@@ -1,4 +1,4 @@
-\documentclass{article}
+\documentclass[10pt, a4paper, draft]{article}
 
 \usepackage{fancyvrb}
 \DefineVerbatimEnvironment{code}{Verbatim}{fontsize=\small}
@@ -9,7 +9,6 @@
 
 
 \begin{document}
-
 \maketitle
 
 \section{Introduction}
@@ -121,7 +120,6 @@ Currently, in GHC, we don't annotate let-bound variables with a usage
 environment, but we already calculate a usage environment and use it to check
 some things (which things?)
 
-
 \begin{itemize}
     \item Transformations, occurrences?
     \item Recursive lets
@@ -151,6 +149,37 @@ so does j2).
 
 However, if j1 and j2 were annotated with their usage environment,
 
+\subsection{Recursive Lets}
+
+Optimisations can create a letrec which uses a variable linearly. The following
+example uses 'x' linearly, but this is not seen by the linter.
+\begin{code}
+
+letrec f True = f False
+       f False = x
+in f True
+\end{code}
+
+Plan: make let-bound variables remember the usage environment.
+See ticket #18694.
+
+
+\subsection{Empty Case}
+
+\begin{itemize}
+\item https://gitlab.haskell.org/ghc/ghc/-/issues/20058
+\item https://gitlab.haskell.org/ghc/ghc/-/issues/18768
+\end{itemize}
+
+\begin{code}
+{-# LANGUAGE LinearTypes, EmptyCase #-}
+module M where
+
+{-# NOINLINE f #-}
+f :: a %1-> ()
+f x = case () of {}
+\end{code}
+
 
 \section{Multiplicity Coercions}
 
@@ -169,6 +198,20 @@ evidence (...)
     \item Are we really preserving linearity?
     \item Inform/unlock other optimisations that take into account linearity
 \end{itemize}
+
+\begin{code}
+data SBool :: Bool -> Type where
+  STrue :: SBool True
+  SFalse :: SBool False
+
+type family If b t f where
+  If True t _ = t
+  If False _ f = f
+
+dep :: SBool b -> Int %(If b One Many) -> Int
+dep STrue x = x
+dep SFalse _ = 0
+\end{code}
 
 \end{document}
 
