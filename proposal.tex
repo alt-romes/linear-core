@@ -1,5 +1,9 @@
 \documentclass{article}
 
+\usepackage{fancyvrb}
+\DefineVerbatimEnvironment{code}{Verbatim}{fontsize=\small}
+\DefineVerbatimEnvironment{example}{Verbatim}{fontsize=\small}
+
 \title{Linting Linearity in Core/System FC}
 \author{Rodrigo Mesquita}
 
@@ -32,9 +36,17 @@ the complexity of all the transformations a Haskell program undergoes, such as
 type inference, desugaring and optimising transformations (and other Core
 related passes?).
 
+\begin{itemize}
+    \item In GHC, the type Type is shared between the surface language and Core.
+        So modifying the types implies that Core is modified as well. 
+
+    \item More importantly, because Core is a good check that our implementation
+        works as intended. That is, a linearly typed Core will ensure that
+        linearly-typed programs are indeed desugared to linearly-typed programs
+        in Core. And that optimisations do not destroy linearity.
+\end{itemize}
+
 The addition of linear types comes at two levels: frontend and Core.
-What's the first and foremost reason for permeating Core with linearity? I can't
-phrase it correctly, something wrt to the foundational formal design and system FC.
 In the frontend, we can now annotate with linearity type declarations and
 typecheck programs that use them accordingly (a linear fuction will consume its
 argument exactly once if it is consumed exactly once, for some definition of
@@ -63,6 +75,11 @@ linearity.
     \item Inform/unlock other optimisations that take into account linearity
 \end{itemize}
 
+% Our key innovation is that, by recognising join points as a language construct,
+% we both preserve join points through subsequent transformations and exploit them
+% to make those transformations more effective. Next, we formalize this ap-
+% proach; subsequent sections develop the consequences.
+
 \section{Typing Usage Environments}
 
 The first set of problems appears in the core-to-core optimisation passes. GHC
@@ -77,11 +94,62 @@ have the empty case expression introduced with the \emph{EmptyCase} language
 extension that we currently can't typecheck either.
 
 
+A usage environment is a mapping from variables to multiplicities.
+
+The key idea is to annotate every variable with either its multiplicity, if it's
+lambda bound, or with its usage environment, if it's let bound.
+
+For example, if y and z are linear, in the following code it might not look as
+if y and z were both being consumed linearly, but indeed they are since in the
+first branch we use x which means using y and z linearly, and we use y and z
+directly on the second branch. Note that let binding x doesn't consume y and z,
+only using x itself does, because of laziness.
+\begin{code}
+let x = (y, z) in
+case e of
+  Pat1 -> … x …
+  Pat2 -> … y … z …
+\end{code}
+
+If we annotate the x bound by let with a usage environment $\delta$ mapping all (free?)
+variables in its binder to a multiplicity ($\delta = [y := 1, z := 1]$), we
+could, upon finding x, simply emit that y and z are consumed once. When typing
+the second branch we'd also see that y and z are used exactly once, hence the
+linearity in the two branches match.
+
+Currently, in GHC, we don't annotate let-bound variables with a usage
+environment, but we already calculate a usage environment and use it to check
+some things (which things?)
+
+
 \begin{itemize}
     \item Transformations, occurrences?
     \item Recursive lets
     \item Empty case expression
 \end{itemize}
+
+\subsection{Join Points}
+
+When duplicating a case (in the case-of-case transformation), to avoid code
+explosion, the branches of the case are first made into join points
+
+\begin{code}
+case e of
+  Pat1 -> u
+  Pat2 -> v
+~~>
+let j1 = u in
+let j2 = v in
+case e of
+  Pat1 -> j1
+  Pat2 -> j2
+\end{code}
+
+If there is any linear variable in u and v, then the standard
+let rule above will fail (since j1 occurs only in one branch, and
+so does j2).
+
+However, if j1 and j2 were annotated with their usage environment,
 
 
 \section{Multiplicity Coercions}
