@@ -155,13 +155,53 @@ Optimisations can create a letrec which uses a variable linearly. The following
 example uses 'x' linearly, but this is not seen by the linter.
 \begin{code}
 
-letrec f True = f False
-       f False = x
+letrec f = \case
+        True -> f False
+        False -> x
 in f True
 \end{code}
 
-Plan: make let-bound variables remember the usage environment.
-See ticket #18694.
+Following the idea of making let-bound variables remember the usage environment
+here's an informal description that that example is well typed. We want to
+anotate the let-bound variable $f$ with a usage environment delta $\delta$, and
+use the binding body to compute it.
+
+Now, how to compute the usage environment of a case expression? It's described
+here if I'm not mistaken
+https://gitlab.haskell.org/ghc/ghc/-/wikis/uploads/355cd9a03291a852a518b0cb42f960b4/minicore.pdf.
+
+However, not understanding it, my take would be that we can compute the usage
+environment of every branch of the case expression and make sure that they all
+unify (wrt to submultiplicities). The special case is when the branch happens to
+call $f$ itself while computing the usage environment of $f$. If it were another
+let bound variable we'd add its own usage environment to the one we're
+computing; if it were a lambda bound variable we'd add [itself $:=$ its
+multiplicity].
+
+My idea is that we can emit a special usage [$rec := p$], which, when unified
+against the other case branches $\delta$ will always succeed with a unification
+mapping from $rec \rightarrow p\delta$ scaled by the multiplicity of $rec$
+
+So taking the example, to compute the usage environment of $f$, we'd compute for
+the second branch $[x := 1]$ and for the first branch $[rec := 1]$. Then, we'd
+unify them with $rec \rightarrow [x := 1*1]$, and somehow result in $[x := 1]$
+
+An example which should break linearity because $x$ is not linear in the first
+branch:
+\begin{code}
+letrec f = \case
+         True -> f False + f False
+         False -> x
+    in f True
+\end{code}
+
+To compute the usage environment of $f$ we take the second branch usage
+environment $[x := 1]$ and the first branch usage $[rec := 1+1]$ and unify them,
+somehow resulting in $[x := 2]$. Now, to lint the linearity in the whole let
+expression we must ensure that the body of the let uses $x$ linearly. The body
+is $f True$, which is a let-bound variable (how to distinguish functions that
+must be applied vs variables) so we take its usage environment $[x := 2]$ which
+does not use $x$ linearly and thus breaks linearity.
 
 
 \subsection{Empty Case}
