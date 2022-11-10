@@ -1,4 +1,4 @@
-\documentclass[10pt, a4paper, draft]{article}
+\documentclass[a4paper, draft]{article}
 
 \usepackage{fancyvrb}
 \DefineVerbatimEnvironment{code}{Verbatim}{fontsize=\small}
@@ -125,6 +125,12 @@ some things (which things?)
     \item Recursive lets
     \item Empty case expression
 \end{itemize}
+
+What do we currently do?
+
+When we lint a core expression, we get both its type and its usage environment.
+That means that to lint linearity in an expression, whenever we come across a
+free variable we compute its usage environment and take it into account
 
 \subsection{Join Points}
 
