@@ -13,6 +13,10 @@
 
 \section{Introduction}
 
+\section{Background}
+
+\section{Technical Details}
+
 Since Linear Haskell's\ref{}
 publication and implementation release in GHC 9.2, Haskell's type system
 supports linearity annotations in functions -- bringing linear types into a
@@ -160,7 +164,6 @@ However, if j1 and j2 were annotated with their usage environment,
 Optimisations can create a letrec which uses a variable linearly. The following
 example uses 'x' linearly, but this is not seen by the linter.
 \begin{code}
-
 letrec f = \case
         True -> f False
         False -> x
@@ -209,12 +212,54 @@ is $f True$, which is a let-bound variable (how to distinguish functions that
 must be applied vs variables) so we take its usage environment $[x := 2]$ which
 does not use $x$ linearly and thus breaks linearity.
 
+\textbf{Re-explained:} to compute the usage environment of the recursive
+let-bound function $f$ when applied, we compute $Z$ such that for all branch
+alternatives $U,V,...$, $U \subset Z$, $V \subset Z$ and so on by tracking the
+multiplicities and usage environments of variables that show up in the body and
+by emitting a special keyword $rec$ everytime we find a saturated call of $f$
+(how to handle unsaturated calls?) (how to have a more general solution that
+doesn't require a keyword, perhaps something to do with fixed points); Then we
+scale $Z \setminus \{(rec,_)\}$ by $Z[rec]$ and get $T$ which is the usage
+environment of $f$ when saturated.
+
+\textbf{Example 1 revisited:}
+\begin{enumerate}
+    \item Take $U = \{rec := 1\}$
+    \item Take $V = \{x := 1\}$
+    \item Take $Z = \{x := 1, rec := 1\}$
+    \item Take $\pi = Z[rec] = 1$
+    \item Take $W = Z \setminus \{rec\} = \{x := 1\}$
+    \item Take $T = \pi W = \{x := \pi * 1\} = \{x := 1\}$
+    \item Linearity OK
+\end{enumerate}
+
+\textbf{Example 2 revisited:}
+\begin{enumerate}
+    \item Take $U = \{rec := 2\}$
+    \item Take $V = \{x := 1\}$
+    \item Take $Z = \{x := 1, rec := 1\}$
+    \item Take $\pi = Z[rec] = 2$
+    \item Take $W = Z \setminus \{rec\} = \{x := 1\}$
+    \item Take $T = \pi W = \{x := \pi * 1\} = \{x := 2\}$
+    \item Linearity not OK
+\end{enumerate}
 
 \subsection{Empty Case}
+
+For case expressions, the usage environment is computed by checking all branches
+and taking sup. However, this trick doesn't work when there are no branches.
 
 \begin{itemize}
 \item https://gitlab.haskell.org/ghc/ghc/-/issues/20058
 \item https://gitlab.haskell.org/ghc/ghc/-/issues/18768
+
+\item (1) Just like a case expression remembers its type (Note [Why does Case have a
+'Type' field?] in Core.hs), it should remember its usage environment. This data
+should be verified by Lint.
+
+\item (2) Once this is done, we can remove the Bottom usage and the second field of
+UsageEnv. In this step, we have to infer the correct usage environment for empty
+case in the typechecker.
 \end{itemize}
 
 \begin{code}
@@ -225,6 +270,45 @@ module M where
 f :: a %1-> ()
 f x = case () of {}
 \end{code}
+
+This example is well typed: a function is linear if it consumes its argument
+exactly once when it's consumed exactly once. It seems like the function isn't
+linear since it won't consume x because of the empty case, however, that also
+means f won't be consumed due to the same empty case, thus linearity is
+preserved.
+
+\begin{code}
+* In the case of empty types (see Note [Bottoming expressions]), say
+  data T
+we do NOT want to replace
+  case (x::T) of Bool {}   -->   error Bool "Inaccessible case"
+because x might raise an exception, and *that*'s what we want to see!
+(#6067 is an example.) To preserve semantics we'd have to say
+   x `seq` error Bool "Inaccessible case"
+but the 'seq' is just such a case, so we are back to square 1.
+\end{code}
+
+There are three different problems:
+
+\begin{itemize}
+\item castBottomExpr converts (case x :: T of {}) :: T to x.
+\item Worker/wrapper moves the empty case to a separate binding
+\item CorePrep eliminates empty case, just like point 1 (See -- Eliminate empty
+    case in GHC.CoreToStg.Prep
+\end{itemize}
+
+With castBottomExpr, we get the example above to
+\begin{code}
+    f = \ @a (x (%1) :: a) -> ()
+\end{code}
+And if we don't, 
+\begin{code}
+    f = \ @a (x (%1) :: a) -> case () of {}
+\end{code}
+And that supposedly if we had a usage environment in the case expression we
+could avoid the error. How is it typed without the transformation in face
+of the bottom? (Even knowing that theoretically it's because of divergence?)
+
 
 
 \section{Multiplicity Coercions}
@@ -239,11 +323,6 @@ that x is indeed linear in one case and unrestricted in the other, even though
 it is according to its type. We'd need some sort of coercion to coerce through
 the multiplicity to the new one we uncover when we pattern match on the GADT
 evidence (...)
-
-\begin{itemize}
-    \item Are we really preserving linearity?
-    \item Inform/unlock other optimisations that take into account linearity
-\end{itemize}
 
 \begin{code}
 data SBool :: Bool -> Type where
@@ -260,6 +339,5 @@ dep SFalse _ = 0
 \end{code}
 
 \end{document}
-
 
 
