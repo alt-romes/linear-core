@@ -13,7 +13,28 @@
 
 \section{Introduction}
 
+
+
+\section{Motivation}
+
+\begin{itemize}
+    \item Are we really preserving linearity?
+    \item Inform/unlock other optimisations that take into account linearity
+\end{itemize}
+
+
 \section{Background}
+
+\begin{itemize}
+    \item Linear types
+    \item Linear Haskell
+    \item Core
+    \item Sistemas de inferência
+    \item GADTs e Coercions
+\end{itemize}
+
+\section{Related Work}
+
 
 \section{Technical Details}
 
@@ -70,13 +91,6 @@ system that is able to type check \emph{Core}/\emph{System FC} at all points in
 the core pipeline and implement it into GHC to be able to preserve linearity
 accross the stages and to enable \emph{Lint} to preserve our sanity regarding
 linearity.
-
-\section{Motivation}
-
-\begin{itemize}
-    \item Are we really preserving linearity?
-    \item Inform/unlock other optimisations that take into account linearity
-\end{itemize}
 
 % Our key innovation is that, by recognising join points as a language construct,
 % we both preserve join points through subsequent transformations and exploit them
