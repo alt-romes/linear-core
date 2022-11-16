@@ -1,5 +1,10 @@
 \documentclass[a4paper, draft]{article}
 
+\usepackage{cmll}
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{mathpartir}
+\usepackage{hyperref}
 \usepackage{fancyvrb}
 \DefineVerbatimEnvironment{code}{Verbatim}{fontsize=\small}
 \DefineVerbatimEnvironment{example}{Verbatim}{fontsize=\small}
@@ -240,6 +245,22 @@ environment of $f$ when saturated.
     \item Linearity not OK
 \end{enumerate}
 
+
+Draft typing rule:
+
+
+\begin{mathparpagebreakable}
+    \infer*[right=(letrec)]
+    {\Gamma ; \Delta/ \Delta' ; \Omega \vdash M : A \Uparrow \and \Gamma ;
+    \Delta/ \Delta'' ; \Omega \vdash N : B \Uparrow \and \Delta' = \Delta''}
+    {\Gamma ; \Delta/\Delta' ; \Omega \vdash  (M \with N) : A
+    \with B \Uparrow}
+\end{mathparpagebreakable}
+
+
+
+
+
 \subsection{Empty Case}
 
 For case expressions, the usage environment is computed by checking all branches
@@ -468,6 +489,99 @@ let rule above will fail (since j1 occurs only in one branch, and
 so does j2).
 
 However, if j1 and j2 were annotated with their usage environment,
+
+\subsection{Compiling ghc with -dlinear-core-lint}
+
+From the definition of groupBy in GHC.Data.List.Infinite
+\begin{code}
+groupBy :: (a -> a -> Bool) -> Infinite a -> Infinite (NonEmpty a)
+groupBy eq = go
+  where
+    go (Inf a as) = Inf (a:|bs) (go cs)
+      where (bs, cs) = span (eq a) as
+\end{code}
+we get the following core which violates linearity.
+\begin{code}
+groupBy = \ (@a) (eq :: a -> a -> Bool) (eta :: Infinite a) ->
+  letrec {
+    go :: Infinite a -> Infinite (NonEmpty a)
+    go = \ (inf :: Infinite a) -> case inf of {
+      Inf x xs -> let {
+        ds :: ([a], Infinite a)
+        ds = let {
+            parteq :: a -> Bool
+            parteq = eq x
+        } in
+          letrec {
+            goZ :: Infinite a -> ([a], Infinite a)
+            goZ = \ (inf' :: Infinite a) -> case wgo inf' of { (# wA, wB #) -> (wA, wB) };
+
+            wgo :: Infinite a -> (# [a], Infinite a #)
+            wgo = \ (inf' :: Infinite a) -> case inf' of wildX2 {
+              Inf y ys ->
+                join {
+                    jp :: ([a], Infinite a) \%1 -> (# [a], Infinite a #)
+                    jp (wwj :: ([a], Infinite a)) =
+                        case wwj of wwj {
+                            DEFAULT -> case wwj of { (wA, wB) -> (# wA, wB #) } }
+                    } in
+                      case parteq y of {
+                        False ->
+                            let {
+                                ww :: ([a], Infinite a)
+                                ww = ([] @a, wildX2)
+                            } in jump jp ww;
+                        True ->
+                            let {
+                                dy :: ([a], Infinite a)
+                                dy = case wgo ys of { (# wA, wB #) -> (wA, wB)
+                                }
+                            } in
+                                let {
+                                    wwB :: [a]
+                                    wwB = case dy of { (bs, cs) -> bs }
+                                } in
+                                    let {
+                                        wwA :: [a]
+                                        wwA = : @a y wwB
+                                    } in let {
+                                        wwC :: Infinite a
+                                        wwC = case dy of { (bs, cs) -> cs }
+                                    } in let {
+                                        ww :: ([a], Infinite a)
+                                        ww = (wwA, wwC)
+                                    } in jump jp ww
+                                }
+              };
+          } in
+              case wgo xs of { (# wA, wB #) -> (wA, wB) }
+      } in
+          Inf @(NonEmpty a) (:| @a x (case ds of { (bs, cs) -> bs })) (case ds of { (bs, cs) -> go cs })
+    };
+  } in go eta
+\end{code}
+The issue is in the linear function that shows up in the core output (how does
+the linearity end up there?). The wwj variable is used once in the case
+expression, bound as the case binder, and used in the case body once again. Why
+do we do that instead of pattern matching right away? Seems a bit redundant.
+
+Observation: If the branch is DEFAULT, then the case binder binds the case
+scrutinee which was just forced?, but hasn't been actually consumed, because we
+haven't consumed its components. As long as the same branch doesn't consume the
+pattern matching result and the case binder at the same time it should be fine?
+
+In this example, we force wwj with the case binder, but we don't really
+consume it (more precise definition of consume...), so we can use the case
+binder meaning we're simply using x for the first time. Needs to be
+formalised....
+
+\begin{code}
+jp :: ([a], Infinite a) \%1 -> (# [a], Infinite a #)
+jp (wwj :: ([a], Infinite a)) =
+    case wwj of wwj {
+        DEFAULT -> case wwj of { (wA, wB) -> (# wA, wB #) }
+    }
+\end{code}
 
 \end{document}
 
