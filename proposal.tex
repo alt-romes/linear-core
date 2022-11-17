@@ -381,6 +381,11 @@ This resulting program fails lint with \emph{Linearity failure in lambda: x
       case x of x { __DEFAULT -> f x }
 \end{code}
 
+The case binder solution also applies here.
+\textbf{case} $x$ evaluates x once, and then the binder has empty usage
+environment because of the DEFAULT $x := []$. Then $f$ is applied to $x$ and $x$
+means the usage of its usage environment which is empty: linearity is preserved
+
 How are strictness annotations typed in the frontend? The issue is this program
 consumes to value once to force it, and then again to determine the return
 value.
@@ -642,6 +647,18 @@ case exp of w1
     (x1,_) -> case w1 of w2
                 (_, x2) -> (x1, x2)
 \end{code}
+
+\section{Typing rules}
+
+
+\begin{mathparpagebreakable}
+    \infer*[right=(letrec)]
+    {\Gamma ; \Delta/ \Delta' ; \Omega \vdash M : A \Uparrow \and \Gamma ;
+    \Delta/ \Delta'' ; \Omega \vdash N : B \Uparrow \and \Delta' = \Delta''}
+    {\Gamma ; \Delta/\Delta' ; \Omega \vdash  (M \with N) : A \leadsto U}
+\end{mathparpagebreakable}
+
+
 
 \end{document}
 
