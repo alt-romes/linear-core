@@ -451,7 +451,23 @@ rather than the constant $False$.
 At first look, the resulting program is impossible to typecheck.
 
 Idea: if $x$ was anotated with some information regarding the CSE then perhaps
-it could be typechecked (in a system that considered said anotations)
+it could be typechecked (in a system that considered said anotations) -- This is
+too specific and the case binder environment solution is much cleaner. It just
+requires that the example is changed into using the case binder $w1$ rather than
+$x$.
+
+Solution with the (unifying) case binder idea:
+Annotate the case binder with its usage environment. For enums without arguments
+this usage environment will always be empty, meaning we can always use the case
+binder instead of the actual enum without issues. This solves this problem as
+well as a handful of other.
+
+In this exact example, the binder has usage environment empty ($w1 := []$),
+meaning that in the False branch, when we use $x$, if we instead used $w1$ which
+is equivalent and seems more correct (since it doesn't need the case scrutinee
+expression to be a variable), then the usage of $w1$ would imply the usage of
+$[]$ which is nothing and therefore we would preserve linearity
+
 
 Confusingly: the resulting optimised program from running the complete simplifier
 and outputting with -ddump-simpl actually does what we expected it to regarding
@@ -466,6 +482,7 @@ particular CSE but it would be fine in the end?
         True -> y
       }
 \end{code}
+
 
 \subsection{Join Points}
 
@@ -581,6 +598,49 @@ jp (wwj :: ([a], Infinite a)) =
     case wwj of wwj {
         DEFAULT -> case wwj of { (wA, wB) -> (# wA, wB #) }
     }
+\end{code}
+
+Solution with the case binder idea that unifies a different problems:
+The case binder is annotated with a usage environment $U_wwj = []$, and its
+usage is equal to using the usage environment
+
+Here it would mean that second \textbf{case of} $wwj$ doesn't actually use any
+variables and hence it isn't used twice.
+
+\subsection{Artificial examples}
+
+Following the difficulties in consuming or not consuming the case binder and its
+associated bound variables linearly we constructed some additional examples that
+bring out the problem quite clearly
+\begin{code}
+case x of w1
+    (x1,x2) -> case y:Bool of
+                DEFAULT -> (x1,x2)
+\end{code}
+Is equal to (note that the case binder is being used rather than the $x$ case
+scrutinee which could be an arbitrary expression and hence really cannot be
+consumed multiple times?)
+\begin{code}
+case x of w1
+    (x1,x2) -> case y:Bool of
+                DEFAULT -> w1
+\end{code}
+
+We initially wondered whether x was being consumed if the pattern match ignored
+some of its variables. We put that if it does have wildcards then it isn't
+consuming x fully
+\begin{code}
+case x of w1
+    (_,x2) -> Is x being consumed? no because not all of its components are
+    being consumed?
+\end{code}
+
+Can we have a solution that even handles weird cases in which we pattern match
+twice on the same expression but only on one constructor argument per time?
+\begin{code}
+case exp of w1
+    (x1,_) -> case w1 of w2
+                (_, x2) -> (x1, x2)
 \end{code}
 
 \end{document}
