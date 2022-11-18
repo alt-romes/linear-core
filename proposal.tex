@@ -18,9 +18,7 @@
 
 \section{Introduction}
 
-
-
-\section{Motivation}
+\subsection{Motivation}
 
 \begin{itemize}
     \item Are we really preserving linearity?
@@ -358,136 +356,6 @@ dep SFalse _ = 0
 
 \section{Typing After Transformations}
 
-\subsection{Result of desugar (before optimization)}
-
-This resulting program fails lint with \emph{Linearity failure in lambda: x
-'Many $\not\subseteq$ p}
-\begin{code}
-($!) :: forall {rep} a (b :: TYPE rep) p q. (a %p -> b) %q -> a %p -> b
-($!) f !x = f x
-~~>
-($!)
-  :: forall {rep :: RuntimeRep} a (b :: TYPE rep) (p :: Multiplicity)
-            (q :: Multiplicity).
-     (a %p -> b) %q -> a %p -> b
-($!)
-  = \ (@(rep :: RuntimeRep))
-      (@a)
-      (@(b :: TYPE rep))
-      (@(p :: Multiplicity))
-      (@(q :: Multiplicity))
-      (f :: a %p -> b)
-      (x :: a) ->
-      case x of x { __DEFAULT -> f x }
-\end{code}
-
-The case binder solution also applies here.
-\textbf{case} $x$ evaluates x once, and then the binder has empty usage
-environment because of the DEFAULT $x := []$. Then $f$ is applied to $x$ and $x$
-means the usage of its usage environment which is empty: linearity is preserved
-
-How are strictness annotations typed in the frontend? The issue is this program
-consumes to value once to force it, and then again to determine the return
-value.
-
-Work better the meaning of consumption (does it mean for a value to be reduced
-to WHNF?). Is consuming = forcing? Why is the above program linear?
-
-The resulting program from -ddump-simpl is
-\begin{code}
-($!)
-  :: forall {rep :: GHC.Types.RuntimeRep} a (b :: TYPE rep)
-            (p :: GHC.Types.Multiplicity) (q :: GHC.Types.Multiplicity).
-     (a %p -> b) %q -> a %p -> b
-($!)
-  = \ (@(rep :: GHC.Types.RuntimeRep))
-      (@a)
-      (@(b :: TYPE rep_aSJ))
-      (@(p :: GHC.Types.Multiplicity))
-      (@(q :: GHC.Types.Multiplicity))
-      (f :: a %p -> b)
-      (x :: a) ->
-      case x of y { __DEFAULT -> f_aDV y }
-\end{code}
-So in this program we use another name for the case binder, but it still stands
-for the resulting of evaluating to WHNF; how is it technically different?
-
-\subsection{In Result of TcGblEnv axioms}
-
-I don't understand this one yet. I would guess it has to do with multiplicity
-coercions. Incorrect incompatible branch: CoAxBranch (src/Prelude/Linear/GenericUtil.hs:112:3-51): [S1
-\begin{code}
-type family Fixup (f :: Type -> Type) (g :: Type -> Type) :: Type -> Type where
-  Fixup (D1 c f) (D1 _c g) = D1 c (Fixup f g)
-  Fixup (C1 c f) (C1 _c g) = C1 c (Fixup f g)
-  Fixup (S1 c f) (S1 _c (MP1 m f)) = S1 c (MP1 m f) -- error in this constructor
-  Fixup (S1 c f) (S1 _c f) = S1 c f
-  Fixup (f :*: g) (f' :*: g') = Fixup f f' :*: Fixup g g'
-  Fixup (f :+: g) (f' :+: g') = Fixup f f' :+: Fixup g g'
-  Fixup V1 V1 = V1
-  Fixup _ _ = TypeError ('Text "FixupMetaData: representations do not match.")
-\end{code}
-
-\subsection{Common Sub-expression Elimination}
-
-Currently, the CSE seems to transform a linear program that pattern matches on
-constant and returns the same constant into a program that breaks linearity that
-pattern matches on the argument and returns the argument (where in the frontend
-a constant equal to the argument would be returned)
-
-Example
-\begin{code}
-(&&) :: Bool %1 -> Bool %1 -> Bool
-False && False = False
-False && True = False
-True && x = x
-~~>
-(&&) :: Bool %1 -> Bool %1 -> Bool
-(&&)
-  = \ (x :: Bool) (y :: Bool) ->
-      case x of w1 {
-        False -> case y of w2 { __DEFAULT -> x };
-        True -> y
-      }
-\end{code}
-In the first branch case, we pattern match on y to force it and then return $x$
-rather than the constant $False$.
-
-At first look, the resulting program is impossible to typecheck.
-
-Idea: if $x$ was anotated with some information regarding the CSE then perhaps
-it could be typechecked (in a system that considered said anotations) -- This is
-too specific and the case binder environment solution is much cleaner. It just
-requires that the example is changed into using the case binder $w1$ rather than
-$x$.
-
-Solution with the (unifying) case binder idea:
-Annotate the case binder with its usage environment. For enums without arguments
-this usage environment will always be empty, meaning we can always use the case
-binder instead of the actual enum without issues. This solves this problem as
-well as a handful of other.
-
-In this exact example, the binder has usage environment empty ($w1 := []$),
-meaning that in the False branch, when we use $x$, if we instead used $w1$ which
-is equivalent and seems more correct (since it doesn't need the case scrutinee
-expression to be a variable), then the usage of $w1$ would imply the usage of
-$[]$ which is nothing and therefore we would preserve linearity
-
-
-Confusingly: the resulting optimised program from running the complete simplifier
-and outputting with -ddump-simpl actually does what we expected it to regarding
-the constants and linearity. So is the issue from running linear lint after a
-particular CSE but it would be fine in the end?
-\begin{code}
-(&&) :: Bool %1 -> Bool %1 -> Bool
-(&&)
-  = \ (x :: Bool) (y :: Bool) ->
-      case x of {
-        False -> case y of { __DEFAULT -> GHC.Types.False };
-        True -> y
-      }
-\end{code}
-
 
 \subsection{Join Points}
 
@@ -511,6 +379,179 @@ let rule above will fail (since j1 occurs only in one branch, and
 so does j2).
 
 However, if j1 and j2 were annotated with their usage environment,
+
+
+\section{Novel rules}
+
+\subsection{The usage environment in a Recursive Let}
+
+\subsection{The usage environment of a Case Binder\label{caseBinderKey}}
+
+
+\begin{mathparpagebreakable}
+    \infer*[right=(letrec)]
+    {\Gamma ; \Delta/ \Delta' ; \Omega \vdash M : A \Uparrow \and \Gamma ;
+    \Delta/ \Delta'' ; \Omega \vdash N : B \Uparrow \and \Delta' = \Delta''}
+    {\Gamma ; \Delta/\Delta' ; \Omega \vdash  (M \with N) : A \leadsto U}
+\end{mathparpagebreakable}
+
+
+\section{Examples}
+
+In this section we present worked examples of programs that currently fail to
+compile with \textbf{-dlinear-core-lint} but would succeed according to the
+novel typing rules we introduced above. Each example belongs to a subsection
+that indicates after which transformation the linting failed.
+
+\subsection{After the desugarer (before optimizations)}
+
+The definition for $\$!$ in \textbf{linear-base}\cite{} fails to lint after the
+desugarer (before any optimisation takes place) with \emph{Linearity failure in
+lambda: x 'Many $\not\subseteq$ p}
+\begin{code}
+($!) :: forall {rep} a (b :: TYPE rep) p q. (a %p -> b) %q -> a %p -> b
+($!) f !x = f x
+\end{code}
+
+The desugared version of that function follows below. It violates (naive?)
+linearity by using $x$ twice, once to force the value and a second time to call
+$f$. However, the $x$ passed as an argument is actually the case binder and it
+must be handled in its own way. The case binder is the key (as seen in ~\ref{caseBinderKey}) to solving this
+and many other examples.
+\begin{code}
+($!)
+  :: forall {rep :: RuntimeRep} a (b :: TYPE rep) (p :: Multiplicity)
+            (q :: Multiplicity).
+     (a %p -> b) %q -> a %p -> b
+($!)
+  = \ (@(rep :: RuntimeRep))
+      (@a)
+      (@(b :: TYPE rep))
+      (@(p :: Multiplicity))
+      (@(q :: Multiplicity))
+      (f :: a %p -> b)
+      (x :: a) ->
+      case x of x { __DEFAULT -> f x }
+\end{code}
+
+% Intuitively, this program is linear because forcing the polymorphic value to
+% WHNF ...? Need better semantics of consuming
+%
+The case binder usage rule typechecks this program because $x$ is consumed once,
+the usage environment of the case binder is empty ($x :_\emptyset a$) and,
+therefore, when $x$ is used in $f(x)$, we use its usage environment which is
+empty, so we don't use anything new.
+
+\emph{How are strictness annotations typed in the frontend? The issue is this program
+consumes to value once to force it, and then again to determine the return
+value.}
+
+% Work better the meaning of consumption (does it mean for a value to be reduced
+% to WHNF?). Is consuming = forcing? Why is the above program linear?
+
+As a finishing note on this example, we show the resulting program from
+\textbf{-ddump-simpl} that uses a different name for the case binder.
+\begin{code}
+($!)
+  :: forall {rep :: RuntimeRep} a (b :: TYPE rep)
+            (p :: Multiplicity) (q :: Multiplicity).
+     (a %p -> b) %q -> a %p -> b
+($!)
+  = \ (@(rep :: RuntimeRep))
+      (@a)
+      (@(b :: TYPE rep_aSJ))
+      (@(p :: Multiplicity))
+      (@(q :: Multiplicity))
+      (f :: a %p -> b)
+      (x :: a) ->
+      case x of y { __DEFAULT -> f_aDV y }
+\end{code}
+% So in this program we use another name for the case binder, but it still stands
+% for the resulting of evaluating to WHNF; how is it technically different?
+
+\subsection{Common Sub-expression Elimination}
+
+Currently, the CSE seems to transform a linear program that pattern matches on
+constant and returns the same constant into a program that breaks linearity that
+pattern matches on the argument and returns the argument (where in the frontend
+a constant equal to the argument would be returned)
+
+The definition for $\&\&$ in \textbf{linear-base} fails to lint after the common
+sub-expression elimination (CSE) pass transforms the program.
+\begin{code}
+(&&) :: Bool %1 -> Bool %1 -> Bool
+False && False = False
+False && True = False
+True && x = x
+\end{code}
+The issue with the program resulting from the transformation is $x$ being used
+twice in the first branch of the first case expression. We pattern match on y to
+force it (since it's a type without constructor arguments, forcing is consuming)
+and then return $x$ rather than the constant $False$
+\begin{code}
+(&&) :: Bool %1 -> Bool %1 -> Bool
+(&&) = \ (x :: Bool) (y :: Bool) ->
+  case x of w1 {
+    False -> case y of w2 { __DEFAULT -> x };
+    True -> y
+  }
+\end{code}
+At a first glance, the resulting program is impossible to typecheck linearly.
+
+The key observation is that after $x$ is forced into either $True$ or $False$,
+we know $x$ to be a constructor without arguments (which can be created
+without restrictions) and know that where we see $x$ we can as well have
+$True$ or $False$ depending on the branch. However, using $x$ here is very
+unsatisfactory (and linearly unsound?) because $x$ might be an expression, and
+we can't really associate $x$ to the value we pattern matched on (be it $True$
+or $False$). What we really want to have instead of $x$ is the $w1$ case binder --
+it relates directly to the value we pattern matched on, it's a variable rather
+than an expression, and, most importantly, our case-binder-usage idea could be
+applied here as well
+
+% Idea: if $x$ was anotated with some information regarding the CSE then perhaps
+% it could be typechecked (in a system that considered said anotations) -- This is
+% too specific and the case binder environment solution is much cleaner. It just
+% requires that the example is changed into using the case binder $w1$ rather than
+% $x$.
+
+The solution with the unifying case binder usage idea means annotating the case
+binder with its usage environment. For $True$ and $False$ (and other data
+constructors without arguments) the usage environment is always empty (using
+them doesn't entail using any other variable), meaning we can always use the
+case binder instead of the actual constant constructor without issues.
+%
+In concrete, if we had $w1$ instead of the second occurrence of $x$, we'd have
+an empty usage environment for $w1$ in the $False$ branch ($w1 :_\emptyset
+Bool$) and upon using $w1$ we wouldn't use any extra resources
+
+
+To make this work, we'd have to look at the current transformations and see
+whether it would be possible to ensure that CSEing the case scrutinee would
+entail using the case binder instead of the scrutinee. I don't know of a
+situation in which we'd really want the scrutinee rather than the case binder,
+so I hypothetize the modified transformation would work out in practice and
+solve this linearity issue.
+
+
+% In this exact example, the binder has usage environment empty ($w1 := []$),
+% meaning that in the False branch, when we use $x$, if we instead used $w1$ which
+% is equivalent and seems more correct (since it doesn't need the case scrutinee
+% expression to be a variable), then the usage of $w1$ would imply the usage of
+% $[]$ which is nothing and therefore we would preserve linearity
+
+Curiously, the optimised program resulting from running all transformations
+actually does what we expected it with regard to using the constant constructors
+and preserving linearity. So is the issue from running linear lint after a
+particular CSE but it would be fine in the end?
+\begin{code}
+(&&) :: Bool %1 -> Bool %1 -> Bool
+(&&) = \ (x :: Bool) (y :: Bool) ->
+  case x of {
+    False -> case y of { __DEFAULT -> GHC.Types.False };
+    True -> y
+  }
+\end{code}
 
 \subsection{Compiling ghc with -dlinear-core-lint}
 
@@ -612,6 +653,24 @@ usage is equal to using the usage environment
 Here it would mean that second \textbf{case of} $wwj$ doesn't actually use any
 variables and hence it isn't used twice.
 
+
+\subsection{In Result of TcGblEnv axioms}
+
+I don't understand this one yet. I would guess it has to do with multiplicity
+coercions. Incorrect incompatible branch: CoAxBranch (src/Prelude/Linear/GenericUtil.hs:112:3-51):
+\begin{code}
+type family Fixup (f :: Type -> Type) (g :: Type -> Type) :: Type -> Type where
+  Fixup (D1 c f) (D1 _c g) = D1 c (Fixup f g)
+  Fixup (C1 c f) (C1 _c g) = C1 c (Fixup f g)
+  Fixup (S1 c f) (S1 _c (MP1 m f)) = S1 c (MP1 m f) -- error in this constructor
+  Fixup (S1 c f) (S1 _c f) = S1 c f
+  Fixup (f :*: g) (f' :*: g') = Fixup f f' :*: Fixup g g'
+  Fixup (f :+: g) (f' :+: g') = Fixup f f' :+: Fixup g g'
+  Fixup V1 V1 = V1
+  Fixup _ _ = TypeError ('Text "FixupMetaData: representations do not match.")
+\end{code}
+
+
 \subsection{Artificial examples}
 
 Following the difficulties in consuming or not consuming the case binder and its
@@ -647,17 +706,6 @@ case exp of w1
     (x1,_) -> case w1 of w2
                 (_, x2) -> (x1, x2)
 \end{code}
-
-\section{Typing rules}
-
-
-\begin{mathparpagebreakable}
-    \infer*[right=(letrec)]
-    {\Gamma ; \Delta/ \Delta' ; \Omega \vdash M : A \Uparrow \and \Gamma ;
-    \Delta/ \Delta'' ; \Omega \vdash N : B \Uparrow \and \Delta' = \Delta''}
-    {\Gamma ; \Delta/\Delta' ; \Omega \vdash  (M \with N) : A \leadsto U}
-\end{mathparpagebreakable}
-
 
 
 \end{document}
