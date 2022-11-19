@@ -4,6 +4,7 @@
 \usepackage{amssymb}
 \usepackage{amsmath}
 \usepackage{mathpartir}
+\usepackage[ruled,vlined]{algorithm2e}
 \usepackage{hyperref}
 \usepackage{fancyvrb}
 \DefineVerbatimEnvironment{code}{Verbatim}{fontsize=\small}
@@ -256,7 +257,46 @@ Draft typing rule:
 \end{mathparpagebreakable}
 
 
+The difficulty of calculating a usage environment for the recursive let recs
+increases with the number of recursive definitions in the same let.
 
+We devise an algorithm for computing the usage environment of a set of recursive
+definitions. The proof that the algorithm works follows...
+
+\begin{itemize}
+    \item Given a list of functions and their naive environment computed from
+        the body and including the recursive function names ($(f, F), (g, G),
+        (h, H)$ in which there might exist multiple occurrences of $f, g, h$ in $F, G, H$
+    \item For each bound rec var and its environment, update all bindings and
+        their usage as described in the algorithm
+    \item After iterating through all bound rec vars, all usage environments
+        will be free of recursive bind usages, and hence "final"
+\end{itemize}
+
+\begin{algorithm}
+$usageEnvs \gets naiveUsageEnvs.map(fst)$\;
+\For{$(bind, U) \in naiveUsageEnvs$}{
+    \For{$V \in usageEnvs$}{
+        $V \gets sup(V[bind]*U\setminus\{bind\}, V\setminus\{bind\})$
+    }
+}
+\caption{computeRecUsageEnvs}
+\end{algorithm}
+
+In haskell that would look like this;
+\begin{code}
+computeRecUsageEnvs :: [(Var, UsageEnv)] -- Recursive usage environments associated to their recursive call
+                    -> [(Var, UsageEnv)] -- Non-recursive usage environments
+computeRecUsageEnvs l =
+  foldl (flip $ \(v,vEnv) -> map $ \(n, nEnv) ->
+      (n, ((fromMaybe 0 $ v `M.lookup` nEnv) `scale` (M.delete v vEnv)) `sup` (M.delete v nEnv))) l l
+
+sup :: UsageEnv -> UsageEnv -> UsageEnv
+sup = M.merge M.preserveMissing M.preserveMissing (M.zipWithMatched $ \_ x y -> max x y)
+
+scale :: Mult -> UsageEnv -> UsageEnv
+scale m = M.map (*m)
+\end{code}
 
 
 \subsection{Empty Case}
@@ -354,32 +394,6 @@ dep SFalse _ = 0
 \end{code}
 
 
-\section{Typing After Transformations}
-
-
-\subsection{Join Points}
-
-When duplicating a case (in the case-of-case transformation), to avoid code
-explosion, the branches of the case are first made into join points
-
-\begin{code}
-case e of
-  Pat1 -> u
-  Pat2 -> v
-~~>
-let j1 = u in
-let j2 = v in
-case e of
-  Pat1 -> j1
-  Pat2 -> j2
-\end{code}
-
-If there is any linear variable in u and v, then the standard
-let rule above will fail (since j1 occurs only in one branch, and
-so does j2).
-
-However, if j1 and j2 were annotated with their usage environment,
-
 
 \section{Novel rules}
 
@@ -450,7 +464,7 @@ value.}
 % to WHNF?). Is consuming = forcing? Why is the above program linear?
 
 As a finishing note on this example, we show the resulting program from
-\textbf{-ddump-simpl} that uses a different name for the case binder.
+\textbf{-ddump-simpl} that simply uses a different name for the case binder.
 \begin{code}
 ($!)
   :: forall {rep :: RuntimeRep} a (b :: TYPE rep)
@@ -706,6 +720,49 @@ case exp of w1
     (x1,_) -> case w1 of w2
                 (_, x2) -> (x1, x2)
 \end{code}
+
+A double let rec in which both use a linear bound variable $y$
+\begin{code}
+letrec f = \case
+        True  -> y
+        False -> g True
+       g = \case
+        True -> f True
+        False -> y
+    in f False
+\end{code}
+
+We have to compute the usage environment of f and g.
+For f, we have the first branch with usage environment $y$ and the second with
+usage $g$, meaning we have $F = \{g := 1, y := 1\}$
+For g, we have $G = \{f := 1, y := 1\}$. To calculate the usage environment of
+$f$ to emit upon $f False$, we calculate ...
+
+Refer to the algorithm for computing recursive environment
+
+
+\subsection{Join Points}
+
+When duplicating a case (in the case-of-case transformation), to avoid code
+explosion, the branches of the case are first made into join points
+
+\begin{code}
+case e of
+  Pat1 -> u
+  Pat2 -> v
+~~>
+let j1 = u in
+let j2 = v in
+case e of
+  Pat1 -> j1
+  Pat2 -> j2
+\end{code}
+
+If there is any linear variable in u and v, then the standard
+let rule above will fail (since j1 occurs only in one branch, and
+so does j2).
+
+However, if j1 and j2 were annotated with their usage environment,
 
 
 \end{document}
