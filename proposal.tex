@@ -291,15 +291,84 @@ In haskell that would look like this;
 computeRecUsageEnvs :: [(Var, UsageEnv)] -- Recursive usage environments associated to their recursive call
                     -> [(Var, UsageEnv)] -- Non-recursive usage environments
 computeRecUsageEnvs l =
-  foldl (flip $ \(v,vEnv) -> map $ \(n, nEnv) ->
-      (n, ((fromMaybe 0 $ v `M.lookup` nEnv) `scale` (M.delete v vEnv)) `sup` (M.delete v nEnv))) l l
+  foldl (flip \\(v,vEnv) -> map \\(n, nEnv) -> (n, ((fromMaybe 0 \$ v `M.lookup` nEnv) `scale` (M.delete v vEnv)) `sup` (M.delete v nEnv))) l l
 
 sup :: UsageEnv -> UsageEnv -> UsageEnv
-sup = M.merge M.preserveMissing M.preserveMissing (M.zipWithMatched $ \_ x y -> max x y)
+sup = M.merge M.preserveMissing M.preserveMissing (M.zipWithMatched \$ \_ x y -> max x y)
 
 scale :: Mult -> UsageEnv -> UsageEnv
 scale m = M.map (*m)
 \end{code}
+
+\subsection{Handling the case binder}
+
+The current typing rule for case expressions describes that using the case
+binder is as using the case scrutinee multiple times (though it seems like it
+actually just starts counting after the second usage which would make the rule
+wrong for a case expression that doesn't use the binder -- the scrutinee should
+also be consumed), so we scale the usage of
+the case scrutinee by the superior multiplicity of using the case binder across
+all branches. However, we hypothetize that this prevents us from typing many
+valid programs and ultimately doesn't capture correctly the usage of variable,
+and present a seemingly viable alternative.
+
+Firstly, we remember the definition of \emph{consuming a value} from Linear
+Haskell as
+\begin{itemize}
+    \item consuming an atomic value is forcing it to Normal Form (NF)
+    \item consuming a value that is constructed with more than 1 argument is
+        consuming all of its arguments
+\end{itemize}
+and further note that when an expression is scrutinized by a case expression it
+is evaluated to Weak Head Normal Form (WHNF), which in the case of a nullary data
+constructor is equal to NF.
+
+Now, with the following example, my interpretation of the current rule says that
+the following case expression consumes the scrutinee twice because the case
+binder is used. However, we know for sure that in the branch where z is used, z
+is equal to False, and using False doesn't violate linearity since we can
+unrestrictedly create nullary data constructors. A situation similar to this one
+below happens after the CSE transformation.
+\begin{code}
+    case <complex expression> $\leadsto U$ of z {
+        False -> case y of z' { DEFAULT -> z }
+        True  -> y
+    }
+
+A different example is using the case binder $z$ instead of the arguments we
+pattern matched on $x,y$. This currently violates linearity because both $x$ and
+$y$ aren't used and because $z$ is used twice. This doesn't typecheck in the
+frontend either. However, we know that in this branch, using $z$ is effectively
+the same as using $(x,y)$!
+\begin{code}
+    case <complex expression> $\leadsto U$ of z {
+        (x,y) -> z
+    }
+\end{code}
+
+The good news is both these two programs and a handful of others listed in
+Section~\ref{examples} are accepted with a new rule we've devised for the
+linear linter. We still need to prove we don't accept any invalid programs as
+valid.
+
+The key idea of the case-binder-usage solution is annotating the case binder
+with independent usage environments for each pattern match. That is, for
+each of the possible branches, using the case binder $z$ will equate to
+using its usage environment in that branch. That makes it so that using the
+case binder instead of a nullary data constructor is the same, using the case
+binder instead of reconstructing the value with the bound pattern variables too,
+and other situations in which we previously couldn't typecheck linearity are
+now accepted.
+
+The typing rule for the case expression using the case binder solution:
+
+\begin{mathparpagebreakable}
+    \infer*[right=(case)]
+    {\Gamma \vdash t : D_{\pi_1 \dots \pi_n} \leadsto \{U\} \\
+     \Gamma ; z :_{U_k} D_{\pi_1 \dots \pi_n} \vdash b_k : C \leadsto \{V_k\}
+     \and V_k \leq V}
+    {\Gamma \vdash \text{case } t \text{ of } z :_{(U_1\dots U_n)} D_{\pi_1 \dots \pi_n} \{b_k\}_1^m : C \leadsto \{U + V\}}
+\end{mathparpagebreakable}
 
 
 \subsection{Empty Case}
@@ -397,23 +466,22 @@ dep SFalse _ = 0
 \end{code}
 
 
+% \section{Novel rules}
 
-\section{Novel rules}
+% \subsection{The usage environment in a Recursive Let}
 
-\subsection{The usage environment in a Recursive Let}
-
-\subsection{The usage environment of a Case Binder\label{caseBinderKey}}
-
-
-\begin{mathparpagebreakable}
-    \infer*[right=(letrec)]
-    {\Gamma ; \Delta/ \Delta' ; \Omega \vdash M : A \Uparrow \and \Gamma ;
-    \Delta/ \Delta'' ; \Omega \vdash N : B \Uparrow \and \Delta' = \Delta''}
-    {\Gamma ; \Delta/\Delta' ; \Omega \vdash  (M \with N) : A \leadsto U}
-\end{mathparpagebreakable}
+% \subsection{The usage environment of a Case Binder\label{caseBinderKey}}
 
 
-\section{Examples}
+% \begin{mathparpagebreakable}
+%     \infer*[right=(letrec)]
+%     {\Gamma ; \Delta/ \Delta' ; \Omega \vdash M : A \Uparrow \and \Gamma ;
+%     \Delta/ \Delta'' ; \Omega \vdash N : B \Uparrow \and \Delta' = \Delta''}
+%     {\Gamma ; \Delta/\Delta' ; \Omega \vdash  (M \with N) : A \leadsto U}
+% \end{mathparpagebreakable}
+
+
+\section{Examples\label{examples}}
 
 In this section we present worked examples of programs that currently fail to
 compile with \textbf{-dlinear-core-lint} but would succeed according to the
