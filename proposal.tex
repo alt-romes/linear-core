@@ -250,10 +250,10 @@ Draft typing rule:
 
 \begin{mathparpagebreakable}
     \infer*[right=(letrec)]
-    {\Gamma ; \Delta/ \Delta' ; \Omega \vdash M : A \Uparrow \and \Gamma ;
-    \Delta/ \Delta'' ; \Omega \vdash N : B \Uparrow \and \Delta' = \Delta''}
-    {\Gamma ; \Delta/\Delta' ; \Omega \vdash  (M \with N) : A
-    \with B \Uparrow}
+    {\Gamma ; x_1 : A_1 \dots x_n : A_n \vdash t_i : A_i \leadsto \{U_{i_\text{naive}}\} \\
+     (U_1 \dots U_n) = computeRecUsages(U_{1_\text{naive}} \dots U_{n_\text{naive}}) \\
+     \Gamma ; x_1 :_{U_1} A_1 \dots x_n :_{U_n} A_n \vdash u : C \leadsto \{V\}}
+    {\Gamma \vdash \text{let } x_1 :_{U_1} A_1 = t_1 \dots x_n :_{U_n} A_n = t_n \text{ in } u : C \leadsto \{V\}}
 \end{mathparpagebreakable}
 
 
@@ -273,6 +273,9 @@ definitions. The proof that the algorithm works follows...
         will be free of recursive bind usages, and hence "final"
 \end{itemize}
 
+-- I should probably use the re-computed usageEnvs instead of the
+naiveUsageEnvs. I'm pretty sure it might fail in some inputs if I keep using the
+naiveUsageEnvs.
 \begin{algorithm}
 $usageEnvs \gets naiveUsageEnvs.map(fst)$\;
 \For{$(bind, U) \in naiveUsageEnvs$}{
@@ -280,7 +283,7 @@ $usageEnvs \gets naiveUsageEnvs.map(fst)$\;
         $V \gets sup(V[bind]*U\setminus\{bind\}, V\setminus\{bind\})$
     }
 }
-\caption{computeRecUsageEnvs}
+\caption{computeRecUsages}
 \end{algorithm}
 
 In haskell that would look like this;
