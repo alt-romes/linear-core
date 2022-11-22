@@ -1,5 +1,6 @@
 \documentclass[a4paper, draft]{article}
 
+\usepackage{todonotes}
 \usepackage{cmll}
 \usepackage{amssymb}
 \usepackage{amsmath}
@@ -17,84 +18,104 @@
 \begin{document}
 \maketitle
 
+% \section{Introduction}
+
+% \subsection{Motivation}
+
+% \begin{itemize}
+%     \item Are we really preserving linearity?
+%     \item Inform/unlock other optimisations that take into account linearity
+% \end{itemize}
+
+
+% \section{Background}
+
+% \begin{itemize}
+%     \item Linear types
+%     \item Linear Haskell
+%     \item Core
+%     \item Sistemas de inferência
+%     \item GADTs e Coercions
+% \end{itemize}
+
+% \section{Related Work}
+
+% \section{Technical Details}
+
+\section{Foreword}
+
+This document is a work in progress proposal that I will deliver at the end of
+the semester as part of my master thesis preparation. The document needs a
+proper introduction and lengthy background and related work section besides the
+content (to be extended) that follows, such that an outsider might understand
+what I propose to do. However, this initial iteration is instead targeted at
+those already familiar with the problem and serves as a (less bureaucratic)
+research proposal on linting linearity in Core and to showcase the progress I
+have made so far.
+
+
 \section{Introduction}
 
-\subsection{Motivation}
 
-\begin{itemize}
-    \item Are we really preserving linearity?
-    \item Inform/unlock other optimisations that take into account linearity
-\end{itemize}
+Since Linear Haskell's\cite{} publication and implementation release in GHC 9.0,
+Haskell's type system supports linearity annotations in functions -- bringing
+linear types into a mainstream pure and lazy functional language. In concrete,
+function arrows can be annotated with a multiplicity. If a function is linear it
+must consume its argument exactly once if it is consumed exactly once, for some
+definition of \emph{consume} that I should revise here.
 
+Linearly typed programs are proven/checked to be linear by the type system, so
+the addition of linear types evidently implied changing the type checker to
+support linearity. There exist, however, two distinct type checkers in Haskell.
+The first is run on the surface language, i.e. the Haskell we write, and is a
+big and complex type checker that now also supports typing linearity. The second
+is run on the intermediate language \emph{Core} that we obtain from desugaring
+Haskell.
 
-\section{Background}
+\emph{Core} is a much smaller language than the whole of Haskell (even though we
+can compile the whole of Haskell to it!) and the type checker for it is small
+and fast due to \emph{Core} being explicitly typed and having a small abstract syntax
+tree. This type checker (called \emph{Lint}) gives us guarantees of correctness
+(i.e. sanity) in face of all the complex transformations a Haskell program
+undergoes such as desugaring and optimising transformations because the linter
+is always run on the resulting code before being compiled to untyped machine
+code.
 
-\begin{itemize}
-    \item Linear types
-    \item Linear Haskell
-    \item Core
-    \item Sistemas de inferência
-    \item GADTs e Coercions
-\end{itemize}
+% System FC is the formal system in which the implementation of GHC's intermediate
+% representation language \emph{Core} is based on.
 
-\section{Related Work}
+We want Core to give us guarantees about our desugaring and transformations with
+regard to linearity too -- a linearly typed Core will ensure that linearly-typed
+programs remain correct (i.e.  linearity is preserved) after desugaring and all
+GHC transformations (optimisations shouldn't destroy linearity).
 
-
-\section{Technical Details}
-
-Since Linear Haskell's\ref{}
-publication and implementation release in GHC 9.2, Haskell's type system
-supports linearity annotations in functions -- bringing linear types into a
-mainstream pure and lazy functional language.
-
-System FC is the formal system in which the implementation of GHC's intermediate
-representation language \emph{Core} is based on.
-
-There are at least two distinct typecheckers in core. The first is run on the frontend
-language, i.e. the Haskell we write, and is a big and complex typechecker. The
-second is run on the intermediate language \emph{Core} that we obtain from
-desugaring Haskell.
-
-\emph{Core} is a much smaller and more principled language than the whole of
-Haskell (even though we can compile the whole of Haskell to it), and the
-typechecker for it is small and fast due to \emph{Core} being explicitly typed
-and having a very small abstract syntax tree. This typechecker is called
-\emph{Lint} and gives us guarantees of correctness (i.e. sanity) in face of
-the complexity of all the transformations a Haskell program undergoes, such as
-type inference, desugaring and optimising transformations (and other Core
-related passes?).
-
-\begin{itemize}
-    \item In GHC, the type Type is shared between the surface language and Core.
-        So modifying the types implies that Core is modified as well. 
-
-    \item More importantly, because Core is a good check that our implementation
-        works as intended. That is, a linearly typed Core will ensure that
-        linearly-typed programs are indeed desugared to linearly-typed programs
-        in Core. And that optimisations do not destroy linearity.
-\end{itemize}
-
-The addition of linear types comes at two levels: frontend and Core.
-In the frontend, we can now annotate with linearity type declarations and
-typecheck programs that use them accordingly (a linear fuction will consume its
-argument exactly once if it is consumed exactly once, for some definition of
-\emph{consume} that I should revise here). In Core, we still have linearity
-annotations and ideally \emph{Lint} would check that all the GHC transformations
-to our linear program preserved its linearity. However, \textbf{it can't}!
-
-Despite the strong formal foundations of linear types driving the
+Core is already annotated with linearity, but \textbf{we currently ignore it}!
+In spite of the strong formal foundations of linear types driving the
 implementation, their interaction with the whole of GHC is still far from
-trivial. Diverse problems with linearity spring up when we get past the
-desugarer. In particular, optimizing transformations, coercions from GADTs and
-type families, recursive lets, and empty case expressions don't currently fit in
-with linearity.
+trivial, and the implemented formal system cannot accomodate various
+optimising transformations and from them resulting programs, that seemingly
+violate linearity, but which do preserve it semantically. Therefore, we reject
+various valid programs with regard to linearity after desugaring: the current
+solution, because disabling optimisations can inccur great performance costs, is
+to disable the linear linter. We believe that GHC's transformations are correct,
+and it is the linear type system that can't accommodate the resulting programs.
+% diverse problems with linearity spring up when we get past the desugarer and the
+% linter rejects valid programs which is quite undesirable.
 
-We believe that GHC's transformations are correct, and it is the linear type
-system that can't accommodate the resulting programs. We aim to formalise a type
-system that is able to type check \emph{Core}/\emph{System FC} at all points in
-the core pipeline and implement it into GHC to be able to preserve linearity
-accross the stages and to enable \emph{Lint} to preserve our sanity regarding
-linearity.
+% For example, optimizing transformations, coercions and type families, recursive
+% lets, and empty case expressions don't currently fit in with linearity.
+
+
+We propose to formalise a type system that is able to type check linear
+\emph{Core} at all points in the core pipeline and then to implement it into
+GHC. Proposal... \todo{proposal paragraph}
+
+% to be able to preserve linearity accross the stages and to enable \emph{Lint} to
+% preserve our sanity regarding linearity and eventually inform with linearity new
+% transformations.
+
+% A value allocated to be passed to a linear function and then never again used could
+% bypass garbage collection.
 
 % Our key innovation is that, by recognising join points as a language construct,
 % we both preserve join points through subsequent transformations and exploit them
@@ -113,7 +134,6 @@ transformations. Then we have recursive let definitions that don't accommodate
 linearity even though it might converge to only use the value once. Finally, we
 have the empty case expression introduced with the \emph{EmptyCase} language
 extension that we currently can't typecheck either.
-
 
 A usage environment is a mapping from variables to multiplicities.
 
@@ -334,6 +354,7 @@ below happens after the CSE transformation.
         False -> case y of z' { DEFAULT -> z }
         True  -> y
     }
+\end{code}
 
 A different example is using the case binder $z$ instead of the arguments we
 pattern matched on $x,y$. This currently violates linearity because both $x$ and
@@ -445,7 +466,7 @@ into another (or say that one is submultiple of another?).
 
 When we pattern match on a GADT we ...
 
-Taking this example (copy example over) we can see that we don't know how to say
+Taking the following example we can see that we don't know how to say
 that x is indeed linear in one case and unrestricted in the other, even though
 it is according to its type. We'd need some sort of coercion to coerce through
 the multiplicity to the new one we uncover when we pattern match on the GADT
