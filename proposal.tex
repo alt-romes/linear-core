@@ -105,10 +105,20 @@ and it is the linear type system that can't accommodate the resulting programs.
 % For example, optimizing transformations, coercions and type families, recursive
 % lets, and empty case expressions don't currently fit in with linearity.
 
-
-We propose to formalise a type system that is able to type check linear
-\emph{Core} at all points in the core pipeline and then to implement it into
-GHC. Proposal... \todo{proposal paragraph}
+Finally, we propose to work and write a master thesis on a formal type system
+that is able to accommodate linear programs as seen in Core after optimising
+transformations, prove its soundness, and ultimately implement it into GHC's
+linter. In concrete, the type system will build on the current linear core
+system and add rules based on usage annotations for let, letrec and case
+binder bound variables; possibly a new kind of coercion related to
+multiplicities, and other rules that might come along.
+%
+The ultimate measure of success is the -dlinear-core-lint flag that right now,
+when enabled, rejects many linearly valid programs in the linter. Ideally, by
+the end of our research and implementation, this flag could be enabled by
+default and accommodate all existing transformations. Realistically, we want to
+formally (in the type system) accept as many diverse transformations as possible
+while still preserving linearity, even if we are unable to fix them all.
 
 % to be able to preserve linearity accross the stages and to enable \emph{Lint} to
 % preserve our sanity regarding linearity and eventually inform with linearity new
