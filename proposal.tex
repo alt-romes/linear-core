@@ -59,61 +59,66 @@ have made so far.
 
 Since Linear Haskell's\cite{} publication and implementation release in GHC 9.0,
 Haskell's type system supports linearity annotations in functions -- bringing
-linear types into a mainstream pure and lazy functional language. In concrete,
-function arrows can be annotated with a multiplicity. If a function is linear it
-must consume its argument exactly once if it is consumed exactly once, for some
+linear types into a mainstream pure and lazy functional language. Concretely,
+function types can be annotated with a multiplicity (a multiplicity of One
+requires the argument to be consumed exactly once, a multiplicity of Many allows
+the argument to be consumed unrestrictedly, i.e., zero or more times). A
+function is linear if it consumes its arguments exactly once when it itself is
+consumed exactly once (its arguments have multiplicity of one), for some
 definition of \emph{consume} that I should revise here.
 
 Linearly typed programs are proven/checked to be linear by the type system, so
 the addition of linear types evidently implied changing the type checker to
 support linearity. There exist, however, two distinct type checkers in Haskell.
 The first is run on the surface language, i.e. the Haskell we write, and is a
-big and complex type checker that now also supports typing linearity. The second
-is run on the intermediate language \emph{Core} that we obtain from desugaring
+very complex type checker that now also supports typing linearity. The second is
+run on the intermediate language \emph{Core} that we obtain from desugaring
 Haskell.
 
 \emph{Core} is a much smaller language than the whole of Haskell (even though we
 can compile the whole of Haskell to it!) and the type checker for it is small
-and fast due to \emph{Core} being explicitly typed and having a small abstract syntax
-tree. This type checker (called \emph{Lint}) gives us guarantees of correctness
-(i.e. sanity) in face of all the complex transformations a Haskell program
-undergoes such as desugaring and optimising transformations because the linter
-is always run on the resulting code before being compiled to untyped machine
-code.
+and fast due to \emph{Core} being explicitly typed and much closer to a
+polymorphic lambda calculus than its surface-level counterpart. This type
+checker (called \emph{Lint}) gives us guarantees of correctness in face of all
+the complex transformations a Haskell program undergoes, such as desugaring and
+core-to-core passes, because the linter is always run on the resulting code
+before being compiled to untyped machine code.
 
 % System FC is the formal system in which the implementation of GHC's intermediate
 % representation language \emph{Core} is based on.
 
 We want Core to give us guarantees about our desugaring and transformations with
 regard to linearity too -- a linearly typed Core will ensure that linearly-typed
-programs remain correct (i.e.  linearity is preserved) after desugaring and all
-GHC transformations (optimisations shouldn't destroy linearity).
+programs remain correct (linearity is preserved) after desugaring and all GHC
+transformations (optimisations shouldn't destroy linearity).
 
-Core is already annotated with linearity, but \textbf{we currently ignore it}!
-In spite of the strong formal foundations of linear types driving the
-implementation, their interaction with the whole of GHC is still far from
-trivial, and the implemented formal system cannot accomodate various
-optimising transformations and from them resulting programs, that seemingly
-violate linearity, but which do preserve it semantically. Therefore, we reject
-various valid programs with regard to linearity after desugaring: the current
-solution, because disabling optimisations can inccur great performance costs, is
-to disable the linear linter. We believe that GHC's transformations are correct,
-and it is the linear type system that can't accommodate the resulting programs.
-% diverse problems with linearity spring up when we get past the desugarer and the
+Core is already annotated with linearity, but the \textbf{linter currently
+ignores it}! In spite of the strong formal foundations of linear types driving
+the implementation, their interaction with the whole of GHC is still far from
+trivial, and the implemented type system cannot accomodate various optimising
+transformations and, from them resulting, programs that seemingly violate
+linearity but which do preserve it semantically; for example, laziness makes it
+harder to reason about linearity. Therefore, we reject various valid programs
+with regard to linearity after desugaring: the current solution, because
+disabling optimisations can inccur great performance costs, is to disable the
+linear linter. However, we believe that GHC's transformations are correct, and
+it is the linear type system that can't accommodate the resulting programs.
+% diverse problems with linearity spring up when we get past the desugarer and
+% the
 % linter rejects valid programs which is quite undesirable.
 
 % For example, optimizing transformations, coercions and type families, recursive
 % lets, and empty case expressions don't currently fit in with linearity.
 
-Finally, we propose to work and write a master thesis on a formal type system
-that is able to accommodate linear programs as seen in Core after optimising
-transformations, prove its soundness, and ultimately implement it into GHC's
-linter. In concrete, the type system will build on the current linear core
-system and add rules based on usage annotations for let, letrec and case
-binder bound variables; possibly a new kind of coercion related to
-multiplicities, and other rules that might come along.
+We propose to extend Core's formal type system with more linearity information
+to be able to accommodate linear programs as seen in Core after optimising
+transformations, prove its soundness/type safety, validate core-to-core
+optimisation passes, and ultimately implement it into GHC's linter. Concretely,
+we'll extend the linear Core system with rules based on usage annotations for
+let, letrec and case binder bound variables, possibly a new kind of coercion for
+multiplicities, and eventually other rules.
 %
-The ultimate measure of success is the -dlinear-core-lint flag that right now,
+The ultimate measure of success is the -dlinear-core-lint flag that, right now,
 when enabled, rejects many linearly valid programs in the linter. Ideally, by
 the end of our research and implementation, this flag could be enabled by
 default and accommodate all existing transformations. Realistically, we want to
@@ -136,19 +141,19 @@ while still preserving linearity, even if we are unable to fix them all.
 
 The first set of problems appears in the core-to-core optimisation passes. GHC
 applies many optimising transformations to \emph{Core} and we believe those
-transformations preserve linearity. However, our linear type system cannot check
+transformations preserve linearity. However, Core's linear type system cannot check
 that they indeed preserve linearity.
 
 The simpler examples come from straightforward and common optimising
 transformations. Then we have recursive let definitions that don't accommodate
 linearity even though it might converge to only use the value once. Finally, we
 have the empty case expression introduced with the \emph{EmptyCase} language
-extension that we currently can't typecheck either.
-
-A usage environment is a mapping from variables to multiplicities.
+extension that Core currently can't typecheck either.
 
 The key idea is to annotate every variable with either its multiplicity, if it's
 lambda bound, or with its usage environment, if it's let bound.
+
+A usage environment is a mapping from variables to multiplicities.
 
 For example, if y and z are linear, in the following code it might not look as
 if y and z were both being consumed linearly, but indeed they are since in the
@@ -637,7 +642,7 @@ constructors without arguments) the usage environment is always empty (using
 them doesn't entail using any other variable), meaning we can always use the
 case binder instead of the actual constant constructor without issues.
 %
-In concrete, if we had $w1$ instead of the second occurrence of $x$, we'd have
+Concretely, if we had $w1$ instead of the second occurrence of $x$, we'd have
 an empty usage environment for $w1$ in the $False$ branch ($w1 :_\emptyset
 Bool$) and upon using $w1$ we wouldn't use any extra resources
 
