@@ -44,22 +44,23 @@
 
 \section{Foreword}
 
-This document is a work in progress proposal that I will deliver at the end of
+This document is a work in progress proposal that I will deliver (in
+an extended form) at the end of
 the semester as part of my master thesis preparation. The document needs a
 proper introduction and lengthy background and related work section besides the
 content (to be extended) that follows, such that an outsider might understand
 what I propose to do. However, this initial iteration is instead targeted at
 those already familiar with the problem and serves as a (less bureaucratic)
-research proposal on linting linearity in Core and to showcase the progress I
+proposal on linting linearity in Core and to showcase the preliminary progress I
 have made so far.
 
 
 \section{Introduction}
 
 
-Since Linear Haskell's\cite{} publication and implementation release in GHC 9.0,
+Since the publication of Linear Haskell~\cite{} and its release in GHC 9.0,
 Haskell's type system supports linearity annotations in functions -- bringing
-linear types into a mainstream pure and lazy functional language. Concretely,
+linear types to a mainstream, pure, and lazy functional language. Concretely,
 function types can be annotated with a multiplicity (a multiplicity of One
 requires the argument to be consumed exactly once, a multiplicity of Many allows
 the argument to be consumed unrestrictedly, i.e., zero or more times). A
@@ -68,41 +69,50 @@ consumed exactly once (its arguments have multiplicity of one), for some
 definition of \emph{consume} that I should revise here.
 
 Linearly typed programs are proven/checked to be linear by the type system, so
-the addition of linear types evidently implied changing the type checker to
-support linearity. There exist, however, two distinct type checkers in Haskell.
+the addition of linear types evidently required changing the type checker to
+support linearity. There exist, however, two distinct type checkers in GHC.
 The first is run on the surface language, i.e. the Haskell we write, and is a
-very complex type checker that now also supports typing linearity. The second is
-run on the intermediate language \emph{Core} that we obtain from desugaring
-Haskell.
+complex type checker that now also supports typing linearity. The second is
+run on programs written in the intermediate language \emph{Core}, that
+are obtained from \emph{desugaring} Haskell.
 
-\emph{Core} is a much smaller language than the whole of Haskell (even though we
-can compile the whole of Haskell to it!) and the type checker for it is small
-and fast due to \emph{Core} being explicitly typed and much closer to a
-polymorphic lambda calculus than its surface-level counterpart. This type
+Core is a much smaller language than the whole of Haskell (even though we
+can compile the whole of Haskell to it!) and its type checker is
+simple and fast due to Core being explicitly typed. In essence, Core
+is close to a higher-order polymorphic lambda calculus. This type
 checker (called \emph{Lint}) gives us guarantees of correctness in face of all
 the complex transformations a Haskell program undergoes, such as desugaring and
-core-to-core passes, because the linter is always run on the resulting code
-before being compiled to untyped machine code.
+core-to-core optimization passes, because the linter is always run on the resulting code
+before being ultimately compiled to (untyped) machine code.
 
 % System FC is the formal system in which the implementation of GHC's intermediate
 % representation language \emph{Core} is based on.
 
-We want Core to give us guarantees about our desugaring and transformations with
-regard to linearity too -- a linearly typed Core will ensure that linearly-typed
-programs remain correct (linearity is preserved) after desugaring and all GHC
-transformations (optimisations shouldn't destroy linearity).
+We want Core and its type system to give us guarantees about
+desugaring and transformations with regard to linearity -- a linearly
+typed Core ensures that linearly-typed programs remain correct
+(i.e.,~linearity is preserved) after desugaring and all GHC
+transformations (i.e.,~optimisations should not destroy linearity).
 
-Core is already annotated with linearity, but the \textbf{linter currently
-ignores it}! In spite of the strong formal foundations of linear types driving
-the implementation, their interaction with the whole of GHC is still far from
-trivial, and the implemented type system cannot accomodate various optimising
-transformations and, from them resulting, programs that seemingly violate
-linearity but which do preserve it semantically; for example, laziness makes it
-harder to reason about linearity. Therefore, we reject various valid programs
-with regard to linearity after desugaring: the current solution, because
-disabling optimisations can inccur great performance costs, is to disable the
-linear linter. However, we believe that GHC's transformations are correct, and
-it is the linear type system that can't accommodate the resulting programs.
+In this sense, Core is already annotated with linearity, but the \textbf{linter currently
+  ignores linearity annotations}.
+%
+In spite of the strong formal foundations of linear types driving the
+implementation, their interaction with the whole of GHC is still far
+from trivial, and the implemented type system cannot accomodate
+several optimising transformations that produce programs that violate
+linearity in a syntactically (i.e.,~multiple occurrences of linear
+variables in the program text), but ultimately preserve it in a
+semantic sense, where a linear term is still consumed exactly once --
+this is compounded by lazy evaluation driving a non-trivial mismatch
+between syntactic and semantic linearity. Therefore, linear linting
+rejects various valid programs (with regard to linearity) after
+desugaring. The current solution to this is to effectively disable the
+linear linter, since disabling optimisations can incur significant
+performance costs. However, we believe that GHC's transformations are
+correct, and it is the linear linter and its underlying type system
+that that cannot sufficiently accommodate the
+resulting programs.
 % diverse problems with linearity spring up when we get past the desugarer and
 % the
 % linter rejects valid programs which is quite undesirable.
@@ -110,25 +120,28 @@ it is the linear type system that can't accommodate the resulting programs.
 % For example, optimizing transformations, coercions and type families, recursive
 % lets, and empty case expressions don't currently fit in with linearity.
 
-We propose to extend Core's type system with additional linearity information to
-be able to accommodate linear programs as seen in Core after optimising
-transformations. We will prove the system's soundness/type safety and validate
-some core-to-core optimisation passes. Ultimately, we will implement the
-extension into GHC's linter. Concretely, we'll extend Core's linear type system
-with rules based on usage annotations for let, letrec and case binder bound
+We propose to extend Core's type system with additional linearity
+information in order to to accommodate linear program in Core that
+result from optimising transformations. We will prove the system's
+soundness/type safety and show how it validates some core-to-core optimisation
+passes. We also plan to implement the extension into GHC's
+linter. Concretely, we will extend Core's linear type system with
+\emph{usage annotations} for let, letrec and case binder bound
 variables. Additionally, we will explore a new kind of coercion for
-multiplicities to validate programs that combine GADTs with multiplicities.
+multiplicities to validate programs that combine GADTs with
+multiplicities.
 %
-The ultimate measure of success is the -dlinear-core-lint flag that, right now,
-when enabled, rejects many linearly valid programs in the linter. Ideally, by
+The ultimate measure of success is the \verb=-dlinear-core-lint= flag,
+which activates the linear linter. In its current implementation,
+enabling this flag rejects many linearly valid programs. Ideally, by
 the end of our research and implementation, this flag could be enabled by
 default and accommodate all existing transformations. Realistically, we want to
 accept as many diverse transformations as possible while still preserving
-linearity, even if we are unable to fix them all.
+linearity, even if we are unable to account for all of them.
 
-In section~\ref{typingUsageEnvs} we describe usage environments and how they
-solve three distinct problems. In section~\ref{multiplicityCoercions} we discuss
-the beginning of multiplicity coercions. In section~\ref{examples} we take
+In Section~\ref{typingUsageEnvs} we describe usage environments and how they
+solve three distinct problems. In Section~\ref{multiplicityCoercions} we discuss
+the beginning of multiplicity coercions. In Section~\ref{examples} we take
 programs that are currently rejected and show how the type system with our
 extensions can accept them.
 
@@ -146,11 +159,11 @@ extensions can accept them.
 
 \section{Typing Usage Environments\label{typingUsageEnvs}}
 
-Haskell has call-by-need semantics that entail that an expression isn't
-evaluated when it is let bound but rather when the binding variable is used.
-This makes it hard to reason about linearity for let bound variables. The
-following example doesn't typecheck in Haskell, but semantically it is indeed
-linear because the let binding is lazy.
+Haskell has call-by-need semantics that entail that an expression is not
+evaluated when it is let-bound but rather when the binding variable is used.
+This makes it challenging to reason about linearity for let-bound variables. The
+following example fails to typecheck in Haskell, but semantically it is indeed
+linear due to lazy evaluation:
 
 \begin{code}
 f :: a %1 -> a
@@ -158,9 +171,9 @@ f x = let y = x in y
 \end{code}
 
 Despite not being accepted by the surface-level language, linear programs using
-lets can occur in Core due to optimising transformations that create let
+lets occur in Core due to optimising transformations that create let
 bindings. In a similar fashion, programs which violate syntatic linearity
-for other reasons other than let bindings are formed from Core transformations.
+for other reasons other than let bindings are produced by Core transformations.
 
 The solution we found to a handful of problems regarding binders is to have a
 \emph{usage environment}. A usage environment is a mapping from variables to
@@ -171,7 +184,7 @@ environment, we type linearity as if we were using all variables with
 corresponding multiplicities from that usage environment.
 
 In the above example, this would amount to annotating $y$ with a usage
-environemnt $x := 1$ (because the expression bound by $y$ uses $x$ one time).
+environment $x := 1$ (because the expression bound by $y$ uses $x$ one time).
 Upon using $y$, we are actually using $x$ one time, and therefore linearity is
 preserved.
 
@@ -201,18 +214,18 @@ preserved.
 
 Let bindings in Core are the first family of problems we tackle with usage
 environment annotations. Multiple transformations can introduce let-bindings,
-such as CSE and join points. By extending the type system to allow lets in core
-we start paving our way to a linear linter.
+such as CSE and join points. By extending the type system to allow let-bindings in Core
+we start paving the way to a linear linter.
 
-Right now, Core annotates every variable with a multiplicity at its binding
-site. The multiplicity for let-bound variables must be ignored thorought the
+Currently, every variable in Core is annotated with a multiplicity at its binding
+site. The multiplicity for let-bound variables must be ignored throughout the
 transformation pipeline or otherwise too many programs valid programs would be
 rejected for violating linearity in its transformed type.
 
 However, programs with let bindings can be correctly typed by associating a
 usage environment to the bound variables. Instead of associating a multiplicity
 to every binder, we want to associate a multiplicity if the variable is lambda
-bound and a usage environment when it is let bound. We then instance the usage
+bound and a usage environment when it is let-bound. We then instantiate the usage
 environment solution to lets in particular -- a let bound variable is annotated
 with the usage environment computed from the binder expression; in the let body
 expression, when we find an occurrence of the let bound variable we emit its
@@ -225,12 +238,12 @@ usage environment. The typing rule is the following:
     {\Gamma \vdash \text{let } x :_{U} A = t \text{ in } u : C \leadsto \{V\}}
 \end{mathparpagebreakable}
 
-Take for example an expression in which $y$ and $z$ are lambda bound with a
-multiplicity of exactly one. In the following code it might not look as if $y$
+Take for example an expression in which $y$ and $z$ are lambda-bound with a
+multiplicity of one. In the following code it might not appear as if $y$
 and $z$ are both being consumed linearly, but indeed they are since in the first
 branch we use $x$ -- which means using $y$ and $z$ linearly -- and we use $y$
 and $z$ directly on the second branch. Note again that let binding $x$ doesn't
-consume $y$ and $z$ because of laziness. Only \emph{using} $x$ consumes $y$ and
+consume $y$ and $z$ because of lazy evaluation. Only \emph{using} $x$ consumes $y$ and
 $z$.
 
 \begin{code}
@@ -271,8 +284,8 @@ similarly to lets: attribute to bound variables a usage environment and emit it
 when the variable is used.
 % TODO: Replace "certain" with concrete examples
 
-The tricky part about determining the usage environment of the variables bound
-by a recursive let is knowing what usage to emit inside their own body when
+The challenging part about determining the usage environment of the variables bound
+by a recursive let is knowing what usage to emit inside their own body, when
 computing said usage environment. The example below uses $x$ linearly % \ref{example_letrec}
 but how can we prove it? If we are able to somehow compute $f$'s usage
 environment to $x := 1$, we know $x$ is used once when $f$ is applied to
@@ -286,19 +299,19 @@ in f True
 \end{code}
 
 The key idea to computing the usage environment of multiple variables that use
-themselves in their body is to do the computation in two separate passes. First,
+themselves in their definition body is to perform the computation in two separate passes. First,
 calculate a naive environment by emiting free variables multiplicities as usual
 while treating the recursive-let bound variables as free ones. Second, pass the
 variables names and their corresponding naive environment as input to
 algorithm~\ref{computeRecUsages} to get a final usage environment. Intuitively,
-the algorithm, for each recursive binder, goes over all (initially naive) usage
-environment and substitutes the recursive binder by the corresponding usage
+the algorithm, for each recursive binder, iterates over all (initially naive) usage
+environments and substitutes the recursive binder by the corresponding usage
 environment, scaled up by the amount of times that recursive binder is used in
 the environment being updated.
 
-We present ahead an algorithm for computing the usage environment of a set of
+We describe below an algorithm for computing the usage environment of a set of
 recursive definitions, and its textual description. An (at least informal) proof
-that the algorithm works should eventually follow this.
+that the algorithm is correct should eventually follow this.
 
 \begin{itemize}
     \item Given a list of functions and their naive environment computed from
@@ -312,7 +325,7 @@ that the algorithm works should eventually follow this.
 
 Note that the difficulty of calculating a usage environment for $n$
 recursive-let bound variables increases quadratically, i.e. the algorithm has
-complexity $O(n^2)$, but this is not a problem since it's rare to have more than
+$O(n^2)$ complexity, but this is not a problem since it's rare to have more than
 a handful of binders in the same recursive let block.
 
 % TODO: I should probably use the re-computed usageEnvs instead of the naiveUsageEnvs.
@@ -327,7 +340,7 @@ $usageEnvs \gets naiveUsageEnvs.map(fst)$\;
 \caption{computeRecUsages\label{computeRecUsages}}
 \end{algorithm}
 
-Putting the usage environment idea together with the algorithm we get the following typing rule:
+Putting the usage environment idea together with the algorithm we obtain the following typing rule:
 
 \begin{mathparpagebreakable}
     \infer*[right=(letrec)]
@@ -337,7 +350,7 @@ Putting the usage environment idea together with the algorithm we get the follow
     {\Gamma \vdash \text{let } x_1 :_{U_1} A_1 = t_1 \dots x_n :_{U_n} A_n = t_n \text{ in } u : C \leadsto \{V\}}
 \end{mathparpagebreakable}
 
-Instancing the usage environment solution according to the above description,
+Instantiating the usage environment solution according to the above description,
 here's an informal proof that the previous example is well typed: We %\ref{example_letrec}
 compute the naive usage environment of $f$ to be $x := 1, f := 1$. We compute
 its actual usage environment by scaling the naive environment of $f$ without $f$
@@ -453,10 +466,10 @@ wrong for a case expression that doesn't use the binder -- the scrutinee should
 also be consumed), so we scale the usage of
 the case scrutinee by the superior multiplicity of using the case binder across
 all branches. However, we hypothetize that this prevents us from typing many
-valid programs and ultimately doesn't capture correctly the usage of variable,
+valid programs and ultimately does not correctly capture the usage of a variable,
 and present a seemingly viable alternative.
 
-Firstly, we remember the definition of \emph{consuming a value} from Linear
+Firstly, we recall the definition of \emph{consuming a value} from Linear
 Haskell as
 \begin{itemize}
     \item Consuming an atomic value is forcing it to Normal Form (NF)
@@ -469,8 +482,8 @@ constructor is equal to NF.
 
 Now, with the following example, my interpretation of the current rule says that
 the following case expression consumes the scrutinee twice because the case
-binder is used. However, we know for sure that in the branch where z is used, z
-is equal to False, and using False doesn't violate linearity since we can
+binder is used. However, we know that in the branch where z is used, z
+is equal to False, and using False does not violate linearity since we can
 unrestrictedly create nullary data constructors. A situation similar to this one
 below happens after the CSE transformation.
 \begin{code}
@@ -493,8 +506,8 @@ the same as using $(x,y)$!
 \end{code}
 % $\leadsto U$ 
 
-The good news is both these two programs and a handful of others listed in
-Section~\ref{examples} are accepted with a new rule we've devised for the
+The good news is that both these programs (and a handful of others listed in
+Section~\ref{examples}) are accepted with a new rule we have devised for the
 linear linter. We still need to prove we don't accept any invalid programs as
 valid.
 
