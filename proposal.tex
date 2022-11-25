@@ -459,8 +459,8 @@ and present a seemingly viable alternative.
 Firstly, we remember the definition of \emph{consuming a value} from Linear
 Haskell as
 \begin{itemize}
-    \item consuming an atomic value is forcing it to Normal Form (NF)
-    \item consuming a value that is constructed with more than 1 argument is
+    \item Consuming an atomic value is forcing it to Normal Form (NF)
+    \item Consuming a value that is constructed with more than 1 argument is
         consuming all of its arguments
 \end{itemize}
 and further note that when an expression is scrutinized by a case expression it
@@ -474,11 +474,12 @@ is equal to False, and using False doesn't violate linearity since we can
 unrestrictedly create nullary data constructors. A situation similar to this one
 below happens after the CSE transformation.
 \begin{code}
-    case <complex expression> $\leadsto U$ of z {
+    case <complex expression> of z {
         False -> case y of z' { DEFAULT -> z }
         True  -> y
     }
 \end{code}
+% $\leadsto U$ 
 
 A different example is using the case binder $z$ instead of the arguments we
 pattern matched on $x,y$. This currently violates linearity because both $x$ and
@@ -486,10 +487,11 @@ $y$ aren't used and because $z$ is used twice. This doesn't typecheck in the
 frontend either. However, we know that in this branch, using $z$ is effectively
 the same as using $(x,y)$!
 \begin{code}
-    case <complex expression> $\leadsto U$ of z {
+    case <complex expression> of z {
         (x,y) -> z
     }
 \end{code}
+% $\leadsto U$ 
 
 The good news is both these two programs and a handful of others listed in
 Section~\ref{examples} are accepted with a new rule we've devised for the
@@ -516,79 +518,13 @@ The typing rule for the case expression using the case binder solution:
 \end{mathparpagebreakable}
 
 
-\subsection{Empty Case}
-
-For case expressions, the usage environment is computed by checking all branches
-and taking sup. However, this trick doesn't work when there are no branches.
-
-\begin{itemize}
-\item https://gitlab.haskell.org/ghc/ghc/-/issues/20058
-\item https://gitlab.haskell.org/ghc/ghc/-/issues/18768
-
-\item (1) Just like a case expression remembers its type (Note [Why does Case have a
-'Type' field?] in Core.hs), it should remember its usage environment. This data
-should be verified by Lint.
-
-\item (2) Once this is done, we can remove the Bottom usage and the second field of
-UsageEnv. In this step, we have to infer the correct usage environment for empty
-case in the typechecker.
-\end{itemize}
-
-\begin{code}
-{-# LANGUAGE LinearTypes, EmptyCase #-}
-module M where
-
-{-# NOINLINE f #-}
-f :: a %1-> ()
-f x = case () of {}
-\end{code}
-
-This example is well typed: a function is linear if it consumes its argument
-exactly once when it's consumed exactly once. It seems like the function isn't
-linear since it won't consume x because of the empty case, however, that also
-means f won't be consumed due to the same empty case, thus linearity is
-preserved.
-
-\begin{code}
-* In the case of empty types (see Note [Bottoming expressions]), say
-  data T
-we do NOT want to replace
-  case (x::T) of Bool {}   -->   error Bool "Inaccessible case"
-because x might raise an exception, and *that*'s what we want to see!
-(#6067 is an example.) To preserve semantics we'd have to say
-   x `seq` error Bool "Inaccessible case"
-but the 'seq' is just such a case, so we are back to square 1.
-\end{code}
-
-There are three different problems:
-
-\begin{itemize}
-\item castBottomExpr converts (case x :: T of {}) :: T to x.
-\item Worker/wrapper moves the empty case to a separate binding
-\item CorePrep eliminates empty case, just like point 1 (See -- Eliminate empty
-    case in GHC.CoreToStg.Prep
-\end{itemize}
-
-With castBottomExpr, we get the example above to
-\begin{code}
-    f = \ @a (x (%1) :: a) -> ()
-\end{code}
-And if we don't, 
-\begin{code}
-    f = \ @a (x (%1) :: a) -> case () of {}
-\end{code}
-And that supposedly if we had a usage environment in the case expression we
-could avoid the error. How is it typed without the transformation in face
-of the bottom? (Even knowing that theoretically it's because of divergence?)
-
-
 
 \section{Multiplicity Coercions\label{multiplicityCoercions}}
 
 The second set of problems arises from our inability to coerce a multiplicity
 into another (or say that one is submultiple of another?).
 
-When we pattern match on a GADT we ...
+% When we pattern match on a GADT we ...
 
 Taking the following example we can see that we don't know how to say
 that x is indeed linear in one case and unrestricted in the other, even though
@@ -785,7 +721,8 @@ particular CSE but it would be fine in the end?
 
 \subsection{Compiling ghc with -dlinear-core-lint}
 
-From the definition of groupBy in GHC.Data.List.Infinite
+From the definition of $\mathit{groupBy}$ in $\mathit{GHC.Data.List.Infinite}$:
+
 \begin{code}
 groupBy :: (a -> a -> Bool) -> Infinite a -> Infinite (NonEmpty a)
 groupBy eq = go
@@ -793,80 +730,10 @@ groupBy eq = go
     go (Inf a as) = Inf (a:|bs) (go cs)
       where (bs, cs) = span (eq a) as
 \end{code}
-we get the following core which violates linearity.
-\begin{code}
-groupBy = \ (@a) (eq :: a -> a -> Bool) (eta :: Infinite a) ->
-  letrec {
-    go :: Infinite a -> Infinite (NonEmpty a)
-    go = \ (inf :: Infinite a) -> case inf of {
-      Inf x xs -> let {
-        ds :: ([a], Infinite a)
-        ds = let {
-            parteq :: a -> Bool
-            parteq = eq x
-        } in
-          letrec {
-            goZ :: Infinite a -> ([a], Infinite a)
-            goZ = \ (inf' :: Infinite a) -> case wgo inf' of { (# wA, wB #) -> (wA, wB) };
 
-            wgo :: Infinite a -> (# [a], Infinite a #)
-            wgo = \ (inf' :: Infinite a) -> case inf' of wildX2 {
-              Inf y ys ->
-                join {
-                    jp :: ([a], Infinite a) \%1 -> (# [a], Infinite a #)
-                    jp (wwj :: ([a], Infinite a)) =
-                        case wwj of wwj {
-                            DEFAULT -> case wwj of { (wA, wB) -> (# wA, wB #) } }
-                    } in
-                      case parteq y of {
-                        False ->
-                            let {
-                                ww :: ([a], Infinite a)
-                                ww = ([] @a, wildX2)
-                            } in jump jp ww;
-                        True ->
-                            let {
-                                dy :: ([a], Infinite a)
-                                dy = case wgo ys of { (# wA, wB #) -> (wA, wB)
-                                }
-                            } in
-                                let {
-                                    wwB :: [a]
-                                    wwB = case dy of { (bs, cs) -> bs }
-                                } in
-                                    let {
-                                        wwA :: [a]
-                                        wwA = : @a y wwB
-                                    } in let {
-                                        wwC :: Infinite a
-                                        wwC = case dy of { (bs, cs) -> cs }
-                                    } in let {
-                                        ww :: ([a], Infinite a)
-                                        ww = (wwA, wwC)
-                                    } in jump jp ww
-                                }
-              };
-          } in
-              case wgo xs of { (# wA, wB #) -> (wA, wB) }
-      } in
-          Inf @(NonEmpty a) (:| @a x (case ds of { (bs, cs) -> bs })) (case ds of { (bs, cs) -> go cs })
-    };
-  } in go eta
-\end{code}
-The issue is in the linear function that shows up in the core output (how does
-the linearity end up there?). The wwj variable is used once in the case
-expression, bound as the case binder, and used in the case body once again. Why
-do we do that instead of pattern matching right away? Seems a bit redundant.
-
-Observation: If the branch is DEFAULT, then the case binder binds the case
-scrutinee which was just forced?, but hasn't been actually consumed, because we
-haven't consumed its components. As long as the same branch doesn't consume the
-pattern matching result and the case binder at the same time it should be fine?
-
-In this example, we force wwj with the case binder, but we don't really
-consume it (more precise definition of consume...), so we can use the case
-binder meaning we're simply using x for the first time. Needs to be
-formalised....
+We get a somewhat large resulting core expression, in the middle of which the
+following expression with a linear type -- which currently syntatically violates
+linearity.
 
 \begin{code}
 jp :: ([a], Infinite a) \%1 -> (# [a], Infinite a #)
@@ -876,28 +743,85 @@ jp (wwj :: ([a], Infinite a)) =
     }
 \end{code}
 
-Solution with the case binder idea that unifies a different problems:
-The case binder is annotated with a usage environment $U_wwj = []$, and its
-usage is equal to using the usage environment
+Using the case binder usage solution, the case binder is annotated with a usage
+environment for the only branch ($U_wwj = \emptyset$) and using $wwj$ is equal
+to using the $\emptyset$. Here it would mean that second \textbf{case of} $wwj$
+doesn't actually use any variables and hence the first $wwj$ isn't used twice.
 
-Here it would mean that second \textbf{case of} $wwj$ doesn't actually use any
-variables and hence it isn't used twice.
 
-\subsection{In Result of TcGblEnv axioms}
+% \begin{code}
+% groupBy = \ (@a) (eq :: a -> a -> Bool) (eta :: Infinite a) ->
+%   letrec {
+%     go :: Infinite a -> Infinite (NonEmpty a)
+%     go = \ (inf :: Infinite a) -> case inf of {
+%       Inf x xs -> let {
+%         ds :: ([a], Infinite a)
+%         ds = let {
+%             parteq :: a -> Bool
+%             parteq = eq x
+%         } in
+%           letrec {
+%             goZ :: Infinite a -> ([a], Infinite a)
+%             goZ = \ (inf' :: Infinite a) -> case wgo inf' of { (# wA, wB #) -> (wA, wB) };
 
-I don't understand this one yet. I would guess it has to do with multiplicity
-coercions. Incorrect incompatible branch: CoAxBranch (src/Prelude/Linear/GenericUtil.hs:112:3-51):
-\begin{code}
-type family Fixup (f :: Type -> Type) (g :: Type -> Type) :: Type -> Type where
-  Fixup (D1 c f) (D1 _c g) = D1 c (Fixup f g)
-  Fixup (C1 c f) (C1 _c g) = C1 c (Fixup f g)
-  Fixup (S1 c f) (S1 _c (MP1 m f)) = S1 c (MP1 m f) -- error in this constructor
-  Fixup (S1 c f) (S1 _c f) = S1 c f
-  Fixup (f :*: g) (f' :*: g') = Fixup f f' :*: Fixup g g'
-  Fixup (f :+: g) (f' :+: g') = Fixup f f' :+: Fixup g g'
-  Fixup V1 V1 = V1
-  Fixup _ _ = TypeError ('Text "FixupMetaData: representations do not match.")
-\end{code}
+%             wgo :: Infinite a -> (# [a], Infinite a #)
+%             wgo = \ (inf' :: Infinite a) -> case inf' of wildX2 {
+%               Inf y ys ->
+%                 join {
+%                     jp :: ([a], Infinite a) \%1 -> (# [a], Infinite a #)
+%                     jp (wwj :: ([a], Infinite a)) =
+%                         case wwj of wwj {
+%                             DEFAULT -> case wwj of { (wA, wB) -> (# wA, wB #) } }
+%                     } in
+%                       case parteq y of {
+%                         False ->
+%                             let {
+%                                 ww :: ([a], Infinite a)
+%                                 ww = ([] @a, wildX2)
+%                             } in jump jp ww;
+%                         True ->
+%                             let {
+%                                 dy :: ([a], Infinite a)
+%                                 dy = case wgo ys of { (# wA, wB #) -> (wA, wB)
+%                                 }
+%                             } in
+%                                 let {
+%                                     wwB :: [a]
+%                                     wwB = case dy of { (bs, cs) -> bs }
+%                                 } in
+%                                     let {
+%                                         wwA :: [a]
+%                                         wwA = : @a y wwB
+%                                     } in let {
+%                                         wwC :: Infinite a
+%                                         wwC = case dy of { (bs, cs) -> cs }
+%                                     } in let {
+%                                         ww :: ([a], Infinite a)
+%                                         ww = (wwA, wwC)
+%                                     } in jump jp ww
+%                                 }
+%               };
+%           } in
+%               case wgo xs of { (# wA, wB #) -> (wA, wB) }
+%       } in
+%           Inf @(NonEmpty a) (:| @a x (case ds of { (bs, cs) -> bs })) (case ds of { (bs, cs) -> go cs })
+%     };
+%   } in go eta
+% \end{code}
+% The issue is in the linear function that shows up in the core output (how does
+% the linearity end up there?). The wwj variable is used once in the case
+% expression, bound as the case binder, and used in the case body once again. Why
+% do we do that instead of pattern matching right away? Seems a bit redundant.
+
+% Observation: If the branch is DEFAULT, then the case binder binds the case
+% scrutinee which was just forced?, but hasn't been actually consumed, because we
+% haven't consumed its components. As long as the same branch doesn't consume the
+% pattern matching result and the case binder at the same time it should be fine?
+
+% In this example, we force wwj with the case binder, but we don't really
+% consume it (more precise definition of consume...), so we can use the case
+% binder meaning we're simply using x for the first time. Needs to be
+% formalised....
 
 
 \subsection{Artificial examples}
@@ -957,6 +881,30 @@ $f$ to emit upon $f False$, we calculate ...
 Refer to the algorithm for computing recursive environment
 
 
+\section{Work in progress}
+
+\subsection{In Result of TcGblEnv axioms}
+
+I don't understand this one yet. I would guess it has to do with multiplicity
+coercions. Incorrect incompatible branch: CoAxBranch (src/Prelude/Linear/GenericUtil.hs:112:3-51):
+\begin{code}
+type family Fixup (f :: Type -> Type) (g :: Type -> Type) :: Type -> Type where
+  Fixup (D1 c f) (D1 _c g) = D1 c (Fixup f g)
+  Fixup (C1 c f) (C1 _c g) = C1 c (Fixup f g)
+  Fixup (S1 c f) (S1 _c (MP1 m f)) = S1 c (MP1 m f) -- error in this constructor
+  Fixup (S1 c f) (S1 _c f) = S1 c f
+  Fixup (f :*: g) (f' :*: g') = Fixup f f' :*: Fixup g g'
+  Fixup (f :+: g) (f' :+: g') = Fixup f f' :+: Fixup g g'
+  Fixup V1 V1 = V1
+  Fixup _ _ = TypeError ('Text "FixupMetaData: representations do not match.")
+\end{code}
+
+
+% \section{Core to Core Validation}
+\subsection{Inlining}
+
+\subsection{CSE}
+
 \subsection{Join Points}
 
 When duplicating a case (in the case-of-case transformation), to avoid code
@@ -980,11 +928,72 @@ so does j2).
 
 However, if j1 and j2 were annotated with their usage environment,
 
+\subsection{Empty Case}
 
-\section{Core2Core Validdations}
+For case expressions, the usage environment is computed by checking all branches
+and taking sup. However, this trick doesn't work when there are no branches.
 
-\subsection{INlining}
-\subsection{CSE}
+\begin{itemize}
+\item https://gitlab.haskell.org/ghc/ghc/-/issues/20058
+\item https://gitlab.haskell.org/ghc/ghc/-/issues/18768
+
+\item (1) Just like a case expression remembers its type (Note [Why does Case have a
+'Type' field?] in Core.hs), it should remember its usage environment. This data
+should be verified by Lint.
+
+\item (2) Once this is done, we can remove the Bottom usage and the second field of
+UsageEnv. In this step, we have to infer the correct usage environment for empty
+case in the typechecker.
+\end{itemize}
+
+\begin{code}
+{-# LANGUAGE LinearTypes, EmptyCase #-}
+module M where
+
+{-# NOINLINE f #-}
+f :: a %1-> ()
+f x = case () of {}
+\end{code}
+
+This example is well typed: a function is linear if it consumes its argument
+exactly once when it's consumed exactly once. It seems like the function isn't
+linear since it won't consume x because of the empty case, however, that also
+means f won't be consumed due to the same empty case, thus linearity is
+preserved.
+
+\begin{code}
+* In the case of empty types (see Note [Bottoming expressions]), say
+  data T
+we do NOT want to replace
+  case (x::T) of Bool {}   -->   error Bool "Inaccessible case"
+because x might raise an exception, and *that*'s what we want to see!
+(#6067 is an example.) To preserve semantics we'd have to say
+   x `seq` error Bool "Inaccessible case"
+but the 'seq' is just such a case, so we are back to square 1.
+\end{code}
+
+There are three different problems:
+
+\begin{itemize}
+\item castBottomExpr converts (case x :: T of {}) :: T to x.
+\item Worker/wrapper moves the empty case to a separate binding
+\item CorePrep eliminates empty case, just like point 1 (See -- Eliminate empty
+    case in GHC.CoreToStg.Prep
+\end{itemize}
+
+With castBottomExpr, we get the example above to
+\begin{code}
+    f = \ @a (x (%1) :: a) -> ()
+\end{code}
+And if we don't, 
+\begin{code}
+    f = \ @a (x (%1) :: a) -> case () of {}
+\end{code}
+And that supposedly if we had a usage environment in the case expression we
+could avoid the error. How is it typed without the transformation in face
+of the bottom? (Even knowing that theoretically it's because of divergence?)
+
+
 
 \end{document}
 
