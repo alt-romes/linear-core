@@ -58,7 +58,7 @@ have made so far.
 \section{Introduction}
 
 
-Since the publication of Linear Haskell~\cite{} and its release in GHC 9.0,
+Since the publication of Linear Haskell~\cite{linearhaskell} and its release in GHC 9.0,
 Haskell's type system supports linearity annotations in functions -- bringing
 linear types to a mainstream, pure, and lazy functional language. Concretely,
 function types can be annotated with a multiplicity (a multiplicity of One
@@ -457,7 +457,7 @@ more than once, i.e. not linearly.
 % scale m = M.map (*m)
 % \end{code}
 
-\subsection{Handling the case binder}
+\subsection{Handling the case binder\label{casebinder}}
 
 The current typing rule for case expressions describes that using the case
 binder is as using the case scrutinee multiple times (though it seems like it
@@ -584,7 +584,7 @@ that indicates after which transformation the linting failed.
 
 \subsection{After the desugarer (before optimizations)}
 
-The definition for $\$!$ in \textbf{linear-base}\cite{} fails to lint after the
+The definition for $\$!$ in \textbf{linear-base}\cite{linearbase} fails to lint after the
 desugarer (before any optimisation takes place) with \emph{Linearity failure in
 lambda: x 'Many $\not\subseteq$ p}
 \begin{code}
@@ -595,7 +595,8 @@ lambda: x 'Many $\not\subseteq$ p}
 The desugared version of that function follows below. It violates (naive?)
 linearity by using $x$ twice, once to force the value and a second time to call
 $f$. However, the $x$ passed as an argument is actually the case binder and it
-must be handled in its own way. The case binder is the key (as seen in ~\ref{caseBinderKey}) to solving this
+must be handled in its own way. The case binder is the key (as seen
+in~\ref{casebinder}) to solving this
 and many other examples.
 \begin{code}
 ($!)
@@ -1006,7 +1007,8 @@ And that supposedly if we had a usage environment in the case expression we
 could avoid the error. How is it typed without the transformation in face
 of the bottom? (Even knowing that theoretically it's because of divergence?)
 
-
+\bibliographystyle{plain}
+\bibliography{references}
 
 \end{document}
 
