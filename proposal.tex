@@ -44,15 +44,13 @@
 
 \section{Foreword}
 
-This document is a work in progress proposal that I will deliver (in
-an extended form) at the end of
-the semester as part of my master thesis preparation. The document needs a
-proper introduction and lengthy background and related work section besides the
-content (to be extended) that follows, such that an outsider might understand
-what I propose to do. However, this initial iteration is instead targeted at
-those already familiar with the problem and serves as a (less bureaucratic)
-proposal on linting linearity in Core and to showcase the preliminary progress I
-have made so far.
+This document is a work in progress proposal that I will deliver (in an extended
+form) at the end of the semester as part of my master thesis preparation. The
+document still needs a proper introduction, lengthy background and related work
+section  such that an outsider might understand what I propose to do. However,
+this initial iteration is instead targeted at those already familiar with the
+problem and serves as a (less bureaucratic) proposal on linting linearity in
+Core and to showcase the preliminary progress I have made so far.
 
 
 \section{Introduction}
@@ -65,8 +63,8 @@ function types can be annotated with a multiplicity (a multiplicity of One
 requires the argument to be consumed exactly once, a multiplicity of Many allows
 the argument to be consumed unrestrictedly, i.e., zero or more times). A
 function is linear if it consumes its arguments exactly once when it itself is
-consumed exactly once (its arguments have multiplicity of one), for some
-definition of \emph{consume} that I should revise here.
+consumed exactly once.
+% TODO: for some definition of \emph{consume} that I should revise here.
 
 Linearly typed programs are proven/checked to be linear by the type system, so
 the addition of linear types evidently required changing the type checker to
@@ -83,7 +81,7 @@ is close to a higher-order polymorphic lambda calculus. This type
 checker (called \emph{Lint}) gives us guarantees of correctness in face of all
 the complex transformations a Haskell program undergoes, such as desugaring and
 core-to-core optimization passes, because the linter is always run on the resulting code
-before being ultimately compiled to (untyped) machine code.
+before ultimately being compiled to (untyped) machine code.
 
 % System FC is the formal system in which the implementation of GHC's intermediate
 % representation language \emph{Core} is based on.
@@ -99,19 +97,19 @@ In this sense, Core is already annotated with linearity, but the \textbf{linter 
 %
 In spite of the strong formal foundations of linear types driving the
 implementation, their interaction with the whole of GHC is still far
-from trivial, and the implemented type system cannot accomodate
+from trivial. The implemented type system cannot accomodate
 several optimising transformations that produce programs that violate
-linearity in a syntactically (i.e.,~multiple occurrences of linear
+linearity syntactically (i.e.,~multiple occurrences of linear
 variables in the program text), but ultimately preserve it in a
 semantic sense, where a linear term is still consumed exactly once --
 this is compounded by lazy evaluation driving a non-trivial mismatch
 between syntactic and semantic linearity. Therefore, linear linting
 rejects various valid programs (with regard to linearity) after
 desugaring. The current solution to this is to effectively disable the
-linear linter, since disabling optimisations can incur significant
+linear linter, since otherwise disabling optimisations can incur significant
 performance costs. However, we believe that GHC's transformations are
 correct, and it is the linear linter and its underlying type system
-that that cannot sufficiently accommodate the
+that cannot sufficiently accommodate the
 resulting programs.
 % diverse problems with linearity spring up when we get past the desugarer and
 % the
@@ -121,7 +119,7 @@ resulting programs.
 % lets, and empty case expressions don't currently fit in with linearity.
 
 We propose to extend Core's type system with additional linearity
-information in order to to accommodate linear program in Core that
+information in order to accommodate linear programs in Core that
 result from optimising transformations. We will prove the system's
 soundness/type safety and show how it validates some core-to-core optimisation
 passes. We also plan to implement the extension into GHC's
@@ -171,7 +169,7 @@ f x = let y = x in y
 \end{code}
 
 Despite not being accepted by the surface-level language, linear programs using
-lets occur in Core due to optimising transformations that create let
+lets occur naturally in Core due to optimising transformations that create let
 bindings. In a similar fashion, programs which violate syntatic linearity
 for other reasons other than let bindings are produced by Core transformations.
 
@@ -219,7 +217,7 @@ we start paving the way to a linear linter.
 
 Currently, every variable in Core is annotated with a multiplicity at its binding
 site. The multiplicity for let-bound variables must be ignored throughout the
-transformation pipeline or otherwise too many programs valid programs would be
+transformation pipeline or otherwise too many valid programs would be
 rejected for violating linearity in its transformed type.
 
 However, programs with let bindings can be correctly typed by associating a
@@ -309,8 +307,8 @@ environments and substitutes the recursive binder by the corresponding usage
 environment, scaled up by the amount of times that recursive binder is used in
 the environment being updated.
 
-We describe below an algorithm for computing the usage environment of a set of
-recursive definitions, and its textual description. An (at least informal) proof
+The algorithm for computing the usage environment of a set of
+recursive definitions works as follows. An at least informal proof
 that the algorithm is correct should eventually follow this.
 
 \begin{itemize}
@@ -459,15 +457,15 @@ more than once, i.e. not linearly.
 
 \subsection{Handling the case binder\label{casebinder}}
 
+% (though in the rule seems to only start counting after the second usage which
+% would make the rule wrong for a case expression that doesn't use the binder --
+% the scrutinee should also be consumed)
 The current typing rule for case expressions describes that using the case
-binder is as using the case scrutinee multiple times (though it seems like it
-actually just starts counting after the second usage which would make the rule
-wrong for a case expression that doesn't use the binder -- the scrutinee should
-also be consumed), so we scale the usage of
+binder is as using the case scrutinee multiple times, so we scale the usage of
 the case scrutinee by the superior multiplicity of using the case binder across
 all branches. However, we hypothetize that this prevents us from typing many
-valid programs and ultimately does not correctly capture the usage of a variable,
-and present a seemingly viable alternative.
+valid programs and ultimately does not correctly capture the usage of a
+variable and present a seemingly viable alternative.
 
 Firstly, we recall the definition of \emph{consuming a value} from Linear
 Haskell as
@@ -480,12 +478,12 @@ and further note that when an expression is scrutinized by a case expression it
 is evaluated to Weak Head Normal Form (WHNF), which in the case of a nullary data
 constructor is equal to NF.
 
-Now, with the following example, my interpretation of the current rule says that
-the following case expression consumes the scrutinee twice because the case
-binder is used. However, we know that in the branch where z is used, z
-is equal to False, and using False does not violate linearity since we can
-unrestrictedly create nullary data constructors. A situation similar to this one
-below happens after the CSE transformation.
+Now, with the following example, my interpretation of the current rule dictates
+that the case expression consumes the scrutinee twice because the case binder is
+used. However, we know that in the branch where $z$ is used, $z$ is equal to
+False, and using False does not violate linearity since we can unrestrictedly
+create nullary data constructors. A situation similar to this one below happens
+after the CSE transformation.
 \begin{code}
     case <complex expression> of z {
         False -> case y of z' { DEFAULT -> z }
@@ -511,8 +509,8 @@ Section~\ref{examples}) are accepted with a new rule we have devised for the
 linear linter. We still need to prove we don't accept any invalid programs as
 valid.
 
-The key idea of the case-binder-usage solution is annotating the case binder
-with independent usage environments for each pattern match. That is, for
+The key idea of the case-binder-usage solution is \textbf{annotating the case binder
+with independent usage environments for each pattern match}. That is, for
 each of the possible branches, using the case binder $z$ will equate to
 using its usage environment in that branch. That makes it so that using the
 case binder instead of a nullary data constructor is the same, using the case
@@ -530,7 +528,16 @@ The typing rule for the case expression using the case binder solution:
     {\Gamma \vdash \text{case } t \text{ of } z :_{(U_1\dots U_n)} D_{\pi_1 \dots \pi_n} \{b_k\}_1^m : C \leadsto \{U + V\}}
 \end{mathparpagebreakable}
 
+Taking the first example in this section, we annotate both branches (True and
+False) with $U_z = \emptyset$ because the pattern match doesn't introduce any
+new variables. We consume \emph{complex expression} once and $y$ once, and then use
+$z$ once. However, using $z$ once equates to not using anything (semantically
+this relates to being able to use False or True unrestrictedly) and therefore
+linearity is preserved.
 
+In the second example, we know annotate the only branch with usage environment
+$U_z = [x := 1, y := 1]$. Upon the usage of $z$ we emit $x$ and $y$ --
+effectively using both -- thus linearity is preserved.
 
 \section{Multiplicity Coercions\label{multiplicityCoercions}}
 
