@@ -11,6 +11,14 @@
 \DefineVerbatimEnvironment{code}{Verbatim}{fontsize=\small}
 \DefineVerbatimEnvironment{example}{Verbatim}{fontsize=\small}
 
+\newcommand{\mypara}[1]{\paragraph{\textbf{#1}.}}
+\newcommand{\lolli}{\multimap}
+\newcommand{\tensor}{\otimes}
+\newcommand{\one}{\mathbf{1}}
+\newcommand{\bang}{{!}}
+
+\newcommand{\llet}[2]{\mathsf{let}\ #1\ \mathsf{in}\ #2}
+
 \title{Linting Linearity in Core/System FC}
 \author{Rodrigo Mesquita}
 
@@ -32,14 +40,164 @@
 
 \section{Linear Types}
 
+\mypara{Type Systems} A type system can be formally described through
+a set of inference rules that inductively define a judgment of the
+form $\Gamma \vdash M : A$, stating that program expression $M$ has
+type $A$ according to the \emph{typing assumptions} for variables
+tracked in $\Gamma$. For instance,
+$x{:}\mathsf{Int}, y{:}\mathsf{Int} \vdash x+y : \mathsf{Int}$ states
+that $x+y$ has type $\mathsf{Int}$ under the assumption that $x$ and
+$y$ have type $\mathsf{Int}$.  An expression $M$ is deemed well-typed
+with a given type $A$ if one can construct a typing derivation with $M :
+A$ as its conclusion, by repeated application of the inference rules.
+
+The simply-typed $\lambda$-calculus is a typed core functional
+language~\cite{10.5555/509043} that captures the essence of a type system in a simple and familiar environment. Its syntax consists of
+functional abstraction, written $\lambda x{:}A.M$, denoting
+an (anonymous) function that takes an argument of type $A$, bound to
+$x$ in $M$; and application $M\,N$, with the standard meaning, and
+variables $x$. For instance, the term $\lambda x{:}A.x$, denoting the identity function, is a functional abstraction
+taking an argument of type $A$ and returning it back.
+
+\mypara{Linear Logic}
+
+Linear logic \cite{DBLP:journals/tcs/Girard87} can be seen as a
+resource-aware logic, where propositions are interpreted as resources
+that are consumed during the inference process.  Where in standard
+propositional logic we are able to use an assumption as many times as
+we want, in linear logic every resource (i.e., every assumption) must
+be used \emph{exactly once}, or \emph{linearly}. This usage
+restriction gives rise to new logical connectives, based on the way
+the ambient resources are used. For instance, conjunction, usually
+written as $A\wedge B$, appears in two forms in linear logic:
+multiplicative or simultaneous conjunction (written $A\tensor B$); and
+additive or alternative conjunction (written $A\with
+B$). Multiplicative conjunction denotes the simultaneous availability
+of resources $A$ and $B$, requiring both of them to be
+used. Alternative conjunction denotes the availability of $A$ and $B$,
+but where only one of the two resources may be used. Similarly,
+implication becomes linear implication, written $A\lolli B$,
+denoting a resource that will consume (exactly one) resource $A$ to
+produce a resource $B$.
+
+To present the formalization of this logic, besides the new
+connectives, we need to introduce the \emph{resource-aware context}
+$\Delta$.  In contrast to the previously seen $\Gamma$, $\Delta$ is
+also a list of variables and their types, but where each and every
+variable must be used exactly once during inference.  So, to introduce
+the connective $\tensor$ which defines a multiplicative pair of
+propositions, we must use exactly all the resources
+($\Delta_1, \Delta_2$) needed to realize the ($\Delta_1$)
+proposition $A$, and ($\Delta_2$) proposition $B$:
+\[
+    \infer*[right=($\tensor I$)]
+    {\Delta_1 \vdash M : A \and \Delta_2 \vdash N : B}
+    {\Delta_1 , \Delta_2 \vdash (M \tensor N) : A \tensor B}
+\]
+Out of the logical connectives, we need to mention one more, since it
+augments the form of the judgment and it's the one that ensures
+logical strength i.e. we're able to translate intuitionistic logic
+into linear logic.  The proposition $\bang A$ (read \emph{of course}
+$A$) is used (under certain conditions) to make a resource
+``infinite'' i.e. to make it useable an arbitrary number of times. To
+distinguish the ``infinite'' variables, a separate, unrestricted,
+context is used -- $\Gamma$. So $\Gamma$ holds the ``infinite''
+resources, and $\Delta$ the resources that can only be used once.  The
+linear typing judgment for the introduction of the exponential $\bang A$
+takes the form:
+\[
+    \infer*[right=($\bang I$)]
+    {\Gamma ; \emptyset \vdash M : A}
+    {\Gamma ; \emptyset \vdash \bang M : \bang A}
+\]
+Logically, a proof of $\bang A$ cannot use linear resources since
+$\bang A$ denotes an unbounded (potentially $0$) number of copies of
+$A$. Proofs of $\bang A$ may use other unrestricted or exponential
+resources, tracked by context $\Gamma$.
+From a computational perspective, the type $\bang A$
+internalizes the simply-typed $\lambda$-calculus in the linear
+$\lambda$-calculus.
+
+The elimination form for the exponential, written $\llet{ !u
+= M}{ N}$, warrants the use of resource $A$ an unbounded
+number of times in $N$ via the variable $u$:
+\[
+    \infer*[right=($\bang E$)]
+    {\Gamma ; \Delta_1 \vdash M : \bang A \and \Gamma, u{:}A ; \Delta_2 \vdash N : C}
+    {\Gamma ; \Delta_1, \Delta_2 \vdash \llet{ !u = M}{ N} : C}
+\]
+
+
+% TODO: Revise the story above instead of dumping so much information
+
+
+\mypara{Linear Types}
+
+Girard's \emph{linear logic} suggests a new \emph{type system} for functional
+languages through the Curry-Howard isomorphism -- every linear logic proposition
+maps to a different linear type.
+
+Values belonging to a linear type must be used exactly once. For example, the
+type corresponding to the linear implication ($\lolli$), the linear function, is
+a function that consumes its argument exactly once. A linear function that
+receives an integer as an input and consumes it exactly once to
+produce a character would have type $\textbf{int} \lolli
+\textbf{char}$.
+
+
+\begin{itemize}
+    \item Ideia dos linear types
+    \item Calculo lambda linear (como forma de falar da linearidade)
+    \item Gestão de recursos
+    \item Rust (core is linear lambda calculus?)
+\end{itemize}
+
+
 \section{Haskell}
+
+\begin{itemize}
+    \item Features fundamentais
+    \item Exemplos, introduzir syntax
+    \item (Ao contrário de OCaml) tem um sistema de tipos muito sufesticado
+    \item Eventualmente explicação de GADTs? c/ exemplo do Vec
+    \item Uma das features mais avaçadas/experimentais é o Linear Haskell
+\end{itemize}
 
 \section{Linear Haskell}
 
+\begin{itemize}
+    \item Linear Haskell definition
+    \item Consuming values precisely
+    \item Multiplicities
+    \item Multiplicity polymorphism
+    \item Que relaciona o systemFC com o calculo lambda linear
+\end{itemize}
+
 \section{Core Haskell}
+
+\begin{itemize}
+    \item What is Core (IR) e as particularidades
+    \item Em cima do SystemFC
+    \item Optimizações feitas no Core
+    \item Base SystemFC tem de ser "merged" com o linear lambda calculus
+    \item Ou porque é que é importante o Core ter linearidade também/a que nível
+        foi introduzido
+    \item Falar das coercions em especifico
+    \item E das local equalities que são implicitas no front end
+\end{itemize}
 
 \section{GHC Pipeline}
 
+\begin{itemize}
+    \item Parser -> Rename -> Typechecker -> Desugar
+    \item Core2Core transformations
+    \item GHC unique em haver tantas transformações sempre sobre a mesma intermediate
+        representation como input e output
+    \item 
+\end{itemize}
+
+% Previous itemize. Talvez ainda tenha de ter secções sobre os últimos dois
+% pontos
 % \begin{itemize}
 %     \item Linear types
 %     \item Linear Haskell
@@ -53,6 +211,11 @@
 \section{System FC}
 
 \section{Linear Haskell}
+
+\section{OutsideIn(X)}
+
+Se for modificar o typechecker com as multiplicity coercions vou ter de falar
+disto.
 
 \chapter{Technical Details}
 
