@@ -131,7 +131,8 @@ number of times in $N$ via the variable $u$:
 % TODO: Revise the story above instead of dumping so much information
 
 
-\mypara{Linear Types}
+% \mypara{Linear Types}
+\subsection{Linear Types}
 
 Girard's \emph{linear logic} suggests a new \emph{type system} for functional
 languages through the Curry-Howard isomorphism -- every linear logic proposition
@@ -154,6 +155,52 @@ produce a character would have type $\textbf{int} \lolli
 
 
 \section{Haskell}
+
+Haskell is a functional programming language defined by the "Haskell
+Report"\cite{jones1999haskell,marlow2010haskell} and whose \emph{de-facto}
+implementation is GHC, the Glasgow Haskell Compiler\cite{GHC}. Haskell is a
+\emph{non-strict}, \emph{purely functional} language, i.e., functions cannot
+have side effects or mutate data, and contrary to many programming languages,
+arguments are \emph{not} evaluated when passed to functions, but rather are only
+evaluated when the value is needed.
+
+A function to compute the length of a list in Haskell is defined by pattern
+matching on the list and returning $0$ if the list is empty and adding one to
+the (computed recursively) length of the rest of the list otherwise. The
+following snippet defines the said \textbf{length} function.
+\begin{code}
+    length [] = 0
+    length (x:xs) = 1 + length xs
+\end{code}
+The function \textbf{length} receives a list and returns an integer, and since
+it treats all list's elements the same, it is said to be polymorphic over the
+list's elements type. In Haskell, function signatures typically appear above the
+definition, and for this particular function we'd have
+\begin{code}
+    length :: [a] -> Int
+\end{code}
+where \textbf{a} is a universally quantified type variable, that is,
+\textbf{length} can be called on lists of ints, lists of characters, lists of
+lists of strings, lists of anything.
+
+The laziness evaluation strategy entails expressions are only evaluated when
+needed. If we were to call just the above function on a list of computationally
+expensive elements, such as
+\begin{code}
+    length [5^1234, 6^4567, 8^(9^42)]
+\end{code}
+We would get the result 3 instantaneously: the elements of the list would never
+be evaluated because the \textbf{length} function does not require the value of
+each element to compute a result.
+
+% TODO:
+Is it outside the scope of this report to discuss the merits and disadvantages
+of laziness and purely functional properties? Não estou nada contente com esta
+secção em geral. Acho que preciso de escrever o resto para conseguir alguma
+coerência.
+
+Another defining feature of Haskell is its powerful type system....
+
 
 \begin{itemize}
     \item Features fundamentais
@@ -216,6 +263,10 @@ produce a character would have type $\textbf{int} \lolli
 
 Se for modificar o typechecker com as multiplicity coercions vou ter de falar
 disto.
+
+\section{Rust}
+
+They have a linearly typed something?
 
 \chapter{Technical Details}
 
