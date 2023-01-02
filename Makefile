@@ -1,4 +1,4 @@
-DOCNAME=proposal
+DOCNAME=report
 
 all: report
 
