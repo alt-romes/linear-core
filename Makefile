@@ -6,7 +6,7 @@ all: report
 
 report:
 	pdflatex $(DOCNAME).tex
-	bibtex $(DOCNAME).aux
+	bibtex 	 $(DOCNAME).aux
 	pdflatex $(DOCNAME).tex
 	pdflatex $(DOCNAME).tex
 
