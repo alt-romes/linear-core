@@ -30,21 +30,21 @@
 \chapter{Introduction}
 
 Linear type systems\cite{} add expressiveness to existing type systems by
-defining that linear resources must be used exactly once (linearly). In
+stating that linear resources must be used exactly once (linearly). In
 programming languages with a linear type system, not using certain resources or
-using them twice are type errors. Linear types can, thus, be used, e.g., to
-guarantee file handles, socket descriptors and allocated memory are freed
+using them twice are type errors. Linear types can, thus, be used to, e.g.,
+guarantee that file handles, socket descriptors, and allocated memory are freed
 exactly once (leaks and double-frees become type errors)\cite{}, implement safe
-high-performance language interop\cite{}, guarantee quantum entangled states are
-not duplicated~\cite{}, handle mutable state\cite{}, a bit on session
-types guarantees\cite{}, and much more.
+high-performance language interoperability\cite{}, guarantee that quantum
+entangled states are not duplicated~\cite{}, handle mutable state\cite{},
+something on session types guarantees\cite{}, and much more.
 
 % TODO: Also include bit about how it makes the basis of other type systems such
 % as rusts owneship. How ?
 
-As an example, consider the following program which allocates some memory and
-frees it twice. The variable $p$ is a linear resource created by the
-\textbf{malloc} keyword.
+As an example, consider the following linearly typed program which allocates
+some memory and frees it twice. The variable $p$ is a linear resource created by
+the \textbf{malloc} keyword.
 
 \begin{code}
 let p = malloc 4
@@ -53,13 +53,27 @@ let p = malloc 4
 \end{code}
 
 Because $p$ is a linear variable, it must be used exactly once. However, we are
-using it in both calls to \textbf{free}. The example program doesn't typecheck!
-In section~\ref{linear-types} we describe the fundamentals of linear types in
-more detail with a formal definition and many examples.
+using it in two different calls to \textbf{free}. The example program
+\emph{doesn't typecheck}! In section~\ref{linear-types} we describe the
+fundamentals of linear types in more detail with a formal definition and many
+examples.
 
-Despite their usefulness, most mainstream programming languages don't have
-linear types. In practice, it can be hard to balance linear and non-linear types
-and avoid the boilerplate threading of linear resources that we'll see ahead.
+Despite their great promise and research literature, few programming languages
+have linear types --
+% , with Rust\cite{} (with its ownership types), Idris\{}, and recently
+% Haskell\cite{} being the most popular.
+it is hard to balance linear and non-linear types in a pratical language. Linear
+Haskell\cite{linearhaskell} tackles this difficulty and describes a type system
+to retrofit linear types into Haskell, a purely-functional lazy language, while
+retaining backwards-compatibility and code reuse across linear and non-linear
+users of libraries.
+% , and, e.g., avoid the required boilerplate threading of linear resources that we will get to know ahead.
+
+
+% In an attempt to bridge the gap between the theory and practicality of linear
+% types, Linear Haskell\cite{} describes , the 9.0 version series of Haskell's
+% \emph{de facto} compiler, GHC, supports linear types. However, retrofitting
+% linear types to a purely-functional lazy language 
 
 % The main contributions of this thesis are:
 % \begin{itemize}
