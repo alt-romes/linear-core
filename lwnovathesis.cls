@@ -62,8 +62,10 @@
 %
 % Make sure the numbers are centered at the bottom
 \copypagestyle{thesis}{ruled}
-\makeevenfoot{thesis}{}{\thepage}{} % Center page number on even footer
-\makeoddfoot{thesis}{}{\thepage}{} % Center page number on odd footer
+% \makeevenfoot{thesis}{}{\thepage}{} % Center page number on even footer
+% \makeoddfoot{thesis}{}{\thepage}{} % Center page number on odd footer
+\makeevenfoot{thesis}{}{}{\thepage} % Align right page number on even footer
+\makeoddfoot{thesis}{}{}{\thepage}  % Align right page number on odd footer
 % Use thesis pagestyle defined above
 \pagestyle{thesis}
 

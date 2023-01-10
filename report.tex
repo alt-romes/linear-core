@@ -37,13 +37,13 @@
 \section{Introduction}
 
 Linear type systems\cite{} add expressiveness to existing type systems by
-stating that linear resources must be used exactly once (linearly). In
-programming languages with a linear type system, not using certain resources or
-using them twice are type errors. Linear types can, thus, be used to, e.g.,
-guarantee that file handles, socket descriptors, and allocated memory are freed
-exactly once (leaks and double-frees become type errors)\cite{}, implement safe
+stating that linear resources must be used \emph{exactly once}. In programming
+languages with a linear type system, not using certain resources or using them
+twice are type errors. Linear types can thus be used to, for example, guarantee
+that file handles, socket descriptors, and allocated memory are freed exactly
+once (leaks and double-frees become type errors)\cite{}, implement safe
 high-performance language interoperability\cite{}, guarantee that quantum
-entangled states are not duplicated~\cite{}, handle mutable state\cite{},
+entangled states are not duplicated~\cite{}, handle mutable state safely\cite{},
 something on session types guarantees\cite{}, and much more.
 
 % TODO: Also include bit about how it makes the basis of other type systems such
@@ -65,16 +65,42 @@ using it in two different calls to \textbf{free}. The example program
 fundamentals of linear types in more detail with a formal definition and many
 examples.
 
-Despite their great promise and research literature, few programming languages
-have linear types --
-% , with Rust\cite{} (with its ownership types), Idris\{}, and recently
-% Haskell\cite{} being the most popular.
-it is hard to balance linear and non-linear types in a pratical language. Linear
-Haskell\cite{linearhaskell} tackles this difficulty and describes a type system
-to retrofit linear types into Haskell, a purely-functional lazy language, while
-retaining backwards-compatibility and code reuse across linear and non-linear
-users of libraries.
-% , and, e.g., avoid the required boilerplate threading of linear resources that we will get to know ahead.
+Despite their great promise and research literature, it is hard to balance
+linear and non-linear types in practice and, consequently, few programming
+languages have linear type systems. Among them are Idris2\cite{}, a linearly and
+dependently typed language based on Quantitative Type Theory, Rust\cite{}, a
+language whose ownership types build on linear ones to guarantee memory safety
+without garbage collection or reference counting, and, more recently,
+Haskell\cite{}, a \emph{purely functional} and \emph{lazy} language.
+
+Linearity in Haskell stands out from linearity in Rust and Idris2 for two
+distinct reasons:
+
+\begin{itemize}
+    \item Linear types were only added to the language roughly \emph{31 years
+        after} Haskell's inception. It is an especially difficult endeavour to
+        add linear types to a well-established language with a large library
+        ecosystem and many active users, rather than to develop the language
+        from the ground up with linear types in mind, and the successful
+        approach as implemented in GHC 9.0, the leading Haskell compiler, was
+        based on Linear Haskell\cite{linearhaskell}, where a linear type system
+        designed with retaining backwards-compatibility and allowing code reuse
+        across linear and non-linear users of the same libraries in mind was
+        described.
+    \item 
+\end{itemize}
+
+
+% Besides Haskell's supporting linear
+% types according to the said paper, Idris2\cite{} supports linear types in a
+% dependently typed setting, Clean\cite{} has uniqueness types which are closely
+% related to linear types, and Rust\cite{} has ownership types which build from
+% linear types. 
+% released in the Glasgow Haskell Compiler (GHC) version 9.0.
+% , and, e.g., avoid the required boilerplate threading of linear resources that
+% we will get to know ahead.
+
+% Linear types were introduced in GHC 9.0
 
 
 % In an attempt to bridge the gap between the theory and practicality of linear
