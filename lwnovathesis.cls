@@ -32,8 +32,21 @@
 % TODO: For the latex font, use 11pt or 10pt?
 \LoadClass[a4paper,11pt,twoside,onecolumn,openright,draft]{memoir}
 
-% TODO: (3) (5) (6) (7)
-% \setlrmarginsandblock{2.5cm}{2.5cm}{*}
+% This solves (6) by setting 1.5 line spacing for the main text
+% And solves (7) as well because footnotes' line spacing is unaltered
+% TODO: (7) for bibliography and acknoledgments must be set manually?
+% 
+% Nevermind, we use 1 line spacing because 1.5 is horrendous?
+% \OnehalfSpacing
+
+% TODO: (3)
+
+% TODO: Check back on Title section to make cover
+
+% (5)
+\setlrmarginsandblock{2.5cm}{2.5cm}{*}
+\setulmarginsandblock{2.5cm}{2.5cm}{*}
+\checkandfixthelayout
 
 
 % Use the commands \frontmatter, \mainmatter and \backmatter to define the
@@ -46,10 +59,23 @@
 %
 % * Backmatter should not really be used for the thesis if I'm not mistaken, but
 %       you might find it useful...
+%
+% Make sure the numbers are centered at the bottom
+\copypagestyle{thesis}{ruled}
+\makeevenfoot{thesis}{}{\thepage}{} % Center page number on even footer
+\makeoddfoot{thesis}{}{\thepage}{} % Center page number on odd footer
+% Use thesis pagestyle defined above
+\pagestyle{thesis}
+
 
 
 \@ifclassloaded{memoir}{\let\endthesis\relax}{\let\endthesis\endinput
    \ClassError{lwnovathesis}{The lwnovathesis package only works with the memoir class}%
                 {\@ehd}}
 \endthesis
+
+
+% Customize
+\chapterstyle{veelo}
+
 
