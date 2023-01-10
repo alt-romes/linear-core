@@ -73,8 +73,8 @@ language whose ownership types build on linear ones to guarantee memory safety
 without garbage collection or reference counting, and, more recently,
 Haskell\cite{}, a \emph{purely functional} and \emph{lazy} language.
 
-Linearity in Haskell stands out from linearity in Rust and Idris2 for two
-distinct reasons:
+Linearity in Haskell stands out from linearity in Rust and Idris2 for, at least,
+the two following distinct reasons:
 
 \begin{itemize}
     \item Linear types were only added to the language roughly \emph{31 years
@@ -87,9 +87,22 @@ distinct reasons:
         designed with retaining backwards-compatibility and allowing code reuse
         across linear and non-linear users of the same libraries in mind was
         described.
-    \item 
+    \item Linear types permeate Haskell down to (its) \textbf{Core}, the intermediate
+        language Haskell is desugared to. \textbf{Core} is a very small
+        explicitly typed language to which multiple Core-to-Core optimizing
+        transformations are applied in succession. The final Core program can be
+        typechecked very fast (because of the explicit type annotations) and
+        doing so serves as a sanity check to the correction of the
+        source transformations. If the resulting optimized Core program doesn't
+        typecheck, something \emph{very wrong} has happened in a transformation!
 \end{itemize}
 
+Even though Linear Haskell was successful in integrating linear types in an
+existing language 
+% In spite of the smooth integration of linear types in an existing language
+with regard to backwards compatibility and (re)usability, 
+
+The advent of linear types in Haskell bring forth
 
 % Besides Haskell's supporting linear
 % types according to the said paper, Idris2\cite{} supports linear types in a
@@ -121,11 +134,7 @@ distinct reasons:
 % about the usage of resources in a
 % programming language.
 
-\section {Introduction}
-
-A história que eu quero contar:
-
-\subsection{Motivation}
+\section{Motivation}
 
 
 \begin{itemize}
@@ -142,7 +151,7 @@ resources, but usually \emph{variables} are considered linear resources
 % That is, we can rely on the type system to prove properties regarding the usage of certain resources.
 The \emph{Hello World} of linearly typed programs is a linearly typed pointer.
 In a non-memory managed language, an allocated pointer must be freed
-\emph{exactly once}. 
+\emph{exactly once}.
 
 \begin{code}
 let p = malloc(5)
