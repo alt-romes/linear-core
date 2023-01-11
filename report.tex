@@ -38,6 +38,17 @@
 
 \chapter{Introduction}
 
+% Linear types are cool
+% Among the few, Haskell has linear types
+% But Haskell differs from other languages with linear types
+%   * added 31 years after inception
+%   * added to its core
+% Core has linear types for good reasons
+% But they are broken -- why?
+%   * Optimizations changes source -- e.g. if recursive lets are introduced, how to type linearity?
+% 
+
+
 \section{Introduction}
 
 Linear type systems\cite{} add expressiveness to existing type systems by
@@ -56,7 +67,6 @@ something on session types guarantees\cite{}, and much more.
 As an example, consider the following linearly typed program which allocates
 some memory and frees it twice. The variable $p$ is a linear resource created by
 the \textbf{malloc} keyword.
-
 \begin{code}
 let p = malloc 4
  in free p
@@ -101,12 +111,73 @@ the two following distinct reasons:
         source transformations. If the resulting optimized Core program doesn't
         typecheck, something \emph{very wrong} has happened in a transformation!
         We discuss Core in detail in section~\ref{core-section}.
+    % TODO: \item values in rust are linear by default while non-linear is the
+        % haskell default?
 \end{itemize}
 
-In theory, the linearity annotations in \textbf{Core} should allow for the same
-typechecking verification we had with the existing type annotations prior to the
-addition of linear types, that is, our Core program with linearity annotations
-should be typechecked after the optimizing transformations...
+Core was imbued with linear types because an implementation detail required it,
+and, more importantly, to guarantee linear programs remain linear after being
+desugared and optimized: much the same way a \emph{typed} Core ensures that
+desugaring, and optimizing transformations, are correctly implemented and result
+in a \emph{well-typed} program -- a design decision that has well served the
+compiler developers with a safety net for a long time. It is crucial that a
+program behaviour enforced by linear types, regarding the usage of certain
+resources, is \emph{not} changed in the desugaring or optimization process
+(optimizations should not destroy linearity!) and a linearity aware Core
+typechecker can guarantee that.
+
+Additionally, while not yet a reality, linearity in Core could be used to inform
+certain program optimizations, i.e. having linear types in Core could be used to
+further optimize certain programs and, therefore, benefit the runtime
+performance characteristics of our programs. For example, Linear Haskell\cite{}
+describes as future work an improvement to the inlining optimization: Inlining
+is a centerpiece program optimization primarily because of the subsequent
+optimizing opportunities unlocked by inlining. However, it relies on a heuristic
+process known as \emph{cardinality analysis} to discover safe inlining
+opportunities. Unfortunately, heuristics can be volatile and fail in identifying
+crucial inlining opportunities resulting in programs that fall short of their
+performance potential. On the contrary, the linearity information could be
+integrated in the analysis and used as a (non-heuristic) cardinality
+\emph{declaration}.
+
+However, currently, typechecking linearity in Core is broken in the face of
+optimizations! The reason is not evidently clear: if we can typecheck linearity
+in the surface level Haskell why can't we in Core? In fact, if we were to
+typecheck the programs in Core as they were at the surface level, we would
+succeed, but programs are \emph{transformed} (by semantic-preserving optimizing
+transformations) and hence end up different from how they were originally
+written. For example, the following recursive let definition, where $x$ is a
+linear variable that must be used exactly once, would not typecheck in a source
+linear Haskell program since the typechecker cannot tell that $x$ is used
+linearly, but this program might occur naturally in Core from
+transformations on a program that did succesfully typecheck:
+\begin{code}
+letrec f = \case
+        True -> f False
+        False -> x
+in f True
+\end{code}
+
+Is this program really still linear? If one looks at it 
+
+
+% Alternatively, one might imagine Haskell being desugared into an intermediate
+% representation to which multiple different optimizing transformations are
+% applied but on which no integrity checks are done
+
+Despite \emph{want} a linearly-typed core
+because a linearly-typed Core ensures that desugaring
+Haskell and optimizing transformations don't destroy linearity.
+
+% In theory, because the Core language must also know about linearity, we should
+
+% A remedy is to use the multiplicity annotations of λq → as cardinality declarations. Formalising
+% and implementing the integration of multiplicities in the cardinality analysis is left as future work.
+
+% In theory, we should typecheck \emph{linearity} in \textbf{Core} just the same
+% as the typechecking verification we had with the existing type annotations prior
+% to the addition of linear types, that is, our Core program with linearity
+% annotations should be typechecked after the optimizing transformations...
 
 % Even though Linear Haskell was successful in integrating linear types in an
 % existing language 
