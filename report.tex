@@ -32,6 +32,10 @@
 
 \mainmatter
 
+% TODO: linear functions to allow safe/controlled use of reified language
+% implementation objects like *single-use continuations* (single use
+% continuations? can we make them faster?)
+
 \chapter{Introduction}
 
 \section{Introduction}
@@ -86,7 +90,8 @@ the two following distinct reasons:
         based on Linear Haskell\cite{linearhaskell}, where a linear type system
         designed with retaining backwards-compatibility and allowing code reuse
         across linear and non-linear users of the same libraries in mind was
-        described.
+        described. We describe Linear Haskell in detail in
+        section~\ref{linear-haskell-section}.
     \item Linear types permeate Haskell down to (its) \textbf{Core}, the intermediate
         language Haskell is desugared to. \textbf{Core} is a very small
         explicitly typed language to which multiple Core-to-Core optimizing
@@ -95,14 +100,20 @@ the two following distinct reasons:
         doing so serves as a sanity check to the correction of the
         source transformations. If the resulting optimized Core program doesn't
         typecheck, something \emph{very wrong} has happened in a transformation!
+        We discuss Core in detail in section~\ref{core-section}.
 \end{itemize}
 
-Even though Linear Haskell was successful in integrating linear types in an
-existing language 
-% In spite of the smooth integration of linear types in an existing language
-with regard to backwards compatibility and (re)usability, 
+In theory, the linearity annotations in \textbf{Core} should allow for the same
+typechecking verification we had with the existing type annotations prior to the
+addition of linear types, that is, our Core program with linearity annotations
+should be typechecked after the optimizing transformations...
 
-The advent of linear types in Haskell bring forth
+% Even though Linear Haskell was successful in integrating linear types in an
+% existing language 
+% In spite of the smooth integration of linear types in an existing language
+% with regard to backwards compatibility and (re)usability, 
+
+% The advent of linear types in Haskell bring forth
 
 % Besides Haskell's supporting linear
 % types according to the said paper, Idris2\cite{} supports linear types in a
@@ -146,27 +157,41 @@ The advent of linear types in Haskell bring forth
 
 \section{Linear Types\label{linear-types}}
 
-Programming languages with linear type systems might differ in their definition of linear
-resources, but usually \emph{variables} are considered linear resources
-% That is, we can rely on the type system to prove properties regarding the usage of certain resources.
-The \emph{Hello World} of linearly typed programs is a linearly typed pointer.
-In a non-memory managed language, an allocated pointer must be freed
-\emph{exactly once}.
+A linear type system is a type system in which ...!
 
-\begin{code}
-let p = malloc(5)
-    p' = store(p, "x")
-    (p'', v) = load(p)
-    free p''
-\end{code}
+% A linear type system is a type system in which statements such as "this function
+% will use its argument exactly once" can be formally expressed and checked.
+
+Girard's \emph{linear logic} suggests a new \emph{type system} for functional
+languages through the Curry-Howard isomorphism -- every linear logic proposition
+maps to a different linear type.
+
+Values belonging to a linear type must be used exactly once. For example, the
+type corresponding to the linear implication ($\lolli$), the linear function, is
+a function that consumes its argument exactly once. A linear function that
+receives an integer as an input and consumes it exactly once to
+produce a character would have type $\textbf{int} \lolli
+\textbf{char}$.
+
+Programming languages with linear type systems might differ in their definition of linear
+resources, but usually \emph{variables} are considered linear resources?
+% That is, we can rely on the type system to prove properties regarding the usage of certain resources.
+% The \emph{Hello World} of linearly typed programs is a linearly typed pointer.
+% In a non-memory managed language, an allocated pointer must be freed
+% \emph{exactly once}.
+
+% \begin{code}
+% let p = malloc(5)
+%     p' = store(p, "x")
+%     (p'', v) = load(p)
+%     free p''
+% \end{code}
 
 % We'd like to hide the boilerplate involved \cite{Linear constraints}
 
 In order to give well defined semantics to a linear type system, we present a
 linearly typed lambda calculus which is a very simple language with linear
 types.
-
-
 
 
 \mypara{Type Systems} A type system can be formally described through
@@ -288,10 +313,15 @@ produce a character would have type $\textbf{int} \lolli
 Haskell is a functional programming language defined by the "Haskell
 Report"\cite{jones1999haskell,marlow2010haskell} and whose \emph{de-facto}
 implementation is GHC, the Glasgow Haskell Compiler\cite{GHC}. Haskell is a
-\emph{non-strict}, \emph{purely functional} language, i.e., functions cannot
+\emph{lazy}, \emph{purely functional} language, i.e., functions cannot
 have side effects or mutate data, and contrary to many programming languages,
 arguments are \emph{not} evaluated when passed to functions, but rather are only
 evaluated when the value is needed.
+
+Another defining feature of Haskell is its powerful type system....
+
+
+% TODO: File example
 
 A function to compute the length of a list in Haskell is defined by pattern
 matching on the list and returning $0$ if the list is empty and adding one to
@@ -323,12 +353,8 @@ be evaluated because the \textbf{length} function does not require the value of
 each element to compute a result.
 
 % TODO:
-Is it outside the scope of this report to discuss the merits and disadvantages
-of laziness and purely functional properties? Não estou nada contente com esta
-secção em geral. Acho que preciso de escrever o resto para conseguir alguma
-coerência.
-
-Another defining feature of Haskell is its powerful type system....
+% Is it outside the scope of this report to discuss the merits and disadvantages
+% of laziness and purely functional properties?
 
 
 \begin{itemize}
@@ -339,7 +365,7 @@ Another defining feature of Haskell is its powerful type system....
     \item Uma das features mais avaçadas/experimentais é o Linear Haskell
 \end{itemize}
 
-\subsection{Linear Haskell}
+\subsection{Linear Haskell\label{linear-haskell-section}}
 
 \begin{itemize}
     \item Linear Haskell definition
@@ -349,7 +375,7 @@ Another defining feature of Haskell is its powerful type system....
     \item Que relaciona o systemFC com o calculo lambda linear
 \end{itemize}
 
-\subsection{Core Haskell}
+\subsection{Core Haskell\label{core-section}}
 
 \begin{itemize}
     \item What is Core (IR) e as particularidades
