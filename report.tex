@@ -8,6 +8,10 @@
 \usepackage[ruled,vlined]{algorithm2e}
 \usepackage{hyperref}
 \usepackage{fancyvrb}
+
+% BNF grammars
+\usepackage[center]{formal-grammar}
+
 \DefineVerbatimEnvironment{code}{Verbatim}{fontsize=\small}
 \DefineVerbatimEnvironment{example}{Verbatim}{fontsize=\small}
 
@@ -148,9 +152,9 @@ succeed, but programs are \emph{transformed} (by semantic-preserving optimizing
 transformations) and hence end up different from how they were originally
 written. For example, the following recursive let definition, where $x$ is a
 linear variable that must be used exactly once, would not typecheck in a source
-linear Haskell program since the typechecker cannot tell that $x$ is used
-linearly, but this program might occur naturally in Core from
-transformations on a program that did succesfully typecheck:
+Haskell program since the typechecker cannot tell that $x$ is used linearly, but
+this program might occur naturally in Core from transformations on a program
+that did succesfully typecheck:
 \begin{code}
 letrec f = \case
         True -> f False
@@ -158,16 +162,17 @@ letrec f = \case
 in f True
 \end{code}
 
-Is this program really still linear? If one looks at it 
+Is this program really still linear? Yes, but ...
 
+% If one looks at it 
 
 % Alternatively, one might imagine Haskell being desugared into an intermediate
 % representation to which multiple different optimizing transformations are
 % applied but on which no integrity checks are done
 
-Despite \emph{want} a linearly-typed core
-because a linearly-typed Core ensures that desugaring
-Haskell and optimizing transformations don't destroy linearity.
+% Despite \emph{want} a linearly-typed core
+% because a linearly-typed Core ensures that desugaring
+% Haskell and optimizing transformations don't destroy linearity.
 
 % In theory, because the Core language must also know about linearity, we should
 
@@ -210,9 +215,6 @@ Haskell and optimizing transformations don't destroy linearity.
 
 % stores a value to the allocated memory, reads from it and finally frees 
 
-% Linear type systems add expressiven at the type level regarding values that
-% must be used exactly once thorought their lifetime.
-
 % about the usage of resources in a
 % programming language.
 
@@ -224,11 +226,16 @@ Haskell and optimizing transformations don't destroy linearity.
     \item Inform/unlock other optimisations that take into account linearity
 \end{itemize}
 
+% TODO? Another defining feature of Haskell is its powerful type system. The
+% interaction between the new linearity polymorphism and the existing
+% type-level facilities is quite interesting
+
 \chapter{Background}
 
 \section{Linear Types\label{linear-types}}
 
-A linear type system is a type system in which ...!
+A linear type system is a type system in which linear resources must be used
+exactly once...!
 
 % A linear type system is a type system in which statements such as "this function
 % will use its argument exactly once" can be formally expressed and checked.
@@ -259,10 +266,6 @@ resources, but usually \emph{variables} are considered linear resources?
 % \end{code}
 
 % We'd like to hide the boilerplate involved \cite{Linear constraints}
-
-In order to give well defined semantics to a linear type system, we present a
-linearly typed lambda calculus which is a very simple language with linear
-types.
 
 
 \mypara{Type Systems} A type system can be formally described through
@@ -355,6 +358,16 @@ number of times in $N$ via the variable $u$:
 
 % TODO: Revise the story above instead of dumping so much information
 
+In order to give well defined semantics to a linear type system, we present a
+linearly typed lambda calculus which is a very simple language with linear
+types.
+
+\begin{grammar}
+    \firstcase{\t}{\star}{Unit type}
+    \otherform{t \tensor t'}{Multiplicative conjunction type}
+    % t ::= a $\lolli$ b
+\end{grammar}
+
 
 % \mypara{Linear Types}
 \subsection{Linear Types}
@@ -377,7 +390,6 @@ produce a character would have type $\textbf{int} \lolli
     \item Gestão de recursos
     \item Rust (core is linear lambda calculus?)
 \end{itemize}
-
 
 \section{Haskell}
 
