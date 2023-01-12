@@ -56,6 +56,10 @@
 
 %\section{Introduction}
 
+Static type systems have brought programmers ...
+Programming languages rely on type systems to statically eliminate classes of
+errors ...
+
 Linear type systems~\cite{} add expressiveness to existing type systems by
 stating that linear resources must be used \emph{exactly once}. In programming
 languages with a linear type system, not using certain resources or using them
@@ -69,20 +73,24 @@ something on session types guarantees~\cite{}, and much more.
 % TODO: Also include bit about how it makes the basis of other type systems such
 % as rusts owneship. How ?
 
-As an example, consider the following linearly typed program which allocates
-some memory and frees it twice. The variable $p$ is a linear resource created by
-the \textbf{malloc} keyword.
+As an example, consider the following C-like program in which allocated memory
+is freed twice. We know this to be the dreaded double-free error which will
+crash our programs and crush our dreams. Regardless, a C-like type system will
+accept this program without any issue.
 \begin{code}
-let p = malloc 4
- in free p
-    free p
+let p = malloc 4;
+ in free p;
+    free p;
 \end{code}
 
-Because $p$ is a linear variable, it must be used exactly once. However, we are
-using it in two different calls to \textbf{free}. The example program
-\emph{doesn't typecheck}! In section~\ref{linear-types} we describe the
-fundamentals of linear types in more detail with a formal definition and many
-examples.
+Under the lens of a linear type system, consider the variable $p$ to be a linear
+resource created by the \textbf{malloc} keyword. Because $p$ is a linear
+variable, it must be used exactly once. However, we are using it in two
+different calls to \textbf{free}. With our new linearity assumptions, the
+% TODO:
+example program \emph{would not typecheck}! Some conclusion on linearity
+goodness. In section~\ref{linear-types} we describe the fundamentals of linear
+types in more detail with a formal definition and many examples.
 
 Despite their great promise and research literature, it is hard to balance
 linear and non-linear types in practice and, consequently, few programming
@@ -92,32 +100,35 @@ language whose ownership types build on linear ones to guarantee memory safety
 without garbage collection or reference counting, and, more recently,
 Haskell\cite{}, a \emph{purely functional} and \emph{lazy} language.
 
-Linearity in Haskell stands out from linearity in Rust and Idris2 for, at least,
-the two following distinct reasons:
+Linearity in Haskell stands out % from linearity in Rust and Idris2
+for the two following distinct reasons:
 
 \begin{itemize}
     \item Linear types were only added to the language roughly \emph{31 years
-        after} Haskell's inception. It is an especially difficult endeavour to
-        add linear types to a well-established language with a large library
-        ecosystem and many active users, rather than to develop the language
-        from the ground up with linear types in mind, and the successful
-        approach as implemented in GHC 9.0, the leading Haskell compiler, was
-        based on Linear Haskell\cite{linearhaskell}, where a linear type system
-        designed with retaining backwards-compatibility and allowing code reuse
-        across linear and non-linear users of the same libraries in mind was
-        described. We describe Linear Haskell in detail in
+        after} Haskell's inception, unlike Rust and Idris2 which were
+        designed with linearity from the start. It is an especially difficult
+        endeavour to add linear types to a well-established language with a
+        large library ecosystem and many active users, rather than to develop
+        the language from the ground up with linear types in mind, and the
+        successful approach as implemented in GHC 9.0, the leading Haskell
+        compiler, was based on Linear Haskell\cite{linearhaskell}, where a
+        linear type system designed with retaining backwards-compatibility and
+        allowing code reuse across linear and non-linear users of the same
+        libraries in mind was described. We describe Linear Haskell in detail in
         section~\ref{linear-haskell-section}.
-    \item Linear types permeate Haskell down to (its) \textbf{Core}, the intermediate
-        language Haskell is desugared to. \textbf{Core} is a very small
-        explicitly typed language to which multiple Core-to-Core optimizing
-        transformations are applied in succession. The final Core program can be
-        typechecked very fast (because of the explicit type annotations) and
-        doing so serves as a sanity check to the correction of the
-        source transformations. If the resulting optimized Core program doesn't
-        typecheck, something \emph{very wrong} has happened in a transformation!
-        We discuss Core in detail in section~\ref{core-section}.
-    % TODO: \item values in rust are linear by default while non-linear is the
-        % haskell default?
+
+    \item Linear types permeate Haskell down to (its) \textbf{Core}, the
+        intermediate language Haskell is desugared to. \textbf{Core} is a very
+        small explicitly typed functional language to which multiple
+        Core-to-Core optimizing transformations are applied in succession. The
+        final Core program can be typechecked very fast (because of the explicit
+        type annotations) and doing so serves as a sanity check to the
+        correction of the source transformations. If the resulting optimized
+        Core program doesn't typecheck, something \emph{very wrong} has happened
+        in a transformation!  We discuss Core in detail in
+        section~\ref{core-section}.
+        % TODO: \item values in rust are linear by default while non-linear is
+        % the haskell default?
 \end{itemize}
 
 Core was imbued with linear types to guarantee linear programs remain linear after being
@@ -144,17 +155,17 @@ performance potential. On the contrary, the linearity information could be
 integrated in the analysis and used as a (non-heuristic) cardinality
 \emph{declaration}.
 
-However, currently, typechecking linearity in Core is broken in the face of
-optimizations! The reason is not evidently clear: if we can typecheck linearity
-in the surface level Haskell why can't we in Core? In fact, if we were to
-typecheck the programs in Core as they were at the surface level, we would
-succeed, but programs are \emph{transformed} (by semantic-preserving optimizing
-transformations) and hence end up different from how they were originally
-written. For example, the following recursive let definition, where $x$ is a
-linear variable that must be used exactly once, would not typecheck in a source
-Haskell program since the typechecker cannot tell that $x$ is used linearly, but
-this program might occur naturally in Core from transformations on a program
-that did succesfully typecheck:
+However, currently, programs transformed by optimizations can fail to typecheck
+in Core because of the newly added linearity! The reason is not evidently clear:
+if we can typecheck linearity in the surface level Haskell why can't we in Core?
+In fact, if we were to typecheck the programs in Core as they were at the
+surface level, we would succeed, but programs are \emph{transformed} (by
+semantic-preserving optimizing transformations) and hence end up different from
+how they were originally written. For example, the following recursive let
+definition, where $x$ is a linear variable that must be used exactly once, would
+not typecheck in a source Haskell program since the typechecker cannot tell that
+$x$ is used linearly, but this program might occur naturally in Core from
+transformations on a program that did succesfully typecheck:
 \begin{code}
 letrec f = \case
         True -> f False
@@ -234,158 +245,219 @@ Is this program really still linear? Yes, but ...
 
 \section{Linear Types\label{linear-types}}
 
-A linear type system is a type system in which linear resources must be used
-exactly once...!
+Much the same way type systems can statically eliminate various kinds of
+programs that would fail at runtime, such as a program that derreferences an
+integer value rather than a pointer, linear type systems can guarantee that
+certain errors (regarding resource usage) are forbidden.
 
-% A linear type system is a type system in which statements such as "this function
-% will use its argument exactly once" can be formally expressed and checked.
+In linear type systems, so called linear resources must be used \emph{exactly
+once}. Not using a linear resource at all or using said resource multiple times
+will result in a type error. We can model many real-world resources such as file
+handles, socket descriptors, and allocated memory, as linear resources. This
+way, because a file handle must be used exactly once, forgetting to close the
+file handle is a type error, and closing the handle twice is also a type error.
+With linear types, avoiding leaks and double frees is no longer a programmer's
+worry because the compiler can guarantee the resource is used exactly once, or
+\emph{linearly}.
 
-Girard's \emph{linear logic} suggests a new \emph{type system} for functional
-languages through the Curry-Howard isomorphism -- every linear logic proposition
-maps to a different linear type.
-
-Values belonging to a linear type must be used exactly once. For example, the
-type corresponding to the linear implication ($\lolli$), the linear function, is
-a function that consumes its argument exactly once. A linear function that
-receives an integer as an input and consumes it exactly once to
-produce a character would have type $\textbf{int} \lolli
-\textbf{char}$.
-
-Programming languages with linear type systems might differ in their definition of linear
-resources, but usually \emph{variables} are considered linear resources?
-% That is, we can rely on the type system to prove properties regarding the usage of certain resources.
-% The \emph{Hello World} of linearly typed programs is a linearly typed pointer.
-% In a non-memory managed language, an allocated pointer must be freed
-% \emph{exactly once}.
-
-% \begin{code}
-% let p = malloc(5)
-%     p' = store(p, "x")
-%     (p'', v) = load(p)
-%     free p''
-% \end{code}
-
-% We'd like to hide the boilerplate involved \cite{Linear constraints}
-
-
-\mypara{Type Systems} A type system can be formally described through
-a set of inference rules that inductively define a judgment of the
-form $\Gamma \vdash M : A$, stating that program expression $M$ has
-type $A$ according to the \emph{typing assumptions} for variables
-tracked in $\Gamma$. For instance,
-$x{:}\mathsf{Int}, y{:}\mathsf{Int} \vdash x+y : \mathsf{Int}$ states
-that $x+y$ has type $\mathsf{Int}$ under the assumption that $x$ and
-$y$ have type $\mathsf{Int}$.  An expression $M$ is deemed well-typed
-with a given type $A$ if one can construct a typing derivation with $M :
-A$ as its conclusion, by repeated application of the inference rules.
-
-The simply-typed $\lambda$-calculus is a typed core functional
-language~\cite{10.5555/509043} that captures the essence of a type system in a simple and familiar environment. Its syntax consists of
-functional abstraction, written $\lambda x{:}A.M$, denoting
-an (anonymous) function that takes an argument of type $A$, bound to
-$x$ in $M$; and application $M\,N$, with the standard meaning, and
-variables $x$. For instance, the term $\lambda x{:}A.x$, denoting the identity function, is a functional abstraction
-taking an argument of type $A$ and returning it back.
-
-\mypara{Linear Logic}
-
-Linear logic \cite{DBLP:journals/tcs/Girard87} can be seen as a
-resource-aware logic, where propositions are interpreted as resources
-that are consumed during the inference process.  Where in standard
-propositional logic we are able to use an assumption as many times as
-we want, in linear logic every resource (i.e., every assumption) must
-be used \emph{exactly once}, or \emph{linearly}. This usage
-restriction gives rise to new logical connectives, based on the way
-the ambient resources are used. For instance, conjunction, usually
-written as $A\wedge B$, appears in two forms in linear logic:
-multiplicative or simultaneous conjunction (written $A\tensor B$); and
-additive or alternative conjunction (written $A\with
-B$). Multiplicative conjunction denotes the simultaneous availability
-of resources $A$ and $B$, requiring both of them to be
-used. Alternative conjunction denotes the availability of $A$ and $B$,
-but where only one of the two resources may be used. Similarly,
-implication becomes linear implication, written $A\lolli B$,
-denoting a resource that will consume (exactly one) resource $A$ to
-produce a resource $B$.
-
-To present the formalization of this logic, besides the new
-connectives, we need to introduce the \emph{resource-aware context}
-$\Delta$.  In contrast to the previously seen $\Gamma$, $\Delta$ is
-also a list of variables and their types, but where each and every
-variable must be used exactly once during inference.  So, to introduce
-the connective $\tensor$ which defines a multiplicative pair of
-propositions, we must use exactly all the resources
-($\Delta_1, \Delta_2$) needed to realize the ($\Delta_1$)
-proposition $A$, and ($\Delta_2$) proposition $B$:
+To understand how linear types are defined and used in practice, we present two
+examples of anonymous functions, try to understand how they could be disregarded
+as incorrect, and work our way up to linear types from them. The first receives a
+file handle as an argument, ignores it, and returns $\star$ (read unit), which
+is equivalent to C's
+\textbf{void}.
+% TODO: Better code formatting
 \[
-    \infer*[right=($\tensor I$)]
-    {\Delta_1 \vdash M : A \and \Delta_2 \vdash N : B}
-    {\Delta_1 , \Delta_2 \vdash (M \tensor N) : A \tensor B}
-\]
-Out of the logical connectives, we need to mention one more, since it
-augments the form of the judgment and it's the one that ensures
-logical strength i.e. we're able to translate intuitionistic logic
-into linear logic.  The proposition $\bang A$ (read \emph{of course}
-$A$) is used (under certain conditions) to make a resource
-``infinite'' i.e. to make it useable an arbitrary number of times. To
-distinguish the ``infinite'' variables, a separate, unrestricted,
-context is used -- $\Gamma$. So $\Gamma$ holds the ``infinite''
-resources, and $\Delta$ the resources that can only be used once.  The
-linear typing judgment for the introduction of the exponential $\bang A$
-takes the form:
-\[
-    \infer*[right=($\bang I$)]
-    {\Gamma ; \emptyset \vdash M : A}
-    {\Gamma ; \emptyset \vdash \bang M : \bang A}
-\]
-Logically, a proof of $\bang A$ cannot use linear resources since
-$\bang A$ denotes an unbounded (potentially $0$) number of copies of
-$A$. Proofs of $\bang A$ may use other unrestricted or exponential
-resources, tracked by context $\Gamma$.
-From a computational perspective, the type $\bang A$
-internalizes the simply-typed $\lambda$-calculus in the linear
-$\lambda$-calculus.
-
-The elimination form for the exponential, written $\llet{ !u
-= M}{ N}$, warrants the use of resource $A$ an unbounded
-number of times in $N$ via the variable $u$:
-\[
-    \infer*[right=($\bang E$)]
-    {\Gamma ; \Delta_1 \vdash M : \bang A \and \Gamma, u{:}A ; \Delta_2 \vdash N : C}
-    {\Gamma ; \Delta_1, \Delta_2 \vdash \llet{ !u = M}{ N} : C}
+    \lambda h.~\textrm{return}~\star;
 \]
 
+And, similarly, the second receives a file handle and closes it
+twice. Note that \textbf{close} has type $\textbf{Handle} \to \star$, that is, it's a
+function that receives a handle and returns unit.
+\[
+    \lambda h.~\textrm{close}~h;~\textrm{close}~h;
+\]
 
-% TODO: Revise the story above instead of dumping so much information
+Both the above functions share the same type ($\textbf{Handle} \to \star$),
+under a simple type system such as C's they are type correct, and both have
+erroneous behaviours. The first forgets to close the handle and the second
+closes it twice. Our goal is now to reach a type system that rejects these
+two programs.
+
+The key observation is that the argument of the function must be linear, and we
+can augment the common function type to account for the linearity of its
+argument. We take the function type $A \to B$ and replace the arrow with the
+$\lolli$
+%
+\footnote{Since linear types are born from a
+correspondence\cite{curry-howard} (the Curry-Howard isomrphism) with linear
+logic\cite{linear-logic}, we borrow the $\lolli$ symbol and other linear logic
+connectives to describe linear types.}
+%
+operator to denote a function that uses its argument exactly once: $A \lolli B$.
+% Linear types are a powerful idea because they allow us to statically reason
+% about resources in our program. A so called linear resource 
+
+% For example, to define a ...
+
+% Linear types are a powerful idea
 
 In order to give well defined semantics to a linear type system, we present a
 linearly typed lambda calculus which is a very simple language with linear
-types.
+types...
 
 \[
   \begin{array}{lcl}
     s,t & ::= & \star\\
         & \mid & t \lolli s\\
-       \dots
+        & \mid & t \oplus s\\
+        & \mid & t \tensor s\\
+        & \mid & t \with s\\
+        & \mid & \bang t\\
    \end{array}
 \]
 
 
 
+% A linear type system is a type system in which linear resources must be used
+% exactly once...!
+
+% % A linear type system is a type system in which statements such as "this function
+% % will use its argument exactly once" can be formally expressed and checked.
+
+% Girard's \emph{linear logic} suggests a new \emph{type system} for functional
+% languages through the Curry-Howard isomorphism -- every linear logic proposition
+% maps to a different linear type.
+
+% Values belonging to a linear type must be used exactly once. For example, the
+% type corresponding to the linear implication ($\lolli$), the linear function, is
+% a function that consumes its argument exactly once. A linear function that
+% receives an integer as an input and consumes it exactly once to
+% produce a character would have type $\textbf{int} \lolli
+% \textbf{char}$.
+
+% Programming languages with linear type systems might differ in their definition of linear
+% resources, but usually \emph{variables} are considered linear resources?
+% % That is, we can rely on the type system to prove properties regarding the usage of certain resources.
+% % The \emph{Hello World} of linearly typed programs is a linearly typed pointer.
+% % In a non-memory managed language, an allocated pointer must be freed
+% % \emph{exactly once}.
+
+% % \begin{code}
+% % let p = malloc(5)
+% %     p' = store(p, "x")
+% %     (p'', v) = load(p)
+% %     free p''
+% % \end{code}
+
+% % We'd like to hide the boilerplate involved \cite{Linear constraints}
+
+
+% \mypara{Type Systems} A type system can be formally described through
+% a set of inference rules that inductively define a judgment of the
+% form $\Gamma \vdash M : A$, stating that program expression $M$ has
+% type $A$ according to the \emph{typing assumptions} for variables
+% tracked in $\Gamma$. For instance,
+% $x{:}\mathsf{Int}, y{:}\mathsf{Int} \vdash x+y : \mathsf{Int}$ states
+% that $x+y$ has type $\mathsf{Int}$ under the assumption that $x$ and
+% $y$ have type $\mathsf{Int}$.  An expression $M$ is deemed well-typed
+% with a given type $A$ if one can construct a typing derivation with $M :
+% A$ as its conclusion, by repeated application of the inference rules.
+
+% The simply-typed $\lambda$-calculus is a typed core functional
+% language~\cite{10.5555/509043} that captures the essence of a type system in a simple and familiar environment. Its syntax consists of
+% functional abstraction, written $\lambda x{:}A.M$, denoting
+% an (anonymous) function that takes an argument of type $A$, bound to
+% $x$ in $M$; and application $M\,N$, with the standard meaning, and
+% variables $x$. For instance, the term $\lambda x{:}A.x$, denoting the identity function, is a functional abstraction
+% taking an argument of type $A$ and returning it back.
+
+% \mypara{Linear Logic}
+
+% Linear logic \cite{DBLP:journals/tcs/Girard87} can be seen as a
+% resource-aware logic, where propositions are interpreted as resources
+% that are consumed during the inference process.  Where in standard
+% propositional logic we are able to use an assumption as many times as
+% we want, in linear logic every resource (i.e., every assumption) must
+% be used \emph{exactly once}, or \emph{linearly}. This usage
+% restriction gives rise to new logical connectives, based on the way
+% the ambient resources are used. For instance, conjunction, usually
+% written as $A\wedge B$, appears in two forms in linear logic:
+% multiplicative or simultaneous conjunction (written $A\tensor B$); and
+% additive or alternative conjunction (written $A\with
+% B$). Multiplicative conjunction denotes the simultaneous availability
+% of resources $A$ and $B$, requiring both of them to be
+% used. Alternative conjunction denotes the availability of $A$ and $B$,
+% but where only one of the two resources may be used. Similarly,
+% implication becomes linear implication, written $A\lolli B$,
+% denoting a resource that will consume (exactly one) resource $A$ to
+% produce a resource $B$.
+
+% To present the formalization of this logic, besides the new
+% connectives, we need to introduce the \emph{resource-aware context}
+% $\Delta$.  In contrast to the previously seen $\Gamma$, $\Delta$ is
+% also a list of variables and their types, but where each and every
+% variable must be used exactly once during inference.  So, to introduce
+% the connective $\tensor$ which defines a multiplicative pair of
+% propositions, we must use exactly all the resources
+% ($\Delta_1, \Delta_2$) needed to realize the ($\Delta_1$)
+% proposition $A$, and ($\Delta_2$) proposition $B$:
+% \[
+%     \infer*[right=($\tensor I$)]
+%     {\Delta_1 \vdash M : A \and \Delta_2 \vdash N : B}
+%     {\Delta_1 , \Delta_2 \vdash (M \tensor N) : A \tensor B}
+% \]
+% Out of the logical connectives, we need to mention one more, since it
+% augments the form of the judgment and it's the one that ensures
+% logical strength i.e. we're able to translate intuitionistic logic
+% into linear logic.  The proposition $\bang A$ (read \emph{of course}
+% $A$) is used (under certain conditions) to make a resource
+% ``infinite'' i.e. to make it useable an arbitrary number of times. To
+% distinguish the ``infinite'' variables, a separate, unrestricted,
+% context is used -- $\Gamma$. So $\Gamma$ holds the ``infinite''
+% resources, and $\Delta$ the resources that can only be used once.  The
+% linear typing judgment for the introduction of the exponential $\bang A$
+% takes the form:
+% \[
+%     \infer*[right=($\bang I$)]
+%     {\Gamma ; \emptyset \vdash M : A}
+%     {\Gamma ; \emptyset \vdash \bang M : \bang A}
+% \]
+% Logically, a proof of $\bang A$ cannot use linear resources since
+% $\bang A$ denotes an unbounded (potentially $0$) number of copies of
+% $A$. Proofs of $\bang A$ may use other unrestricted or exponential
+% resources, tracked by context $\Gamma$.
+% From a computational perspective, the type $\bang A$
+% internalizes the simply-typed $\lambda$-calculus in the linear
+% $\lambda$-calculus.
+
+% The elimination form for the exponential, written $\llet{ !u
+% = M}{ N}$, warrants the use of resource $A$ an unbounded
+% number of times in $N$ via the variable $u$:
+% \[
+%     \infer*[right=($\bang E$)]
+%     {\Gamma ; \Delta_1 \vdash M : \bang A \and \Gamma, u{:}A ; \Delta_2 \vdash N : C}
+%     {\Gamma ; \Delta_1, \Delta_2 \vdash \llet{ !u = M}{ N} : C}
+% \]
+
+
+% % TODO: Revise the story above instead of dumping so much information
+
+
 
 % \mypara{Linear Types}
-\subsection{Linear Types}
+% \subsection{Linear Types}
 
-Girard's \emph{linear logic} suggests a new \emph{type system} for functional
-languages through the Curry-Howard isomorphism -- every linear logic proposition
-maps to a different linear type.
+% Girard's \emph{linear logic} suggests a new \emph{type system} for functional
+% languages through the Curry-Howard isomorphism -- every linear logic proposition
+% maps to a different linear type.
 
-Values belonging to a linear type must be used exactly once. For example, the
-type corresponding to the linear implication ($\lolli$), the linear function, is
-a function that consumes its argument exactly once. A linear function that
-receives an integer as an input and consumes it exactly once to
-produce a character would have type $\textbf{int} \lolli
-\textbf{char}$.
+% Values belonging to a linear type must be used exactly once. For example, the
+% type corresponding to the linear implication ($\lolli$), the linear function, is
+% a function that consumes its argument exactly once. A linear function that
+% receives an integer as an input and consumes it exactly once to
+% produce a character would have type $\textbf{int} \lolli
+% \textbf{char}$.
 
 
 \begin{itemize}
@@ -1372,117 +1444,100 @@ $f$ to emit upon $f False$, we calculate ...
 Refer to the algorithm for computing recursive environment
 
 
-\section{Work in progress}
+% \section{Work in progress}
 
-\subsection{In Result of TcGblEnv axioms}
+% % \section{Core to Core Validation}
+% \subsection{Inlining}
 
-I don't understand this one yet. I would guess it has to do with multiplicity
-coercions. Incorrect incompatible branch: CoAxBranch (src/Prelude/Linear/GenericUtil.hs:112:3-51):
-\begin{code}
-type family Fixup (f :: Type -> Type) (g :: Type -> Type) :: Type -> Type where
-  Fixup (D1 c f) (D1 _c g) = D1 c (Fixup f g)
-  Fixup (C1 c f) (C1 _c g) = C1 c (Fixup f g)
-  Fixup (S1 c f) (S1 _c (MP1 m f)) = S1 c (MP1 m f) -- error in this constructor
-  Fixup (S1 c f) (S1 _c f) = S1 c f
-  Fixup (f :*: g) (f' :*: g') = Fixup f f' :*: Fixup g g'
-  Fixup (f :+: g) (f' :+: g') = Fixup f f' :+: Fixup g g'
-  Fixup V1 V1 = V1
-  Fixup _ _ = TypeError ('Text "FixupMetaData: representations do not match.")
-\end{code}
+% \subsection{CSE}
 
+% \subsection{Join Points}
 
-% \section{Core to Core Validation}
-\subsection{Inlining}
+% When duplicating a case (in the case-of-case transformation), to avoid code
+% explosion, the branches of the case are first made into join points
 
-\subsection{CSE}
+% \begin{code}
+% case e of
+%   Pat1 -> u
+%   Pat2 -> v
+% ~~>
+% let j1 = u in
+% let j2 = v in
+% case e of
+%   Pat1 -> j1
+%   Pat2 -> j2
+% \end{code}
 
-\subsection{Join Points}
+% If there is any linear variable in u and v, then the standard
+% let rule above will fail (since j1 occurs only in one branch, and
+% so does j2).
 
-When duplicating a case (in the case-of-case transformation), to avoid code
-explosion, the branches of the case are first made into join points
+% However, if j1 and j2 were annotated with their usage environment,
 
-\begin{code}
-case e of
-  Pat1 -> u
-  Pat2 -> v
-~~>
-let j1 = u in
-let j2 = v in
-case e of
-  Pat1 -> j1
-  Pat2 -> j2
-\end{code}
+% \subsection{Empty Case}
 
-If there is any linear variable in u and v, then the standard
-let rule above will fail (since j1 occurs only in one branch, and
-so does j2).
+% For case expressions, the usage environment is computed by checking all branches
+% and taking sup. However, this trick doesn't work when there are no branches.
 
-However, if j1 and j2 were annotated with their usage environment,
+% \begin{itemize}
+% \item https://gitlab.haskell.org/ghc/ghc/-/issues/20058
+% \item https://gitlab.haskell.org/ghc/ghc/-/issues/18768
 
-\subsection{Empty Case}
+% \item (1) Just like a case expression remembers its type (Note [Why does Case have a
+% 'Type' field?] in Core.hs), it should remember its usage environment. This data
+% should be verified by Lint.
 
-For case expressions, the usage environment is computed by checking all branches
-and taking sup. However, this trick doesn't work when there are no branches.
+% \item (2) Once this is done, we can remove the Bottom usage and the second field of
+% UsageEnv. In this step, we have to infer the correct usage environment for empty
+% case in the typechecker.
+% \end{itemize}
 
-\begin{itemize}
-\item https://gitlab.haskell.org/ghc/ghc/-/issues/20058
-\item https://gitlab.haskell.org/ghc/ghc/-/issues/18768
+% \begin{code}
+% {-# LANGUAGE LinearTypes, EmptyCase #-}
+% module M where
 
-\item (1) Just like a case expression remembers its type (Note [Why does Case have a
-'Type' field?] in Core.hs), it should remember its usage environment. This data
-should be verified by Lint.
+% {-# NOINLINE f #-}
+% f :: a %1-> ()
+% f x = case () of {}
+% \end{code}
 
-\item (2) Once this is done, we can remove the Bottom usage and the second field of
-UsageEnv. In this step, we have to infer the correct usage environment for empty
-case in the typechecker.
-\end{itemize}
+% This example is well typed: a function is linear if it consumes its argument
+% exactly once when it's consumed exactly once. It seems like the function isn't
+% linear since it won't consume x because of the empty case, however, that also
+% means f won't be consumed due to the same empty case, thus linearity is
+% preserved.
 
-\begin{code}
-{-# LANGUAGE LinearTypes, EmptyCase #-}
-module M where
+% \begin{code}
+% * In the case of empty types (see Note [Bottoming expressions]), say
+%   data T
+% we do NOT want to replace
+%   case (x::T) of Bool {}   -->   error Bool "Inaccessible case"
+% because x might raise an exception, and *that*'s what we want to see!
+% (#6067 is an example.) To preserve semantics we'd have to say
+%    x `seq` error Bool "Inaccessible case"
+% but the 'seq' is just such a case, so we are back to square 1.
+% \end{code}
 
-{-# NOINLINE f #-}
-f :: a %1-> ()
-f x = case () of {}
-\end{code}
+% There are three different problems:
 
-This example is well typed: a function is linear if it consumes its argument
-exactly once when it's consumed exactly once. It seems like the function isn't
-linear since it won't consume x because of the empty case, however, that also
-means f won't be consumed due to the same empty case, thus linearity is
-preserved.
+% \begin{itemize}
+% \item castBottomExpr converts (case x :: T of {}) :: T to x.
+% \item Worker/wrapper moves the empty case to a separate binding
+% \item CorePrep eliminates empty case, just like point 1 (See -- Eliminate empty
+%     case in GHC.CoreToStg.Prep
+% \end{itemize}
 
-\begin{code}
-* In the case of empty types (see Note [Bottoming expressions]), say
-  data T
-we do NOT want to replace
-  case (x::T) of Bool {}   -->   error Bool "Inaccessible case"
-because x might raise an exception, and *that*'s what we want to see!
-(#6067 is an example.) To preserve semantics we'd have to say
-   x `seq` error Bool "Inaccessible case"
-but the 'seq' is just such a case, so we are back to square 1.
-\end{code}
-
-There are three different problems:
-
-\begin{itemize}
-\item castBottomExpr converts (case x :: T of {}) :: T to x.
-\item Worker/wrapper moves the empty case to a separate binding
-\item CorePrep eliminates empty case, just like point 1 (See -- Eliminate empty
-    case in GHC.CoreToStg.Prep
-\end{itemize}
-
-With castBottomExpr, we get the example above to
-\begin{code}
-    f = \ @a (x (%1) :: a) -> ()
-\end{code}
-And if we don't, 
-\begin{code}
-    f = \ @a (x (%1) :: a) -> case () of {}
-\end{code}
-And that supposedly if we had a usage environment in the case expression we
-could avoid the error. How is it typed without the transformation in face
-of the bottom? (Even knowing that theoretically it's because of divergence?)
+% With castBottomExpr, we get the example above to
+% \begin{code}
+%     f = \ @a (x (%1) :: a) -> ()
+% \end{code}
+% And if we don't, 
+% \begin{code}
+%     f = \ @a (x (%1) :: a) -> case () of {}
+% \end{code}
+% And that supposedly if we had a usage environment in the case expression we
+% could avoid the error. How is it typed without the transformation in face
+% of the bottom? (Even knowing that theoretically it's because of divergence?)
 
 \bibliographystyle{plain}
 \bibliography{references}

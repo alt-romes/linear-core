@@ -1,8 +1,11 @@
 DOCNAME=report
 
-all: report
+all: simple
 
 .PHONY: clean
+
+simple:
+	pdflatex $(DOCNAME).tex
 
 report:
 	pdflatex $(DOCNAME).tex
