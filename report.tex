@@ -9,8 +9,7 @@
 \usepackage{hyperref}
 \usepackage{fancyvrb}
 
-% BNF grammars
-\usepackage[center]{formal-grammar}
+
 
 \DefineVerbatimEnvironment{code}{Verbatim}{fontsize=\small}
 \DefineVerbatimEnvironment{example}{Verbatim}{fontsize=\small}
@@ -42,6 +41,7 @@
 
 \chapter{Introduction}
 
+% Statically typed languages 
 % Linear types are cool
 % Among the few, Haskell has linear types
 % But Haskell differs from other languages with linear types
@@ -50,20 +50,21 @@
 % Core has linear types for good reasons
 % But they are broken -- why?
 %   * Optimizations changes source -- e.g. if recursive lets are introduced, how to type linearity?
-% 
+% Goals - O que eu vou fazer
+% Document Structure (pode-se eventualmente combinar com a seccao dos goals)
 
 
-\section{Introduction}
+%\section{Introduction}
 
-Linear type systems\cite{} add expressiveness to existing type systems by
+Linear type systems~\cite{} add expressiveness to existing type systems by
 stating that linear resources must be used \emph{exactly once}. In programming
 languages with a linear type system, not using certain resources or using them
 twice are type errors. Linear types can thus be used to, for example, guarantee
 that file handles, socket descriptors, and allocated memory are freed exactly
-once (leaks and double-frees become type errors)\cite{}, implement safe
-high-performance language interoperability\cite{}, guarantee that quantum
-entangled states are not duplicated~\cite{}, handle mutable state safely\cite{},
-something on session types guarantees\cite{}, and much more.
+once (leaks and double-frees become type errors)~\cite{}, implement safe
+high-performance language interoperability~\cite{}, guarantee that quantum
+entangled states are not duplicated~\cite{}, handle mutable state safely~\cite{},
+something on session types guarantees~\cite{}, and much more.
 
 % TODO: Also include bit about how it makes the basis of other type systems such
 % as rusts owneship. How ?
@@ -119,8 +120,7 @@ the two following distinct reasons:
         % haskell default?
 \end{itemize}
 
-Core was imbued with linear types because an implementation detail required it,
-and, more importantly, to guarantee linear programs remain linear after being
+Core was imbued with linear types to guarantee linear programs remain linear after being
 desugared and optimized: much the same way a \emph{typed} Core ensures that
 desugaring, and optimizing transformations, are correctly implemented and result
 in a \emph{well-typed} program -- a design decision that has well served the
@@ -362,11 +362,15 @@ In order to give well defined semantics to a linear type system, we present a
 linearly typed lambda calculus which is a very simple language with linear
 types.
 
-\begin{grammar}
-    \firstcase{\t}{\star}{Unit type}
-    \otherform{t \tensor t'}{Multiplicative conjunction type}
-    % t ::= a $\lolli$ b
-\end{grammar}
+\[
+  \begin{array}{lcl}
+    s,t & ::= & \star\\
+        & \mid & t \lolli s\\
+       \dots
+   \end{array}
+\]
+
+
 
 
 % \mypara{Linear Types}
