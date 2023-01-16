@@ -20,7 +20,8 @@
 \newcommand{\one}{\mathbf{1}}
 \newcommand{\bang}{{!}}
 
-\newcommand{\llet}[2]{\mathsf{let}\ #1\ \mathsf{in}\ #2}
+\newcommand{\llet}[2]{\mathsf{let}~#1~\mathsf{in}~#2}
+\newcommand{\ccase}[2]{\mathsf{case}~#1~\mathsf{of}~#2}
 
 \title{Linting Linearity in Core/System FC}
 \author{Rodrigo Mesquita}
@@ -261,52 +262,63 @@ worry because the compiler can guarantee the resource is used exactly once, or
 \emph{linearly}.
 
 To understand how linear types are defined and used in practice, we present two
-examples of anonymous functions, try to understand how they could be disregarded
-as incorrect, and work our way up to linear types from them. The first receives a
-file handle as an argument, ignores it, and returns $\star$ (read unit), which
-is equivalent to C's
-\textbf{void}.
+examples of anonymous functions that receive as an argument a handle to work
+with and are responsible for closing it, we try to understand how the examples
+could be disregarded as incorrect, and work our way up to linear types from
+them. The first function ignores the received file handle and returns $\star$
+(read unit), which is equivalent to C's \textbf{void}.
 % TODO: Better code formatting
-\[
+\begin{mathpar}
     \lambda h.~\textrm{return}~\star;
-\]
-
-And, similarly, the second receives a file handle and closes it
-twice. Note that \textbf{close} has type $\textbf{Handle} \to \star$, that is, it's a
-function that receives a handle and returns unit.
-\[
+    \and
     \lambda h.~\textrm{close}~h;~\textrm{close}~h;
-\]
+\end{mathpar}
+% TODO: Equation references?
 
-Both the above functions share the same type ($\textbf{Handle} \to \star$),
-under a simple type system such as C's they are type correct, and both have
-erroneous behaviours. The first forgets to close the handle and the second
-closes it twice. Our goal is now to reach a type system that rejects these
-two programs.
-
-The key observation is that the argument of the function must be linear, and we
-can augment the common function type to account for the linearity of its
-argument. We take the function type $A \to B$ and replace the arrow with the
-$\lolli$
+Ignoring the file handle which should have been closed by the function makes the
+first function incorrect. Similarly, the second function receives the file handle and
+closes it twice, which is incorrect not because it falls short of the
+specification, but rather because the program will crash while executing it.
 %
-\footnote{Since linear types are born from a
-correspondence\cite{curry-howard} (the Curry-Howard isomrphism) with linear
-logic\cite{linear-logic}, we borrow the $\lolli$ symbol and other linear logic
-connectives to describe linear types.}
+Additionally, both functions share the same type, $\textbf{Handle} \to \star$, i.e.
+a function that takes a \textbf{Handle} and returns $\star$. The second function also
+shares this type because \textbf{close} has type $\textbf{Handle} \to \star$.
+%
+Under a simple type system such as C's both functions are type correct (the
+compiler will happily succeed), but both have erroneous behaviours. The first
+forgets to close the handle and the second closes it twice. Our goal is now to
+reach a type system that rejects these two programs.
+
+The key observation to invalidating these programs is to focus on the function
+type going between \textbf{Handle} and $\star$ and augment it to indicate that
+\emph{the argument must be used exactly once}, or, in other words, that the
+argument of the function must be linear. We take the function type $A \to B$
+and replace the function arrow ($\to$) with the linear function arrow ($\lolli$)
+%
+\footnote{Since linear types are born from a correspondence with linear
+logic\cite{linear-logic} (the Curry-Howard isomorphism\cite{curry-howard}), we
+borrow the $\lolli$ symbol and other linear logic connectives to describe linear
+types.}
 %
 operator to denote a function that uses its argument exactly once: $A \lolli B$.
+%
+Providing the more restrictive linear function signature $\textbf{Handle} \lolli
+\star$ to the example programs would make both of them fail to typecheck because
+they do not satisfy the linearity specification that the function argument
+should only be used exactly once.
+
 % Linear types are a powerful idea because they allow us to statically reason
-% about resources in our program. A so called linear resource 
+% about resources in our program. A so called linear resource ?
 
-% For example, to define a ...
+In order to further give well defined semantics to a linear type system, we
+present a linearly typed lambda calculus, a very simple language with linear
+types, by defining what are syntatically valid programs through the grammar and
+what programs are well typed through the typing rules.
 
-% Linear types are a powerful idea
+An expression in the linearly typed lambda calculus can be $\star$...
+A type in the linearly typed lambda calculus can be $\star$...
 
-In order to give well defined semantics to a linear type system, we present a
-linearly typed lambda calculus which is a very simple language with linear
-types...
-
-\[
+\begin{mathpar}
   \begin{array}{lcl}
     s,t & ::= & \star\\
         & \mid & t \lolli s\\
@@ -315,9 +327,108 @@ types...
         & \mid & t \with s\\
         & \mid & \bang t\\
    \end{array}
-\]
 
+\and
 
+  \begin{array}{lcl}
+      M,N & ::= & \star \mid \llet{\star = M}{N} \\
+        & \mid & u \\
+        & \mid & \lambda u. M \mid M~N\\
+        & \mid & \textrm{inl}~M \mid \textrm{inr}~M \mid
+        \ccase{M}{\textrm{inl}~u_1 \to N_1 \mid \textrm{inr}~u_2 \to N_2}\\
+        & \mid & M \tensor N \mid \llet{u_1 \tensor u_2 = M}{N}\\
+        & \mid & M \with N \mid \textrm{fst}~M \mid \textrm{snd}~M \\
+        & \mid & \bang M \mid \llet{!u = M}{N} \\
+   \end{array}
+\end{mathpar}
+
+\begin{mathpar}
+    \infer*[right=($\tensor I$)]
+    {\Delta \vdash M : A \and \Delta' \vdash N : B}
+    {\Delta , \Delta' \vdash (M \tensor N) : A \tensor B}
+
+    \and
+\end{mathpar}
+
+\begin{mathpar}
+    \infer*[right=($\tensor E$)]
+    {\Delta \vdash M : A \tensor B \and \Delta', u{:}A, v{:}B \vdash N : C}
+    {\Delta , \Delta' \vdash \llet{u \tensor v}{N} : C}
+\end{mathpar}
+
+\begin{mathpar}
+    \infer*[right=($\lolli I$)]
+    {\Delta , u{:}A \vdash M : B}
+    {\Delta \vdash \lambda u. M : A \lolli B}
+
+    \and
+
+    \infer*[right=($\lolli E$)]
+    {\Delta \vdash M : A \lolli B \and \Delta' \vdash N : A}
+    {\Delta, \Delta' \vdash M~N : B}
+\end{mathpar}
+
+\begin{mathpar}
+    \infer*[right=($\with I$)]
+    {\Delta \vdash M : A \and \Delta \vdash N : B}
+    {\Delta \vdash M \with N : A \with B}
+
+    \and
+
+    \infer*[right=($\with E_L$)]
+    {\Delta \vdash M : A \with B}
+    {\Delta \vdash \textrm{fst}~M : A}
+    
+    \and
+
+    \infer*[right=($\with E_R$)]
+    {\Delta \vdash M : A \with B}
+    {\Delta \vdash \textrm{snd}~M : B}
+\end{mathpar}
+
+\begin{mathpar}
+    \infer*[right=($\oplus I_L$)]
+    {\Delta \vdash M : A}
+    {\Delta \vdash \textrm{inl}~M : A \oplus B}
+
+    \and
+
+    \infer*[right=($\oplus I_R$)]
+    {\Delta \vdash M : B}
+    {\Delta \vdash \textrm{inr}~M : A \oplus B}
+
+    \and
+
+    \infer*[right=($\oplus E$)]
+    {\Delta \vdash M : A \oplus B \and \Delta', w_1{:}A \vdash N_1 : C \and
+    \Delta', w_2{:}B \vdash N_2 : C}
+    {\Delta, \Delta' \vdash \ccase{M}{\textrm{inl}~w_1 \to N_1 \mid \textrm{inr}~w_2 \to N_2} : C}
+\end{mathpar}
+
+\begin{mathpar}
+    \infer*[right=($\star I$)]
+    { }
+    {\Delta \vdash \star : \star}
+
+    \and
+
+    \infer*[right=($\star E$)]
+    {\Delta \vdash M : \star \and \Delta' \vdash N : B}
+    {\Delta, \Delta' \vdash \llet{\star = M}{N} : B}
+
+\end{mathpar}
+
+\begin{mathpar}
+    \infer*[right=($\bang I$)]
+    {\Gamma ; \cdot \vdash M : A}
+    {\Gamma ; \cdot \vdash !M : !A}
+
+    \and
+
+    \infer*[right=($\bang E$)]
+    {\Gamma ; \Delta \vdash M : \bang A \and \Gamma, u{:}A ; \Delta' \vdash N : C}
+    {\Gamma ; \Delta, \Delta' \vdash \llet{!u = M}{N} : C}
+\end{mathpar}
 
 % A linear type system is a type system in which linear resources must be used
 % exactly once...!
