@@ -571,12 +571,12 @@ A type in the linearly typed lambda calculus can be $\star$...
 % \textbf{char}$.
 
 
-\begin{itemize}
-    \item Ideia dos linear types
-    \item Calculo lambda linear (como forma de falar da linearidade)
-    \item Gestão de recursos
-    \item Rust (core is linear lambda calculus?)
-\end{itemize}
+% \begin{itemize}
+%     \item Ideia dos linear types
+%     \item Calculo lambda linear (como forma de falar da linearidade)
+%     \item Gestão de recursos
+%     \item Rust (core is linear lambda calculus?)
+% \end{itemize}
 
 \section{Haskell}
 
@@ -586,7 +586,56 @@ implementation is GHC, the Glasgow Haskell Compiler\cite{GHC}. Haskell is a
 \emph{lazy}, \emph{purely functional} language, i.e., functions cannot
 have side effects or mutate data, and contrary to many programming languages,
 arguments are \emph{not} evaluated when passed to functions, but rather are only
-evaluated when the value is needed.
+evaluated when the value is needed. The combination of purety and laziness is
+unique to Haskell among mainstream programming languages...
+
+Haskell is a large language but its small core is based on a typed lambda
+calculus. As such, there exist no statements and computation is done simply
+through the evaluation of functions. Besides functions, one can define types and
+their constructors and pattern match on said constructors. Function application
+is denoted by an empty space (\textbf{f~a} means \textbf{f} applied to
+\textbf{a}) and pattern matching is done with the \textbf{case} keyword followed
+by the enumerated alternatives. All variable names start with lower case and
+types start with upper case (excluding type variables). To make explicit the
+type of an expression, the \textbf{::} operator is used (e.g.
+$\textbf{f~::~Int}\to \textbf{Bool}$ is read \textbf{f} \emph{has type} function
+from \textbf{Int} to \textbf{Bool}).
+
+Because Haskell is a pure programming language, input/ouptut side-effects are
+"made pure" by modelling them on the type level through the
+higher-kinded\footnote{\textbf{IO} has kind $\textbf{Type}\to\textbf{Type}$,
+that is, it is only a type after another type is passed as a parameter (e.g.
+\textbf{IO~Int}, \textbf{IO~Bool}); \textbf{IO} by itself is a \emph{type
+constructor}} type \textbf{IO}. Some of the example programs will look though as
+if they had statements, but, in reality, the sequential appearence is just
+syntatic sugar to an expression using Monadic operators. The main take away is
+that computations that do I/O may be sequenced together with other operations
+that do I/O while retaining the lack of statements and the language purity
+guarantees.
+
+% TODO: Perhaps elaborate a bit more on the constructors and pattern matching?
+
+As an example, consider these functions that do I/O and their types. The first
+opens a file by path and returns its handle, the second gets the size of a file
+from its handle, and the third closes the handle. It is important that the
+handle be closed exactly once, but currently nothing enforces that usage policy.
+
+\begin{code}
+openFile :: FilePath -> IOMode -> IO Handle
+hFileSize :: Handle -> IO Integer
+hClose   :: Handle -> IO ()
+\end{code}
+
+The following function makes use of the above definitions to return the size of
+a file given its path.
+\begin{code}
+countWords :: FilePath -> IO Integer
+countWords path = do
+    handle <- openFile path ReadMode
+    size   <- hFileSize handle
+    return size
+\end{code}
+% hClose handle
 
 Another defining feature of Haskell is its powerful type system....
 
