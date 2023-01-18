@@ -608,7 +608,7 @@ that is, it is only a type after another type is passed as a parameter (e.g.
 \textbf{IO~Int}, \textbf{IO~Bool}); \textbf{IO} by itself is a \emph{type
 constructor}} type \textbf{IO}. Some of the example programs will look though as
 if they had statements, but, in reality, the sequential appearence is just
-syntatic sugar to an expression using Monadic operators. The main take away is
+syntatic sugar to an expression using monadic operators. The main take away is
 that computations that do I/O may be sequenced together with other operations
 that do I/O while retaining the lack of statements and the language purity
 guarantees.
@@ -627,7 +627,9 @@ hClose   :: Handle -> IO ()
 \end{code}
 
 The following function makes use of the above definitions to return the size of
-a file given its path.
+a file given its path. Note that the function silently leaks the handle to the
+file, despite compiling successfully.
+
 \begin{code}
 countWords :: FilePath -> IO Integer
 countWords path = do
@@ -637,39 +639,84 @@ countWords path = do
 \end{code}
 % hClose handle
 
-Another defining feature of Haskell is its powerful type system....
+Another defining feature of Haskell is its powerful type system. Features such
+as type classes, arbitrary-rank types, functional dependencies, GADTs, type
+families and (now) even impredicative polymorphism\cite{10.1145/3408971} have become
+commonplace in Haskell code enforcing application level invariants and program
+correctness through the types. For example, consider the definition of
+\textbf{head} in the standard library, a function which takes the first element
+of a list by pattern matching on the list constructors.
 
-
-% TODO: File example
-
-A function to compute the length of a list in Haskell is defined by pattern
-matching on the list and returning $0$ if the list is empty and adding one to
-the (computed recursively) length of the rest of the list otherwise. The
-following snippet defines the said \textbf{length} function.
 \begin{code}
-    length [] = 0
-    length (x:xs) = 1 + length xs
+    head :: [a] -> a
+    head [] = error "List is empty!"
+    head (x:xs) = x
 \end{code}
-The function \textbf{length} receives a list and returns an integer, and since
-it treats all list's elements the same, it is said to be polymorphic over the
-list's elements type. In Haskell, function signatures typically appear above the
-definition, and for this particular function we'd have
-\begin{code}
-    length :: [a] -> Int
-\end{code}
-where \textbf{a} is a universally quantified type variable, that is,
-\textbf{length} can be called on lists of ints, lists of characters, lists of
-lists of strings, lists of anything.
 
-The laziness evaluation strategy entails expressions are only evaluated when
-needed. If we were to call just the above function on a list of computationally
-expensive elements, such as
+If the list is empty, we terminate the program with an error, otherwise, we take
+the first element. This function is unsafe -- our program might crash if we use
+it on an invalid input. A common technique in Haskell is to use more expressive
+types to assert properties about the values and get rid of the impossible cases
+(e.g. a \textbf{NonEmpty} is a list that can not be empty). A well liked motto is
+"make invalid states unrepresentable". In this light, we will introduce
+Generalized Algebraic Data Types (GADTs) and create a list type indexed by size
+for which we can write a completely safe \textbf{head} function by expressing
+that the size of the list must be at least one, at the type level.
+
+\textbf{GADTs}~\cite{10.1145/1159803.1159811,,,} are a wildly popular type level
+feature that allow the user to define data types by enumerating its constructors
+with explicit type signatures, where the result type may differ in the type
+parameters across branches; pattern matching against GADTs might introduce type
+refinements locally, i.e. in individual case alternatives. We develop the
+length-indexed lists example without discussing the type system and type
+inference details of GADTs which we explore later in~\ref{related-work-gadts}.
+First, we define the natural numbers inductively: a natural number is either
+zero (\textbf{Z}) or a successor (\textbf{S}) of another natural number (e.g.
+the successor of the successor of zero is a natural number). The following
+definition creates the \textbf{Nat} type, the \textbf{Z} and \textbf{S} data
+constructors which construct values, \emph{and}, the \textbf{Z} and \textbf{S}
+\emph{type} constructors which construct types. The latter two exist due to the
+\emph{DataKinds} language feature which promotes term-level constructors to
+type-level constructors.
+%
 \begin{code}
-    length [5^1234, 6^4567, 8^(9^42)]
+    data Nat = Z | S Nat
 \end{code}
-We would get the result 3 instantaneously: the elements of the list would never
-be evaluated because the \textbf{length} function does not require the value of
-each element to compute a result.
+% Before introducing the data type of 
+
+Besides the aforementioned type-level features of Haskell, \emph{linear types},
+which allow for a finer control over the usage of certain resources at the type
+level, are another example of an extension to Haskell's type system that makes
+it yet more expressive.
+
+% A function to compute the length of a list in Haskell is defined by pattern
+% matching on the list and returning $0$ if the list is empty and adding one to
+% the (computed recursively) length of the rest of the list otherwise. The
+% following snippet defines the said \textbf{length} function.
+% \begin{code}
+%     length [] = 0
+%     length (x:xs) = 1 + length xs
+% \end{code}
+% The function \textbf{length} receives a list and returns an integer, and since
+% it treats all list's elements the same, it is said to be polymorphic over the
+% list's elements type. In Haskell, function signatures typically appear above the
+% definition, and for this particular function we'd have
+% \begin{code}
+%     length :: [a] -> Int
+% \end{code}
+% where \textbf{a} is a universally quantified type variable, that is,
+% \textbf{length} can be called on lists of ints, lists of characters, lists of
+% lists of strings, lists of anything.
+
+% The laziness evaluation strategy entails expressions are only evaluated when
+% needed. If we were to call just the above function on a list of computationally
+% expensive elements, such as
+% \begin{code}
+%     length [5^1234, 6^4567, 8^(9^42)]
+% \end{code}
+% We would get the result 3 instantaneously: the elements of the list would never
+% be evaluated because the \textbf{length} function does not require the value of
+% each element to compute a result.
 
 % TODO:
 % Is it outside the scope of this report to discuss the merits and disadvantages
@@ -677,9 +724,9 @@ each element to compute a result.
 
 
 \begin{itemize}
-    \item Features fundamentais
-    \item Exemplos, introduzir syntax
-    \item (Ao contrário de OCaml) tem um sistema de tipos muito sufesticado
+    % \item Features fundamentais
+    % \item Exemplos, introduzir syntax
+    \item (Ao contrário de OCaml) tem um sistema de tipos muito sofisticado
     \item Eventualmente explicação de GADTs? c/ exemplo do Vec
     \item Uma das features mais avaçadas/experimentais é o Linear Haskell
 \end{itemize}
@@ -733,7 +780,7 @@ each element to compute a result.
 
 \section{Linear Haskell}
 
-\section{OutsideIn(X)}
+\section{OutsideIn(X)\label{related-work-gadts}}
 
 Se for modificar o typechecker com as multiplicity coercions vou ter de falar
 disto.

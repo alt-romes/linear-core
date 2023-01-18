@@ -37,3 +37,60 @@
   howpublished = {\url{https://github.com/tweag/linear-base}},
   note = {Accessed: 2022-11-25}
 }
+
+@article{10.1145/1160074.1159811,
+author = {Peyton Jones, Simon and Vytiniotis, Dimitrios and Weirich, Stephanie and Washburn, Geoffrey},
+title = {Simple Unification-Based Type Inference for GADTs},
+year = {2006},
+issue_date = {September 2006},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+volume = {41},
+number = {9},
+issn = {0362-1340},
+url = {https://doi.org/10.1145/1160074.1159811},
+doi = {10.1145/1160074.1159811},
+abstract = {Generalized algebraic data types (GADTs), sometimes known as "guarded recursive data types" or "first-class phantom types", are a simple but powerful generalization of the data types of Haskell and ML. Recent works have given compelling examples of the utility of GADTs, although type inference is known to be difficult. Our contribution is to show how to exploit programmer-supplied type annotations to make the type inference task almost embarrassingly easy. Our main technical innovation is wobbly types, which express in a declarative way the uncertainty caused by the incremental nature of typical type-inference algorithms.},
+journal = {SIGPLAN Not.},
+month = {sep},
+pages = {50–61},
+numpages = {12},
+keywords = {type inference, generalized algebraic data types}
+}
+
+@inproceedings{10.1145/1159803.1159811,
+author = {Peyton Jones, Simon and Vytiniotis, Dimitrios and Weirich, Stephanie and Washburn, Geoffrey},
+title = {Simple Unification-Based Type Inference for GADTs},
+year = {2006},
+isbn = {1595933093},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+url = {https://doi.org/10.1145/1159803.1159811},
+doi = {10.1145/1159803.1159811},
+abstract = {Generalized algebraic data types (GADTs), sometimes known as "guarded recursive data types" or "first-class phantom types", are a simple but powerful generalization of the data types of Haskell and ML. Recent works have given compelling examples of the utility of GADTs, although type inference is known to be difficult. Our contribution is to show how to exploit programmer-supplied type annotations to make the type inference task almost embarrassingly easy. Our main technical innovation is wobbly types, which express in a declarative way the uncertainty caused by the incremental nature of typical type-inference algorithms.},
+booktitle = {Proceedings of the Eleventh ACM SIGPLAN International Conference on Functional Programming},
+pages = {50–61},
+numpages = {12},
+keywords = {type inference, generalized algebraic data types},
+location = {Portland, Oregon, USA},
+series = {ICFP '06}
+}
+
+@article{10.1145/3408971,
+author = {Serrano, Alejandro and Hage, Jurriaan and Peyton Jones, Simon and Vytiniotis, Dimitrios},
+title = {A Quick Look at Impredicativity},
+year = {2020},
+issue_date = {August 2020},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+volume = {4},
+number = {ICFP},
+url = {https://doi.org/10.1145/3408971},
+doi = {10.1145/3408971},
+abstract = {Type inference for parametric polymorphism is wildly successful, but has always suffered from an embarrassing flaw: polymorphic types are themselves not first class. We present Quick Look, a practical, implemented, and deployable design for impredicative type inference. To demonstrate our claims, we have modified GHC, a production-quality Haskell compiler, to support impredicativity. The changes required are modest, localised, and are fully compatible with GHC's myriad other type system extensions.},
+journal = {Proc. ACM Program. Lang.},
+month = {aug},
+articleno = {89},
+numpages = {29},
+keywords = {Type systems, constraint-based inference, impredicative polymorphism}
+}
