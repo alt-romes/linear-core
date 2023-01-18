@@ -766,15 +766,20 @@ features, that makes it even more expressive.
 % of laziness and purely functional properties?
 
 
-\begin{itemize}
+% \begin{itemize}
     % \item Features fundamentais
     % \item Exemplos, introduzir syntax
-    \item (Ao contrário de OCaml) tem um sistema de tipos muito sofisticado
-    \item Eventualmente explicação de GADTs? c/ exemplo do Vec
-    \item Uma das features mais avaçadas/experimentais é o Linear Haskell
-\end{itemize}
+    % \item (Ao contrário de OCaml) tem um sistema de tipos muito sofisticado
+    % \item Eventualmente explicação de GADTs? c/ exemplo do Vec
+    % \item Uma das features mais avaçadas/experimentais é o Linear Haskell
+% \end{itemize}
 
-\subsection{Linear Haskell\label{linear-haskell-section}}
+\section{Linear Haskell\label{linear-haskell-section}}
+
+Introduction of linear types to Haskell. How do they work, what's the syntax?
+Multiplicities, examples. Monads, multiplicity polymorphism, multiplicity
+polymoprhism applied to monadic bind to define resource-aware sequencing of
+operations. Linear haskell relates systemFC with the linear lambda calculus?
 
 \begin{itemize}
     \item Linear Haskell definition
@@ -784,7 +789,9 @@ features, that makes it even more expressive.
     \item Que relaciona o systemFC com o calculo lambda linear
 \end{itemize}
 
-\subsection{Core Haskell\label{core-section}}
+\section{Core Haskell\label{core-section}}
+
+Haskel's intermediate representation that is statically typed
 
 \begin{itemize}
     \item What is Core (IR) e as particularidades
@@ -798,6 +805,10 @@ features, that makes it even more expressive.
 \end{itemize}
 
 \section{GHC Pipeline}
+
+The architecture of GHC
+Both typecheckers, the backends Core is transformed into, and \textbf{\emph{all
+core transformations}}.
 
 \begin{itemize}
     \item Parser -> Rename -> Typechecker -> Desugar
@@ -819,18 +830,37 @@ features, that makes it even more expressive.
 
 \chapter{Related Work}
 
+A brief introduction to the related work section?
+
 \section{System FC}
+
+Haskell Core's foundational language was imbued with linear types, but it does
+not account for linearity with the whole of the type system
+
+Multiplicity annotations in SystemFC?
+
+Rules?
 
 \section{Linear Haskell}
 
+The paper is concerned with retrofitted lienar types but couldn't account for
+optimizations in the Core. It originally did not set out to modify Core but had
+to, and it's better this way bc we get optimizations typechecking safety
+guarantees.
+
 \section{OutsideIn(X)\label{related-work-gadts}}
+
+Defines constraint-based type system parametrized over X which does not account
+for local type refinements regarding linearity.
 
 Se for modificar o typechecker com as multiplicity coercions vou ter de falar
 disto.
 
 \section{Rust}
 
-They have a linearly typed something?
+Rust has a core based on linear types. Describe Rust's architecture?
+How do they handle linearity plus optimizations
+They probabluy don't typecheck linearity in Core
 
 \chapter{Technical Details}
 
