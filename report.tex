@@ -387,7 +387,7 @@ A type in the linearly typed lambda calculus can be $\star$...
     \\[1em]
     \infer*[right=($\star I$)]
     { }
-    {\Delta \vdash \star : \star}
+    {\cdot \vdash \star : \star}
 \quad    \infer*[right=($\star E$)]
     {\Delta \vdash M : \star \and \Delta' \vdash N : B}
     {\Delta, \Delta' \vdash \llet{\star = M}{N} : B}
@@ -626,17 +626,24 @@ of a list by pattern matching on the list constructors.
 
 If the list is empty, we terminate the program with an error, otherwise, we take
 the first element. This function is unsafe -- our program might crash if we use
-it on an invalid input. A common technique in Haskell is to use more expressive
+it on an invalid input.
+\todo[inline]{When applied to the empty list, ...}
+
+A common technique in Haskell is to use more expressive
 types to assert properties about the values and get rid of the impossible cases
-(e.g. a \textbf{NonEmpty} is a list that can not be empty). A well liked motto is
+(e.g. a \textbf{NonEmpty} is a list that can not be empty).
+
+\todo[inline]{Leveraging Haskell's more advanced features, we can
+  .... }
+
+A well liked motto is
 "make invalid states unrepresentable". In this light, we will introduce
 Generalized Algebraic Data Types (GADTs) and create a list type indexed by size
 for which we can write a completely safe \textbf{head} function by expressing
 that the size of the list must be at least one, at the type level.
 
-% TODO: But what are ADTs? Perhaps expand Haskell introduction section to
-% include recursive ADTs
-\textbf{GADTs}~\cite{10.1145/1159803.1159811,,,} are a very popular feature with
+
+\textbf{GADTs}~\cite{10.1145/1159803.1159811,,,} are a very popular\todo{nope} feature with
 which users can define data types as they would common recursive algebraic data
 types, but that allows explicit type signatures for the data constructors where
 the result type may differ in the type parameters across branches. Pattern
@@ -678,7 +685,7 @@ type of the values contained in the list, and any type is valid, hence the
 The length-indexed list is defined inductively as either an empty list \emph{of
 size zero}, or the construction of a list by appending a new element to an
 existing list \emph{of size $m$} whose final size is $m+1$ (\textbf{S m}). The
-list \textbf{Cons~2~(Cons~1~Nil)} has type \textbf{Vec~(S~(S~Z))~Int} because
+list \texttt{Cons~2~(Cons~1~Nil)} has type \textbf{Vec~(S~(S~Z))~Int} because
 \textbf{Nil~::~Vec~Z~Int} and \textbf{Cons~1~Nil~::~Vec~(S~Z)~Int}. GADTs make
 possible different data type constructors being parametrized over different type
 parameters as we do with \textbf{Vec}'s size parameter being different depending
