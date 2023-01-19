@@ -327,9 +327,7 @@ A type in the linearly typed lambda calculus can be $\star$...
         & \mid & t \with s\\
         & \mid & \bang t\\
    \end{array}
-
 \and
-
   \begin{array}{lcl}
       M,N & ::= & \star \mid \llet{\star = M}{N} \\
         & \mid & u \\
@@ -342,93 +340,66 @@ A type in the linearly typed lambda calculus can be $\star$...
    \end{array}
 \end{mathpar}
 
-\begin{mathpar}
+\[
+  \begin{array}{c}
     \infer*[right=($\tensor I$)]
     {\Delta \vdash M : A \and \Delta' \vdash N : B}
     {\Delta , \Delta' \vdash (M \tensor N) : A \tensor B}
-
-    \and
-\end{mathpar}
-
-\begin{mathpar}
+\qquad
     \infer*[right=($\tensor E$)]
     {\Delta \vdash M : A \tensor B \and \Delta', u{:}A, v{:}B \vdash N : C}
     {\Delta , \Delta' \vdash \llet{u \tensor v}{N} : C}
-\end{mathpar}
-
-\begin{mathpar}
+\\[1em]
     \infer*[right=($\lolli I$)]
     {\Delta , u{:}A \vdash M : B}
     {\Delta \vdash \lambda u. M : A \lolli B}
-
-    \and
-
+\qquad
     \infer*[right=($\lolli E$)]
     {\Delta \vdash M : A \lolli B \and \Delta' \vdash N : A}
     {\Delta, \Delta' \vdash M~N : B}
-\end{mathpar}
-
-\begin{mathpar}
+\\[1em]
     \infer*[right=($\with I$)]
     {\Delta \vdash M : A \and \Delta \vdash N : B}
     {\Delta \vdash M \with N : A \with B}
-
-    \and
-
+    \qquad
     \infer*[right=($\with E_L$)]
     {\Delta \vdash M : A \with B}
     {\Delta \vdash \textrm{fst}~M : A}
-    
-    \and
-
+\qquad
     \infer*[right=($\with E_R$)]
     {\Delta \vdash M : A \with B}
     {\Delta \vdash \textrm{snd}~M : B}
-\end{mathpar}
-
-\begin{mathpar}
+\\[1em]
     \infer*[right=($\oplus I_L$)]
     {\Delta \vdash M : A}
     {\Delta \vdash \textrm{inl}~M : A \oplus B}
 
-    \and
-
+\qquad
     \infer*[right=($\oplus I_R$)]
     {\Delta \vdash M : B}
     {\Delta \vdash \textrm{inr}~M : A \oplus B}
-
-    \and
+\\[1em]
 
     \infer*[right=($\oplus E$)]
     {\Delta \vdash M : A \oplus B \and \Delta', w_1{:}A \vdash N_1 : C \and
     \Delta', w_2{:}B \vdash N_2 : C}
     {\Delta, \Delta' \vdash \ccase{M}{\textrm{inl}~w_1 \to N_1 \mid \textrm{inr}~w_2 \to N_2} : C}
-\end{mathpar}
-
-\begin{mathpar}
+    \\[1em]
     \infer*[right=($\star I$)]
     { }
     {\Delta \vdash \star : \star}
-
-    \and
-
-    \infer*[right=($\star E$)]
+\quad    \infer*[right=($\star E$)]
     {\Delta \vdash M : \star \and \Delta' \vdash N : B}
     {\Delta, \Delta' \vdash \llet{\star = M}{N} : B}
-
-\end{mathpar}
-
-\begin{mathpar}
+\\[1em]
     \infer*[right=($\bang I$)]
     {\Gamma ; \cdot \vdash M : A}
     {\Gamma ; \cdot \vdash !M : !A}
-
-    \and
-
-    \infer*[right=($\bang E$)]
+\qquad    \infer*[right=($\bang E$)]
     {\Gamma ; \Delta \vdash M : \bang A \and \Gamma, u{:}A ; \Delta' \vdash N : C}
     {\Gamma ; \Delta, \Delta' \vdash \llet{!u = M}{N} : C}
-\end{mathpar}
+  \end{array}
+  \]
 
 % A linear type system is a type system in which linear resources must be used
 % exactly once...!
