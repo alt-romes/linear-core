@@ -116,7 +116,7 @@ for the two following distinct reasons:
         linear type system designed with retaining backwards-compatibility and
         allowing code reuse across linear and non-linear users of the same
         libraries in mind was described. We describe Linear Haskell in detail in
-        section~\ref{linear-haskell-section}.
+        section~\ref{sec:linear-haskell}.
 
     \item Linear types permeate Haskell down to (its) \textbf{Core}, the
         intermediate language Haskell is desugared to. \textbf{Core} is a very
@@ -312,11 +312,23 @@ should only be used exactly once.
 
 In order to further give well defined semantics to a linear type system, we
 present a linearly typed lambda calculus, a very simple language with linear
-types, by defining what are syntatically valid programs through the grammar and
-what programs are well typed through the typing rules.
+types, by defining what are syntatically valid programs through the grammar
+in Fig.~\ref{fig:llcgrammar} and what programs are well typed through the typing
+rules in Fig.~\ref{fig:llcrules}. The language features functions and function application ($\lolli$), two
+flavours of pairs, additive ($\with$) and multiplicative ($\tensor$), a
+disjunction operator ($\oplus$) and the $\bang$ modality operator. A typing
+judgement for the linearly typed lambda calculus has the form
+%
+\[ \Gamma; \Delta \vdash M : A \]
+%
+where $\Gamma$ is the context of resources that may be used unrestrictedly, that
+is, any number of times, $\Delta$ is the context of resources that must be used
+linearly (\emph{exactly once}), $M$ is the program to type and $A$ is its type.
+When resources from the linear context are used, they are removed from the
+context and no longer available, and all resources in the linear context must be
+used exactly once.
 
-An expression in the linearly typed lambda calculus can be $\star$...
-A type in the linearly typed lambda calculus can be $\star$...
+% Explicar o que é modality operator?
 
 \begin{figure}[h]
 \[
@@ -343,7 +355,85 @@ A type in the linearly typed lambda calculus can be $\star$...
 \end{array}
 \]
 \caption{Grammar for a linearly-typed lambda calculus}
+\label{fig:llcgrammar}
 \end{figure}
+
+The function abstraction is typed according to the linear function introduction
+rule ($\lolli I$). The rule states that a a function abstraction, written
+$\lambda u. M$, is a linear function (i.e. has type $A \lolli B$) given the
+unrestricted context $\Gamma$ and the linear context $\Delta$, if the program $M$
+has type $B$ given the same unrestricted context $\Gamma$ and the linear context
+$\Delta,u{:}A$. That is, if $M$ has type $B$ using $u$ of type $A$ exactly once
+besides the other resources in $\Delta$, then the lambda abstraction has the
+linear function type.
+%
+\[
+    \infer*[right=($\lolli I$)]
+    {\Gamma ; \Delta , u{:}A \vdash M : B}
+    {\Gamma ; \Delta \vdash \lambda u. M : A \lolli B}
+\qquad
+    \infer*[right=($\lolli E$)]
+    {\Gamma ; \Delta \vdash M : A \lolli B \and \Gamma ; \Delta' \vdash N : A}
+    {\Gamma ; \Delta, \Delta' \vdash M~N : B}
+\]
+%
+Function application is typed according to the elimination
+rule for the same type ($\lolli E$). To type an application $M~N$ as $B$, $M$
+must have type $A \lolli B$ and $N$ must have type $A$. To account for the
+linear resources that might be used while proving both that $M{:}A \lolli B$ and
+$N{:}A$, the linear context must be split in two such that both typing judgments
+succeed using exactly once every resource in their linear context (while the
+resources in $\Gamma$ might be used unrestrictedly), hence the separation of the
+linear context in $\Delta$ and $\Delta'$.
+
+The multiplicative pair ($M \tensor N$) is constructed from two linearly typed expressions that
+can each be typed with a division of the given linear context, as we see in its
+introduction rule ($\tensor I$). Upon deconstruction, the multiplicative pair
+elimination rule ($\tensor E$) requires that both of the pair constituents be
+consumed exactly once.
+%
+\[
+    \infer*[right=($\tensor I$)]
+    {\Gamma ; \Delta \vdash M : A \and \Gamma ; \Delta' \vdash N : B}
+    {\Gamma ; \Delta , \Delta' \vdash (M \tensor N) : A \tensor B}
+\qquad
+    \infer*[right=($\tensor E$)]
+    {\Gamma ; \Delta \vdash M : A \tensor B \and \Gamma ; \Delta', u{:}A, v{:}B \vdash N : C}
+    {\Gamma ; \Delta , \Delta' \vdash \llet{u \tensor v}{N} : C}
+\]
+%
+On the other hand, the additive pair requires that both elements of the pair can
+be proved with the same linear context, and upon deconstruction only one of the
+pair elements might be used, rather than both simultaneously.
+
+Finally, the modality operator ($\bang$) constructs a resource that can be used
+unrestrictedly. Its introduction rule ($\bang I$) states that to construct this
+resource means to add a resource to the unrestricted context, which can then be
+used freely. To construct an unrestricted value, however, the linear context
+must be empty -- an unrestricted value can only be constructed if it does not
+depend on any linear resource.
+%
+\[
+    \infer*[right=($\bang I$)]
+    {\Gamma ; \cdot \vdash M : A}
+    {\Gamma ; \cdot \vdash !M : !A}
+\qquad    \infer*[right=($\bang E$)]
+    {\Gamma ; \Delta \vdash M : \bang A \and \Gamma, u{:}A ; \Delta' \vdash N : C}
+    {\Gamma ; \Delta, \Delta' \vdash \llet{!u = M}{N} : C}
+\]
+%
+To utilize an unrestricted value $M$, we must
+bind it to $u$ with $\llet{\bang u = M}{N}$ and can then use it in $N$
+unrestrictedly, because $u$ extends the unrestricted context rather than the
+linear context as we have seen thus far.
+
+In section~\ref{sec:linear-haskell} we describe how linear types are defined in
+Haskell, a programming language more featureful than the linearly typed lambda
+calculus. We will see that, the theoretical principles underlying the linear
+lambda calculus and linear Haskell are the same, and by studying them in this
+minimal setting we can understand them at large.
+
+% TODO: Variable rules
 
 \begin{figure}[h]
 \[
@@ -405,6 +495,7 @@ A type in the linearly typed lambda calculus can be $\star$...
   \end{array}
 \]
 \caption{Typing rules for a linearly-typed lambda calculus}
+\label{fig:llcrules}
 \end{figure}
 
 % A linear type system is a type system in which linear resources must be used
@@ -639,8 +730,7 @@ A common technique in Haskell is to use more expressive
 types to assert properties about the values and get rid of the impossible cases
 (e.g. a \textt{NonEmpty} is a list that can not be empty).
 
-\todo[inline]{Leveraging Haskell's more advanced features, we can
-  .... }
+\todo[inline]{Leveraging Haskell's more advanced features, we can .... }
 
 A well liked motto is
 "make invalid states unrepresentable". In this light, we will introduce
@@ -761,7 +851,7 @@ that makes it even more expressive.
     % \item Uma das features mais avaçadas/experimentais é o Linear Haskell
 % \end{itemize}
 
-\section{Linear Haskell\label{linear-haskell-section}}
+\section{Linear Haskell\label{sec:linear-haskell}}
 
 Introduction of linear types to Haskell. How do they work, what's the syntax?
 Multiplicities, examples. Monads, multiplicity polymorphism, multiplicity
