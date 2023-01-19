@@ -85,9 +85,9 @@ let p = malloc 4;
 \end{code}
 
 Under the lens of a linear type system, consider the variable $p$ to be a linear
-resource created by the \textbf{malloc} keyword. Because $p$ is a linear
+resource created by the \texttt{malloc} keyword. Because $p$ is a linear
 variable, it must be used exactly once. However, we are using it in two
-different calls to \textbf{free}. With our new linearity assumptions, the
+different calls to \texttt{free}. With our new linearity assumptions, the
 % TODO:
 example program \emph{would not typecheck}! Some conclusion on linearity
 goodness. In section~\ref{linear-types} we describe the fundamentals of linear
@@ -266,7 +266,7 @@ examples of anonymous functions that receive as an argument a handle to work
 with and are responsible for closing it, we try to understand how the examples
 could be disregarded as incorrect, and work our way up to linear types from
 them. The first function ignores the received file handle and returns $\star$
-(read unit), which is equivalent to C's \textbf{void}.
+(read unit), which is equivalent to C's \texttt{void}.
 % TODO: Better code formatting
 \begin{mathpar}
     \lambda h.~\textrm{return}~\star;
@@ -280,9 +280,9 @@ first function incorrect. Similarly, the second function receives the file handl
 closes it twice, which is incorrect not because it falls short of the
 specification, but rather because the program will crash while executing it.
 %
-Additionally, both functions share the same type, $\textbf{Handle} \to \star$, i.e.
-a function that takes a \textbf{Handle} and returns $\star$. The second function also
-shares this type because \textbf{close} has type $\textbf{Handle} \to \star$.
+Additionally, both functions share the same type, $\texttt{Handle} \to \star$, i.e.
+a function that takes a \texttt{Handle} and returns $\star$. The second function also
+shares this type because \texttt{close} has type $\texttt{Handle} \to \star$.
 %
 Under a simple type system such as C's both functions are type correct (the
 compiler will happily succeed), but both have erroneous behaviours. The first
@@ -290,7 +290,7 @@ forgets to close the handle and the second closes it twice. Our goal is now to
 reach a type system that rejects these two programs.
 
 The key observation to invalidating these programs is to focus on the function
-type going between \textbf{Handle} and $\star$ and augment it to indicate that
+type going between \texttt{Handle} and $\star$ and augment it to indicate that
 \emph{the argument must be used exactly once}, or, in other words, that the
 argument of the function must be linear. We take the function type $A \to B$
 and replace the function arrow ($\to$) with the linear function arrow ($\lolli$)
@@ -302,7 +302,7 @@ types.}
 %
 operator to denote a function that uses its argument exactly once: $A \lolli B$.
 %
-Providing the more restrictive linear function signature $\textbf{Handle} \lolli
+Providing the more restrictive linear function signature $\texttt{Handle} \lolli
 \star$ to the example programs would make both of them fail to typecheck because
 they do not satisfy the linearity specification that the function argument
 should only be used exactly once.
@@ -318,79 +318,83 @@ what programs are well typed through the typing rules.
 An expression in the linearly typed lambda calculus can be $\star$...
 A type in the linearly typed lambda calculus can be $\star$...
 
-\begin{mathpar}
+\begin{figure}[h]
+\[
+\begin{array}{c}
   \begin{array}{lcl}
-    s,t & ::= & \star\\
-        & \mid & t \lolli s\\
-        & \mid & t \oplus s\\
-        & \mid & t \tensor s\\
-        & \mid & t \with s\\
-        & \mid & \bang t\\
+    A,B & ::= & \star\\
+        & \mid & A \lolli B\\
+        & \mid & A \oplus B\\
+        & \mid & A \tensor B\\
+        & \mid & A \with B\\
+        & \mid & \bang A\\
    \end{array}
-\and
+\qquad
   \begin{array}{lcl}
       M,N & ::= & \star \mid \llet{\star = M}{N} \\
         & \mid & u \\
         & \mid & \lambda u. M \mid M~N\\
         & \mid & \textrm{inl}~M \mid \textrm{inr}~M \mid
-        \ccase{M}{\textrm{inl}~u_1 \to N_1 \mid \textrm{inr}~u_2 \to N_2}\\
+        \ccase{M}{\textrm{inl}~u_1 \to N_1;\textrm{inr}~u_2 \to N_2}\\
         & \mid & M \tensor N \mid \llet{u_1 \tensor u_2 = M}{N}\\
         & \mid & M \with N \mid \textrm{fst}~M \mid \textrm{snd}~M \\
         & \mid & \bang M \mid \llet{!u = M}{N} \\
    \end{array}
-\end{mathpar}
+\end{array}
+\]
+\caption{Grammar for a linearly-typed lambda calculus}
+\end{figure}
 
+\begin{figure}[h]
 \[
   \begin{array}{c}
     \infer*[right=($\tensor I$)]
-    {\Delta \vdash M : A \and \Delta' \vdash N : B}
-    {\Delta , \Delta' \vdash (M \tensor N) : A \tensor B}
+    {\Gamma ; \Delta \vdash M : A \and \Gamma ; \Delta' \vdash N : B}
+    {\Gamma ; \Delta , \Delta' \vdash (M \tensor N) : A \tensor B}
 \qquad
     \infer*[right=($\tensor E$)]
-    {\Delta \vdash M : A \tensor B \and \Delta', u{:}A, v{:}B \vdash N : C}
-    {\Delta , \Delta' \vdash \llet{u \tensor v}{N} : C}
+    {\Gamma ; \Delta \vdash M : A \tensor B \and \Gamma ; \Delta', u{:}A, v{:}B \vdash N : C}
+    {\Gamma ; \Delta , \Delta' \vdash \llet{u \tensor v}{N} : C}
 \\[1em]
     \infer*[right=($\lolli I$)]
-    {\Delta , u{:}A \vdash M : B}
-    {\Delta \vdash \lambda u. M : A \lolli B}
+    {\Gamma ; \Delta , u{:}A \vdash M : B}
+    {\Gamma ; \Delta \vdash \lambda u. M : A \lolli B}
 \qquad
     \infer*[right=($\lolli E$)]
-    {\Delta \vdash M : A \lolli B \and \Delta' \vdash N : A}
-    {\Delta, \Delta' \vdash M~N : B}
+    {\Gamma ; \Delta \vdash M : A \lolli B \and \Gamma ; \Delta' \vdash N : A}
+    {\Gamma ; \Delta, \Delta' \vdash M~N : B}
 \\[1em]
     \infer*[right=($\with I$)]
-    {\Delta \vdash M : A \and \Delta \vdash N : B}
-    {\Delta \vdash M \with N : A \with B}
+    {\Gamma ; \Delta \vdash M : A \and \Gamma ; \Delta \vdash N : B}
+    {\Gamma ; \Delta \vdash M \with N : A \with B}
     \qquad
     \infer*[right=($\with E_L$)]
-    {\Delta \vdash M : A \with B}
-    {\Delta \vdash \textrm{fst}~M : A}
+    {\Gamma ; \Delta \vdash M : A \with B}
+    {\Gamma ; \Delta \vdash \textrm{fst}~M : A}
 \qquad
     \infer*[right=($\with E_R$)]
-    {\Delta \vdash M : A \with B}
-    {\Delta \vdash \textrm{snd}~M : B}
+    {\Gamma ; \Delta \vdash M : A \with B}
+    {\Gamma ; \Delta \vdash \textrm{snd}~M : B}
 \\[1em]
     \infer*[right=($\oplus I_L$)]
-    {\Delta \vdash M : A}
-    {\Delta \vdash \textrm{inl}~M : A \oplus B}
-
+    {\Gamma ; \Delta \vdash M : A}
+    {\Gamma ; \Delta \vdash \textrm{inl}~M : A \oplus B}
 \qquad
     \infer*[right=($\oplus I_R$)]
-    {\Delta \vdash M : B}
-    {\Delta \vdash \textrm{inr}~M : A \oplus B}
+    {\Gamma ; \Delta \vdash M : B}
+    {\Gamma ; \Delta \vdash \textrm{inr}~M : A \oplus B}
 \\[1em]
-
     \infer*[right=($\oplus E$)]
-    {\Delta \vdash M : A \oplus B \and \Delta', w_1{:}A \vdash N_1 : C \and
-    \Delta', w_2{:}B \vdash N_2 : C}
-    {\Delta, \Delta' \vdash \ccase{M}{\textrm{inl}~w_1 \to N_1 \mid \textrm{inr}~w_2 \to N_2} : C}
+    {\Gamma ; \Delta \vdash M : A \oplus B \and \Gamma ; \Delta', w_1{:}A \vdash N_1 : C \and
+    \Gamma ; \Delta', w_2{:}B \vdash N_2 : C}
+    {\Gamma ; \Delta, \Delta' \vdash \ccase{M}{\textrm{inl}~w_1 \to N_1 \mid \textrm{inr}~w_2 \to N_2} : C}
     \\[1em]
     \infer*[right=($\star I$)]
     { }
-    {\Delta \vdash \star : \star}
+    {\Gamma ; \Delta \vdash \star : \star}
 \quad    \infer*[right=($\star E$)]
-    {\Delta \vdash M : \star \and \Delta' \vdash N : B}
-    {\Delta, \Delta' \vdash \llet{\star = M}{N} : B}
+    {\Gamma ; \Delta \vdash M : \star \and \Gamma ; \Delta' \vdash N : B}
+    {\Gamma ; \Delta, \Delta' \vdash \llet{\star = M}{N} : B}
 \\[1em]
     \infer*[right=($\bang I$)]
     {\Gamma ; \cdot \vdash M : A}
@@ -399,7 +403,9 @@ A type in the linearly typed lambda calculus can be $\star$...
     {\Gamma ; \Delta \vdash M : \bang A \and \Gamma, u{:}A ; \Delta' \vdash N : C}
     {\Gamma ; \Delta, \Delta' \vdash \llet{!u = M}{N} : C}
   \end{array}
-  \]
+\]
+\caption{Typing rules for a linearly-typed lambda calculus}
+\end{figure}
 
 % A linear type system is a type system in which linear resources must be used
 % exactly once...!
@@ -564,20 +570,20 @@ Haskell is a large language but its small core is based on a typed lambda
 calculus. As such, there exist no statements and computation is done simply
 through the evaluation of functions. Besides functions, one can define types and
 their constructors and pattern match on said constructors. Function application
-is denoted by an empty space (\textbf{f~a} means \textbf{f} applied to
-\textbf{a}) and pattern matching is done with the \textbf{case} keyword followed
+is denoted by an empty space (\texttt{f~a} means \texttt{f} applied to
+\texttt{a}) and pattern matching is done with the \texttt{case} keyword followed
 by the enumerated alternatives. All variable names start with lower case and
 types start with upper case (excluding type variables). To make explicit the
-type of an expression, the \textbf{::} operator is used (e.g.
-$\textbf{f~::~Int}\to \textbf{Bool}$ is read \textbf{f} \emph{has type} function
-from \textbf{Int} to \textbf{Bool}).
+type of an expression, the \texttt{::} operator is used (e.g.
+$\texttt{f~::~Int}\to \texttt{Bool}$ is read \texttt{f} \emph{has type} function
+from \texttt{Int} to \texttt{Bool}).
 
 Because Haskell is a pure programming language, input/ouptut side-effects are
 "made pure" by modelling them on the type level through the
-non-nullary\footnote{\textbf{IO} has kind $\textbf{Type}\to\textbf{Type}$,
+non-nullary\footnote{\texttt{IO} has kind $\texttt{Type}\to\texttt{Type}$,
 that is, it is only a type after another type is passed as a parameter (e.g.
-\textbf{IO~Int}, \textbf{IO~Bool}); \textbf{IO} by itself is a \emph{type
-constructor}} type constructor \textbf{IO}. Some of the example programs will look though as
+\texttt{IO~Int}, \texttt{IO~Bool}); \texttt{IO} by itself is a \emph{type
+constructor}} type constructor \texttt{IO}. Some of the example programs will look though as
 if they had statements, but, in reality, the sequential appearence is just
 syntatic sugar to an expression using monadic operators. The main take away is
 that computations that do I/O may be sequenced together with other operations
@@ -615,7 +621,7 @@ as type classes, arbitrary-rank types, functional dependencies, GADTs, type
 families and (more recently) even impredicative polymorphism\cite{10.1145/3408971} have become
 commonplace in Haskell code, enforcing application level invariants and program
 correctness through the types. For example, consider the definition of
-\textbf{head} in the standard library, a function which takes the first element
+\texttt{head} in the standard library, a function which takes the first element
 of a list by pattern matching on the list constructors.
 
 \begin{code}
@@ -628,10 +634,10 @@ Note that if the list is empty, we terminate the program with an error. This
 function is unsafe -- our program might crash if we use it on an invalid input.
 A common technique in Haskell is to use more expressive types to assert
 properties about the values and get rid of the unsafe cases (e.g. a
-\textbf{NonEmpty} is a list that can not be empty). A well liked motto is "make
+\texttt{NonEmpty} is a list that can not be empty). A well liked motto is "make
 invalid states unrepresentable". In this light, we will introduce Generalized
 Algebraic Data Types (GADTs) and create a list type indexed by size for which we
-can write a completely safe \textbf{head} function. This is done by expressing that the size
+can write a completely safe \texttt{head} function. This is done by expressing that the size
 of the list must be at least one at the type level.
 
 % TODO: But what are ADTs? Perhaps expand Haskell introduction section to
@@ -649,13 +655,14 @@ inference details of GADTs which we later explore in~\ref{related-work-gadts}.
 % TODO: Explain Type in Type?
 
 First, we define the natural numbers inductively: a natural number is either
-zero (\textbf{Z}) or a successor (\textbf{S}) of another natural number (e.g.
+zero (\texttt{Z}) or a successor (\texttt{S}) of another natural number (e.g.
 the successor of the successor of zero is a natural number). The following
-definition creates the \textbf{Nat} type, the \textbf{Z} and \textbf{S} data
-constructors which construct values, \emph{and} the \textbf{Z} and \textbf{S}
-\emph{type} constructors which construct types. The latter two exist because of
-the \emph{DataKinds} language feature which promotes term-level constructors to
-type-level constructors.
+definition creates the \texttt{Nat} type, the \texttt{Z} and \texttt{S} data
+constructors which construct values, \emph{and} the \texttt{Z} and \texttt{S}
+\emph{type} constructors which construct types.
+%
+% The latter two exist because of the \emph{DataKinds} language feature which
+% promotes term-level constructors to type-level constructors.
 
 \begin{code}
     data Nat = Z | S Nat
@@ -664,10 +671,10 @@ type-level constructors.
 Secondly, we define the data type in GADT syntax for length-index lists which
 takes two type parameters. The first type parameter is the length of the list
 and the type of the type parameter (i.e. the kind of the first type parameter)
-is \textbf{Nat}. To construct a type of kind \textbf{Nat} we can only use the
-type constructors \textbf{Z} and \textbf{S}. The second type parameter is the
+is \texttt{Nat}. To construct a type of kind \texttt{Nat} we can only use the
+type constructors \texttt{Z} and \texttt{S}. The second type parameter is the
 type of the values contained in the list, and any type is valid, hence the
-\textbf{Type} kind.
+\texttt{Type} kind.
 
 \begin{code}
     data Vec (n :: Nat) (a :: Type) where
@@ -677,28 +684,28 @@ type of the values contained in the list, and any type is valid, hence the
 
 The length-indexed list is defined inductively as either an empty list \emph{of
 size zero}, or the construction of a list by appending a new element to an
-existing list \emph{of size $m$} whose final size is $m+1$ (\textbf{S m}). The
-list \textbf{Cons~'a'~(Cons~'b'~Nil)} has type \textbf{Vec~(S~(S~Z))~Char}
-because \textbf{Nil~::~Vec~Z~Char} and \textbf{Cons~'a'~Nil~::~Vec~(S~Z)~Char}.
+existing list \emph{of size $m$} whose final size is $m+1$ (\texttt{S m}). The
+list \texttt{Cons~'a'~(Cons~'b'~Nil)} has type \texttt{Vec~(S~(S~Z))~Char}
+because \texttt{Nil~::~Vec~Z~Char} and \texttt{Cons~'a'~Nil~::~Vec~(S~Z)~Char}.
 GADTs make possible different data constructors being parametrized over
-different type parameters as we do with \textbf{Vec}'s size parameter being
+different type parameters as we do with \texttt{Vec}'s size parameter being
 different depending on the constructor that constructs the list.
 
-To define the safe \textbf{head} function, we must specify the type of the input
+To define the safe \texttt{head} function, we must specify the type of the input
 list taking into account that the size must not be zero. To that effect, the
-function takes as input a \textbf{Vec (S n) a}, that is, a vector with size
+function takes as input a \texttt{Vec (S n) a}, that is, a vector with size
 (n+1) for all possible n's, which makes it impossible to pass a list of type
-\textbf{Vec Z a} to \textbf{head}.
+\texttt{Vec Z a} to \texttt{head}.
 
 \begin{code}
     head :: Vec (S n) a -> a
     head (Cons x xs) = x
 \end{code}
 
-Pattern matching on the \textbf{Nil} constructor would result in an innacessible
+Pattern matching on the \texttt{Nil} constructor would result in an innacessible
 pattern warning because it is impossible to pass a list that would match
-\textbf{Nil} -- it would entail the argument list has size zero; however, it's
-impossible to call \textbf{head} on a list of size zero!
+\texttt{Nil} -- it would entail the argument list has size zero; however, it's
+impossible to call \texttt{head} on a list of size zero!
 
 Linear types, which allow for a finer control over the usage of certain resources at the type
 level, are another example of an extension to Haskell's type system
@@ -708,20 +715,20 @@ that makes it even more expressive.
 % A function to compute the length of a list in Haskell is defined by pattern
 % matching on the list and returning $0$ if the list is empty and adding one to
 % the (computed recursively) length of the rest of the list otherwise. The
-% following snippet defines the said \textbf{length} function.
+% following snippet defines the said \texttt{length} function.
 % \begin{code}
 %     length [] = 0
 %     length (x:xs) = 1 + length xs
 % \end{code}
-% The function \textbf{length} receives a list and returns an integer, and since
+% The function \texttt{length} receives a list and returns an integer, and since
 % it treats all list's elements the same, it is said to be polymorphic over the
 % list's elements type. In Haskell, function signatures typically appear above the
 % definition, and for this particular function we'd have
 % \begin{code}
 %     length :: [a] -> Int
 % \end{code}
-% where \textbf{a} is a universally quantified type variable, that is,
-% \textbf{length} can be called on lists of ints, lists of characters, lists of
+% where \texttt{a} is a universally quantified type variable, that is,
+% \texttt{length} can be called on lists of ints, lists of characters, lists of
 % lists of strings, lists of anything.
 
 % The laziness evaluation strategy entails expressions are only evaluated when
@@ -731,7 +738,7 @@ that makes it even more expressive.
 %     length [5^1234, 6^4567, 8^(9^42)]
 % \end{code}
 % We would get the result 3 instantaneously: the elements of the list would never
-% be evaluated because the \textbf{length} function does not require the value of
+% be evaluated because the \texttt{length} function does not require the value of
 % each element to compute a result.
 
 % TODO:
