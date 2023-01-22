@@ -311,12 +311,14 @@ should only be used exactly once.
 % about resources in our program. A so called linear resource ?
 
 In order to further give well defined semantics to a linear type system, we
-present a linearly typed lambda calculus, a very simple language with linear
+present a linearly typed lambda calculus\todo{citar o girard
+  provavelmente ou o Barber (\url{https://www.lfcs.inf.ed.ac.uk/reports/96/ECS-LFCS-96-347/})}, a very simple language with linear
 types, by defining what are syntatically valid programs through the grammar
 in Fig.~\ref{fig:llcgrammar} and what programs are well typed through the typing
 rules in Fig.~\ref{fig:llcrules}. The language features functions and function application ($\lolli$), two
 flavours of pairs, additive ($\with$) and multiplicative ($\tensor$), a
-disjunction operator ($\oplus$) and the $\bang$ modality operator. A typing
+disjunction operator ($\oplus$)\todo{sum types} and the $\bang$
+modality operator\todo{que serve para}. A typing
 judgement for the linearly typed lambda calculus has the form
 %
 \[ \Gamma; \Delta \vdash M : A \]
@@ -441,7 +443,7 @@ minimal setting we can understand them at large.
     \infer*[right=($\tensor I$)]
     {\Gamma ; \Delta \vdash M : A \and \Gamma ; \Delta' \vdash N : B}
     {\Gamma ; \Delta , \Delta' \vdash (M \tensor N) : A \tensor B}
-\qquad
+\quad
     \infer*[right=($\tensor E$)]
     {\Gamma ; \Delta \vdash M : A \tensor B \and \Gamma ; \Delta', u{:}A, v{:}B \vdash N : C}
     {\Gamma ; \Delta , \Delta' \vdash \llet{u \tensor v}{N} : C}
@@ -457,11 +459,11 @@ minimal setting we can understand them at large.
     \infer*[right=($\with I$)]
     {\Gamma ; \Delta \vdash M : A \and \Gamma ; \Delta \vdash N : B}
     {\Gamma ; \Delta \vdash M \with N : A \with B}
-    \qquad
+    \quad
     \infer*[right=($\with E_L$)]
     {\Gamma ; \Delta \vdash M : A \with B}
     {\Gamma ; \Delta \vdash \textrm{fst}~M : A}
-\qquad
+\quad
     \infer*[right=($\with E_R$)]
     {\Gamma ; \Delta \vdash M : A \with B}
     {\Gamma ; \Delta \vdash \textrm{snd}~M : B}
@@ -648,20 +650,20 @@ minimal setting we can understand them at large.
 
 \section{Haskell}
 
-Haskell is a functional programming language defined by the "Haskell
-Report"\cite{jones1999haskell,marlow2010haskell} and whose \emph{de-facto}
+Haskell is a functional programming language defined by the Haskell
+Report~\cite{jones1999haskell,marlow2010haskell} and whose \emph{de-facto}
 implementation is GHC, the Glasgow Haskell Compiler\cite{GHC}. Haskell is a
 \emph{lazy}, \emph{purely functional} language, i.e., functions cannot
 have side effects or mutate data, and contrary to many programming languages,
 arguments are \emph{not} evaluated when passed to functions, but rather are only
-evaluated when the value is needed. The combination of purety and laziness is
-unique to Haskell among mainstream programming languages...
+evaluated when its value is needed. The combination of purity and laziness is
+unique to Haskell among mainstream programming languages.
 
-Haskell is a large language but its small core is based on a typed lambda
+Haskell is a large feature-rich language but its relatively small core is based on a typed lambda
 calculus. As such, there exist no statements and computation is done simply
 through the evaluation of functions. Besides functions, one can define types and
 their constructors and pattern match on said constructors. Function application
-is denoted by an empty space (\texttt{f~a} means \texttt{f} applied to
+is denoted by an empty space\todo{juxtaposition} (\texttt{f~a} means \texttt{f} applied to
 \texttt{a}) and pattern matching is done with the \texttt{case} keyword followed
 by the enumerated alternatives. All variable names start with lower case and
 types start with upper case (excluding type variables). To make explicit the
@@ -670,11 +672,16 @@ $\texttt{f~::~Int}\to \texttt{Bool}$ is read \texttt{f} \emph{has type} function
 from \texttt{Int} to \texttt{Bool}).
 
 Because Haskell is a pure programming language, input/ouptut side-effects are
-"made pure" by modelling them on the type level through the
+``made pure'' by modelling them on the type level through the
 non-nullary\footnote{\texttt{IO} has kind $\texttt{Type}\to\texttt{Type}$,
 that is, it is only a type after another type is passed as a parameter (e.g.
 \texttt{IO~Int}, \texttt{IO~Bool}); \texttt{IO} by itself is a \emph{type
-constructor}} type constructor \texttt{IO}. Some of the example programs will look though as
+constructor}} type constructor \texttt{IO}.\todo{IO monad; made pure
+nao quer dizer nada. A ideia é que valores do tipo IO t capturam
+\emph{computacoes} que quando executadas produzem efeitos e produzem
+valores do tipo $t$, os operadores monadicos permitem compor
+computacoes, mas nao executam nada, por isso e que e tudo puro.}
+Some of the example programs will look though as
 if they had statements, but, in reality, the sequential appearence is just
 syntatic sugar to an expression using monadic operators. The main take away is
 that computations that do I/O may be sequenced together with other operations
@@ -728,24 +735,34 @@ it on an invalid input.
 
 A common technique in Haskell is to use more expressive
 types to assert properties about the values and get rid of the impossible cases
-(e.g. a \textt{NonEmpty} is a list that can not be empty).
+(e.g. a \texttt{NonEmpty} is a list that can not be empty).
 
 \todo[inline]{Leveraging Haskell's more advanced features, we can .... }
 
 A well liked motto is
-"make invalid states unrepresentable". In this light, we will introduce
+"make invalid states unrepresentable". In this light, we will\todo{nao
+  uses o futuro} introduce
 Generalized Algebraic Data Types (GADTs) and create a list type indexed by size
 for which we can write a completely safe \texttt{head} function by expressing
 that the size of the list must be at least one, at the type level.
 
 
 \textbf{GADTs}~\cite{10.1145/1159803.1159811,,,} are a very popular\todo{nope} feature with
-which users can define data types as they would common recursive algebraic data
-types, with the added abilitiy to give explicit type signatures for the data
+which users can define data types as they would common algebraic data
+types, with the added ability to give explicit type signatures for the data
 constructors where the result type may differ in the type parameters across
-branches. Pattern matching against GADTs can introduce local type refinements,
+branches.
+\todo{nao ha branches, é nos varios construtores. This allows for
+  additional type invariants to be represented with GADTs through
+  their type parameters, which restricts the use of specific
+  constructors and their subsequent deconstruction through pattern
+  matching}
+
+Pattern matching against GADTs can introduce local type refinements,
 that is, pattern matching against certain data constructors will refine the type
-information used for typechecking individual case alternatives. We develop
+information used for typechecking individual case alternatives.
+\todo{acho que a outra frase que escrevi e melhor que esta / complementa}
+We develop
 the length-indexed lists example without discussing the type system and type
 inference details of GADTs which we later explore in~\ref{related-work-gadts}.
 
@@ -763,7 +780,9 @@ constructors which construct values, \emph{and} the \texttt{Z} and \texttt{S}
 
 \begin{code}
     data Nat = Z | S Nat
-\end{code}
+  \end{code}
+
+  \todo[inline]{Acho que a parte dos naturais nao e necessaria}
 
 Secondly, we define the data type in GADT syntax for length-index lists which
 takes two type parameters. The first type parameter is the length of the list
