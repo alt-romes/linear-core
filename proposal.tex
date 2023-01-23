@@ -97,7 +97,7 @@ In this sense, Core is already annotated with linearity, but the \textbf{linter 
 %
 In spite of the strong formal foundations of linear types driving the
 implementation, their interaction with the whole of GHC is still far
-from trivial. The implemented type system cannot accomodate
+from trivial. The implemented type system cannot accommodate 
 several optimising transformations that produce programs that violate
 linearity syntactically (i.e.,~multiple occurrences of linear
 variables in the program text), but ultimately preserve it in a
@@ -170,7 +170,7 @@ f x = let y = x in y
 
 Despite not being accepted by the surface-level language, linear programs using
 lets occur naturally in Core due to optimising transformations that create let
-bindings. In a similar fashion, programs which violate syntatic linearity
+bindings. In a similar fashion, programs which violate syntactic linearity
 for other reasons other than let bindings are produced by Core transformations.
 
 The solution we found to a handful of problems regarding binders is to have a
@@ -298,7 +298,7 @@ in f True
 
 The key idea to computing the usage environment of multiple variables that use
 themselves in their definition body is to perform the computation in two separate passes. First,
-calculate a naive environment by emiting free variables multiplicities as usual
+calculate a naive environment by emitting free variables multiplicities as usual
 while treating the recursive-let bound variables as free ones. Second, pass the
 variables names and their corresponding naive environment as input to
 algorithm~\ref{computeRecUsages} to get a final usage environment. Intuitively,

@@ -79,9 +79,9 @@ is freed twice. We know this to be the dreaded double-free error which will
 crash our programs and crush our dreams. Regardless, a C-like type system will
 accept this program without any issue.
 \begin{code}
-let p = malloc 4;
- in free p;
-    free p;
+let p = malloc(4);
+ in free(p);
+    free(p);
 \end{code}
 
 Under the lens of a linear type system, consider the variable $p$ to be a linear
@@ -112,7 +112,7 @@ for the two following distinct reasons:
         large library ecosystem and many active users, rather than to develop
         the language from the ground up with linear types in mind, and the
         successful approach as implemented in GHC 9.0, the leading Haskell
-        compiler, was based on Linear Haskell\cite{linearhaskell}, where a
+        compiler, was based on Linear Haskell\cite{cite:linearhaskell}, where a
         linear type system designed with retaining backwards-compatibility and
         allowing code reuse across linear and non-linear users of the same
         libraries in mind was described. We describe Linear Haskell in detail in
@@ -141,6 +141,9 @@ program behaviour enforced by linear types, regarding the usage of certain
 resources, is \emph{not} changed in the desugaring or optimization process
 (optimizations should not destroy linearity!) and a linearity aware Core
 typechecker can guarantee that.
+
+% TODO: Rewrite this whole second part of the introduction.
+% It needs to be much clearer
 
 Additionally, while not yet a reality, linearity in Core could be used to inform
 certain program optimizations, i.e. having linear types in Core could be used to
@@ -242,9 +245,9 @@ Is this program really still linear? Yes, but ...
 % interaction between the new linearity polymorphism and the existing
 % type-level facilities is quite interesting
 
-\chapter{Background}
+\chapter{Background and Related Work}
 
-\section{Linear Types\label{linear-types}}
+\section{Linear Types\label{sec:linear-types}}
 
 Much the same way type systems can statically eliminate various kinds of
 programs that would fail at runtime, such as a program that derreferences an
@@ -408,12 +411,12 @@ On the other hand, the additive pair requires that both elements of the pair can
 be proved with the same linear context, and upon deconstruction only one of the
 pair elements might be used, rather than both simultaneously.
 
-Finally, the modality operator ($\bang$) constructs a resource that can be used
-unrestrictedly. Its introduction rule ($\bang I$) states that to construct this
-resource means to add a resource to the unrestricted context, which can then be
-used freely. To construct an unrestricted value, however, the linear context
-must be empty -- an unrestricted value can only be constructed if it does not
-depend on any linear resource.
+Finally, the "of-course" operator ($\bang$) can be used to construct a resource that can be
+used unrestrictedly ($\bang M$). Its introduction rule ($\bang I$) states that
+to construct this resource means to add a resource to the unrestricted context,
+which can then be used freely. To construct an unrestricted value, however, the
+linear context \emph{must be empty} -- an unrestricted value can only be constructed if
+it does not depend on any linear resource.
 %
 \[
     \infer*[right=($\bang I$)]
@@ -435,11 +438,17 @@ calculus. We will see that, the theoretical principles underlying the linear
 lambda calculus and linear Haskell are the same, and by studying them in this
 minimal setting we can understand them at large.
 
-% TODO: Variable rules
-
 \begin{figure}[h]
 \[
   \begin{array}{c}
+    \infer*[right=($u$)]
+    { }
+    {\Gamma ; u{:}A \vdash u : A}
+\qquad
+    \infer*[right=($u$)]
+    { }
+    {\Gamma , u{:}A ; \cdot \vdash u : A}
+\\[1em]
     \infer*[right=($\tensor I$)]
     {\Gamma ; \Delta \vdash M : A \and \Gamma ; \Delta' \vdash N : B}
     {\Gamma ; \Delta , \Delta' \vdash (M \tensor N) : A \tensor B}
@@ -654,7 +663,7 @@ Haskell is a functional programming language defined by the Haskell
 Report~\cite{jones1999haskell,marlow2010haskell} and whose \emph{de-facto}
 implementation is GHC, the Glasgow Haskell Compiler\cite{GHC}. Haskell is a
 \emph{lazy}, \emph{purely functional} language, i.e., functions cannot
-have side effects or mutate data, and contrary to many programming languages,
+have side effects or mutate data, and, contrary to many programming languages,
 arguments are \emph{not} evaluated when passed to functions, but rather are only
 evaluated when its value is needed. The combination of purity and laziness is
 unique to Haskell among mainstream programming languages.
@@ -714,13 +723,39 @@ countWords path = do
 \end{code}
 % hClose handle
 
-Another defining feature of Haskell is its powerful type system. Features such
-as type classes, arbitrary-rank types, functional dependencies, GADTs, type
-families and (more recently) even impredicative polymorphism\cite{10.1145/3408971} have become
-commonplace in Haskell code, enforcing application level invariants and program
-correctness through the types. For example, consider the definition of
-\texttt{head} in the standard library, a function which takes the first element
-of a list by pattern matching on the list constructors.
+Another defining feature of Haskell is its powerful type system. In contrast to
+most mainstream programming languages, such as OCaml and Java, Haskell supports a myriad of
+advanced type level features, such as:
+\begin{itemize}
+
+    \item Multiple forms of advanced polymorphism: where languages with whole
+        program type inference usually stick to Damas–Hindley–Milner type
+        inference~\cite{DBLP:conf/popl/DamasM82}, Haskell goes much further with, e.g.,
+        arbitrary-rank types~\cite{10.1017/S0956796806006034}, type-class
+        polymorphism~\cite{10.1145/227699.227700}, levity polymorphism~\cite{10.1145/3062341.3062357},
+        multiplicity polymorphism~\cite{cite:linearhaskell}, and, more recently, impredicative
+        polymorphism~\cite{10.1145/3408971}.
+
+    \item Type level computation by means of type classes and Haskell's type
+        families~\cite{,,}, which permit a direct encoding of type-level
+        functions resembling rewrite rules.
+
+    \item Local equality constraints and existential types by using GADTs, we
+        explain ahead in more detail. A design for first class existential types
+        with bi-directional type inference in Haskell has been published
+        in~\cite{10.1145/3473569}, despite not being yet implemented in GHC.
+
+\end{itemize}
+% Haskell's type families, supports abstraction through type classes, and GADTs
+% which we explain in more detail ahead.  as type classes, arbitrary-rank types,
+% functional dependencies, GADTs, type families and (more recently) even
+% impredicative polymorphism\cite{}
+These advanced features have become commonplace in Haskell code, enforcing
+application level invariants and program correctness through the types. As an
+example to work through this section while we introduce compile-time invariants
+with GADTs, consider the definition of \texttt{head} in the standard library, a
+function which takes the first element of a list by pattern matching on the list
+constructors.
 
 \begin{code}
     head :: [a] -> a
@@ -728,42 +763,35 @@ of a list by pattern matching on the list constructors.
     head (x:xs) = x
 \end{code}
 
-If the list is empty, we terminate the program with an error, otherwise, we take
-the first element. This function is unsafe -- our program might crash if we use
-it on an invalid input.
-\todo[inline]{When applied to the empty list, ...}
-
-A common technique in Haskell is to use more expressive
-types to assert properties about the values and get rid of the impossible cases
-(e.g. a \texttt{NonEmpty} is a list that can not be empty).
-
-\todo[inline]{Leveraging Haskell's more advanced features, we can .... }
-
-A well liked motto is
-"make invalid states unrepresentable". In this light, we will\todo{nao
-  uses o futuro} introduce
-Generalized Algebraic Data Types (GADTs) and create a list type indexed by size
-for which we can write a completely safe \texttt{head} function by expressing
-that the size of the list must be at least one, at the type level.
+When applied to the empty list, \texttt{head} terminates the program with an
+error. This function is unsafe -- our program might crash if we use it on an
+invalid input.
+%
+Leveraging Haskell's more advanced features, we can use more expressive types to
+assert properties about the values and get rid of the invalid cases (e.g. we
+could define a \texttt{NonEmpty} type to model a list that can not be empty).
+%
+A well liked motto is "make invalid states unrepresentable". In this light, we
+introduce Generalized Algebraic Data Types (GADTs) and create a list type
+indexed by size for which we can write a completely safe \texttt{head} function
+by expressing that the size of the list must be at least one, at the type level.
 
 
-\textbf{GADTs}~\cite{10.1145/1159803.1159811,,,} are a very popular\todo{nope} feature with
-which users can define data types as they would common algebraic data
-types, with the added ability to give explicit type signatures for the data
-constructors where the result type may differ in the type parameters across
+\textbf{GADTs}~\cite{10.1145/1159803.1159811,,,} are an advanced Haskell feature
+which allows users to define data types as they would common algebraic
+data types, with the added abilitiy to give explicit type signatures for the
+data constructors where the result type may differ in the type parameters across
 branches.
 \todo{nao ha branches, é nos varios construtores. This allows for
   additional type invariants to be represented with GADTs through
   their type parameters, which restricts the use of specific
   constructors and their subsequent deconstruction through pattern
   matching}
-
-Pattern matching against GADTs can introduce local type refinements,
-that is, pattern matching against certain data constructors will refine the type
-information used for typechecking individual case alternatives.
-\todo{acho que a outra frase que escrevi e melhor que esta / complementa}
-We develop
-the length-indexed lists example without discussing the type system and type
+% TODO: Rewrite this bit below
+Pattern matching against GADTs can introduce local type refinements, that is,
+pattern matching against certain data constructors will refine the type
+information used for typechecking individual case alternatives. We develop the
+length-indexed lists example without discussing the type system and type
 inference details of GADTs which we later explore in~\ref{related-work-gadts}.
 
 % TODO: Explain Type in Type?
@@ -802,7 +830,8 @@ The length-indexed list is defined inductively as either an empty list \emph{of
 size zero}, or the construction of a list by appending a new element to an
 existing list \emph{of size $m$} whose final size is $m+1$ (\texttt{S m}). The
 list \texttt{Cons~'a'~(Cons~'b'~Nil)} has type \texttt{Vec~(S~(S~Z))~Char}
-because \texttt{Nil~::~Vec~Z~Char} and \texttt{Cons~'a'~Nil~::~Vec~(S~Z)~Char}.
+because \texttt{Nil} has type \texttt{Vec~Z~Char} and \texttt{Cons~'a'~Nil} has
+type \texttt{Vec~(S~Z)~Char}.
 GADTs make possible different data constructors being parametrized over
 different type parameters as we do with \texttt{Vec}'s size parameter being
 different depending on the constructor that constructs the list.
@@ -810,23 +839,35 @@ different depending on the constructor that constructs the list.
 To define the safe \texttt{head} function, we must specify the type of the input
 list taking into account that the size must not be zero. To that effect, the
 function takes as input a \texttt{Vec (S n) a}, that is, a vector with size
-(n+1) for all possible n's, which makes it impossible to pass a list of type
-\texttt{Vec Z a} to \texttt{head}.
+(n+1) for all possible n's, making a call to \texttt{head} on a list of type
+\texttt{Vec Z a} (an empty list) is a compile-time type error.
 
 \begin{code}
     head :: Vec (S n) a -> a
     head (Cons x xs) = x
 \end{code}
 
-Pattern matching on the \texttt{Nil} constructor would result in an innacessible
-pattern warning because it is impossible to pass a list that would match
-\texttt{Nil} -- it would entail the argument list has size zero; however, it's
-impossible to call \texttt{head} on a list of size zero!
+Pattern matching on the \texttt{Nil} constructor is not needed, despite it being
+indeed a constructor of \texttt{Vec}. The input type just doesn't match the type
+of \texttt{Nil} ($\texttt{S~n} \neq \texttt{Z}$), so the corresponding pattern
+case alternative would be innacessible because the typechecker will not allow
+calling \texttt{head} on \texttt{Nil} (once again, its type, \texttt{Vec~Z~a},
+does not match the input type of \texttt{head}, \texttt{Vec~(S~n)~a}).
 
-Linear types, which allow for a finer control over the usage of certain resources at the type
-level, are another example of an extension to Haskell's type system
+In practice, the idea of using more expressive types to enforce invariants at
+compile time, that is illustrated by this simple example, can be taken much
+further, e.g., to implement type-safe artificial neural
+networks\cite{https://blog.jle.im/entry/practical-dependent-types-in-haskell-1.html},
+enforce size compatibility in operations between matrices and vectors\cite{}, to
+implement red-black trees guaranteeing its invariants at compile-time, or to
+implement a material system in a game engine\cite{}.
+% TODO: cite: https://blog.jle.im/entry/practical-dependent-types-in-haskell-1.html
+% TODO: haskell-servant?
+
+Linear types are, similarly, an extension to Haskell's type system that makes it
+even more expressive, by providing a finer control over the usage of certain
+resources at the type level.
 %, besides the aforementioned type-level features
-that makes it even more expressive.
 
 % A function to compute the length of a list in Haskell is defined by pattern
 % matching on the list and returning $0$ if the list is empty and adding one to
@@ -872,10 +913,88 @@ that makes it even more expressive.
 
 \section{Linear Haskell\label{sec:linear-haskell}}
 
-Introduction of linear types to Haskell. How do they work, what's the syntax?
-Multiplicities, examples. Monads, multiplicity polymorphism, multiplicity
-polymoprhism applied to monadic bind to define resource-aware sequencing of
-operations. Linear haskell relates systemFC with the linear lambda calculus?
+% Introduction of linear types to Haskell. How do they work, what's the syntax?
+% Multiplicities, examples. Monads, multiplicity polymorphism, multiplicity
+% polymoprhism applied to monadic bind to define resource-aware sequencing of
+% operations. Linear haskell relates systemFC with the linear lambda calculus?
+
+The introduction of linear types to Haskell's type system is originally
+described in Linear Haskell\cite{cite:linearhaskell}. While
+in~\ref{sec:related-work-linear-haskell} we discuss the reasoning and design
+choices behind retrofitting linear types to Haskell, here we focus on
+linear types solely as they exist in the language, and re-work the file
+handle example seen in the previous section along the way.
+% TODO: useless information but the term "Linear Haskell" is sometimes also used
+% to refer to the existence of linear types in Haskell in general.
+
+A linear function ($f :: A \lolli B$) guarantees that if ($f~x$) is consumed
+exactly once, then the argument $x$ is consumed exactly once. The precise
+definition of \emph{consuming a value} depends on the value as follows,
+paraphrasing Linear Haskell~\cite{cite:linearhaskell}:
+
+\begin{itemize}
+    \item To consume a value of atomic base type (like \texttt{Int} or
+        \texttt{Ptr}) exactly once, just evaluate it
+    \item To consume a function value exactly once, apply it to one argument,
+        and consume its result exactly once.
+    \item To consume a value of an algebraic datatype exactly once,
+        pattern-match on it, and consume all its linear components exactly once.
+        For example, a linear pair (equivalent to $\tensor$) is consumed exactly
+        once if pattern-matched on \emph{and} both the first and second element are
+        consumed once.
+\end{itemize}
+
+
+In Haskell, linear types are introduced through \emph{linearity on the function
+arrow}, rather than through \emph{linearity in the kinds}. In practice, this
+means function types are annotated with a linearity that defines whether a
+function argument must be consumed \emph{exactly once} or whether it can be
+consumed \emph{unrestrictedly} (many times). Additionally, algebraic data types
+constructor consume its arguments linearly by default, but the constructor can
+be specified to receive unrestricted arguments which, in contrast, do not need
+to be consumed exactly once when pattern matched on.
+%
+As an example, consider from the following functions the first, which doesn't
+typecheck because it is a linear function (annotated with the linearity of
+\texttt{1}) that consumes its argument more than once, and the second, which is
+an unrestricted function (annoted with \texttt{Many}) that typechecks because
+its type allows the argument to be consumed unrestrictedly.
+
+\begin{code}
+    f :: a %1 -> (a, a)
+    f x = (x, x)
+\end{code}
+\begin{code}
+    g :: a %Many -> (a, a)
+    g x = (x, x)
+\end{code}
+
+The function annotated with the linearity annotation of \texttt{1} is equivalent
+to the linear function type ($\lolli$) seen in the linear lambda
+calculs~\ref{sec:linear-types}. To encode the multiplicative linear pair
+($\tensor$) we must create a pair data type with two linear components. To
+consume an algebraic data type is to consume all its linear components once, so
+to consume said pair data type we need to consume both its linear components,
+which successfully encodes the multiplicative pair elimination rule ($\tensor
+E$). To construct said pair data type we must provide two linear elements, each
+consuming some required resources to be constructed, which encodes the
+multiplicative pair introduction rule ($\tensor I$).
+
+\begin{code}
+data MultPair a b where
+    MkPair :: a %1 -> b %1 -> MultPair a b
+\end{code}
+
+The linearity annotations are a specialization of the more general so-called
+\emph{multiplicity annotations}. A multiplicity of \texttt{1} entails that the
+function argument must be consumed once, and a function annotated with it
+($\to_1$) is called a linear function (also known as $\lolli$). A function with
+multiplicity of \texttt{Many} ($\to_\omega$) allows the function argument to
+be consumed unrestrictedly. Unrestricted functions are equivalent to the common
+function type and, in fact, the usual function arrow ($\to$) implicitly has
+multiplicity \texttt{Many}.  Multiplicities also smoothly allow for
+\emph{multiplicity polymorphism}, which we describe below.
+
 
 \begin{itemize}
     \item Linear Haskell definition
@@ -924,11 +1043,11 @@ core transformations}}.
 %     \item GADTs e Coercions
 % \end{itemize}
 
-\chapter{Related Work}
+\section{Related Work}
 
 A brief introduction to the related work section?
 
-\section{System FC}
+\subsection{System FC}
 
 Haskell Core's foundational language was imbued with linear types, but it does
 not account for linearity with the whole of the type system
@@ -937,14 +1056,39 @@ Multiplicity annotations in SystemFC?
 
 Rules?
 
-\section{Linear Haskell}
+\subsection{Linear Haskell\label{sec:related-work-linear-haskell}}
 
 The paper is concerned with retrofitted lienar types but couldn't account for
 optimizations in the Core. It originally did not set out to modify Core but had
 to, and it's better this way bc we get optimizations typechecking safety
 guarantees.
 
-\section{OutsideIn(X)\label{related-work-gadts}}
+Haskell, contrary to most programming languages with linear types or
+linearity-based types (such as ownership types), has existed for 31 years of its
+life \emph{without} linear types. As such, the introduction of linear types to
+Haskell comes with added challenges that can't exist in linearly-typed languages
+that were designed with linear types from the start:
+
+\begin{itemize}
+    \item Backwards compatibility. The addition of linear types shouldn't break
+        all existing Haskell code.
+    \item Code re-usability. The linearly-typed part of Haskell's ecosystem and
+        its non-linearly-typed counterpart should fit in together and it must be
+        possible to define functions readily usable by both sides
+        simultaneously.
+\end{itemize}
+
+\begin{itemize}
+    \item Forwards compatibility -- Haskell, despite being an
+        industrial-strength language, is also a petri-dish for experimentation
+        and innovation in the field of programming languages. Therefore, Linear
+        Haskell takes care to accomodate possible future features, in
+        particular, its design is forward compatible with affine and dependent
+        types.
+\end{itemize}
+
+
+\subsection{OutsideIn(X)\label{related-work-gadts}}
 
 Defines constraint-based type system parametrized over X which does not account
 for local type refinements regarding linearity.
@@ -952,7 +1096,7 @@ for local type refinements regarding linearity.
 Se for modificar o typechecker com as multiplicity coercions vou ter de falar
 disto.
 
-\section{Rust}
+\subsection{Rust}
 
 Rust has a core based on linear types. Describe Rust's architecture?
 How do they handle linearity plus optimizations
@@ -971,10 +1115,10 @@ They probabluy don't typecheck linearity in Core
 % Core and to showcase the preliminary progress I have made so far.
 
 
-\section{Introduction}
+\section{Summary}
 
 
-Since the publication of Linear Haskell~\cite{linearhaskell} and its release in GHC 9.0,
+Since the publication of Linear Haskell~\cite{cite:linearhaskell} and its release in GHC 9.0,
 Haskell's type system supports linearity annotations in functions -- bringing
 linear types to a mainstream, pure, and lazy functional language. Concretely,
 function types can be annotated with a multiplicity (a multiplicity of One
