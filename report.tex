@@ -1020,7 +1020,47 @@ multiplicity \texttt{Many}.  Multiplicities also smoothly allow for
 
 \section{Core Haskell\label{core-section}}
 
-Haskel's intermediate representation that is statically typed
+Haskell is a big and expressive language with a lot of syntatic constructs and
+many, many features. However, the whole of Haskell can be desugared down to a
+very simple and elegant, explicitly typed, intermediate representation called
+\textbf{Core}. To illustrate the difference in complexity, in GHC, the source
+language (the big and complex Haskell) is defined through dozens of datatypes
+and hundreds of constructors, while Core is defined in 3 types (expressions,
+types, and coercions) and 15 constructors~\cite{}.
+%
+Core is unique as a strongly-typed intermediate language, with GHC as the only
+production-ready compiler having such a typed intermediate representation.
+
+Core allows us to reason about the entirety of Haskell in a much smaller and
+elegant language -- analysis, optimizating transformations, and code generation
+are all done on Core, not Haskell.
+%
+Of equal importance is Core being explicitly typed, which makes Core an internal
+consistency tool that validates desugaring and optimization passes. Desugaring
+and optimizing transformations must produce well-typed Core: having the Core
+typechecker guarantee that Core programs are well-typed provides a verification
+layer of the correctness of the optimizing transformations, of the desugarer,
+and of their implementations.
+%
+Finally, the expressive but simple type-system in Core serves as a sanity-check
+for all the extensions to the source language type system -- if we can desugar a
+type system feature into Core then the feature must be sound by reducibility.
+
+Core is typed very differently from Haskell because Core is explicitly typed and
+its type system is based on the $System_{FC}$~\cite{systemfc} type system, while
+Haskell is implicitly typed and its type system is based on the constraint-based
+type inference system $OutsideIn(X)$~\cite{outsideinx}. Therefore, typechecking
+Core is simple and fast and no inference must be done and, on the contrary,
+Haskell's typechecker is much more complicated and requires ad-hoc restrictions
+to make type inference feasible~\cite{}.
+%
+Haskell is typechecked in addition to Core to do type inference and to provide
+meaningful type errors. If Haskell wasn't typechecked as it is, everything (e.g.
+all binders) would have to be explicitly typed and all error messages would
+refer to the intermediate language rather than the written program.
+
+\todo[inline]{Any feature added to Haskell is only syntatic sugar}
+
 
 \begin{itemize}
     \item What is Core (IR) e as particularidades
