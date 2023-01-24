@@ -68,11 +68,9 @@ twice are type errors. Linear types can thus be used to, for example, guarantee
 that file handles, socket descriptors, and allocated memory are freed exactly
 once (leaks and double-frees become type errors)~\cite{}, implement safe
 high-performance language interoperability~\cite{}, guarantee that quantum
-entangled states are not duplicated~\cite{}, handle mutable state safely~\cite{},
-something on session types guarantees~\cite{}, and much more.
-
-% TODO: Also include bit about how it makes the basis of other type systems such
-% as rusts owneship. How ?
+entangled states are not duplicated~\cite{}, something on session types
+guarantees~\cite{}, and much more.
+% handle mutable state safely~\cite{}
 
 As an example, consider the following C-like program in which allocated memory
 is freed twice. We know this to be the dreaded double-free error which will
@@ -89,8 +87,8 @@ resource created by the \texttt{malloc} keyword. Because $p$ is a linear
 variable, it must be used exactly once. However, we are using it in two
 different calls to \texttt{free}. With our new linearity assumptions, the
 % TODO:
-example program \emph{would not typecheck}! Some conclusion on linearity
-goodness. In section~\ref{linear-types} we describe the fundamentals of linear
+example program \emph{would not typecheck}! \todo{Some conclusion on linearity
+goodness.} In section~\ref{linear-types} we describe the fundamentals of linear
 types in more detail with a formal definition and many examples.
 
 Despite their great promise and research literature, it is hard to balance
@@ -102,7 +100,7 @@ without garbage collection or reference counting, and, more recently,
 Haskell\cite{}, a \emph{purely functional} and \emph{lazy} language.
 
 Linearity in Haskell stands out % from linearity in Rust and Idris2
-for the two following distinct reasons:
+two distinct reasons:
 
 \begin{itemize}
     \item Linear types were only added to the language roughly \emph{31 years
@@ -127,7 +125,7 @@ for the two following distinct reasons:
         correction of the source transformations. If the resulting optimized
         Core program doesn't typecheck, something \emph{very wrong} has happened
         in a transformation!  We discuss Core in detail in
-        section~\ref{core-section}.
+        section~\ref{core-section}.\todo{Mention systemFC}
         % TODO: \item values in rust are linear by default while non-linear is
         % the haskell default?
 \end{itemize}
@@ -265,32 +263,33 @@ worry because the compiler can guarantee the resource is used exactly once, or
 \emph{linearly}.
 
 To understand how linear types are defined and used in practice, we present two
-examples of anonymous functions that receive as an argument a handle to work
-with and are responsible for closing it, we try to understand how the examples
-could be disregarded as incorrect, and work our way up to linear types from
-them. The first function ignores the received file handle and returns $\star$
-(read unit), which is equivalent to C's \texttt{void}.
-% TODO: Better code formatting
+examples of anonymous functions that receive a handle to work with (that must be
+closed before returning), we explore how the examples could be disregarded as
+incorrect, and work our way up to linear types from them. The first function
+ignores the received file handle and returns $\star$ (read unit), which is
+equivalent to C's \texttt{void}.
+%
 \begin{mathpar}
-    \lambda h.~\textrm{return}~\star;
+    \lambda h.~\mathsf{return}~\star;
     \and
-    \lambda h.~\textrm{close}~h;~\textrm{close}~h;
+    \lambda h.~\mathsf{close}~h;~\mathsf{close}~h;
 \end{mathpar}
 % TODO: Equation references?
 
 Ignoring the file handle which should have been closed by the function makes the
-first function incorrect. Similarly, the second function receives the file handle and
-closes it twice, which is incorrect not because it falls short of the
+first function incorrect. Similarly, the second function receives the file
+handle and closes it twice, which is incorrect not because it falls short of the
 specification, but rather because the program will crash while executing it.
 %
-Additionally, both functions share the same type, $\texttt{Handle} \to \star$, i.e.
-a function that takes a \texttt{Handle} and returns $\star$. The second function also
-shares this type because \texttt{close} has type $\texttt{Handle} \to \star$.
+Additionally, both functions share the same type, $\texttt{Handle} \to \star$,
+i.e.  a function that takes a \texttt{Handle} and returns $\star$. The second
+function also shares this type because \texttt{close} has type $\texttt{Handle}
+\to \star$.
 %
-Under a simple type system such as C's both functions are type correct (the
+Under a simple type system such as C's, both functions are type correct (the
 compiler will happily succeed), but both have erroneous behaviours. The first
-forgets to close the handle and the second closes it twice. Our goal is now to
-reach a type system that rejects these two programs.
+forgets to close the handle and the second closes it twice. Our goal is to reach
+a type system that rejects these two programs.
 
 The key observation to invalidating these programs is to focus on the function
 type going between \texttt{Handle} and $\star$ and augment it to indicate that
@@ -314,15 +313,18 @@ should only be used exactly once.
 % about resources in our program. A so called linear resource ?
 
 In order to further give well defined semantics to a linear type system, we
-present a linearly typed lambda calculus\todo{citar o girard
-  provavelmente ou o Barber (\url{https://www.lfcs.inf.ed.ac.uk/reports/96/ECS-LFCS-96-347/})}, a very simple language with linear
-types, by defining what are syntatically valid programs through the grammar
-in Fig.~\ref{fig:llcgrammar} and what programs are well typed through the typing
-rules in Fig.~\ref{fig:llcrules}. The language features functions and function application ($\lolli$), two
-flavours of pairs, additive ($\with$) and multiplicative ($\tensor$), a
-disjunction operator ($\oplus$)\todo{sum types} and the $\bang$
-modality operator\todo{que serve para}. A typing
-judgement for the linearly typed lambda calculus has the form
+present a linearly typed lambda calculus~\cite{}\todo{citar o girard
+provavelmente ou o Barber
+(\url{https://www.lfcs.inf.ed.ac.uk/reports/96/ECS-LFCS-96-347/})}, a very
+simple language with linear types, by defining what are syntatically valid
+programs through the grammar in Fig.~\ref{fig:llcgrammar} and what programs are
+well typed through the typing rules in Fig.~\ref{fig:llcrules}. The language
+features functions and function application ($\lolli$), two flavours of pairs,
+additive ($\with$) and multiplicative ($\tensor$), a disjunction operator
+($\oplus$) to construct sum types, and the $\bang$ modality operator which
+constructs an unrestricted type from a linear one, allowing values inhabiting
+$\bang A$ to be consumed unrestrictedly. A typing judgement for the linearly typed
+lambda calculus has the form
 %
 \[ \Gamma; \Delta \vdash M : A \]
 %
@@ -427,14 +429,13 @@ it does not depend on any linear resource.
     {\Gamma ; \Delta, \Delta' \vdash \llet{!u = M}{N} : C}
 \]
 %
-To utilize an unrestricted value $M$, we must
-bind it to $u$ with $\llet{\bang u = M}{N}$ and can then use it in $N$
-unrestrictedly, because $u$ extends the unrestricted context rather than the
-linear context as we have seen thus far.
+To utilize an unrestricted value $M$, we must bind it to $u$ with $\llet{\bang u
+= M}{N}$ which can then be used in $N$ unrestrictedly, because $u$ extends the
+unrestricted context rather than the linear context as we have seen thus far.
 
 In section~\ref{sec:linear-haskell} we describe how linear types are defined in
 Haskell, a programming language more featureful than the linearly typed lambda
-calculus. We will see that, the theoretical principles underlying the linear
+calculus. We will see that the theoretical principles underlying the linear
 lambda calculus and linear Haskell are the same, and by studying them in this
 minimal setting we can understand them at large.
 
@@ -668,17 +669,18 @@ arguments are \emph{not} evaluated when passed to functions, but rather are only
 evaluated when its value is needed. The combination of purity and laziness is
 unique to Haskell among mainstream programming languages.
 
-Haskell is a large feature-rich language but its relatively small core is based on a typed lambda
-calculus. As such, there exist no statements and computation is done simply
-through the evaluation of functions. Besides functions, one can define types and
-their constructors and pattern match on said constructors. Function application
-is denoted by an empty space\todo{juxtaposition} (\texttt{f~a} means \texttt{f} applied to
-\texttt{a}) and pattern matching is done with the \texttt{case} keyword followed
-by the enumerated alternatives. All variable names start with lower case and
-types start with upper case (excluding type variables). To make explicit the
-type of an expression, the \texttt{::} operator is used (e.g.
-$\texttt{f~::~Int}\to \texttt{Bool}$ is read \texttt{f} \emph{has type} function
-from \texttt{Int} to \texttt{Bool}).
+Haskell is a large feature-rich language but its relatively small core is based
+on a typed lambda calculus. As such, there exist no statements and computation
+is done simply through the evaluation of functions. Besides functions, one can
+define types and their constructors and pattern match on said constructors.
+Function application is denoted by the juxtaposition of the function expression
+and its arguments, which often means empty space between terms (\texttt{f~a}
+means \texttt{f} applied to \texttt{a}). Pattern matching is done with the
+\texttt{case} keyword followed by the enumerated alternatives. All variable
+names start with lower case and types start with upper case (excluding type
+variables). To make explicit the type of an expression, the \texttt{::} operator
+is used (e.g.  $\texttt{f~::~Int}\to \texttt{Bool}$ is read \texttt{f} \emph{has
+type} function from \texttt{Int} to \texttt{Bool}).
 
 Because Haskell is a pure programming language, input/ouptut side-effects are
 ``made pure'' by modelling them on the type level through the
@@ -740,9 +742,9 @@ advanced type level features, such as:
         families~\cite{,,}, which permit a direct encoding of type-level
         functions resembling rewrite rules.
 
-    \item Local equality constraints and existential types by using GADTs, we
-        explain ahead in more detail. A design for first class existential types
-        with bi-directional type inference in Haskell has been published
+    \item Local equality constraints and existential types by using GADTs, which
+        we explain ahead in more detail. A design for first class existential
+        types with bi-directional type inference in Haskell has been published
         in~\cite{10.1145/3473569}, despite not being yet implemented in GHC.
 
 \end{itemize}
@@ -778,15 +780,16 @@ by expressing that the size of the list must be at least one, at the type level.
 
 
 \textbf{GADTs}~\cite{10.1145/1159803.1159811,,,} are an advanced Haskell feature
-which allows users to define data types as they would common algebraic
-data types, with the added abilitiy to give explicit type signatures for the
-data constructors where the result type may differ in the type parameters across
-branches.
-\todo{nao ha branches, é nos varios construtores. This allows for
-  additional type invariants to be represented with GADTs through
-  their type parameters, which restricts the use of specific
-  constructors and their subsequent deconstruction through pattern
-  matching}
+that allows users to define data types as they would common algebraic data
+types, with the added abilitiy to give explicit type signatures for the data
+constructors where the result type may differ in the type parameters (e.g., we
+might have two constructors of the same data type \texttt{T~a} return values of
+type \texttt{T~Bool} and \texttt{T~Int}).
+%
+This allows for additional type invariants to be represented with GADTs through
+their type parameters, which restricts the use of specific constructors and
+their subsequent deconstruction through pattern matching.
+%
 % TODO: Rewrite this bit below
 Pattern matching against GADTs can introduce local type refinements, that is,
 pattern matching against certain data constructors will refine the type
@@ -840,7 +843,7 @@ To define the safe \texttt{head} function, we must specify the type of the input
 list taking into account that the size must not be zero. To that effect, the
 function takes as input a \texttt{Vec (S n) a}, that is, a vector with size
 (n+1) for all possible n's, making a call to \texttt{head} on a list of type
-\texttt{Vec Z a} (an empty list) is a compile-time type error.
+\texttt{Vec Z a} (an empty list) a compile-time type error.
 
 \begin{code}
     head :: Vec (S n) a -> a
@@ -923,7 +926,7 @@ described in Linear Haskell\cite{cite:linearhaskell}. While
 in~\ref{sec:related-work-linear-haskell} we discuss the reasoning and design
 choices behind retrofitting linear types to Haskell, here we focus on
 linear types solely as they exist in the language, and re-work the file
-handle example seen in the previous section along the way.
+handle example seen in the previous section to make sure it doesn't typecheck.
 % TODO: useless information but the term "Linear Haskell" is sometimes also used
 % to refer to the existence of linear types in Haskell in general.
 
@@ -949,17 +952,14 @@ In Haskell, linear types are introduced through \emph{linearity on the function
 arrow}, rather than through \emph{linearity in the kinds}. In practice, this
 means function types are annotated with a linearity that defines whether a
 function argument must be consumed \emph{exactly once} or whether it can be
-consumed \emph{unrestrictedly} (many times). Additionally, algebraic data types
-constructor consume its arguments linearly by default, but the constructor can
-be specified to receive unrestricted arguments which, in contrast, do not need
-to be consumed exactly once when pattern matched on.
+consumed \emph{unrestrictedly} (many times).
 %
 As an example, consider from the following functions the first, which doesn't
-typecheck because it is a linear function (annotated with the linearity of
+typecheck because it is a linear function (annotated with the linearity
 \texttt{1}) that consumes its argument more than once, and the second, which is
 an unrestricted function (annoted with \texttt{Many}) that typechecks because
 its type allows the argument to be consumed unrestrictedly.
-
+%
 \begin{code}
     f :: a %1 -> (a, a)
     f x = (x, x)
@@ -968,24 +968,37 @@ its type allows the argument to be consumed unrestrictedly.
     g :: a %Many -> (a, a)
     g x = (x, x)
 \end{code}
-
+%
 The function annotated with the linearity annotation of \texttt{1} is equivalent
 to the linear function type ($\lolli$) seen in the linear lambda
-calculs~\ref{sec:linear-types}. To encode the multiplicative linear pair
-($\tensor$) we must create a pair data type with two linear components. To
-consume an algebraic data type is to consume all its linear components once, so
-to consume said pair data type we need to consume both its linear components,
-which successfully encodes the multiplicative pair elimination rule ($\tensor
-E$). To construct said pair data type we must provide two linear elements, each
-consuming some required resources to be constructed, which encodes the
-multiplicative pair introduction rule ($\tensor I$).
+calculs~\ref{sec:linear-types}. 
+%
+Additionally, algebraic data type constructors can specify whether their
+arguments are linear or unrestricted, requiring that, when pattern matched on,
+linear arguments be consumed once while unrestricted arguments need not be
+consumed exactly once.
+%Similarly, when constructing such a constructor, using
+% a linear value as a linear argument of the constructor consumes it once, while
+% using it as an unrestricted argument consumes it unrestrictedly.
+%
+To encode the multiplicative linear pair ($\tensor$) we must create a pair data
+type with two linear components. To consume an algebraic data type is to consume
+all its linear components once, so to consume said pair data type we need to
+consume both its linear components -- successfully encoding the
+multiplicative pair elimination rule ($\tensor E$). To construct said pair data
+type we must provide two linear elements, each consuming some required resources
+to be constructed, thus encoding the multiplicative pair introduction rule
+($\tensor I$). As such, we define \texttt{MultPair} as an algebraic data type
+whose constructor uses a linear arrow for each of the arguments\footnote{By
+default, constructors defined without GADT syntax have linear arguments. We
+could have written \texttt{data MultPair a b = MkPair a b} to the same effect.}
 
 \begin{code}
 data MultPair a b where
     MkPair :: a %1 -> b %1 -> MultPair a b
 \end{code}
 
-The linearity annotations are a specialization of the more general so-called
+The linearity annotations are just a specialization of the more general so-called
 \emph{multiplicity annotations}. A multiplicity of \texttt{1} entails that the
 function argument must be consumed once, and a function annotated with it
 ($\to_1$) is called a linear function (also known as $\lolli$). A function with
@@ -995,11 +1008,12 @@ function type and, in fact, the usual function arrow ($\to$) implicitly has
 multiplicity \texttt{Many}.  Multiplicities also smoothly allow for
 \emph{multiplicity polymorphism}, which we describe below.
 
+% TODO: Is this enough about multiplicities?
 
 \begin{itemize}
-    \item Linear Haskell definition
-    \item Consuming values precisely
-    \item Multiplicities
+    % \item Linear Haskell definition
+    % \item Consuming values precisely
+    % \item Multiplicities
     \item Multiplicity polymorphism
     \item Que relaciona o systemFC com o calculo lambda linear
 \end{itemize}
