@@ -99,7 +99,7 @@ language whose ownership types build on linear ones to guarantee memory safety
 without garbage collection or reference counting, and, more recently,
 Haskell\cite{}, a \emph{purely functional} and \emph{lazy} language.
 
-Linearity in Haskell stands out % from linearity in Rust and Idris2
+Linearity in Haskell stands out from linearity in Rust and Idris2
 two distinct reasons:
 
 \begin{itemize}
@@ -632,10 +632,6 @@ minimal setting we can understand them at large.
 % \]
 
 
-% % TODO: Revise the story above instead of dumping so much information
-
-
-
 % \mypara{Linear Types}
 % \subsection{Linear Types}
 
@@ -1063,7 +1059,7 @@ refer to the intermediate language rather than the written program.
 
 
 \begin{itemize}
-    \item What is Core (IR) e as particularidades
+    % \item What is Core (IR) e as particularidades
     \item Em cima do SystemFC
     \item Optimizações feitas no Core
     \item Base SystemFC tem de ser "merged" com o linear lambda calculus
@@ -1096,6 +1092,25 @@ core transformations}}.
 %     \item Sistemas de inferência
 %     \item GADTs e Coercions
 % \end{itemize}
+
+\section{Core-To-Core Optimizations}
+
+% like inlining, its inverse (CSE), beta-reduction, lambda-lifting, eta-reduction/eta-expansion, binder-swap, case-of-case, case-of-know-constructor, float-out, float-in, worker/wrapper split (this one is big, in comparison), etc…)
+
+\subsection{Inlining}
+
+\subsection{Common Sub-expression elimination}
+
+\subsection{Beta-reduction}
+\subsection{Lambda lifting}
+\subsection{Eta-reduction/Eta-expansion}
+
+\subsection{Binder-swap}
+
+\subsection{Case-of-case}
+\subsection{Case-of-known-constructor}
+\subsection{Float-out and Float-in}
+\subsection{Worker/wrapper split}
 
 \section{Related Work}
 
@@ -2117,5 +2132,11 @@ Refer to the algorithm for computing recursive environment
 \bibliography{references}
 
 \end{document}
+
+% TODO: - In the letrec case: congratulations on finding an inference algorithm
+% (though I will want to see the proof some day, I don't see why it works yet).
+% You should clarify that, during linting, you will have a usage environment
+% annotation and won't need to run the inference algorithm. This algorithm is
+% only needed when you first create a letrec.
 
 % TODO:Use glossary
