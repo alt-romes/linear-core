@@ -1024,38 +1024,40 @@ language (the big and complex Haskell) is defined through dozens of datatypes
 and hundreds of constructors, while Core is defined in 3 types (expressions,
 types, and coercions) and 15 constructors~\cite{}.
 %
-Core is unique as a strongly-typed intermediate language, with GHC as the only
+Core is unique as a strongly-typed, lazy, purely functional intermediate
+language akin to a polymorphic lambda calculus, with GHC as the only
 production-ready compiler having such a typed intermediate representation.
 
 Core allows us to reason about the entirety of Haskell in a much smaller and
-elegant language -- analysis, optimizating transformations, and code generation
-are all done on Core, not Haskell.
+elegant functional language -- analysis, optimizating transformations, and code
+generation are all done on Core, not Haskell.
 %
 Of equal importance is Core being explicitly typed, which makes Core an internal
 consistency tool that validates desugaring and optimization passes. Desugaring
-and optimizing transformations must produce well-typed Core: having the Core
-typechecker guarantee that Core programs are well-typed provides a verification
-layer of the correctness of the optimizing transformations, of the desugarer,
-and of their implementations.
+and optimizing transformations must produce well-typed Core, and the Core
+typechecker can guarantee that Core programs are well-typed, thus providing a
+verification layer of the correctness of the optimizing transformations, of the
+desugarer, and of their implementations.
 %
 Finally, the expressive but simple type-system in Core serves as a sanity-check
 for all the extensions to the source language type system -- if we can desugar a
 type system feature into Core then the feature must be sound by reducibility.
+Effectively, any feature added to Haskell is only syntatic sugar if it can be
+desugared to Core.
 
 Core is typed very differently from Haskell because Core is explicitly typed and
-its type system is based on the $System_{FC}$~\cite{systemfc} type system, while
+its type system is based on the $System~F_C$~\cite{systemfc} type system, while
 Haskell is implicitly typed and its type system is based on the constraint-based
 type inference system $OutsideIn(X)$~\cite{outsideinx}. Therefore, typechecking
 Core is simple and fast and no inference must be done and, on the contrary,
 Haskell's typechecker is much more complicated and requires ad-hoc restrictions
 to make type inference feasible~\cite{}.
 %
-Haskell is typechecked in addition to Core to do type inference and to provide
-meaningful type errors. If Haskell wasn't typechecked as it is, everything (e.g.
-all binders) would have to be explicitly typed and all error messages would
-refer to the intermediate language rather than the written program.
-
-\todo[inline]{Any feature added to Haskell is only syntatic sugar}
+Haskell is typechecked in addition to Core to (i) do type inference and (ii)
+provide meaningful type errors. If Haskell wasn't typechecked as it is and
+instead we only typechecked Core, everything (e.g.  all binders) would have to
+be explicitly typed and all error messages would refer to the intermediate
+language rather than the written program, which is known to be undesirable.
 
 
 \begin{itemize}
