@@ -1,4 +1,4 @@
-\documentclass[]{lwnovathesis}
+\documentclass{lwnovathesis}
 
 \usepackage{todonotes}
 \usepackage{cmll}
@@ -8,6 +8,24 @@
 \usepackage[ruled,vlined]{algorithm2e}
 \usepackage{hyperref}
 \usepackage{fancyvrb}
+
+
+%%%%%%%%%%%%%%  Color-related things   %%%%%%%%%%%%%%
+
+%include polycode.fmt
+
+%subst keyword a = "\textcolor{BlueViolet}{\textbf{" a "}}"
+
+\newcommand{\id}[1]{\textsf{\textsl{#1}}}
+
+\renewcommand{\Varid}[1]{\textcolor{Sepia}{\id{#1}}}
+\renewcommand{\Conid}[1]{\textcolor{OliveGreen}{\id{#1}}}
+
+%%%%%%%%%%%%  End of Color-related things   %%%%%%%%%%%%
+
+% It might make sence to add pretty formating of individual things
+% like "forall", cf.
+% https://github.com/goldfirere/thesis/blob/master/tex/rae.fmt
 
 
 
@@ -78,7 +96,7 @@ crash our programs and crush our dreams. Regardless, a C-like type system will
 accept this program without any issue.
 \begin{code}
 let p = malloc(4);
- in free(p);
+in free(p);
     free(p);
 \end{code}
 

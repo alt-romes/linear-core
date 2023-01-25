@@ -30,6 +30,7 @@
 % Use memoir as the base class, for documentation run `texdoc memoir`
 % The options set solve (4), (2), (1)
 % TODO: For the latex font, use 11pt or 10pt?
+\PassOptionsToPackage{dvipsnames}{xcolor}
 \LoadClass[a4paper,11pt,twoside,onecolumn,openright,draft]{memoir}
 
 % This solves (6) by setting 1.5 line spacing for the main text
