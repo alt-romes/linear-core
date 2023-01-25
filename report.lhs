@@ -97,7 +97,7 @@ accept this program without any issue.
 \begin{code}
 let p = malloc(4);
 in free(p);
-    free(p);
+   free(p);
 \end{code}
 
 Under the lens of a linear type system, consider the variable $p$ to be a linear
@@ -1077,10 +1077,14 @@ instead we only typechecked Core, everything (e.g.  all binders) would have to
 be explicitly typed and all error messages would refer to the intermediate
 language rather than the written program, which is known to be undesirable.
 
+The Core language is founded on $System~F_C$, a polymorphic lambda calculus
+with explicit type-equality coercions that, like types, are erased at compile
+time (i.e. types and coercions alike don't incur any cost at run-time).
+$System~F_C$ is expressive enough as a target for Haskell
 
 \begin{itemize}
     % \item What is Core (IR) e as particularidades
-    \item Em cima do SystemFC
+    % \item Em cima do SystemFC
     \item Optimizações feitas no Core
     \item Base SystemFC tem de ser "merged" com o linear lambda calculus
     \item Ou porque é que é importante o Core ter linearidade também/a que nível

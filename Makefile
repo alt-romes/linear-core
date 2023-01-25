@@ -6,9 +6,9 @@ all: $(DOCNAME).pdf
 
 $(DOCNAME).pdf: $(DOCNAME).tex
 	pdflatex $(DOCNAME).tex
-	bibtex 	 $(DOCNAME).aux
-	pdflatex $(DOCNAME).tex
-	pdflatex $(DOCNAME).tex
+	# bibtex 	 $(DOCNAME).aux
+	# pdflatex $(DOCNAME).tex
+	# pdflatex $(DOCNAME).tex
 
 $(DOCNAME).tex: $(DOCNAME).lhs
 	lhs2TeX $(DOCNAME).lhs -o $(DOCNAME).tex
