@@ -485,7 +485,7 @@ minimal setting we can understand them at large.
     \infer*[right=($\with I$)]
     {\Gamma ; \Delta \vdash M : A \and \Gamma ; \Delta \vdash N : B}
     {\Gamma ; \Delta \vdash M \with N : A \with B}
-    \quad
+\quad
     \infer*[right=($\with E_L$)]
     {\Gamma ; \Delta \vdash M : A \with B}
     {\Gamma ; \Delta \vdash \textrm{fst}~M : A}
@@ -506,7 +506,7 @@ minimal setting we can understand them at large.
     {\Gamma ; \Delta \vdash M : A \oplus B \and \Gamma ; \Delta', w_1{:}A \vdash N_1 : C \and
     \Gamma ; \Delta', w_2{:}B \vdash N_2 : C}
     {\Gamma ; \Delta, \Delta' \vdash \ccase{M}{\textrm{inl}~w_1 \to N_1 \mid \textrm{inr}~w_2 \to N_2} : C}
-    \\[1em]
+\\[1em]
     \infer*[right=($\star I$)]
     { }
     {\Gamma ; \cdot \vdash \star : \star}
@@ -848,7 +848,7 @@ data MultPair a b where
     MkPair :: a %1 -> b %1 -> MultPair a b
 \end{code}
 
-The linearity annotations \texttt{1} and \texttt{Many} are just a
+The linearity annotations~\texttt{1} and \texttt{Many} are just a
 specialization of the more general so-called \emph{multiplicity annotations}. A
 multiplicity of \texttt{1} entails that the function argument must be consumed
 once, and a function annotated with it ($\to_1$) is called a linear function
@@ -859,11 +859,11 @@ the usual function arrow ($\to$) implicitly has multiplicity \texttt{Many}.
 Multiplicities naturally allow for \emph{multiplicity polymorphism}, which we
 explain below.
 
-Consider the functions $f$, $g$ which return $Int$ and take as an argument a
-function from @Bool@ to @Int@ which is, respectively, a linear function
-($Bool~\to_1~Int$) and an unrestricted one ($Bool~\to_\omega~Int$), and the
-function $h$ is a function from @Bool@ to @Int@ that we want to pass as an
-argument to both $f$ and $g$.
+Consider the functions $f$ and $g$ which take as an argument a function from
+@Bool@ to @Int@ which is, respectively, a linear function ($Bool~\to_1~Int$)
+and an unrestricted one ($Bool~\to_\omega~Int$), and the function $h$ is a
+function from @Bool@ to @Int@ that we want to pass as an argument to both $f$
+and $g$.
 
 \begin{minipage}{0.47\textwidth}
 \begin{code}
@@ -889,9 +889,10 @@ $f$ and $g$ ($m$ will unify with $1$ and $\omega$ at the call sites).
 
 \begin{code}
 h :: Bool %m -> Int
-h False = 0
-h True = 1
+h x = case x of False -> 0; True -> 1
 \end{code}
+ 
+% TODO: Is this enough about multiplicities?
 
 \begin{itemize}
     % \item Linear Haskell definition
@@ -948,9 +949,39 @@ instead we only typechecked Core, everything (e.g.  all binders) would have to
 be explicitly typed and all error messages would refer to the intermediate
 language rather than the written program, which is known to be undesirable.
 
-The Core language is based on $System~F_C$, a polymorphic lambda calculus
-with explicit type-equality coercions that, like types, are erased at compile
-time (i.e. types and coercions alike don't incur any cost at run-time). 
+The Core language is based on $System~F_C$, a polymorphic lambda calculus with
+explicit type-equality coercions that, like types, are erased at compile time
+(i.e. types and coercions alike don't incur any cost at run-time). System
+$F_C$'s syntax in Figure~\ref{fig:systemfc-terms} defines the foundation of the
+small language to which all of Haskell is desugared to. Core extends System
+$F_C$ with two constructors for \emph{join points}~\cite{maurer2017compiling}
+that allow new optimizations to be performed, and with a \emph{tick} construct
+which is used as an internal note.
+
+\begin{figure}[h]
+\[
+\begin{array}{lcll}
+    u               & ::=  & x \mid K                           & \textrm{Variables and data constructors}\\
+    e               & ::=  & u                                  & \textrm{Term atoms}\\
+                    & \mid & \Lambda a{:}\kappa.~e~\mid~e~\varphi  & \textrm{Type abstraction/application}\\
+                    & \mid & \lambda x{:}\sigma.~e~\mid~e_1~e_2 & \textrm{Term abstraction/application}\\
+                    & \mid & \llet{x{:}\sigma = e_1}{e_2}       & \\
+                    & \mid & \ccase{e_1}{\overline{p\to e_2}}   & \\
+                    & \mid & e \blacktriangleright \gamma       & \textrm{Cast} \\
+                    &      &                                    & \\
+    p               & ::= & K~\overline{b{:}\kappa}~\overline{x{:}\sigma} & \textrm{Pattern}
+\end{array}
+\]
+\caption{System $F_C$'s Terms\label{fig:systemfc-terms}}
+\end{figure}
+
+% \begin{array}{lcl}
+%   d & ::= & a \mid T \\
+%   g & ::= & c \mid C 
+% \end{array}
+% \quad
+
+
 % $System~F_C$ is expressive enough as a target for Haskell
 
 \begin{itemize}
@@ -975,6 +1006,8 @@ time (i.e. types and coercions alike don't incur any cost at run-time).
 % \end{itemize}
 
 \section{GHC Pipeline}
+
+
 
 Ideia de que há uma transformação .... pipeline... e depois há muitas
 transformações feitas internamente dentro do Core,STG,Cmm,LLVM e que o meu foco
