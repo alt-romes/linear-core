@@ -8,6 +8,7 @@
 \usepackage[ruled,vlined]{algorithm2e}
 \usepackage{hyperref}
 \usepackage{fancyvrb}
+\usepackage{cleveref}
 
 
 %%%%%%%%%%%%%%  Color-related things   %%%%%%%%%%%%%%
@@ -79,7 +80,7 @@ Static type systems have brought programmers ...
 Programming languages rely on type systems to statically eliminate classes of
 errors ...
 
-Linear type systems~\cite{} add expressiveness to existing type systems by
+Linear type systems~\cite{cite:linear-logic,cite:barberdill} add expressiveness to existing type systems by
 stating that linear resources must be used \emph{exactly once}. In programming
 languages with a linear type system, not using certain resources or using them
 twice are type errors. Linear types can thus be used to, for example, guarantee
@@ -111,24 +112,24 @@ types in more detail with a formal definition and many examples.
 
 Despite their great promise and research literature, it is hard to balance
 linear and non-linear types in practice and, consequently, few programming
-languages have linear type systems. Among them are Idris2\cite{}, a linearly and
-dependently typed language based on Quantitative Type Theory, Rust\cite{}, a
+languages have linear type systems. Among them are Idris 2~\cite{brady:LIPIcs.ECOOP.2021.9}, a linearly and
+dependently typed language based on Quantitative Type Theory, Rust~\cite{10.1145/2692956.2663188}, a
 language whose ownership types build on linear ones to guarantee memory safety
 without garbage collection or reference counting, and, more recently,
-Haskell\cite{}, a \emph{purely functional} and \emph{lazy} language.
+Haskell~\cite{cite:linearhaskell}, a \emph{purely functional} and \emph{lazy} language.
 
-Linearity in Haskell stands out from linearity in Rust and Idris2
+Linearity in Haskell stands out from linearity in Rust and Idris 2
 two distinct reasons:
 
 \begin{itemize}
     \item Linear types were only added to the language roughly \emph{31 years
-        after} Haskell's inception, unlike Rust and Idris2 which were
+        after} Haskell's inception, unlike Rust and Idris 2 which were
         designed with linearity from the start. It is an especially difficult
         endeavour to add linear types to a well-established language with a
         large library ecosystem and many active users, rather than to develop
         the language from the ground up with linear types in mind, and the
         successful approach as implemented in GHC 9.0, the leading Haskell
-        compiler, was based on Linear Haskell\cite{cite:linearhaskell}, where a
+        compiler, was based on Linear Haskell~\cite{cite:linearhaskell}, where a
         linear type system designed with retaining backwards-compatibility and
         allowing code reuse across linear and non-linear users of the same
         libraries in mind was described. We describe Linear Haskell in detail in
@@ -223,7 +224,7 @@ Is this program really still linear? Yes, but ...
 % The advent of linear types in Haskell bring forth
 
 % Besides Haskell's supporting linear
-% types according to the said paper, Idris2\cite{} supports linear types in a
+% types according to the said paper, Idris 2\cite{} supports linear types in a
 % dependently typed setting, Clean\cite{} has uniqueness types which are closely
 % related to linear types, and Rust\cite{} has ownership types which build from
 % linear types. 
@@ -316,7 +317,7 @@ argument of the function must be linear. We take the function type $A \to B$
 and replace the function arrow ($\to$) with the linear function arrow ($\lolli$)
 %
 \footnote{Since linear types are born from a correspondence with linear
-logic\cite{linear-logic} (the Curry-Howard isomorphism\cite{curry-howard}), we
+logic\cite{cite:linear-logic} (the Curry-Howard isomorphism\cite{curry:34,howard:80}), we
 borrow the $\lolli$ symbol and other linear logic connectives to describe linear
 types.}
 %
@@ -331,29 +332,26 @@ should only be used exactly once.
 % about resources in our program. A so called linear resource ?
 
 In order to further give well defined semantics to a linear type system, we
-present a linearly typed lambda calculus~\cite{}\todo{citar o girard
-provavelmente ou o Barber
-(\url{https://www.lfcs.inf.ed.ac.uk/reports/96/ECS-LFCS-96-347/})}, a very
-simple language with linear types, by defining what are syntatically valid
-programs through the grammar in Fig.~\ref{fig:llcgrammar} and what programs are
-well typed through the typing rules in Fig.~\ref{fig:llcrules}. The language
-features functions and function application ($\lolli$), two flavours of pairs,
-additive ($\with$) and multiplicative ($\tensor$), a disjunction operator
-($\oplus$) to construct sum types, and the $\bang$ modality operator which
-constructs an unrestricted type from a linear one, allowing values inhabiting
-$\bang A$ to be consumed unrestrictedly. A typing judgement for the linearly typed
-lambda calculus has the form
+present a linearly typed lambda
+calculus~\cite{cite:linear-logic,cite:barberdill}, a very simple language with
+linear types, by defining what are syntatically valid programs through the
+grammar in Fig.~\ref{fig:llcgrammar} and what programs are well typed through
+the typing rules in Fig.~\ref{fig:llcrules}. The language features functions
+and function application ($\lolli$), two flavours of pairs, additive ($\with$)
+and multiplicative ($\tensor$), a disjunction operator ($\oplus$) to construct
+sum types, and the $\bang$ modality operator which constructs an unrestricted
+type from a linear one, allowing values inhabiting $\bang A$ to be consumed
+unrestrictedly. A typing judgement for the linearly typed lambda calculus has
+the form
 %
 \[ \Gamma; \Delta \vdash M : A \]
 %
-where $\Gamma$ is the context of resources that may be used unrestrictedly, that
-is, any number of times, $\Delta$ is the context of resources that must be used
-linearly (\emph{exactly once}), $M$ is the program to type and $A$ is its type.
-When resources from the linear context are used, they are removed from the
-context and no longer available, and all resources in the linear context must be
-used exactly once.
-
-% Explicar o que é modality operator?
+where $\Gamma$ is the context of resources that may be used unrestrictedly,
+that is, any number of times, $\Delta$ is the context of resources that must be
+used linearly (\emph{exactly once}), $M$ is the program to type and $A$ is its
+type.  When resources from the linear context are used, they are removed from
+the context and no longer available, and all resources in the linear context
+must be used exactly once.
 
 \begin{figure}[h]
 \[
@@ -528,30 +526,6 @@ minimal setting we can understand them at large.
 \label{fig:llcrules}
 \end{figure}
 
-% A linear type system is a type system in which linear resources must be used
-% exactly once...!
-
-% % A linear type system is a type system in which statements such as "this function
-% % will use its argument exactly once" can be formally expressed and checked.
-
-% Girard's \emph{linear logic} suggests a new \emph{type system} for functional
-% languages through the Curry-Howard isomorphism -- every linear logic proposition
-% maps to a different linear type.
-
-% Values belonging to a linear type must be used exactly once. For example, the
-% type corresponding to the linear implication ($\lolli$), the linear function, is
-% a function that consumes its argument exactly once. A linear function that
-% receives an integer as an input and consumes it exactly once to
-% produce a character would have type $\textbf{int} \lolli
-% \textbf{char}$.
-
-% Programming languages with linear type systems might differ in their definition of linear
-% resources, but usually \emph{variables} are considered linear resources?
-% % That is, we can rely on the type system to prove properties regarding the usage of certain resources.
-% % The \emph{Hello World} of linearly typed programs is a linearly typed pointer.
-% % In a non-memory managed language, an allocated pointer must be freed
-% % \emph{exactly once}.
-
 % % \begin{code}
 % % let p = malloc(5)
 % %     p' = store(p, "x")
@@ -561,122 +535,11 @@ minimal setting we can understand them at large.
 
 % % We'd like to hide the boilerplate involved \cite{Linear constraints}
 
-
-% \mypara{Type Systems} A type system can be formally described through
-% a set of inference rules that inductively define a judgment of the
-% form $\Gamma \vdash M : A$, stating that program expression $M$ has
-% type $A$ according to the \emph{typing assumptions} for variables
-% tracked in $\Gamma$. For instance,
-% $x{:}\mathsf{Int}, y{:}\mathsf{Int} \vdash x+y : \mathsf{Int}$ states
-% that $x+y$ has type $\mathsf{Int}$ under the assumption that $x$ and
-% $y$ have type $\mathsf{Int}$.  An expression $M$ is deemed well-typed
-% with a given type $A$ if one can construct a typing derivation with $M :
-% A$ as its conclusion, by repeated application of the inference rules.
-
-% The simply-typed $\lambda$-calculus is a typed core functional
-% language~\cite{10.5555/509043} that captures the essence of a type system in a simple and familiar environment. Its syntax consists of
-% functional abstraction, written $\lambda x{:}A.M$, denoting
-% an (anonymous) function that takes an argument of type $A$, bound to
-% $x$ in $M$; and application $M\,N$, with the standard meaning, and
-% variables $x$. For instance, the term $\lambda x{:}A.x$, denoting the identity function, is a functional abstraction
-% taking an argument of type $A$ and returning it back.
-
-% \mypara{Linear Logic}
-
-% Linear logic \cite{DBLP:journals/tcs/Girard87} can be seen as a
-% resource-aware logic, where propositions are interpreted as resources
-% that are consumed during the inference process.  Where in standard
-% propositional logic we are able to use an assumption as many times as
-% we want, in linear logic every resource (i.e., every assumption) must
-% be used \emph{exactly once}, or \emph{linearly}. This usage
-% restriction gives rise to new logical connectives, based on the way
-% the ambient resources are used. For instance, conjunction, usually
-% written as $A\wedge B$, appears in two forms in linear logic:
-% multiplicative or simultaneous conjunction (written $A\tensor B$); and
-% additive or alternative conjunction (written $A\with
-% B$). Multiplicative conjunction denotes the simultaneous availability
-% of resources $A$ and $B$, requiring both of them to be
-% used. Alternative conjunction denotes the availability of $A$ and $B$,
-% but where only one of the two resources may be used. Similarly,
-% implication becomes linear implication, written $A\lolli B$,
-% denoting a resource that will consume (exactly one) resource $A$ to
-% produce a resource $B$.
-
-% To present the formalization of this logic, besides the new
-% connectives, we need to introduce the \emph{resource-aware context}
-% $\Delta$.  In contrast to the previously seen $\Gamma$, $\Delta$ is
-% also a list of variables and their types, but where each and every
-% variable must be used exactly once during inference.  So, to introduce
-% the connective $\tensor$ which defines a multiplicative pair of
-% propositions, we must use exactly all the resources
-% ($\Delta_1, \Delta_2$) needed to realize the ($\Delta_1$)
-% proposition $A$, and ($\Delta_2$) proposition $B$:
-% \[
-%     \infer*[right=($\tensor I$)]
-%     {\Delta_1 \vdash M : A \and \Delta_2 \vdash N : B}
-%     {\Delta_1 , \Delta_2 \vdash (M \tensor N) : A \tensor B}
-% \]
-% Out of the logical connectives, we need to mention one more, since it
-% augments the form of the judgment and it's the one that ensures
-% logical strength i.e. we're able to translate intuitionistic logic
-% into linear logic.  The proposition $\bang A$ (read \emph{of course}
-% $A$) is used (under certain conditions) to make a resource
-% ``infinite'' i.e. to make it useable an arbitrary number of times. To
-% distinguish the ``infinite'' variables, a separate, unrestricted,
-% context is used -- $\Gamma$. So $\Gamma$ holds the ``infinite''
-% resources, and $\Delta$ the resources that can only be used once.  The
-% linear typing judgment for the introduction of the exponential $\bang A$
-% takes the form:
-% \[
-%     \infer*[right=($\bang I$)]
-%     {\Gamma ; \emptyset \vdash M : A}
-%     {\Gamma ; \emptyset \vdash \bang M : \bang A}
-% \]
-% Logically, a proof of $\bang A$ cannot use linear resources since
-% $\bang A$ denotes an unbounded (potentially $0$) number of copies of
-% $A$. Proofs of $\bang A$ may use other unrestricted or exponential
-% resources, tracked by context $\Gamma$.
-% From a computational perspective, the type $\bang A$
-% internalizes the simply-typed $\lambda$-calculus in the linear
-% $\lambda$-calculus.
-
-% The elimination form for the exponential, written $\llet{ !u
-% = M}{ N}$, warrants the use of resource $A$ an unbounded
-% number of times in $N$ via the variable $u$:
-% \[
-%     \infer*[right=($\bang E$)]
-%     {\Gamma ; \Delta_1 \vdash M : \bang A \and \Gamma, u{:}A ; \Delta_2 \vdash N : C}
-%     {\Gamma ; \Delta_1, \Delta_2 \vdash \llet{ !u = M}{ N} : C}
-% \]
-
-
-% \mypara{Linear Types}
-% \subsection{Linear Types}
-
-% Girard's \emph{linear logic} suggests a new \emph{type system} for functional
-% languages through the Curry-Howard isomorphism -- every linear logic proposition
-% maps to a different linear type.
-
-% Values belonging to a linear type must be used exactly once. For example, the
-% type corresponding to the linear implication ($\lolli$), the linear function, is
-% a function that consumes its argument exactly once. A linear function that
-% receives an integer as an input and consumes it exactly once to
-% produce a character would have type $\textbf{int} \lolli
-% \textbf{char}$.
-
-
-% \begin{itemize}
-%     \item Ideia dos linear types
-%     \item Calculo lambda linear (como forma de falar da linearidade)
-%     \item Gestão de recursos
-%     \item Rust (core is linear lambda calculus?)
-% \end{itemize}
-
 \section{Haskell}
 
 Haskell is a functional programming language defined by the Haskell
 Report~\cite{jones1999haskell,marlow2010haskell} and whose \emph{de-facto}
-implementation is GHC, the Glasgow Haskell Compiler\cite{GHC}. Haskell is a
+implementation is GHC, the Glasgow Haskell Compiler~\cite{marlow2012the}. Haskell is a
 \emph{lazy}, \emph{purely functional} language, i.e., functions cannot
 have side effects or mutate data, and, contrary to many programming languages,
 arguments are \emph{not} evaluated when passed to functions, but rather are only
@@ -813,23 +676,23 @@ inference details of GADTs which we later explore in~\ref{related-work-gadts}.
 
 % TODO: Explain Type in Type?
 
-First, we define the natural numbers inductively: a natural number is either
-zero (\texttt{Z}) or a successor (\texttt{S}) of another natural number (e.g.
-the successor of the successor of zero is a natural number). The following
-definition creates the \texttt{Nat} type, the \texttt{Z} and \texttt{S} data
-constructors which construct values, \emph{and} the \texttt{Z} and \texttt{S}
-\emph{type} constructors which construct types.
-%
-% The latter two exist because of the \emph{DataKinds} language feature which
-% promotes term-level constructors to type-level constructors.
+% First, we define the natural numbers inductively: a natural number is either
+% zero (\texttt{Z}) or a successor (\texttt{S}) of another natural number (e.g.
+% the successor of the successor of zero is a natural number). The following
+% definition creates the \texttt{Nat} type, the \texttt{Z} and \texttt{S} data
+% constructors which construct values, \emph{and} the \texttt{Z} and \texttt{S}
+% \emph{type} constructors which construct types.
+% %
+% % The latter two exist because of the \emph{DataKinds} language feature which
+% % promotes term-level constructors to type-level constructors.
+% 
+% \begin{code}
+%     data Nat = Z | S Nat
+%   \end{code}
+% 
+%   \todo[inline]{Acho que a parte dos naturais nao e necessaria}
 
-\begin{code}
-    data Nat = Z | S Nat
-  \end{code}
-
-  \todo[inline]{Acho que a parte dos naturais nao e necessaria}
-
-Secondly, we define the data type in GADT syntax for length-index lists which
+We define the data type in GADT syntax for length-index lists which
 takes two type parameters. The first type parameter is the length of the list
 and the type of the type parameter (i.e. the kind of the first type parameter)
 is \texttt{Nat}. To construct a type of kind \texttt{Nat} we can only use the
@@ -864,12 +727,13 @@ function takes as input a \texttt{Vec (S n) a}, that is, a vector with size
     head (Cons x xs) = x
 \end{code}
 
-Pattern matching on the \texttt{Nil} constructor is not needed, despite it being
-indeed a constructor of \texttt{Vec}. The input type just doesn't match the type
-of \texttt{Nil} ($\texttt{S~n} \neq \texttt{Z}$), so the corresponding pattern
-case alternative would be innacessible because the typechecker will not allow
-calling \texttt{head} on \texttt{Nil} (once again, its type, \texttt{Vec~Z~a},
-does not match the input type of \texttt{head}, \texttt{Vec~(S~n)~a}).
+Pattern matching on the \texttt{Nil} constructor is not needed, despite it
+being a constructor of \texttt{Vec}. The argument type doesn't match the type
+of the \texttt{Nil} constructor ($\texttt{S~n} \neq \texttt{Z}$), so the
+corresponding pattern case alternative is innacessible because the typechecker
+does not allow calling \texttt{head} on \texttt{Nil} (once again, its type,
+\texttt{Vec~Z~a}, does not match the input type of \texttt{head},
+\texttt{Vec~(S~n)~a}).
 
 In practice, the idea of using more expressive types to enforce invariants at
 compile time, that is illustrated by this simple example, can be taken much
@@ -884,41 +748,10 @@ implement a material system in a game engine\cite{}.
 Linear types are, similarly, an extension to Haskell's type system that makes it
 even more expressive, by providing a finer control over the usage of certain
 resources at the type level.
-%, besides the aforementioned type-level features
-
-% A function to compute the length of a list in Haskell is defined by pattern
-% matching on the list and returning $0$ if the list is empty and adding one to
-% the (computed recursively) length of the rest of the list otherwise. The
-% following snippet defines the said \texttt{length} function.
-% \begin{code}
-%     length [] = 0
-%     length (x:xs) = 1 + length xs
-% \end{code}
-% The function \texttt{length} receives a list and returns an integer, and since
-% it treats all list's elements the same, it is said to be polymorphic over the
-% list's elements type. In Haskell, function signatures typically appear above the
-% definition, and for this particular function we'd have
-% \begin{code}
-%     length :: [a] -> Int
-% \end{code}
-% where \texttt{a} is a universally quantified type variable, that is,
-% \texttt{length} can be called on lists of ints, lists of characters, lists of
-% lists of strings, lists of anything.
-
-% The laziness evaluation strategy entails expressions are only evaluated when
-% needed. If we were to call just the above function on a list of computationally
-% expensive elements, such as
-% \begin{code}
-%     length [5^1234, 6^4567, 8^(9^42)]
-% \end{code}
-% We would get the result 3 instantaneously: the elements of the list would never
-% be evaluated because the \texttt{length} function does not require the value of
-% each element to compute a result.
 
 % TODO:
 % Is it outside the scope of this report to discuss the merits and disadvantages
 % of laziness and purely functional properties?
-
 
 % \begin{itemize}
     % \item Features fundamentais
@@ -936,13 +769,11 @@ resources at the type level.
 % operations. Linear haskell relates systemFC with the linear lambda calculus?
 
 The introduction of linear types to Haskell's type system is originally
-described in Linear Haskell\cite{cite:linearhaskell}. While
+described in Linear Haskell~\cite{cite:linearhaskell}. While
 in~\ref{sec:related-work-linear-haskell} we discuss the reasoning and design
 choices behind retrofitting linear types to Haskell, here we focus on
 linear types solely as they exist in the language, and re-work the file
 handle example seen in the previous section to make sure it doesn't typecheck.
-% TODO: useless information but the term "Linear Haskell" is sometimes also used
-% to refer to the existence of linear types in Haskell in general.
 
 A linear function ($f :: A \lolli B$) guarantees that if ($f~x$) is consumed
 exactly once, then the argument $x$ is consumed exactly once. The precise
@@ -963,64 +794,70 @@ paraphrasing Linear Haskell~\cite{cite:linearhaskell}:
 
 
 In Haskell, linear types are introduced through \emph{linearity on the function
-arrow}, rather than through \emph{linearity in the kinds}. In practice, this
-means function types are annotated with a linearity that defines whether a
-function argument must be consumed \emph{exactly once} or whether it can be
-consumed \emph{unrestrictedly} (many times).
+arrow}.
+In practice, this means function types are annotated with a linearity that
+defines whether a function argument must be consumed \emph{exactly once} or
+whether it can be consumed \emph{unrestrictedly} (many times).
 %
-As an example, consider from the following functions the first, which doesn't
-typecheck because it is a linear function (annotated with the linearity
-\texttt{1}) that consumes its argument more than once, and the second, which is
-an unrestricted function (annoted with \texttt{Many}) that typechecks because
-its type allows the argument to be consumed unrestrictedly.
-%
+As an example, consider the function $f$ below, which doesn't typecheck because
+it is a linear function (annotated with \texttt{1}) that consumes its argument
+more than once, and the function $g$, which is an unrestricted function
+(annoted with \texttt{Many}) that typechecks because its type allows the
+argument to be consumed unrestrictedly.
+
+\begin{minipage}{0.47\textwidth}
 \begin{code}
     f :: a %1 -> (a, a)
     f x = (x, x)
 \end{code}
+\end{minipage}
+\begin{minipage}{0.47\textwidth}
 \begin{code}
     g :: a %Many -> (a, a)
     g x = (x, x)
 \end{code}
-%
-The function annotated with the linearity annotation of \texttt{1} is equivalent
-to the linear function type ($\lolli$) seen in the linear lambda
-calculs~\ref{sec:linear-types}. 
+\end{minipage}
+
+The function annotated with the \emph{multiplicity} annotation of \texttt{1} is
+equivalent to the linear function type ($\lolli$) seen in the linear lambda
+calculus~(\Cref{sec:linear-types}).
 %
 Additionally, algebraic data type constructors can specify whether their
 arguments are linear or unrestricted, requiring that, when pattern matched on,
 linear arguments be consumed once while unrestricted arguments need not be
 consumed exactly once.
-%Similarly, when constructing such a constructor, using
-% a linear value as a linear argument of the constructor consumes it once, while
-% using it as an unrestricted argument consumes it unrestrictedly.
+%Similarly, when constructing such a constructor, using a linear value as a
+%linear argument of the constructor consumes it once, while using it as an
+%unrestricted argument consumes it unrestrictedly.
 %
 To encode the multiplicative linear pair ($\tensor$) we must create a pair data
-type with two linear components. To consume an algebraic data type is to consume
-all its linear components once, so to consume said pair data type we need to
-consume both its linear components -- successfully encoding the
+type with two linear components. To consume an algebraic data type is to
+consume all its linear components once, so, to consume said pair data type, we
+need to consume both its linear components -- successfully encoding the
 multiplicative pair elimination rule ($\tensor E$). To construct said pair data
-type we must provide two linear elements, each consuming some required resources
-to be constructed, thus encoding the multiplicative pair introduction rule
-($\tensor I$). As such, we define \texttt{MultPair} as an algebraic data type
-whose constructor uses a linear arrow for each of the arguments\footnote{By
-default, constructors defined without GADT syntax have linear arguments. We
-could have written \texttt{data MultPair a b = MkPair a b} to the same effect.}
+type we must provide two linear elements, each consuming some required
+resources to be constructed, thus encoding the multiplicative pair introduction
+rule ($\tensor I$). As such, we define \texttt{MultPair} as an algebraic data
+type whose constructor uses a linear arrow for each of the
+arguments\footnote{By default, constructors defined without GADT syntax have
+linear arguments. We could have written \texttt{data MultPair a b = MkPair a b}
+to the same effect.}.
 
 \begin{code}
 data MultPair a b where
     MkPair :: a %1 -> b %1 -> MultPair a b
 \end{code}
 
-The linearity annotations are just a specialization of the more general so-called
-\emph{multiplicity annotations}. A multiplicity of \texttt{1} entails that the
-function argument must be consumed once, and a function annotated with it
-($\to_1$) is called a linear function (also known as $\lolli$). A function with
-multiplicity of \texttt{Many} ($\to_\omega$) allows the function argument to
-be consumed unrestrictedly. Unrestricted functions are equivalent to the common
-function type and, in fact, the usual function arrow ($\to$) implicitly has
-multiplicity \texttt{Many}.  Multiplicities also smoothly allow for
-\emph{multiplicity polymorphism}, which we describe below.
+The linearity annotations \texttt{1} and \texttt{Many} are just a
+specialization of the more general so-called \emph{multiplicity annotations}. A
+multiplicity of \texttt{1} entails that the function argument must be consumed
+once, and a function annotated with it ($\to_1$) is called a linear function
+(also known as $\lolli$). A function with multiplicity of \texttt{Many}
+($\to_\omega$) allows the function argument to be consumed unrestrictedly.
+Unrestricted functions are equivalent to the common function type and, in fact,
+the usual function arrow ($\to$) implicitly has multiplicity \texttt{Many}.
+Multiplicities also smoothly allow for \emph{multiplicity polymorphism}, which
+we describe below.
 
 % TODO: Is this enough about multiplicities?
 
@@ -1032,44 +869,45 @@ multiplicity \texttt{Many}.  Multiplicities also smoothly allow for
     \item Que relaciona o systemFC com o calculo lambda linear
 \end{itemize}
 
-\section{Core Haskell\label{core-section}}
+\section{Core and System $F_C$\label{core-section}}
 
-Haskell is a big and expressive language with a lot of syntatic constructs and
-many, many features. However, the whole of Haskell can be desugared down to a
-very simple and elegant, explicitly typed, intermediate representation called
-\textbf{Core}. To illustrate the difference in complexity, in GHC, the source
-language (the big and complex Haskell) is defined through dozens of datatypes
-and hundreds of constructors, while Core is defined in 3 types (expressions,
-types, and coercions) and 15 constructors~\cite{}.
+Haskell is a large and expressive language with many syntatic constructs and
+features. However, the whole of Haskell can be desugared down to a minimal,
+explicitly typed, intermediate language called \textbf{Core}. To illustrate the
+difference in complexity, in GHC's implementation of Haskell, the abstract
+syntax tree is defined through dozens of datatypes and hundreds of
+constructors, while the GHC's implmentation of Core is defined in 3 types
+(expressions, types, and coercions) and 15 constructors~\cite{}.
 %
-Core is unique as a strongly-typed, lazy, purely functional intermediate
-language akin to a polymorphic lambda calculus, with GHC as the only
-production-ready compiler having such a typed intermediate representation.
+Core is a strongly-typed, lazy, purely functional intermediate language akin to
+a polymorphic lambda calculus, that GHC uses as its key intermediate
+representation.
 
-Core allows us to reason about the entirety of Haskell in a much smaller and
-elegant functional language -- analysis, optimizating transformations, and code
+Core allows us to reason about the entirety of Haskell in a much smaller
+functional language -- analysis, optimizing transformations, and code
 generation are all done on Core, not Haskell.
 %
-Of equal importance is Core being explicitly typed, which makes Core an internal
-consistency tool that validates desugaring and optimization passes. Desugaring
-and optimizing transformations must produce well-typed Core, and the Core
-typechecker can guarantee that Core programs are well-typed, thus providing a
-verification layer of the correctness of the optimizing transformations, of the
-desugarer, and of their implementations.
+Of equal importance is Core being explicitly typed, which makes Core an
+internal consistency tool that validates desugaring and optimization passes.
+Desugaring and optimizing transformations must produce well-typed Core, with
+the Core typechecker providing a verification layer for the correctness of
+optimizing transformations, the desugarer, and their implementations.
 %
-Finally, the expressive but simple type-system in Core serves as a sanity-check
-for all the extensions to the source language type system -- if we can desugar a
+Finally, Core's expressive but simple type-system serves as a sanity-check for
+all the extensions to the source language type system -- if we can desugar a
 type system feature into Core then the feature must be sound by reducibility.
 Effectively, any feature added to Haskell is only syntatic sugar if it can be
 desugared to Core.
 
-Core is typed very differently from Haskell because Core is explicitly typed and
-its type system is based on the $System~F_C$~\cite{systemfc} type system, while
-Haskell is implicitly typed and its type system is based on the constraint-based
-type inference system $OutsideIn(X)$~\cite{outsideinx}. Therefore, typechecking
-Core is simple and fast and no inference must be done and, on the contrary,
-Haskell's typechecker is much more complicated and requires ad-hoc restrictions
-to make type inference feasible~\cite{}.
+The implementation of Core's typechecker is differs significantly from the
+Haskell typechecker because Core is explicitly typed and its type system is
+based on the $System~F_C$~\cite{cite:systemfc} type system, while Haskell is
+implicitly typed and its type system is based on the constraint-based type
+inference system $OutsideIn(X)$~\cite{cite:outsideinx}. Therefore, typechecking Core
+is simple, fast and requires no type inference, whereas Haskell's typechecker
+must account for the entirety of Haskell's syntax and must perform type-inference in 
+the presence of arbitrary-rank polymorphism, existential types, type-level functions, and GADTs, which 
+are known to introduce significant challenges for type inference algorithms~\cite{cite:outsideinx}.
 %
 Haskell is typechecked in addition to Core to (i) do type inference and (ii)
 provide meaningful type errors. If Haskell wasn't typechecked as it is and
@@ -1077,23 +915,39 @@ instead we only typechecked Core, everything (e.g.  all binders) would have to
 be explicitly typed and all error messages would refer to the intermediate
 language rather than the written program, which is known to be undesirable.
 
-The Core language is founded on $System~F_C$, a polymorphic lambda calculus
+The Core language is based on $System~F_C$, a polymorphic lambda calculus
 with explicit type-equality coercions that, like types, are erased at compile
-time (i.e. types and coercions alike don't incur any cost at run-time).
-$System~F_C$ is expressive enough as a target for Haskell
+time (i.e. types and coercions alike don't incur any cost at run-time). The syntax
+% $System~F_C$ is expressive enough as a target for Haskell
 
 \begin{itemize}
-    % \item What is Core (IR) e as particularidades
-    % \item Em cima do SystemFC
-    \item Optimizações feitas no Core
-    \item Base SystemFC tem de ser "merged" com o linear lambda calculus
-    \item Ou porque é que é importante o Core ter linearidade também/a que nível
-        foi introduzido
-    \item Falar das coercions em especifico
-    \item E das local equalities que são implicitas no front end
+\item Referencia figura, as can be seen in bla, is a lambda calculus type system with coercions
+\item Figura com syntax do system FC
+\item Coercions são para local equalities, type families, func deps, newtypes e etc, tornam possível fazer o desugar das features mais complicadas
+\item No contexto dos linear types ...  Revisitando a idea de desugar para
+        core... system fc...  Esta linguagem as is não suporta linearidade e não
+        permite seguir esta filosofia de "desugar to core" por que Core não suporta,
+        fundamentalmente incompatível com linearidade, e por isso é preciso integrar
+        linearidade no systemFC (consequently no Core)
 \end{itemize}
 
+% \begin{itemize}
+    % \item What is Core (IR) e as particularidades
+    % \item Em cima do SystemFC
+    % \item Optimizações feitas no Core
+    % \item Base SystemFC tem de ser "merged" com o linear lambda calculus
+    % \item Ou porque é que é importante o Core ter linearidade também/a que nível foi introduzido
+    % \item Falar das coercions em especifico
+    % \item E das local equalities que são implicitas no front end
+% \end{itemize}
+
 \section{GHC Pipeline}
+
+Ideia de que há uma transformação .... pipeline... e depois há muitas
+transformações feitas internamente dentro do Core,STG,Cmm,LLVM e que o meu foco
+fundamental é as trasnformações CoreToCore
+
+Typechecekr sobre o Haskell, é produzido Core com termos anotados explicitamente que saem do typechecker do Haskell e depois gera-se código que primeiro é preciso optimizar core...
 
 The architecture of GHC
 Both typecheckers, the backends Core is transformed into, and \textbf{\emph{all
@@ -1117,7 +971,7 @@ core transformations}}.
 %     \item GADTs e Coercions
 % \end{itemize}
 
-\section{Core-To-Core Optimizations}
+\subsection{Core-To-Core Optimizations}
 
 % like inlining, its inverse (CSE), beta-reduction, lambda-lifting, eta-reduction/eta-expansion, binder-swap, case-of-case, case-of-know-constructor, float-out, float-in, worker/wrapper split (this one is big, in comparison), etc…)
 

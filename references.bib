@@ -5,7 +5,6 @@
   publisher={Citeseer}
 }
 
-
 @article{marlow2010haskell,
   title={Haskell 2010 language report},
   author={Marlow, Simon and others},
@@ -187,4 +186,131 @@ keywords = {type inference, Haskell, existential types}
   timestamp = {Tue, 06 Nov 2018 11:07:43 +0100},
   biburl    = {https://dblp.org/rec/conf/popl/DamasM82.bib},
   bibsource = {dblp computer science bibliography, https://dblp.org}
+}
+
+@article{cite:linear-logic,
+title = {Linear logic},
+journal = {Theoretical Computer Science},
+volume = {50},
+number = {1},
+pages = {1-101},
+year = {1987},
+issn = {0304-3975},
+doi = {https://doi.org/10.1016/0304-3975(87)90045-4},
+url = {https://www.sciencedirect.com/science/article/pii/0304397587900454},
+author = {Jean-Yves Girard},
+abstract = {The familiar connective of negation is broken into two operations: linear negation which is the purely negative part of negation and the modality “of course” which has the meaning of a reaffirmation. Following this basic discovery, a completely new approach to the whole area between constructive logics and programmation is initiated.}
+}
+
+@techreport{cite:barberdill,
+    author={Andrew Barber},
+    title={Dual Intuitionistic Linear Logic},
+    institution={The University of Edinburgh},
+    year={1996},
+    number={ECS-LFCS-96-347}
+}
+
+@InProceedings{brady:LIPIcs.ECOOP.2021.9,
+  author =	{Brady, Edwin},
+  title =	{{Idris 2: Quantitative Type Theory in Practice}},
+  booktitle =	{35th European Conference on Object-Oriented Programming (ECOOP 2021)},
+  pages =	{9:1--9:26},
+  series =	{Leibniz International Proceedings in Informatics (LIPIcs)},
+  ISBN =	{978-3-95977-190-0},
+  ISSN =	{1868-8969},
+  year =	{2021},
+  volume =	{194},
+  editor =	{M{\o}ller, Anders and Sridharan, Manu},
+  publisher =	{Schloss Dagstuhl -- Leibniz-Zentrum f{\"u}r Informatik},
+  address =	{Dagstuhl, Germany},
+  URL =		{https://drops.dagstuhl.de/opus/volltexte/2021/14052},
+  URN =		{urn:nbn:de:0030-drops-140527},
+  doi =		{10.4230/LIPIcs.ECOOP.2021.9},
+  annote =	{Keywords: Dependent types, linear types, concurrency}
+}
+
+
+@article{10.1145/2692956.2663188,
+author = {Matsakis, Nicholas D. and Klock, Felix S.},
+title = {The Rust Language},
+year = {2014},
+issue_date = {December 2014},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+volume = {34},
+number = {3},
+issn = {1094-3641},
+url = {https://doi.org/10.1145/2692956.2663188},
+doi = {10.1145/2692956.2663188},
+abstract = {Rust is a new programming language for developing reliable and efficient systems. It is designed to support concurrency and parallelism in building applications and libraries that take full advantage of modern hardware. Rust's static type system is safe1 and expressive and provides strong guarantees about isolation, concurrency, and memory safety.Rust also offers a clear performance model, making it easier to predict and reason about program efficiency. One important way it accomplishes this is by allowing fine-grained control over memory representations, with direct support for stack allocation and contiguous record storage. The language balances such controls with the absolute requirement for safety: Rust's type system and runtime guarantee the absence of data races, buffer overflows, stack overflows, and accesses to uninitialized or deallocated memory.},
+journal = {Ada Lett.},
+month = {oct},
+pages = {103–104},
+numpages = {2},
+keywords = {affine type systems, rust, systems programming, memory management}
+}
+
+@incollection {curry:34,
+    author    = {H.B. Curry},
+    journal = {Proceedings of the National Academy of Sciences},
+    title     = {Functionality in Combinatory Logic},
+    year      = {1934},
+    volume = {20},
+    number = {11},
+   pages = {584-590},
+   doi = {​10.1073/pnas.20.11.584​},
+   address   = {Department of Mathematics, The Pennsylvania State College},
+ }
+
+@incollection{howard:80,
+  author =       {William A. Howard},
+  journal = {To H.B. Curry: Essays on Combinatory Logic, Lambda Calculus and Formalism},
+  title =  {The Formulae-as-types notion of construction},
+  year =         {1980 (originally circulated 1969)},
+  pages =        "479-490",
+  ISBN = {​978-0-12-349050-6​}
+}
+
+@inbook{marlow2012the,
+author = {Marlow, Simon and Peyton Jones, Simon},
+title = {The Glasgow Haskell Compiler},
+booktitle = {The Architecture of Open Source Applications, Volume 2},
+year = {2012},
+month = {January},
+abstract = {The Glasgow Haskell Compiler (GHC) started as part of an academic research project funded by the UK government at the beginning of the 1990’s, with several goals in mind:
+
+ 	To make freely available a robust and portable compiler for Haskell that generates high performance code;
+ 	To provide a modular foundation that other researchers can extend and develop;
+ 	To learn how real programs behave, so that we can design and build better compilers.
+
+GHC is now over 20 years old, and has been under continuous active development since its inception. Today, GHC releases are downloaded by hundreds of thousands of people, the online repository of Haskell libraries has over 3,000 packages, GHC is used to teach Haskell in many undergraduate courses, and there are a growing number of instances of Haskell being depended upon commercially.},
+publisher = {Lulu},
+url = {https://www.microsoft.com/en-us/research/publication/the-glasgow-haskell-compiler/},
+edition = {The Architecture of Open Source Applications, Volume 2},
+}
+
+@inproceedings{cite:systemfc,
+author = {Sulzmann, Martin and Chakravarty, Manuel and Peyton Jones, Simon and Donnelly, Kevin},
+title = {System F with type equality coercions},
+booktitle = {ACM SIGPLAN International Workshop on Types in Language Design and Implementation (TLDI'07)},
+year = {2007},
+month = {January},
+abstract = {We introduce a variant of System F that uses a single mechanism to enable the type preserving translation of generalised abstract data types (GADTs), type classes with associated types and functional dependencies, as well as closed type functions. The core idea is to pass around explicit evidence for type equalities, just like System F passes types explicitly. We use this evidence to justify type casts encoding non-syntactic type equalities induced by the mentioned source language features. In particular, we don't need special typing rules for pattern matching on GADTs, we can easily combine GADTs with type classes, and we can relax restrictions on programs involving associated types or functional dependencies.},
+publisher = {ACM},
+url = {https://www.microsoft.com/en-us/research/publication/system-f-with-type-equality-coercions/},
+pages = {53-66},
+isbn = {1-59593-393-X},
+edition = {ACM SIGPLAN International Workshop on Types in Language Design and Implementation (TLDI'07)},
+}
+
+@article{cite:outsideinx,
+    title={OutsideIn(X) Modular type inference with local assumptions},
+    volume={21},
+    DOI={10.1017/S0956796811000098},
+    number={4-5},
+    journal={Journal of Functional Programming},
+    publisher={Cambridge University Press},
+    author={VYTINIOTIS, DIMITRIOS and PEYTON JONES, SIMON and SCHRIJVERS, TOM and SULZMANN, MARTIN},
+    year={2011},
+    pages={333–412}
 }
