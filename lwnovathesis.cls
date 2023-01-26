@@ -26,11 +26,12 @@
 % Reference: https://www.fct.unl.pt/sites/default/files/desp_n2-cc-2011_normas_para_elaboracao_de_dissertacoes.pdf
 %
 
+% Color options for lhs
+\PassOptionsToPackage{dvipsnames}{xcolor}
 
 % Use memoir as the base class, for documentation run `texdoc memoir`
 % The options set solve (4), (2), (1)
 % TODO: For the latex font, use 11pt or 10pt?
-\PassOptionsToPackage{dvipsnames}{xcolor}
 \LoadClass[a4paper,11pt,twoside,onecolumn,openright,draft]{memoir}
 
 % This solves (6) by setting 1.5 line spacing for the main text
@@ -63,10 +64,9 @@
 %
 % Make sure the numbers are centered at the bottom
 \copypagestyle{thesis}{ruled}
-% \makeevenfoot{thesis}{}{\thepage}{} % Center page number on even footer
-% \makeoddfoot{thesis}{}{\thepage}{} % Center page number on odd footer
 \makeevenfoot{thesis}{}{}{\thepage} % Align right page number on even footer
 \makeoddfoot{thesis}{}{}{\thepage}  % Align right page number on odd footer
+
 % Use thesis pagestyle defined above
 \pagestyle{thesis}
 

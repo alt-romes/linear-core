@@ -856,16 +856,49 @@ once, and a function annotated with it ($\to_1$) is called a linear function
 ($\to_\omega$) allows the function argument to be consumed unrestrictedly.
 Unrestricted functions are equivalent to the common function type and, in fact,
 the usual function arrow ($\to$) implicitly has multiplicity \texttt{Many}.
-Multiplicities also smoothly allow for \emph{multiplicity polymorphism}, which
-we describe below.
+Multiplicities naturally allow for \emph{multiplicity polymorphism}, which we
+explain below.
 
-% TODO: Is this enough about multiplicities?
+Consider the functions $f$, $g$ which return $Int$ and take as an argument a
+function from @Bool@ to @Int@ which is, respectively, a linear function
+($Bool~\to_1~Int$) and an unrestricted one ($Bool~\to_\omega~Int$), and the
+function $h$ is a function from @Bool@ to @Int@ that we want to pass as an
+argument to both $f$ and $g$.
+
+\begin{minipage}{0.47\textwidth}
+\begin{code}
+f :: (Bool %1 -> Int) -> Int
+f c = c True
+\end{code}
+\end{minipage}
+\begin{minipage}{0.47\textwidth}
+\begin{code}
+g :: (Bool -> Int) -> Int
+g c = c False
+\end{code}
+\end{minipage}
+
+For the call of both $f$ and $g$ on $h$ to be well typed, the multiplicity of
+$h$ ($\to_?$) should match both $f$'s ($\to_1$) and $g$'s ($\to_\omega$).
+Multiplicity polymorphism allows us to use \emph{multiplicity variables} when
+annotating arrows to indicate that the function can both be typed as linear and
+as an unrestricted function, much the same way type variables can be used to
+define polymorphic functions. Thus, we define $h$ as multiplicity
+polymorphic function ($\to_m$) such that $h$ is a well-typed argument to both
+$f$ and $g$ ($m$ will unify with $1$ and $\omega$ at the call sites).
+
+\begin{code}
+h :: Bool %m -> Int
+h False = 0
+h True = 1
+\end{code}
 
 \begin{itemize}
     % \item Linear Haskell definition
     % \item Consuming values precisely
     % \item Multiplicities
-    \item Multiplicity polymorphism
+    % \item Multiplicity polymorphism
+    \item Files example
     \item Que relaciona o systemFC com o calculo lambda linear
 \end{itemize}
 
@@ -899,7 +932,7 @@ type system feature into Core then the feature must be sound by reducibility.
 Effectively, any feature added to Haskell is only syntatic sugar if it can be
 desugared to Core.
 
-The implementation of Core's typechecker is differs significantly from the
+The implementation of Core's typechecker differs significantly from the
 Haskell typechecker because Core is explicitly typed and its type system is
 based on the $System~F_C$~\cite{cite:systemfc} type system, while Haskell is
 implicitly typed and its type system is based on the constraint-based type
@@ -917,7 +950,7 @@ language rather than the written program, which is known to be undesirable.
 
 The Core language is based on $System~F_C$, a polymorphic lambda calculus
 with explicit type-equality coercions that, like types, are erased at compile
-time (i.e. types and coercions alike don't incur any cost at run-time). The syntax
+time (i.e. types and coercions alike don't incur any cost at run-time). 
 % $System~F_C$ is expressive enough as a target for Haskell
 
 \begin{itemize}
@@ -954,7 +987,7 @@ Both typecheckers, the backends Core is transformed into, and \textbf{\emph{all
 core transformations}}.
 
 \begin{itemize}
-    \item Parser -> Rename -> Typechecker -> Desugar
+    \item Parser to Rename to Typechecker to Desugar
     \item Core2Core transformations
     \item GHC unique em haver tantas transformações sempre sobre a mesma intermediate
         representation como input e output
