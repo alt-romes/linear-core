@@ -70,8 +70,6 @@
 % Use thesis pagestyle defined above
 \pagestyle{thesis}
 
-
-
 \@ifclassloaded{memoir}{\let\endthesis\relax}{\let\endthesis\endinput
    \ClassError{lwnovathesis}{The lwnovathesis package only works with the memoir class}%
                 {\@ehd}}
@@ -81,4 +79,6 @@
 % Customize
 \chapterstyle{veelo}
 
+% Numbering of subsections
+\setsecnumdepth{subsection}
 

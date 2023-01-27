@@ -33,7 +33,7 @@
 \DefineVerbatimEnvironment{code}{Verbatim}{fontsize=\small}
 \DefineVerbatimEnvironment{example}{Verbatim}{fontsize=\small}
 
-\newcommand{\parawith}[1]{\paragraph{\emph{\textbf{#1}}}}
+\newcommand{\parawith}[1]{\paragraph{\emph{#1}}}
 \newcommand{\lolli}{\multimap}
 \newcommand{\tensor}{\otimes}
 \newcommand{\one}{\mathbf{1}}
@@ -144,7 +144,7 @@ two distinct reasons:
         correction of the source transformations. If the resulting optimized
         Core program doesn't typecheck, something \emph{very wrong} has happened
         in a transformation!  We discuss Core in detail in
-        section~\ref{core-section}.\todo{Mention systemFC}
+        section~\ref{sec:core}.\todo{Mention systemFC}
         % TODO: \item values in rust are linear by default while non-linear is
         % the haskell default?
 \end{itemize}
@@ -655,6 +655,7 @@ introduce Generalized Algebraic Data Types (GADTs) and create a list type
 indexed by size for which we can write a completely safe \texttt{head} function
 by expressing that the size of the list must be at least one, at the type level.
 
+\subsection{Generalized Algebraic Data Types}
 
 \textbf{GADTs}~\cite{10.1145/1159803.1159811,,,} are an advanced Haskell feature
 that allows users to define data types as they would common algebraic data
@@ -903,7 +904,7 @@ h x = case x of False -> 0; True -> 1
     \item Que relaciona o systemFC com o calculo lambda linear
 \end{itemize}
 
-\section{Core and System $F_C$\label{core-section}}
+\section{Core and System $F_C$\label{sec:core}}
 
 Haskell is a large and expressive language with many syntatic constructs and
 features. However, the whole of Haskell can be desugared down to a minimal,
@@ -1008,21 +1009,18 @@ which is used for internal notes.
 
 \section{GHC Pipeline}
 
-The GHC compiler processes Haskell source files in a pipeline comprised of a
-series of phases that feed each other in a pipeline fashion each transforming
-their input before passing it on to the next stage. This pipeline
-(Figure~\ref{fig:ghc-pipeline}) is the heart of GHC and we'll discuss from a
-bird's view each of the phases.
+The GHC compiler processes Haskell source files in a series of phases that feed
+each other in a pipeline fashion each transforming their input before passing
+it on to the next stage. This pipeline (Figure~\ref{fig:ghc-pipeline}) is the
+crucial in the overall design GHC and we'll discuss from a bird's view each of
+the phases.
 
-The Haskell source files are first processed by the lexer and the parser. The
-lexer transforms the input file into a sequence of valid Haskell tokens. The
-parser processes the tokens to create an abstract syntax tree representing the
-original code, as long as the input was a syntatically valid Haskell program.
+\subsection{Haskell to Core}
 
 \parawith{Parsing.} The Haskell source files are first processed by the lexer
 and the parser. The lexer transforms the input file into a sequence of valid
 Haskell tokens. The parser processes the tokens to create an abstract syntax
-tree representing the original code, as long as the input was a syntatically
+tree representing the original code, as long as the input is a syntatically
 valid Haskell program.
 
 \parawith{Renamer.} The renamer's main task is to resolve names to fully
@@ -1031,42 +1029,73 @@ module being compiled and identifiers exported by other modules. Additionally,
 name ambiguity, variables out of scope, unused bindings or imports, etc., are
 all checked and reported as errors or warnings.
 
-\parawith{Type-checking Haskell.} With the abstract syntax tree validated by the
-renamer and with the names fully qualified, the Haskell program is type-checked
-before being desugared into Core.  Type checking the Haskell program as written
-by the programmer guarantees that the program is well-typed, or that otherwise
-fails with an error reporting where type-checking failed in the source program.
-
+\parawith{Type-checking Haskell.} With the abstract syntax tree validated by
+the renamer and with the names fully qualified, the Haskell program is
+type-checked before being desugared into Core.  Type-checking the Haskell
+program guarantees that the program is well-typed. Otherwise, type-checking
+fails with an error reporting where in the source typing failed.
+%
 Furthermore, every identifier in the program is annotated with its type.
 Haskell is an implicitly typed language and, as such, type-inference must be
 performed to type-check programs. During type inference, every identifier is
 typed and we can use its type to decorate said identifier in the abstract
 syntax tree produced by the type-checker. First, annotating identifiers is
-required to desugar Haskell into Core because Core is explicitly typed -- to
-construct a Core abstract syntax tree the types are \emph{indispensable} (i.e.
+\emph{required} to desugar Haskell into Core because Core is explicitly typed -- to
+construct a Core abstract syntax tree the types are indispensable (i.e.
 we cannot construct a Core expression without explicit types). Secondly, names
 annotated with their types are useful for tools manipulating Haskell, e.g.
 for an IDE to report the type of an identifier.
 
-As
-previously mentioned, Core is an explicitly typed language, and doing
-type-inference on the source language is what determines the type every
-identifier
+\parawith{Desugaring.} The type-checked Haskell abstract syntax tree is then
+transformed into Core by the desugarer. We've discussed in
+Section~\ref{sec:core} the relationship between Haskell and Core detail, so we
+refrain from repeating it here. It suffices to say that the desugarer
+transforms the large Haskell language into the small Core language by
+simplifying all syntatic constructs to their Core form (e.g.  @newtype@
+constructors are transformed into coercions).
+
+\subsection{Core-To-Core Transformations}
+
+The so-called Core-to-Core transformations are the most important set of
+optimizing transformations that GHC performs during compilation. By design, the
+frontend of the pipeline (parsing, renaming, typechecking and desugaring) does
+not include any optimizations -- rather all optimizing work is done in Core.
+The transformational approach focused on Core ... transformations are modular
+and transformations unlock other transformations leading to a powerful
+optimizing process when all composed.
+
+Regardless, the order in which transformations are applied is still relevant
+because transformations are destructive (i.e. after applying a transformation
+we never undo it). This is known as the phase-ordering problem~\cite{},
+techniques such as equality saturation~\cite{} don't have the phase-ordering problem
+because all optimizing transformations are applied non-destructively; however,
+it's a much more costly technique and still not well understood whether it
+could work in the context of large compilers such as GHC.
+
+%
+transformation based approach to optimization allows
+each producing a Core
+program fed to the next optimizing transformation.
+%
+Core is the main object of our study, we want to type-check linearity in Core
+before \emph{and} after optimizing transformations are applied.
 
 
-Ideia de que há uma transformação .... pipeline... e depois há muitas
-transformações feitas internamente dentro do Core,STG,Cmm,LLVM e que o meu foco
-fundamental é as trasnformações CoreToCore
-
-Typechecekr sobre o Haskell, é produzido Core com termos anotados explicitamente que saem do typechecker do Haskell e depois gera-se código que primeiro é preciso optimizar core...
-
-The architecture of GHC
-Both typecheckers, the backends Core is transformed into, and \textbf{\emph{all
-core transformations}}.
+% Ideia de que há uma transformação .... pipeline... e depois há muitas
+% transformações feitas internamente dentro do Core,STG,Cmm,LLVM e que o meu foco
+% fundamental é as trasnformações CoreToCore
+% 
+% Typechecekr sobre o Haskell, é produzido Core com termos anotados
+% explicitamente que saem do typechecker do Haskell e depois gera-se código que
+% primeiro é preciso optimizar core...
+% 
+% The architecture of GHC
+% Both typecheckers, the backends Core is transformed into, and \textbf{\emph{all
+% core transformations}}.
 
 \begin{itemize}
-    \item Parser to Rename to Typechecker to Desugar
-    \item Core2Core transformations
+    % \item Parser to Rename to Typechecker to Desugar
+    % \item Core2Core transformations
     \item GHC unique em haver tantas transformações sempre sobre a mesma intermediate
         representation como input e output
     \item 
@@ -1084,7 +1113,10 @@ core transformations}}.
 
 \subsection{Core-To-Core Optimizations}
 
-% like inlining, its inverse (CSE), beta-reduction, lambda-lifting, eta-reduction/eta-expansion, binder-swap, case-of-case, case-of-know-constructor, float-out, float-in, worker/wrapper split (this one is big, in comparison), etc…)
+% like inlining, its inverse (CSE), beta-reduction, lambda-lifting,
+% eta-reduction/eta-expansion, binder-swap, case-of-case,
+% case-of-know-constructor, float-out, float-in, worker/wrapper split (this one
+% is big, in comparison), etc…)
 
 \subsection{Inlining}
 
@@ -1116,7 +1148,7 @@ Rules?
 
 \subsection{Linear Haskell\label{sec:related-work-linear-haskell}}
 
-The paper is concerned with retrofitted lienar types but couldn't account for
+The paper is concerned with retrofitted linear types but couldn't account for
 optimizations in the Core. It originally did not set out to modify Core but had
 to, and it's better this way bc we get optimizations typechecking safety
 guarantees.
