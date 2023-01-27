@@ -33,7 +33,7 @@
 \DefineVerbatimEnvironment{code}{Verbatim}{fontsize=\small}
 \DefineVerbatimEnvironment{example}{Verbatim}{fontsize=\small}
 
-\newcommand{\mypara}[1]{\paragraph{\textbf{#1}.}}
+\newcommand{\parawith}[1]{\paragraph{\emph{\textbf{#1}}}}
 \newcommand{\lolli}{\multimap}
 \newcommand{\tensor}{\otimes}
 \newcommand{\one}{\mathbf{1}}
@@ -952,11 +952,11 @@ language rather than the written program, which is known to be undesirable.
 The Core language is based on $System~F_C$, a polymorphic lambda calculus with
 explicit type-equality coercions that, like types, are erased at compile time
 (i.e. types and coercions alike don't incur any cost at run-time). System
-$F_C$'s syntax in Figure~\ref{fig:systemfc-terms} defines the foundation of the
-small language to which all of Haskell is desugared to. Core extends System
-$F_C$ with two constructors for \emph{join points}~\cite{maurer2017compiling}
+$F_C$'s term syntax in Figure~\ref{fig:systemfc-terms} defines the foundation
+of Core's syntax which only extends $System~F_C$'s with two constructors for
+\emph{join points}~\cite{maurer2017compiling} (\emph{jump} and \emph{join})
 that allow new optimizations to be performed, and with a \emph{tick} construct
-which is used as an internal note.
+which is used for internal notes.
 
 \begin{figure}[h]
 \[
@@ -985,8 +985,9 @@ which is used as an internal note.
 % $System~F_C$ is expressive enough as a target for Haskell
 
 \begin{itemize}
-\item Referencia figura, as can be seen in bla, is a lambda calculus type system with coercions
+% \item Referencia figura, as can be seen in bla, is a lambda calculus type system with coercions
 \item Figura com syntax do system FC
+\item Coercions
 \item Coercions são para local equalities, type families, func deps, newtypes e etc, tornam possível fazer o desugar das features mais complicadas
 \item No contexto dos linear types ...  Revisitando a idea de desugar para
         core... system fc...  Esta linguagem as is não suporta linearidade e não
@@ -1007,6 +1008,50 @@ which is used as an internal note.
 
 \section{GHC Pipeline}
 
+The GHC compiler processes Haskell source files in a pipeline comprised of a
+series of phases that feed each other in a pipeline fashion each transforming
+their input before passing it on to the next stage. This pipeline
+(Figure~\ref{fig:ghc-pipeline}) is the heart of GHC and we'll discuss from a
+bird's view each of the phases.
+
+The Haskell source files are first processed by the lexer and the parser. The
+lexer transforms the input file into a sequence of valid Haskell tokens. The
+parser processes the tokens to create an abstract syntax tree representing the
+original code, as long as the input was a syntatically valid Haskell program.
+
+\parawith{Parsing.} The Haskell source files are first processed by the lexer
+and the parser. The lexer transforms the input file into a sequence of valid
+Haskell tokens. The parser processes the tokens to create an abstract syntax
+tree representing the original code, as long as the input was a syntatically
+valid Haskell program.
+
+\parawith{Renamer.} The renamer's main task is to resolve names to fully
+qualified names, taking into consideration both existing identifiers in the
+module being compiled and identifiers exported by other modules. Additionally,
+name ambiguity, variables out of scope, unused bindings or imports, etc., are
+all checked and reported as errors or warnings.
+
+\parawith{Type-checking Haskell.} With the abstract syntax tree validated by the
+renamer and with the names fully qualified, the Haskell program is type-checked
+before being desugared into Core.  Type checking the Haskell program as written
+by the programmer guarantees that the program is well-typed, or that otherwise
+fails with an error reporting where type-checking failed in the source program.
+
+Furthermore, every identifier in the program is annotated with its type.
+Haskell is an implicitly typed language and, as such, type-inference must be
+performed to type-check programs. During type inference, every identifier is
+typed and we can use its type to decorate said identifier in the abstract
+syntax tree produced by the type-checker. First, annotating identifiers is
+required to desugar Haskell into Core because Core is explicitly typed -- to
+construct a Core abstract syntax tree the types are \emph{indispensable} (i.e.
+we cannot construct a Core expression without explicit types). Secondly, names
+annotated with their types are useful for tools manipulating Haskell, e.g.
+for an IDE to report the type of an identifier.
+
+As
+previously mentioned, Core is an explicitly typed language, and doing
+type-inference on the source language is what determines the type every
+identifier
 
 
 Ideia de que há uma transformação .... pipeline... e depois há muitas
