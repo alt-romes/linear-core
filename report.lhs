@@ -6,9 +6,12 @@
 \usepackage{amsmath}
 \usepackage{mathpartir}
 \usepackage[ruled,vlined]{algorithm2e}
-\usepackage{hyperref}
 \usepackage{fancyvrb}
 \usepackage{cleveref}
+
+
+% Glossary
+\usepackage{glossaries}
 
 
 %%%%%%%%%%%%%%  Color-related things   %%%%%%%%%%%%%%
@@ -45,13 +48,31 @@
 \title{Linting Linearity in Core/System FC}
 \author{Rodrigo Mesquita}
 
+\makeglossaries
+
+\newglossaryentry{GHC}
+{
+    name=GHC,
+    description={The Glorious Glasgow Haskell Compiler}
+}
+
+\newglossaryentry{GADT}
+{
+    name=GADT,
+    description={Generalized Algebraic Data Types}
+}
+
 
 \begin{document}
 
 \frontmatter
 
 \maketitle
-\tableofcontents
+
+\xtableofcontents
+\xlistoffigures
+\xlistoftables
+\printglossaries
 
 \mainmatter
 
@@ -128,7 +149,7 @@ two distinct reasons:
         endeavour to add linear types to a well-established language with a
         large library ecosystem and many active users, rather than to develop
         the language from the ground up with linear types in mind, and the
-        successful approach as implemented in GHC 9.0, the leading Haskell
+        successful approach as implemented in \Gls{GHC} 9.0, the leading Haskell
         compiler, was based on Linear Haskell~\cite{cite:linearhaskell}, where a
         linear type system designed with retaining backwards-compatibility and
         allowing code reuse across linear and non-linear users of the same
@@ -632,7 +653,7 @@ advanced type level features, such as:
 These advanced features have become commonplace in Haskell code, enforcing
 application level invariants and program correctness through the types. As an
 example to work through this section while we introduce compile-time invariants
-with GADTs, consider the definition of \texttt{head} in the standard library, a
+with \gls{GADT}s, consider the definition of \texttt{head} in the standard library, a
 function which takes the first element of a list by pattern matching on the list
 constructors.
 
@@ -2159,5 +2180,3 @@ Refer to the algorithm for computing recursive environment
 % You should clarify that, during linting, you will have a usage environment
 % annotation and won't need to run the inference algorithm. This algorithm is
 % only needed when you first create a letrec.
-
-% TODO:Use glossary

@@ -70,15 +70,30 @@
 % Use thesis pagestyle defined above
 \pagestyle{thesis}
 
+% Indices that open right on new page
+\newcommand{\xtableofcontents}{\tableofcontents\cleardoublepage}
+\newcommand{\xlistoffigures}{\listoffigures\cleardoublepage}
+\newcommand{\xlistoftables}{\listoftables}
+
+
 \@ifclassloaded{memoir}{\let\endthesis\relax}{\let\endthesis\endinput
    \ClassError{lwnovathesis}{The lwnovathesis package only works with the memoir class}%
                 {\@ehd}}
 \endthesis
 
 
-% Customize
+%%%% Customize %%%%%
+
+% Chapter style
 \chapterstyle{veelo}
 
 % Numbering of subsections
 \setsecnumdepth{subsection}
+
+% Show until paragraph in TOC
+\setcounter{tocdepth}{3}
+
+% Colored links
+\usepackage{hyperref}
+\hypersetup{colorlinks=true,linkcolor=magenta}
 
