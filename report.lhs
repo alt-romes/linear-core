@@ -940,22 +940,28 @@ the abstract syntax tree is defined through dozens of datatypes and hundreds of
 constructors, while the GHC's implmentation of Core is defined in 3 types
 (expressions, types, and coercions) and 15 constructors~\cite{}.
 
-Core allows us to reason about the entirety of Haskell in a much smaller
-functional language -- analysis, optimizing transformations, and code
-generation are all done on Core, not Haskell.
-%
-Of equal importance is Core being an (explicitly) typed language in the style
+Core is a major design decision in GHC Haskell with significant benefits which
+have decidedly proved themselves over time~\cite{,}.\todo{something more}
+
+\begin{itemize}
+\item Core allows us to reason about the entirety of Haskell in a much smaller
+functional language. Performing analysis, optimizing transformations, and code
+generation is done on Core, not Haskell. The implementation of such passes ends
+up simpler and concise for Core being smaller.
+ 
+\item Of equal importance is Core being an (explicitly) typed language in the style
 of System F, making Core an internal consistency tool that validates desugaring
 and optimization passes.  Desugaring and optimizing transformations must
 produce well-typed Core, with the Core typechecker providing a verification
 layer for the correctness of optimizing transformations, the desugarer, and
 their implementations.
-%
-Finally, Core's expressive but simple type-system serves as a sanity-check for
+ 
+\item Finally, Core's expressive but simple type-system serves as a sanity-check for
 all the extensions to the source language type system -- if we can desugar a
 type system feature into Core then the feature must be sound by reducibility.
 Effectively, any feature added to Haskell is only syntatic sugar if it can be
 desugared to Core.
+\end{itemize}
 
 The implementation of Core's typechecker differs significantly from the Haskell
 typechecker because Core is explicitly typed and its type system is based on
@@ -1014,31 +1020,58 @@ to $\tau$ using the axiom of symmetry of equality. Through it, the expression
 $e{:}\sigma$ can be cast to $e{:}\tau$, i.e.
 $(e{:}\sigma\blacktriangleright\textbf{sym}~\tau\sim\sigma){:}\tau$.
 
-% of Core's syntax which only extends $System~F_C$'s with two constructors for
-% \emph{join points}~\cite{maurer2017compiling} (\emph{jump} and \emph{join})
-% that allow new optimizations to be performed, and with a construct which is
-% used for internal notes such as profiling information.
+\begin{figure}[h]
+\[
+\begin{array}{lcll}
+  \sigma,\tau & ::= & d \mid \tau_1~\tau_2 \mid S_n~\overline{\tau}^n \mid \forall a{:}\kappa. \tau & \textrm{Types} \\
+  \gamma,\delta & ::= & g \mid \tau \mid \gamma_1~\gamma_2 \mid S_n~\overline{\gamma}^n \mid \forall a{:}\kappa. \gamma & \textrm{Coercions} \\
+                & \mid & \textbf{sym}~\gamma \mid \gamma_1\circ\gamma_2 \mid \gamma @@ \sigma \mid \textbf{left}~\gamma \mid \textbf{right}~\gamma \\
+  \varphi & ::= & \tau \mid \gamma & \textrm{Types and Coercions}
+\end{array}
+\]
+\caption{System $F_C$'s Types and Coercions\label{fig:systemfc-types}}
+\end{figure}
 
-% \begin{array}{lcl}
-%   d & ::= & a \mid T \\
-%   g & ::= & c \mid C 
-% \end{array}
-% \quad
 
+Core further extends $System~F_C$'s with \emph{jumps} and \emph{join
+points}~\cite{maurer2017compiling}, allowing new optimizations to be performed
+which ultimately result in efficient code directly using labels and jumps, and
+with a construct used for internal notes such as profiling information.
+
+$System~F_C$'s coercions are the key to desugar a multitude of more
+type-complex Haskell features such as GADTs, type families and newtypes. In
+short, GADTs local equalities constraints are desugared into explicit
+type-equality evidence that are pattern matched on and used to cast the branch
+alternative's type to the return type; newtypes such as @newtype BoxI = BoxI
+Int@ introduce a global type-equality $\texttt{BoxI}\sim\texttt{Int}$ and
+construction and deconstruction of said newtype are desugared into casts; and,
+type family instances such as @type instance F Int = Bool@ introduce a global
+coercion $\texttt{F~Int}\sim\texttt{Bool}$ which can be used to cast
+expressions of type $\texttt{F~Int}$.
 
 % $System~F_C$ is expressive enough as a target for Haskell
 
-\begin{itemize}
+In the context of linear types as they exist in Haskell, and revisiting the
+idea that all of Haskell is desugared into Core/System~$F_C$ as a means of
+having a well defined foundation, simplifying analysis, optimization and code
+generation, and overall validating Haskell's implementation, we highlight the
+inherent incompatibility of linearity with Core/System~$F_C$ as a current flaw
+in GHC that invalidates all benefits of Core when it comes to linearity.
+Consequently, we must extend System $F_C$ (and, therefore, Core) to account for
+linearity, to validate that desugaring and optimizing transformations don't
+destroy linearity and ensure we can reason about linearly typed Haskell in its Core.
+
+% \begin{itemize}
 % \item Referencia figura, as can be seen in bla, is a lambda calculus type system with coercions
-\item Figura com syntax do system FC
-\item Coercions
-\item Coercions são para local equalities, type families, func deps, newtypes e etc, tornam possível fazer o desugar das features mais complicadas
-\item No contexto dos linear types ...  Revisitando a idea de desugar para
-        core... system fc...  Esta linguagem as is não suporta linearidade e não
-        permite seguir esta filosofia de "desugar to core" por que Core não suporta,
-        fundamentalmente incompatível com linearidade, e por isso é preciso integrar
-        linearidade no systemFC (consequently no Core)
-\end{itemize}
+% \item Figura com syntax do system FC
+% \item Coercions
+% \item Coercions são para local equalities, type families, func deps, newtypes e etc, tornam possível fazer o desugar das features mais complicadas
+% \item No contexto dos linear types ...  Revisitando a idea de desugar para
+%        core... system fc...  Esta linguagem as is não suporta linearidade e não
+%        permite seguir esta filosofia de "desugar to core" por que Core não suporta,
+%        fundamentalmente incompatível com linearidade, e por isso é preciso integrar
+%        linearidade no systemFC (consequently no Core)
+%\end{itemize}
 
 % \begin{itemize}
     % \item What is Core (IR) e as particularidades
@@ -1159,7 +1192,7 @@ before \emph{and} after optimizing transformations are applied.
 % like inlining, its inverse (CSE), beta-reduction, lambda-lifting,
 % eta-reduction/eta-expansion, binder-swap, case-of-case,
 % case-of-know-constructor, float-out, float-in, worker/wrapper split (this one
-% is big, in comparison), etc…)
+% is big, in comparison), etc…
 
 \subsection{Inlining}
 
