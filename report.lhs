@@ -11,7 +11,7 @@
 
 
 % Glossary
-\usepackage{glossaries}
+\usepackage[toc]{glossaries}
 
 
 %%%%%%%%%%%%%%  Color-related things   %%%%%%%%%%%%%%
@@ -929,25 +929,27 @@ h x = case x of False -> 0; True -> 1
 
 Haskell is a large and expressive language with many syntatic constructs and
 features. However, the whole of Haskell can be desugared down to a minimal,
-explicitly typed, intermediate language called \textbf{Core}. To illustrate the
-difference in complexity, in GHC's implementation of Haskell, the abstract
-syntax tree is defined through dozens of datatypes and hundreds of
-constructors, while the GHC's implmentation of Core is defined in 3 types
-(expressions, types, and coercions) and 15 constructors~\cite{}.
+explicitly typed, intermediate language called \textbf{Core}.
 %
 Core is a strongly-typed, lazy, purely functional intermediate language akin to
 a polymorphic lambda calculus, that GHC uses as its key intermediate
 representation.
+%
+To illustrate the difference in complexity, in GHC's implementation of Haskell,
+the abstract syntax tree is defined through dozens of datatypes and hundreds of
+constructors, while the GHC's implmentation of Core is defined in 3 types
+(expressions, types, and coercions) and 15 constructors~\cite{}.
 
 Core allows us to reason about the entirety of Haskell in a much smaller
 functional language -- analysis, optimizing transformations, and code
 generation are all done on Core, not Haskell.
 %
-Of equal importance is Core being explicitly typed, which makes Core an
-internal consistency tool that validates desugaring and optimization passes.
-Desugaring and optimizing transformations must produce well-typed Core, with
-the Core typechecker providing a verification layer for the correctness of
-optimizing transformations, the desugarer, and their implementations.
+Of equal importance is Core being an (explicitly) typed language in the style
+of System F, making Core an internal consistency tool that validates desugaring
+and optimization passes.  Desugaring and optimizing transformations must
+produce well-typed Core, with the Core typechecker providing a verification
+layer for the correctness of optimizing transformations, the desugarer, and
+their implementations.
 %
 Finally, Core's expressive but simple type-system serves as a sanity-check for
 all the extensions to the source language type system -- if we can desugar a
@@ -955,15 +957,17 @@ type system feature into Core then the feature must be sound by reducibility.
 Effectively, any feature added to Haskell is only syntatic sugar if it can be
 desugared to Core.
 
-The implementation of Core's typechecker differs significantly from the
-Haskell typechecker because Core is explicitly typed and its type system is
-based on the $System~F_C$~\cite{cite:systemfc} type system, while Haskell is
-implicitly typed and its type system is based on the constraint-based type
-inference system $OutsideIn(X)$~\cite{cite:outsideinx}. Therefore, typechecking Core
-is simple, fast and requires no type inference, whereas Haskell's typechecker
-must account for the entirety of Haskell's syntax and must perform type-inference in 
-the presence of arbitrary-rank polymorphism, existential types, type-level functions, and GADTs, which 
-are known to introduce significant challenges for type inference algorithms~\cite{cite:outsideinx}.
+The implementation of Core's typechecker differs significantly from the Haskell
+typechecker because Core is explicitly typed and its type system is based on
+the $System~F_C$~\cite{cite:systemfc} type system (i.e., System F extended with
+a notion of type coercion), while Haskell is implicitly typed and its type
+system is based on the constraint-based type inference system
+$OutsideIn(X)$~\cite{cite:outsideinx}. Therefore, typechecking Core is simple,
+fast and requires no type inference, whereas Haskell's typechecker must account
+for the entirety of Haskell's syntax and must perform type-inference in the
+presence of arbitrary-rank polymorphism, existential types, type-level
+functions, and GADTs, which are known to introduce significant challenges for
+type inference algorithms~\cite{cite:outsideinx}.
 %
 Haskell is typechecked in addition to Core to (i) do type inference and (ii)
 provide meaningful type errors. If Haskell wasn't typechecked as it is and
@@ -974,11 +978,10 @@ language rather than the written program, which is known to be undesirable.
 The Core language is based on $System~F_C$, a polymorphic lambda calculus with
 explicit type-equality coercions that, like types, are erased at compile time
 (i.e. types and coercions alike don't incur any cost at run-time). System
-$F_C$'s term syntax in Figure~\ref{fig:systemfc-terms} defines the foundation
-of Core's syntax which only extends $System~F_C$'s with two constructors for
-\emph{join points}~\cite{maurer2017compiling} (\emph{jump} and \emph{join})
-that allow new optimizations to be performed, and with a \emph{tick} construct
-which is used for internal notes.
+$F_C$'s term syntax is given in Figure~\ref{fig:systemfc-terms}, which
+corresponds exactly to the syntax of System F with term and type abstraction
+and application, extended with algebraic data types, let-bound expressions,
+pattern matching and coercions or casts.
 
 \begin{figure}[h]
 \[
@@ -996,6 +999,25 @@ which is used for internal notes.
 \]
 \caption{System $F_C$'s Terms\label{fig:systemfc-terms}}
 \end{figure}
+
+Explicit type-equality coercions (or simply coercions) are concrete evidence of
+equality between two types $\sigma_1$ and $\sigma_2$, written
+$\sigma_1\sim\sigma_2$. A coercion $\sigma_1\sim\sigma_2$ can be used to safely
+\emph{cast} an expression $e$ of type $\sigma_1$ to type $\sigma_2$, where
+casting $e$ to $\sigma_2$ using $\sigma_1\sim\sigma_2$ is written
+$e\blacktriangleright\sigma_1\sim\sigma_2$. The syntax of \emph{coercions} is
+given by Figure~\ref{fig:systemfc-types} and describes how coercions can be
+constructed to justify new equalities between types (e.g. using symmetry and
+transitivity). For example, given $\tau\sim\sigma$, the coercion
+$\textbf{sym}~(\tau\sim\sigma)$ denotes a type-equality coercion from $\sigma$
+to $\tau$ using the axiom of symmetry of equality. Through it, the expression
+$e{:}\sigma$ can be cast to $e{:}\tau$, i.e.
+$(e{:}\sigma\blacktriangleright\textbf{sym}~\tau\sim\sigma){:}\tau$.
+
+% of Core's syntax which only extends $System~F_C$'s with two constructors for
+% \emph{join points}~\cite{maurer2017compiling} (\emph{jump} and \emph{join})
+% that allow new optimizations to be performed, and with a construct which is
+% used for internal notes such as profiling information.
 
 % \begin{array}{lcl}
 %   d & ::= & a \mid T \\

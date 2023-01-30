@@ -46,6 +46,10 @@
 % TODO: Check back on Title section to make cover
 
 % (5)
+% Novathesis way
+% \setlrmarginsandblock{3.0cm}{3.0cm}{*}
+% \setulmarginsandblock{3.5cm}{2.5cm}{*}
+% LW Novathesis way:
 \setlrmarginsandblock{2.5cm}{2.5cm}{*}
 \setulmarginsandblock{2.5cm}{2.5cm}{*}
 \checkandfixthelayout
