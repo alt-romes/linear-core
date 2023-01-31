@@ -397,3 +397,21 @@ number = {2},
 
 
 @article{sergey_vytiniotis_jones_breitner_2017, title={Modular, higher order cardinality analysis in theory and practice}, volume={27}, DOI={10.1017/S0956796817000016}, journal={Journal of Functional Programming}, publisher={Cambridge University Press}, author={SERGEY, ILYA and VYTINIOTIS, DIMITRIOS and JONES, SIMON L. PEYTON and BREITNER, JOACHIM}, year={2017}, pages={e11}}
+
+@article{peytonjones2002secrets,
+author = {Peyton Jones, Simon and Marlow, Simon},
+title = {Secrets of the Glasgow Haskell Compiler inliner},
+year = {2002},
+month = {July},
+abstract = {Higher-order languages, such as Haskell, encourage the programmer to build abstractions by composing functions. A good compiler must inline many of these calls to recover an efficiently executable program.
+
+In principle, inlining is dead simple: just replace the call of a function by an instance of its body. But any compiler-writer will tell you that inlining is a black art, full of delicate compromises that work together to give good performance without unnecessary code bloat.
+
+The purpose of this paper is, therefore, to articulate the key lessons we learned from a full-scale ``production'' inliner, the one used in the Glasgow Haskell compiler. We focus mainly on the algorithmic aspects, but we also provide some indicative measurements to substantiate the importance of various aspects of the inliner.
+
+The "Related File" link above is an earlier tech-report version of the paper, but the JFP version is the one to read (the "View publication" button).},
+url = {https://www.microsoft.com/en-us/research/publication/secrets-of-the-glasgow-haskell-compiler-inliner/},
+pages = {393-434},
+journal = {Journal of Functional Programming},
+volume = {12},
+}

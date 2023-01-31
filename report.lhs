@@ -1,5 +1,5 @@
 \documentclass{lwnovathesis}
-
+ 
 \usepackage{todonotes}
 \usepackage{cmll}
 \usepackage{amssymb}
@@ -8,7 +8,9 @@
 \usepackage[ruled,vlined]{algorithm2e}
 \usepackage{fancyvrb}
 \usepackage{cleveref}
-
+\usepackage{tikz}
+\usepackage{tikz-qtree}
+\usetikzlibrary{trees}	% this is to allow the fork right path
 
 % Glossary
 \usepackage[toc]{glossaries}
@@ -292,15 +294,15 @@ programs that would fail at runtime, such as a program that derreferences an
 integer value rather than a pointer, linear type systems can guarantee that
 certain errors (regarding resource usage) are forbidden.
 
-In linear type systems, so called linear resources must be used \emph{exactly
-once}. Not using a linear resource at all or using said resource multiple times
-will result in a type error. We can model many real-world resources such as file
-handles, socket descriptors, and allocated memory, as linear resources. This
-way, because a file handle must be used exactly once, forgetting to close the
-file handle is a type error, and closing the handle twice is also a type error.
-With linear types, avoiding leaks and double frees is no longer a programmer's
-worry because the compiler can guarantee the resource is used exactly once, or
-\emph{linearly}.
+In linear type systems~\cite{cite:linear-logic,cite:barberdill}, so called
+linear resources must be used \emph{exactly once}. Not using a linear resource
+at all or using said resource multiple times will result in a type error. We can
+model many real-world resources such as file handles, socket descriptors, and
+allocated memory, as linear resources. This way, because a file handle must be
+used exactly once, forgetting to close the file handle is a type error, and
+closing the handle twice is also a type error.  With linear types, avoiding
+leaks and double frees is no longer a programmer's worry because the compiler
+can guarantee the resource is used exactly once, or \emph{linearly}.
 
 To understand how linear types are defined and used in practice, we present two
 examples of anonymous functions that receive a handle to work with (that must be
@@ -1043,21 +1045,21 @@ which ultimately result in efficient code using labels and jumps, and
 with a construct used for internal notes such as profiling information.
 
 $System~F_C$'s coercions are the key to desugar a multitude of more
-type-complex Haskell features such as GADTs, type families and newtypes. In
+type-complex Haskell features such as GADTs, type families and newtypes~\cite{cite:systemfc}. In
 short, these three features are desugared as follows:
 % TODO: Use itemize in this paragraph
 \begin{itemize}
-\item GADTs local equality constraints are desugared into explicit type-equality
-evidence that are pattern matched on and used to cast the branch alternative's
-type to the return type.
+  \item GADTs local equality constraints are desugared into explicit type-equality
+  evidence that are pattern matched on and used to cast the branch alternative's
+  type to the return type.
 
-\item Newtypes such as @newtype BoxI = BoxI Int@ introduce a global
-type-equality $\texttt{BoxI}\sim\texttt{Int}$ and construction and
-deconstruction of said newtype are desugared into casts.
+  \item Newtypes such as @newtype BoxI = BoxI Int@ introduce a global
+  type-equality $\texttt{BoxI}\sim\texttt{Int}$ and construction and
+  deconstruction of said newtype are desugared into casts.
 
-\item Type family instances such as @type instance F Int = Bool@ introduce a
-global coercion $\texttt{F~Int}\sim\texttt{Bool}$ which can be used to cast
-expressions of type $\texttt{F~Int}$ to $\texttt{Bool}$.
+  \item Type family instances such as @type instance F Int = Bool@ introduce a
+  global coercion $\texttt{F~Int}\sim\texttt{Bool}$ which can be used to cast
+  expressions of type $\texttt{F~Int}$ to $\texttt{Bool}$.
 \end{itemize}
 
 % $System~F_C$ is expressive enough as a target for Haskell
@@ -1168,11 +1170,108 @@ however, it's a much more expensive technique.
 
 Core is the main object of our study, we want to type-check linearity in Core
 before \emph{and} after optimizing transformations are applied as motivated in
-Section~\ref{sec:core}. In that light, we describe some of the individual
-optimizations Core undergoes. The first are described
+Section~\ref{sec:core}. In that light, we describe below some of the individual
+optimizations Core undergoes, using $\Longrightarrow$ to denote a program
+transformation. The first optimizations are described
 in~\cite{santos1995compilation,peytonjones1997a}, but many were refined and
 created
-later~\cite{baker-finch2004constructed,maurer2017compiling,Breitner2016_1000054251,sergey_vytiniotis_jones_breitner_2017}.
+later~\cite{peytonjones2002secrets,baker-finch2004constructed,maurer2017compiling,Breitner2016_1000054251,sergey_vytiniotis_jones_breitner_2017}.
+
+% \begin{figure}[h]
+% \begin{tikzpicture}
+% %Define the function structure
+% \tikzset{
+%   grow'=right,level distance=25mm, sibling distance =3.5mm,
+%   execute at begin node=\strut,
+%   every tree node/.style={
+% 			draw,
+% 			rounded corners,
+% 			anchor = west,
+% 			minimum width=20mm,
+% 			text width=18mm,
+% 			align=center,
+% 			font = {\scriptsize}},
+%          edge from parent/.style={draw, edge from parent fork right}
+% }
+% %Draw the function structure (top to bottom)
+% %distance from root: width of tree
+% \begin{scope}[frontier/.style={distance from root=75mm}]
+% \Tree
+% [.{Overall-\\ Function}
+% 		[.{Main-\\ Function A}
+% 			[.{Sub-Function\\ A}
+% 			\node(f1){Function A};
+% 			\node(f2){Function B};
+% 			\node(f3){Function C};
+% 			]
+% 			\node(f4){Function D};
+% 		]
+% 		[.{Main-\\ Function B}
+% 			[.{Sub-Function\\ B}
+% 				\node(f5){Function E};
+% 				\node(f6){Function F};
+% 				\node(f7){Function G};
+% 			]
+% 			\node(f8){Function H};
+% 		]
+% 		\node(f9){Function I};
+% ]
+% \end{scope}
+% %Define the product structure
+% \tikzset{grow'=left,
+% 		sibling distance =3.85mm,
+%        edge from parent/.style={
+%          draw, edge from parent fork left}
+% }
+% %Draw the product structure (bottom up)
+% %distance from root: width of tree
+% %xshift/yshift: Shiftoption of right tree
+% \begin{scope}[
+% 	frontier/.style={distance from root=75mm},
+% 	xshift=190mm,
+% 	yshift=4.9mm]
+% \Tree
+% [.{Product}
+% 		\node(p8){Part H};
+% 		[.{Module A}
+% 			[.{Component B}
+% 				\node(p7){Part G};
+% 				\node(p6){Part F};
+% 				\node(p5){Part E};
+% 			]
+% 			\node(p4){{Part D}};
+% 		]
+% 		[.{Module B}
+% 			[.{Component A}
+% 				\node(p3){Part C};
+% 				\node(p2){Part B};
+% 				\node(p1){Part A};
+% 			]
+% 		]
+% ]
+% \end{scope}
+% %Draw the lines between function and product side
+%   \draw [thick, >=stealth, dashed]
+%         (f1.east)--(p1.west)
+%         (f2.east)--(p2.west)
+%         (f3.east)--(p3.west)
+%         (f3.east)--(p1.west)
+%         (f4.east)--(p4.west)
+%         (f5.east)--(p5.west)
+%         (f6.east)--(p6.west)
+%         (f7.east)--(p7.west)
+%         (f7.east)--(p6.west)
+%         (f8.east)--(p4.west)
+%         (f8.east)--(p5.west)
+%         (f8.east)--(p8.west)
+%         (f9.east)--(p7.west);
+% %Draw the headlines
+% \begin{scope}[every node/.style = {rounded corners, font = {\normalsize\bfseries}}]
+% \node at (5,5) [] {function structure};
+% \node at (16,5) [rounded corners] {product structure};
+% \end{scope}
+% \end{tikzpicture}
+% \end{figure}
 
 % Ideia de que há uma transformação .... pipeline... e depois há muitas
 % transformações feitas internamente dentro do Core,STG,Cmm,LLVM e que o meu foco
@@ -1208,20 +1307,74 @@ later~\cite{baker-finch2004constructed,maurer2017compiling,Breitner2016_10000542
 % case-of-know-constructor, float-out, float-in, worker/wrapper split (this one
 % is big, in comparison), etc…
 
-\parawith{Inlining.} 
+\parawith{Inlining.} Inlining is an optimization common to all compilers, but
+especially important in functional languages~\cite{peytonjones1997a}. Given
+Haskell's pure and lazy semantics, inlining can be employed in Haskell to a much
+larger extent because we needn't worry about evaluation order or side effects,
+contrary to most imperative and strict languages. \emph{Inlining} consists of
+replacing an occurrence of a let-bound variable by its right-hand side:
+\[
+\llet{x = e}{\dots x \dots}~\Longrightarrow~\llet{x = e}{\dots e \dots}
+\]
+Effective inlining is crucial to optimization because, by bringing the
+definition of a variable to the context in which it is used, many other local
+optimizations are unlocked. The paper ``Secrets of the GHC
+inliner''~\cite{peytonjones2002secrets} further discusses the intricacies of
+inlining and provides algorithms used for inlining in GHC. Below we present an
+example that makes use of inlining in conjunction with other optimizations to
+highlight its importance.
+
+\parawith{$\beta$-reduction.} $\beta$-reduction is an optimization that always
+reduces an application of a term, or type, $\lambda$-abstraction ($\lambda$ or
+$\Lambda$ as seen in Figure~\ref{fig:systemfc-terms}) by replacing the
+$\lambda$-bound variable with the argument:
+\[
+(\lambda x{:}\tau.~e)~y~\Longrightarrow~e[y/x]
+\qquad
+(\Lambda a{:}\kappa.~e)~\varphi~\Longrightarrow~e[\varphi/a]
+\]
+If the $\lambda$-bound variable is used more than once in the body of the
+$\lambda$-abstraction we must be careful not to duplicate work, and we can
+let-bound the argument, while still removing the $\lambda$-abstraction, to avoid
+doing so:
+\[
+(\lambda x{:}\tau.~e)~y~\Longrightarrow~\llet{x = y}{e}
+\]
+$\beta$-reduction is always a good optimization because it effectively evaluates
+the application at compile-time (reducing heap allocations and execution time)
+and unlocks other transformations.
+
+\parawith{Case-of-known-constructor.} If a \texttt{case} expression is
+scrutinizing a known constructor $K~\overline{x{:}\sigma}$, we can simplify the
+case expression to the branch it would enter, substituting the pattern-bound
+variables by the known constructor arguments ($\overline{x{:}\sigma}$):
+\[
+\begin{array}{lcl}
+\textbf{case}~K~v_1~\dots~v_n~\textbf{of}\\
+~~K~x_1~\dots~x_n \to e \\
+~~\dots
+\end{array}
+\Longrightarrow
+e[v_i/x_i]_{i=1}^n
+\]
+Case-of-known-constructor is an optimization mostly unlocked by other
+optimizations such as inlining and $\beta$-reduction more so than by code
+written as-is by the programmer. As $\beta$-reduction, this optimization is also
+always good -- it eliminates evaluations whose result is known at compile time
+and further unblocks for other transformations.
+
+
+\parawith{Float-out and Float-in}
+
+\parawith{Case-of-case}
 
 \parawith{Common Sub-expression elimination}
-
-\parawith{Beta-reduction}
 
 \parawith{Lambda lifting}
 \parawith{Eta-reduction/Eta-expansion}
 
 \parawith{Binder-swap}
 
-\parawith{Case-of-case}
-\parawith{Case-of-known-constructor}
-\parawith{Float-out and Float-in}
 \parawith{Worker/wrapper split}
 
 \section{Related Work}
@@ -1284,6 +1437,10 @@ How do they handle linearity plus optimizations
 They probabluy don't typecheck linearity in Core
 
 \subsection{A transformation based optimizer for Haskell}
+
+They discuss a cardinality analysis based on a linear type system but create (an
+ad-hoc?) one suited. Comparison in the measure of creating optimizations based
+on linearity.
 
 \chapter{Technical Details}
 
