@@ -344,3 +344,56 @@ volume = {32},
 number = {1},
 }
 
+@phdthesis{santos1995compilation,
+author = {Santos, Andre and Peyton Jones, Simon},
+title = {Compilation by transformation for non-strict functional languages},
+organization = {University of Glasgow},
+year = {1995},
+month = {July},
+abstract = {In this thesis we present and analyse a set of automatic source-to-source program transformations that are suitable for incorporation in optimising compilers for lazy functional languages.  These transformations improve the quality of code in many different respects, such as execution time and memory usage.
+
+The transformations presented are divided into two sets: global transformations, which are performed once (or perhaps twice) during compilation; and a set of local transformations with are performed before and after each of the global transformations, so that they can simplify the code before applying the global transformations, and take advantage of them afterwards.
+
+Many of the local transformations are simple, well known, and do not have major effects on their own.  They become important as they interact with each other and with global transformations, sometimes in non-obvious ways.  We present how and why they improve the code, and perform extensive experiments with real application programs.
+
+We describe four global transformations, two of which have not been used in any lazy functional compiler we know of: the static argument transformations and let-floating transformations.  The other two are well known for lazy functional languages, but no major studies of their effects have been performed: full laziness and lambda lifting.  We also study and measure the effects of different inlining strategies.
+
+We also present a Cost Semantics as a way to reason about the effects of program transformations in lazy functional languages.
+
+[I have listed myself as an author only so that this thesis appears on my home page; it is Andre's thesis!]},
+url = {https://www.microsoft.com/en-us/research/publication/compilation-transformation-non-strict-functional-languages/},
+}
+
+@phdthesis{Breitner2016_1000054251,
+    author       = {Breitner, Joachim},
+    year         = {2016},
+    title        = {Lazy Evaluation: From natural semantics to a machine-checked compiler transformation},
+    doi          = {10.5445/IR/1000054251},
+    publisher    = {{Karlsruher Institut für Technologie (KIT)}},
+    keywords     = {Haskell, Lazy Evaluation, Call Arity, Interactive Theorem Proving},
+    pagetotal    = {226},
+    school       = {Karlsruher Institut für Technologie (KIT)},
+    language     = {english}
+}
+
+@article{baker-finch2004constructed,
+author = {Baker-Finch, Clem and Glynn, Kevin and Peyton Jones, Simon},
+title = {Constructed Product Result Analysis for Haskell},
+year = {2004},
+month = {March},
+abstract = {Compilers for ML and Haskell typically go to a good deal of trouble to arrange that multiple arguments can be passed efficiently to a procedure. For some reason, less effort seems to be invested in ensuring that multiple results can also be returned efficiently.
+
+In the context of the lazy functional language Haskell, we describe an analysis, Constructed Product Result (CPR) analysis, that determines when a function can profitably return multiple results in registers. The analysis is based only on a function's definition, and not on its uses (so separate compilation is easily supported) and the results of the analysis can be expressed by a transformation of the function definition alone. We discuss a variety of design issues that were addressed in our implementation, and give measurements of the effectiveness of our approach across a substantial benchmark set.
+
+Overall, the price/performance ratio is good: the benefits are modest in general (though occasionally dramatic), but the costs in both complexity and compile time, are low.
+
+ },
+url = {https://www.microsoft.com/en-us/research/publication/constructed-product-result-analysis-haskell/},
+pages = {211-245},
+journal = {Journal of Functional Programming},
+volume = {14},
+number = {2},
+}
+
+
+@article{sergey_vytiniotis_jones_breitner_2017, title={Modular, higher order cardinality analysis in theory and practice}, volume={27}, DOI={10.1017/S0956796817000016}, journal={Journal of Functional Programming}, publisher={Cambridge University Press}, author={SERGEY, ILYA and VYTINIOTIS, DIMITRIOS and JONES, SIMON L. PEYTON and BREITNER, JOACHIM}, year={2017}, pages={e11}}

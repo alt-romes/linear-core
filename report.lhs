@@ -937,8 +937,10 @@ representation.
 %
 To illustrate the difference in complexity, in GHC's implementation of Haskell,
 the abstract syntax tree is defined through dozens of datatypes and hundreds of
-constructors, while the GHC's implmentation of Core is defined in 3 types
+constructors, while the GHC's implementation of Core is defined in 3 types
 (expressions, types, and coercions) and 15 constructors~\cite{}.
+
+\todo{Nao estou a justificar o "desugaring"}
 
 Core is a major design decision in GHC Haskell with significant benefits which
 have decidedly proved themselves over time~\cite{,}.\todo{something more}
@@ -950,11 +952,12 @@ generation is done on Core, not Haskell. The implementation of such passes ends
 up simpler and concise for Core being smaller.
  
 \item Of equal importance is Core being an (explicitly) typed language in the style
-of System F, making Core an internal consistency tool that validates desugaring
-and optimization passes.  Desugaring and optimizing transformations must
-produce well-typed Core, with the Core typechecker providing a verification
-layer for the correctness of optimizing transformations, the desugarer, and
-their implementations.
+of System~F, making Core an internal consistency tool that validates desugaring
+and optimization passes.
+%
+The Core typechecker provides a verification layer for the correctness of
+desugaring and optimizing transformations (and their implementations) because
+both desugaring and optimizing transformations must produce well-typed Core.
  
 \item Finally, Core's expressive but simple type-system serves as a sanity-check for
 all the extensions to the source language type system -- if we can desugar a
@@ -976,18 +979,19 @@ functions, and GADTs, which are known to introduce significant challenges for
 type inference algorithms~\cite{cite:outsideinx}.
 %
 Haskell is typechecked in addition to Core to (i) do type inference and (ii)
-provide meaningful type errors. If Haskell wasn't typechecked as it is and
-instead we only typechecked Core, everything (e.g.  all binders) would have to
-be explicitly typed and all error messages would refer to the intermediate
-language rather than the written program, which is known to be undesirable.
+provide meaningful type errors. If Haskell wasn't typechecked and instead we
+only typechecked Core, everything (e.g.  all binders) would have to be
+explicitly typed and all error messages would refer to the intermediate language
+rather than the written program.
+%, which is known to be undesirable.
 
 The Core language is based on $System~F_C$, a polymorphic lambda calculus with
 explicit type-equality coercions that, like types, are erased at compile time
 (i.e. types and coercions alike don't incur any cost at run-time). System
 $F_C$'s term syntax is given in Figure~\ref{fig:systemfc-terms}, which
-corresponds exactly to the syntax of System F with term and type abstraction
-and application, extended with algebraic data types, let-bound expressions,
-pattern matching and coercions or casts.
+corresponds exactly to the syntax of System F with term and type abstraction as
+well as term and type application, extended with algebraic data types, let-bound
+expressions, pattern matching and coercions or casts.
 
 \begin{figure}[h]
 \[
@@ -1033,21 +1037,28 @@ $(e{:}\sigma\blacktriangleright\textbf{sym}~\tau\sim\sigma){:}\tau$.
 \end{figure}
 
 
-Core further extends $System~F_C$'s with \emph{jumps} and \emph{join
+Core further extends $System~F_C$ with \emph{jumps} and \emph{join
 points}~\cite{maurer2017compiling}, allowing new optimizations to be performed
-which ultimately result in efficient code directly using labels and jumps, and
+which ultimately result in efficient code using labels and jumps, and
 with a construct used for internal notes such as profiling information.
 
 $System~F_C$'s coercions are the key to desugar a multitude of more
 type-complex Haskell features such as GADTs, type families and newtypes. In
-short, GADTs local equalities constraints are desugared into explicit
-type-equality evidence that are pattern matched on and used to cast the branch
-alternative's type to the return type; newtypes such as @newtype BoxI = BoxI
-Int@ introduce a global type-equality $\texttt{BoxI}\sim\texttt{Int}$ and
-construction and deconstruction of said newtype are desugared into casts; and,
-type family instances such as @type instance F Int = Bool@ introduce a global
-coercion $\texttt{F~Int}\sim\texttt{Bool}$ which can be used to cast
-expressions of type $\texttt{F~Int}$.
+short, these three features are desugared as follows:
+% TODO: Use itemize in this paragraph
+\begin{itemize}
+\item GADTs local equality constraints are desugared into explicit type-equality
+evidence that are pattern matched on and used to cast the branch alternative's
+type to the return type.
+
+\item Newtypes such as @newtype BoxI = BoxI Int@ introduce a global
+type-equality $\texttt{BoxI}\sim\texttt{Int}$ and construction and
+deconstruction of said newtype are desugared into casts.
+
+\item Type family instances such as @type instance F Int = Bool@ introduce a
+global coercion $\texttt{F~Int}\sim\texttt{Bool}$ which can be used to cast
+expressions of type $\texttt{F~Int}$ to $\texttt{Bool}$.
+\end{itemize}
 
 % $System~F_C$ is expressive enough as a target for Haskell
 
@@ -1059,7 +1070,8 @@ inherent incompatibility of linearity with Core/System~$F_C$ as a current flaw
 in GHC that invalidates all benefits of Core when it comes to linearity.
 Consequently, we must extend System $F_C$ (and, therefore, Core) to account for
 linearity, to validate that desugaring and optimizing transformations don't
-destroy linearity and ensure we can reason about linearly typed Haskell in its Core.
+destroy linearity and ensure we can reason about linearly typed Haskell in its
+Core representation.
 
 % \begin{itemize}
 % \item Referencia figura, as can be seen in bla, is a lambda calculus type system with coercions
@@ -1136,26 +1148,31 @@ The so-called Core-to-Core transformations are the most important set of
 optimizing transformations that GHC performs during compilation. By design, the
 frontend of the pipeline (parsing, renaming, typechecking and desugaring) does
 not include any optimizations -- rather all optimizing work is done in Core.
-The transformational approach focused on Core ... transformations are modular
-and transformations unlock other transformations leading to a powerful
-optimizing process when all composed.
+The transformational approach focused on Core allow transformations to be
+modular and simple individually, but very powerful when combined, with each
+transformation potentially unlocking other transformations that further unlock
+more.
 
-Regardless, the order in which transformations are applied is still relevant
-because transformations are destructive (i.e. after applying a transformation
-we never undo it). This is known as the phase-ordering problem~\cite{},
-techniques such as equality saturation~\cite{} don't have the phase-ordering problem
-because all optimizing transformations are applied non-destructively; however,
-it's a much more costly technique and still not well understood whether it
-could work in the context of large compilers such as GHC.
+% I know this paragraph is useless :)
+Despite having great results when combined, the order in which transformations
+are applied determines how well the program optimizes because transformations
+are destructive (i.e. after applying a transformation we never undo it) and, as
+such, certain orderings can block optimizations from firing. This
+phase-ordering problem~\cite{} is present in most optimizing compilers.
+Techniques such as equality saturation~\cite{} bypass the phase-ordering
+problem because all optimizing transformations are applied non-destructively;
+however, it's a much more expensive technique.
+%
+% transformation based approach to optimization allows each producing a Core
+% program fed to the next optimizing transformation.
 
-%
-transformation based approach to optimization allows
-each producing a Core
-program fed to the next optimizing transformation.
-%
 Core is the main object of our study, we want to type-check linearity in Core
-before \emph{and} after optimizing transformations are applied.
-
+before \emph{and} after optimizing transformations are applied as motivated in
+Section~\ref{sec:core}. In that light, we describe some of the individual
+optimizations Core undergoes. The first are described
+in~\cite{santos1995compilation,peytonjones1997a}, but many were refined and
+created
+later~\cite{baker-finch2004constructed,maurer2017compiling,Breitner2016_1000054251,sergey_vytiniotis_jones_breitner_2017}.
 
 % Ideia de que há uma transformação .... pipeline... e depois há muitas
 % transformações feitas internamente dentro do Core,STG,Cmm,LLVM e que o meu foco
@@ -1169,13 +1186,12 @@ before \emph{and} after optimizing transformations are applied.
 % Both typecheckers, the backends Core is transformed into, and \textbf{\emph{all
 % core transformations}}.
 
-\begin{itemize}
+%\begin{itemize}
     % \item Parser to Rename to Typechecker to Desugar
     % \item Core2Core transformations
-    \item GHC unique em haver tantas transformações sempre sobre a mesma intermediate
-        representation como input e output
-    \item 
-\end{itemize}
+    % \item GHC unique em haver tantas transformações sempre sobre a mesma intermediate
+    %    representation como input e output
+%\end{itemize}
 
 % Previous itemize. Talvez ainda tenha de ter secções sobre os últimos dois
 % pontos
@@ -1187,27 +1203,26 @@ before \emph{and} after optimizing transformations are applied.
 %     \item GADTs e Coercions
 % \end{itemize}
 
-\subsection{Core-To-Core Optimizations}
-
 % like inlining, its inverse (CSE), beta-reduction, lambda-lifting,
 % eta-reduction/eta-expansion, binder-swap, case-of-case,
 % case-of-know-constructor, float-out, float-in, worker/wrapper split (this one
 % is big, in comparison), etc…
 
-\subsection{Inlining}
+\parawith{Inlining.} 
 
-\subsection{Common Sub-expression elimination}
+\parawith{Common Sub-expression elimination}
 
-\subsection{Beta-reduction}
-\subsection{Lambda lifting}
-\subsection{Eta-reduction/Eta-expansion}
+\parawith{Beta-reduction}
 
-\subsection{Binder-swap}
+\parawith{Lambda lifting}
+\parawith{Eta-reduction/Eta-expansion}
 
-\subsection{Case-of-case}
-\subsection{Case-of-known-constructor}
-\subsection{Float-out and Float-in}
-\subsection{Worker/wrapper split}
+\parawith{Binder-swap}
+
+\parawith{Case-of-case}
+\parawith{Case-of-known-constructor}
+\parawith{Float-out and Float-in}
+\parawith{Worker/wrapper split}
 
 \section{Related Work}
 
@@ -1267,6 +1282,8 @@ disto.
 Rust has a core based on linear types. Describe Rust's architecture?
 How do they handle linearity plus optimizations
 They probabluy don't typecheck linearity in Core
+
+\subsection{A transformation based optimizer for Haskell}
 
 \chapter{Technical Details}
 
