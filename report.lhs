@@ -1150,29 +1150,30 @@ The so-called Core-to-Core transformations are the most important set of
 optimizing transformations that GHC performs during compilation. By design, the
 frontend of the pipeline (parsing, renaming, typechecking and desugaring) does
 not include any optimizations -- rather all optimizing work is done in Core.
-The transformational approach focused on Core allow transformations to be
-modular and simple individually, but very powerful when combined, with each
-transformation potentially unlocking other transformations that further unlock
-more.
+The transformational approach focused on Core, known as \emph{compilation by
+transformation}, allows transformations to be modular and simple, but very
+powerful when combined, with each transformation potentially unlocking other
+transformations that further unlock more.
 
 % I know this paragraph is useless :)
 Despite having great results when combined, the order in which transformations
-are applied determines how well the program optimizes because transformations
-are destructive (i.e. after applying a transformation we never undo it) and, as
-such, certain orderings can block optimizations from firing. This
-phase-ordering problem~\cite{} is present in most optimizing compilers.
-Techniques such as equality saturation~\cite{} bypass the phase-ordering
-problem because all optimizing transformations are applied non-destructively;
-however, it's a much more expensive technique.
+are applied determines how well the resulting program is optimized because
+transformations are destructive (i.e. after applying a transformation we never
+undo it). As such, certain orderings of optimizations can hide potential
+optimization opportunities and block them from firing.  This phase-ordering
+problem~\cite{} is present in most optimizing compilers.  Techniques such as
+equality saturation~\cite{} bypass the phase-ordering problem because all
+optimizing transformations are applied non-destructively; however, it's a much
+more expensive technique that has not been .
 %
 % transformation based approach to optimization allows each producing a Core
 % program fed to the next optimizing transformation.
 
-Core is the main object of our study, we want to type-check linearity in Core
-before \emph{and} after optimizing transformations are applied as motivated in
-Section~\ref{sec:core}. In that light, we describe below some of the individual
-optimizations Core undergoes, using $\Longrightarrow$ to denote a program
-transformation. The first optimizations are described
+Core is the main object of our study: we want to type-check linearity in Core
+before \emph{and} after each optimizing transformation is applied, as motivated
+in Section~\ref{sec:core}. In that light, we describe below some of the
+individual optimizations Core undergoes, using $\Longrightarrow$ to denote a
+program transformation. The first optimizations are described
 in~\cite{santos1995compilation,peytonjones1997a}, but many were refined and
 created
 later~\cite{peytonjones2002secrets,baker-finch2004constructed,maurer2017compiling,Breitner2016_1000054251,sergey_vytiniotis_jones_breitner_2017}.
@@ -1324,10 +1325,11 @@ inlining and provides algorithms used for inlining in GHC. Below we present an
 example that makes use of inlining in conjunction with other optimizations to
 highlight its importance.
 
-\parawith{$\beta$-reduction.} $\beta$-reduction is an optimization that always
-reduces an application of a term, or type, $\lambda$-abstraction ($\lambda$ or
-$\Lambda$ as seen in Figure~\ref{fig:systemfc-terms}) by replacing the
-$\lambda$-bound variable with the argument:
+\parawith{$\beta$-reduction.} $\beta$-reduction is an optimization that
+consists of reducing an application of a $\lambda$-abstraction (term-level
+$\lambda$ or type-level $\Lambda$ as seen in Figure~\ref{fig:systemfc-terms})
+by replacing the $\lambda$-bound variable with the argument the function is
+applied to:
 \[
 (\lambda x{:}\tau.~e)~y~\Longrightarrow~e[y/x]
 \qquad
@@ -1358,13 +1360,65 @@ variables by the known constructor arguments ($\overline{x{:}\sigma}$):
 e[v_i/x_i]_{i=1}^n
 \]
 Case-of-known-constructor is an optimization mostly unlocked by other
-optimizations such as inlining and $\beta$-reduction more so than by code
+optimizations such as inlining and $\beta$-reduction, more so than by code
 written as-is by the programmer. As $\beta$-reduction, this optimization is also
 always good -- it eliminates evaluations whose result is known at compile time
 and further unblocks for other transformations.
 
 
-\parawith{Float-out and Float-in}
+% não gosto da frase abaixo
+\parawith{Let-floating.} A let-binding in Core entails performing
+\emph{heap-allocation}, therefore, let-related transformations directly impact
+the performance of Haskell programs. In particular, let-floating
+transformations are concerned with best the position of let-bindings in a
+program in order to improve efficiency. Let-floating is an important group of
+transformations for non-strict (lazy) languages described in detail
+by~\cite{cite:let-floating}. We distinguish three let-floating transformations:
+\begin{itemize}
+  \item \emph{Float-in} consists of moving a let-binding as far \emph{inwards}
+  as possible. For example, it could be moving a let-binding outside of a case
+  expression into the branch alternative that uses the let-bound variable:
+  \[
+  \begin{array}{l}
+    \llet{x = y+1\\}{\ccase{z}{\\\ ~[] \to x*x \\~~(p:ps) \to 1}}
+  \end{array}
+  \Longrightarrow
+  \begin{array}{l}
+    \ccase{z}{\\\ [] \to \llet{x = y+1}{x*x} \\~(p:ps) \to 1}
+  \end{array}
+  \]
+  This can improve performance by not performing let-bindings (e.g. if the
+  branch the let was moved into is never executed); improving strictness
+  analysis; and further unlocking other optimizations such as
+  ~\cite{cite:let-floating}. However, care must be taken when floating a
+  let-binding inside a $\lambda$-abstraction because every time that
+  abstraction is applied the value (or thunk) of the binding will be allocated
+  in the heap (we briefly revisit this in Section~\ref{sec:rw:let-floating})
+
+  \item \emph{Full laziness} transformation, also known as \emph{float-out},
+  consists of moving let-bindings outside of enclosing $\lambda$-abstractions.
+  The warning above regarding $\lambda$-abstractions recomputing the binding
+  every time they are applied is valid even if bindings are not purposefully
+  pushed inwards. In such a situation, floating the let binding out of the
+  enclosing lambda can make it readily available across applications of said
+  lambda.
+
+  \item The \emph{local transformations} are the third type of let-floating
+  optimizations. In this context, the local transformations are local rewrites
+  that improve the placement of bindings. There are three local
+  transformations:
+  \[
+  \begin{array}{llcl}
+  1. & (\llet{v = e}{b})~a              & \Longrightarrow & \llet{v = e}{b~a} \\
+  2. & \ccase{(\llet{v = e}{b})}{\dots} & \Longrightarrow & \llet{v = e}{\ccase{b}{\dots}}\\
+  3. & \llet{x = (\llet{v = e}{b})}{c}  & \Longrightarrow & \llet{v = e}{\llet{x = b}{c}} \\
+  \end{array}
+  \]
+  These transformations do not change the number of allocations but potentially
+  create opportunities for other optimizations to fire, such as expose a lambda
+  abstraction~\cite{cite:let-floating}.
+
+\end{itemize}
 
 \parawith{Case-of-case}
 
@@ -1376,6 +1430,8 @@ and further unblocks for other transformations.
 \parawith{Binder-swap}
 
 \parawith{Worker/wrapper split}
+
+\subsection{Code Generation}
 
 \section{Related Work}
 
@@ -1441,6 +1497,13 @@ They probabluy don't typecheck linearity in Core
 They discuss a cardinality analysis based on a linear type system but create (an
 ad-hoc?) one suited. Comparison in the measure of creating optimizations based
 on linearity.
+
+\subsection{Let-Floating: Moving Bindings to Give Faster Programs\label{sec:rw:let-floating}}
+
+In the paper~\cite{cite:let-floating}...
+They say they are doing work on a linear type system to identify places where
+the lambda is linearly used and therefore floating-in is beneficial and
+floating-out not as productive.
 
 \chapter{Technical Details}
 
