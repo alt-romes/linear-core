@@ -166,8 +166,8 @@ two distinct reasons:
         type annotations) and doing so serves as a sanity check to the
         correction of the source transformations. If the resulting optimized
         Core program doesn't typecheck, something \emph{very wrong} has happened
-        in a transformation!  We discuss Core in detail in
-        section~\ref{sec:core}.\todo{Mention systemFC}
+        in a transformation!  We discuss Core and System~$F_C$ in detail in
+        section~\ref{sec:core}.
         % TODO: \item values in rust are linear by default while non-linear is
         % the haskell default?
 \end{itemize}
@@ -281,10 +281,6 @@ Is this program really still linear? Yes, but ...
     \item Inform/unlock other optimisations that take into account linearity
 \end{itemize}
 
-% TODO? Another defining feature of Haskell is its powerful type system. The
-% interaction between the new linearity polymorphism and the existing
-% type-level facilities is quite interesting
-
 \chapter{Background and Related Work}
 
 \section{Linear Types\label{sec:linear-types}}
@@ -316,7 +312,6 @@ equivalent to C's \texttt{void}.
     \and
     \lambda h.~\mathsf{close}~h;~\mathsf{close}~h;
 \end{mathpar}
-% TODO: Equation references?
 
 Ignoring the file handle which should have been closed by the function makes the
 first function incorrect. Similarly, the second function receives the file
@@ -583,21 +578,23 @@ is used (e.g.  $\texttt{f~::~Int}\to \texttt{Bool}$ is read \texttt{f} \emph{has
 type} function from \texttt{Int} to \texttt{Bool}).
 
 Because Haskell is a pure programming language, input/ouptut side-effects are
-``made pure'' by modelling them on the type level through the
-non-nullary\footnote{\texttt{IO} has kind $\texttt{Type}\to\texttt{Type}$,
-that is, it is only a type after another type is passed as a parameter (e.g.
-\texttt{IO~Int}, \texttt{IO~Bool}); \texttt{IO} by itself is a \emph{type
-constructor}} type constructor \texttt{IO}.\todo{IO monad; made pure
-nao quer dizer nada. A ideia é que valores do tipo IO t capturam
-\emph{computacoes} que quando executadas produzem efeitos e produzem
-valores do tipo $t$, os operadores monadicos permitem compor
-computacoes, mas nao executam nada, por isso e que e tudo puro.}
-Some of the example programs will look though as
-if they had statements, but, in reality, the sequential appearence is just
-syntatic sugar to an expression using monadic operators. The main take away is
-that computations that do I/O may be sequenced together with other operations
-that do I/O while retaining the lack of statements and the language purity
-guarantees.
+modelled at the type-level through the non-nullary
+%
+\footnote{\texttt{IO} has kind $\texttt{Type}\to\texttt{Type}$, that is, it is
+only a type after another type is passed as a parameter (e.g.  \texttt{IO~Int},
+\texttt{IO~Bool}); \texttt{IO} by itself is a \emph{type constructor}}
+%
+type constructor \texttt{IO}. A value of type \texttt{IO~a} represents a
+\emph{computation} that when executed will perform side-effects and produce a
+value of type \texttt{a}. Computations that do I/O can be composed into larger
+computations using so-called monadic operators, which are like any other
+operators but grouped under the same abstraction.
+%
+Some of the example programs will look though as if they had statements, but,
+in reality, the sequential appearence is just syntatic sugar to an expression
+using monadic operators. The main take away is that computations that do I/O
+may be sequenced together with other operations that do I/O while retaining the
+lack of statements and the language purity guarantees.
 
 % TODO: Perhaps elaborate a bit more on the constructors and pattern matching?
 
@@ -698,8 +695,6 @@ information used for typechecking individual case alternatives. We develop the
 length-indexed lists example without discussing the type system and type
 inference details of GADTs which we later explore in~\ref{related-work-gadts}.
 
-% TODO: Explain Type in Type?
-
 % First, we define the natural numbers inductively: a natural number is either
 % zero (\texttt{Z}) or a successor (\texttt{S}) of another natural number (e.g.
 % the successor of the successor of zero is a natural number). The following
@@ -713,8 +708,6 @@ inference details of GADTs which we later explore in~\ref{related-work-gadts}.
 % \begin{code}
 %     data Nat = Z | S Nat
 %   \end{code}
-% 
-%   \todo[inline]{Acho que a parte dos naturais nao e necessaria}
 
 We define the data type in GADT syntax for length-index lists which
 takes two type parameters. The first type parameter is the length of the list
@@ -793,11 +786,11 @@ resources at the type level.
 % operations. Linear haskell relates systemFC with the linear lambda calculus?
 
 The introduction of linear types to Haskell's type system is originally
-described in Linear Haskell~\cite{cite:linearhaskell}. While
-in~\ref{sec:related-work-linear-haskell} we discuss the reasoning and design
-choices behind retrofitting linear types to Haskell, here we focus on
-linear types solely as they exist in the language, and re-work the file
-handle example seen in the previous section to make sure it doesn't typecheck.
+described in Linear Haskell~\cite{cite:linearhaskell}. While in
+Section~\ref{sec:related-work-linear-haskell} we discuss the reasoning and
+design choices behind retrofitting linear types to Haskell, here we focus on
+linear types solely as they exist in the language, and re-work the file handle
+example seen in the previous section to make sure it doesn't typecheck.
 
 A linear function ($f :: A \lolli B$) guarantees that if ($f~x$) is consumed
 exactly once, then the argument $x$ is consumed exactly once. The precise
@@ -889,22 +882,21 @@ whereas $g$ expects an unrestricted function ($Bool~\to_\omega~Int$).
 Function $h$ is a function from @Bool@ to @Int@ that we want to pass as an argument to both $f$
 and $g$.
 
-\begin{minipage}{0.3\linewidth}
+\begin{minipage}{0.47\textwidth}
 \begin{code}
 f :: (Bool %1 -> Int) -> Int
 f c = c True
-\end{code}
-\end{minipage}
-\begin{minipage}{0.3\linewidth}
-\begin{code}
+
 g :: (Bool -> Int) -> Int
 g c = c False
 \end{code}
 \end{minipage}
-\begin{minipage}{0.3\linewidth}
+\begin{minipage}{0.47\textwidth}
 \begin{code}
 h :: Bool %m -> Int
-h x = case x of False -> 0; True -> 1
+h x = case x of
+  False -> 0
+  True -> 1
 \end{code}
 \end{minipage}
 
@@ -918,24 +910,25 @@ define polymorphic functions. Thus, we define $h$ as a multiplicity
 polymorphic function ($\to_m$), making $h$ a well-typed argument to both
 $f$ and $g$ ($m$ will unify with $1$ and $\omega$ at the call sites).
 
-
- 
-% TODO: Is this enough about multiplicities?
-
-\begin{itemize}
+% \begin{itemize}
     % \item Linear Haskell definition
     % \item Consuming values precisely
     % \item Multiplicities
     % \item Multiplicity polymorphism
-    \item Files example
-    \item Que relaciona o systemFC com o calculo lambda linear
-\end{itemize}
+    % \item Files example
+    % \item Ok talvez acabar abruptamente
+    % \item Talvez na próxima. Que relaciona o systemFC com o calculo lambda linear
+% \end{itemize}
 
 \section{Core and System $F_C$\label{sec:core}}
 
 Haskell is a large and expressive language with many syntatic constructs and
 features. However, the whole of Haskell can be desugared down to a minimal,
 explicitly typed, intermediate language called \textbf{Core}.
+%
+Desugaring allows the compiler to focus on the small desugared language rather
+than on the large surface one, which can greatly simplify the subsequent
+compilation passes.
 %
 Core is a strongly-typed, lazy, purely functional intermediate language akin to
 a polymorphic lambda calculus, that GHC uses as its key intermediate
@@ -944,12 +937,11 @@ representation.
 To illustrate the difference in complexity, in GHC's implementation of Haskell,
 the abstract syntax tree is defined through dozens of datatypes and hundreds of
 constructors, while the GHC's implementation of Core is defined in 3 types
-(expressions, types, and coercions) and 15 constructors~\cite{}.
-
-\todo{Nao estou a justificar o "desugaring"}
-
-Core is a major design decision in GHC Haskell with significant benefits which
-have decidedly proved themselves over time~\cite{,}.\todo{something more}
+(expressions, types, and coercions) and 15 constructors~\cite{cite:ghc-source-code}.
+%
+The existence of Core and its use is a major design decision in GHC Haskell
+with significant benefits which have decidedly proved themselves over
+time~\cite{,}:
 
 \begin{itemize}
 \item Core allows us to reason about the entirety of Haskell in a much smaller
@@ -958,7 +950,7 @@ generation is done on Core, not Haskell. The implementation of these compiler pa
 significantly simplified by the minimality of Core.
  
 \item Since Core is an (explicitly) typed language
-  (c.f.~System~F~\cite{}), type-checking Core serves as an internal
+  (c.f.~System~F~\cite{Girard1972InterpretationFE,10.1007/3-540-06859-7_148}), type-checking Core serves as an internal
   consistency check for the desugaring
 and optimization passes.
 %
@@ -990,14 +982,13 @@ provide meaningful type errors. If Haskell wasn't typechecked and instead we
 only typechecked Core, everything (e.g.  all binders) would have to be
 explicitly typed and error messages would refer to the intermediate language
 rather than the written program.
-%, which is known to be undesirable.
 
 The Core language is based on $System~F_C$, a polymorphic lambda calculus with
 explicit type-equality coercions that, like types, are erased at compile time
 (i.e. types and coercions alike don't incur any cost at run-time). The
 syntax of System
-$F_C$ terms is given in Figure~\ref{fig:systemfc-terms}, which
-corresponds exactly to the syntax of System F with term and (kind-annotated) type abstraction as
+$F_C$~\cite{cite:systemfc} terms is given in Figure~\ref{fig:systemfc-terms}, which
+corresponds exactly to the syntax of System $F$~\cite{Girard1972InterpretationFE,10.1007/3-540-06859-7_148} with term and (kind-annotated) type abstraction as
 well as term and type application, extended with algebraic data types, let-bound
 expressions, pattern matching and coercions or casts.
 
@@ -1047,7 +1038,6 @@ $(e{:}\sigma\blacktriangleright\textbf{sym}~\tau\sim\sigma){:}\tau$.
 
 $System~F_C$'s coercions are key in desugaring  advanced type-level Haskell features such as GADTs, type families and newtypes~\cite{cite:systemfc}. In
 short, these three features are desugared as follows:
-% TODO: Use itemize in this paragraph
 \begin{itemize}
   \item GADTs local equality constraints are desugared into explicit type-equality
   evidence that are pattern matched on and used to cast the branch alternative's
@@ -1329,17 +1319,15 @@ replacing an occurrence of a let-bound variable by its right-hand side:
 \]
 Effective inlining is crucial to optimization because, by bringing the
 definition of a variable to the context in which it is used, many other local
-optimizations are unlocked. The paper ``Secrets of the GHC
-inliner''~\cite{peytonjones2002secrets} further discusses the intricacies of
-inlining and provides algorithms used for inlining in GHC. Below we present an
-example that makes use of inlining in conjunction with other optimizations to
-highlight its importance.
+optimizations are unlocked. The work~\cite{peytonjones2002secrets} further
+discusses the intricacies of inlining and provides algorithms used for inlining
+in GHC. Below we present an example that makes use of inlining in conjunction
+with other optimizations to highlight its importance.
 
-\parawith{Beta-reduction.} $\beta$-reduction is an optimization that
-consists of reducing an application of a $\lambda$-abstraction (term-level
-$\lambda$ or type-level $\Lambda$ as seen in Figure~\ref{fig:systemfc-terms})
-by replacing the $\lambda$-bound variable with the argument the function is
-applied to:
+\parawith{$\beta$-reduction.} $\beta$-reduction is an optimization that
+consists of reducing an application of a term $\lambda$-abstraction or
+type-level $\Lambda$-abstraction (Figure~\ref{fig:systemfc-terms}) by replacing
+the $\lambda$-bound variable with the argument the function is applied to:
 \[
 (\lambda x{:}\tau.~e)~y~\Longrightarrow~e[y/x]
 \qquad
@@ -1429,13 +1417,15 @@ by~\cite{cite:let-floating}. We distinguish three let-floating transformations:
   abstraction~\cite{cite:let-floating}.
 \end{itemize}
 
-\parawith{Eta-expansion and eta-reduction.} $\eta$-expansion is transformation
-that expands an function expression $f$ to $(\lambda x. f~x)$, where $x$ is not
-a free variable in $f$. This transformation can improve efficiency because it
-can fully saturates functions which would previously create a partial
-application with the variable bound to the expanded $\lambda$. $\eta$-reduction
-is the inverse transformation to $\eta$-expansion, i.e., a
-$\lambda$-abstraction $(\lambda x. f~x)$ can be $\eta$-reduced to simply $f$.
+\parawith{$\eta$-expansion and $\eta$-reduction.} $\eta$-expansion is a transformation
+that expands a function expression $f$ to $(\lambda x. f~x)$, where $x$ is not
+free in $f$. This transformation can improve efficiency because it can fully
+apply functions which would previously be partially applied by using the
+variable bound to the expanded $\lambda$. A partially applied function is often
+more costly than a fully saturated one because it entails a heap allocation for
+the function closure, while a fully saturated one equates to a function call.
+$\eta$-reduction is the inverse transformation to $\eta$-expansion, i.e., a
+$\lambda$-abstraction $(\lambda x.  f~x)$ can be $\eta$-reduced to simply $f$.
 
 \parawith{Case-of-case.}
 
@@ -1460,7 +1450,7 @@ e.g. LLVM, x86, JS, WASM
 
 A brief introduction to the related work section?
 
-\subsection{System FC}
+\parawith{System FC}
 
 Haskell Core's foundational language was imbued with linear types, but it does
 not account for linearity with the whole of the type system
@@ -1469,7 +1459,7 @@ Multiplicity annotations in SystemFC?
 
 Rules?
 
-\subsection{Linear Haskell\label{sec:related-work-linear-haskell}}
+\parawith{Linear Haskell\label{sec:related-work-linear-haskell}}
 
 The paper is concerned with retrofitted linear types but couldn't account for
 optimizations in the Core. It originally did not set out to modify Core but had
@@ -1501,27 +1491,27 @@ that were designed with linear types from the start:
 \end{itemize}
 
 
-\subsection{OutsideIn(X)\label{related-work-gadts}}
+% \subsection{OutsideIn(X)\label{related-work-gadts}}
+% 
+% Defines constraint-based type system parametrized over X which does not account
+% for local type refinements regarding linearity.
+% 
+% Se for modificar o typechecker com as multiplicity coercions vou ter de falar
+% disto.
 
-Defines constraint-based type system parametrized over X which does not account
-for local type refinements regarding linearity.
+% \subsection{Rust}
+% 
+% Rust has a core based on linear types. Describe Rust's architecture?
+% How do they handle linearity plus optimizations
+% They probabluy don't typecheck linearity in Core
 
-Se for modificar o typechecker com as multiplicity coercions vou ter de falar
-disto.
-
-\subsection{Rust}
-
-Rust has a core based on linear types. Describe Rust's architecture?
-How do they handle linearity plus optimizations
-They probabluy don't typecheck linearity in Core
-
-\subsection{A transformation based optimizer for Haskell}
+\parawith{A transformation based optimizer for Haskell}
 
 They discuss a cardinality analysis based on a linear type system but create (an
 ad-hoc?) one suited. Comparison in the measure of creating optimizations based
 on linearity.
 
-\subsection{Let-Floating: Moving Bindings to Give Faster Programs\label{sec:rw:let-floating}}
+\parawith{Let-Floating: Moving Bindings to Give Faster Programs\label{sec:rw:let-floating}}
 
 In the paper~\cite{cite:let-floating}...
 They say they are doing work on a linear type system to identify places where
