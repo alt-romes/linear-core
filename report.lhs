@@ -950,8 +950,8 @@ generation is done on Core, not Haskell. The implementation of these compiler pa
 significantly simplified by the minimality of Core.
  
 \item Since Core is an (explicitly) typed language
-  (c.f.~System~F~\cite{Girard1972InterpretationFE,10.1007/3-540-06859-7_148}), type-checking Core serves as an internal
-  consistency check for the desugaring
+(c.f.~System~F~\cite{Girard1972InterpretationFE,10.1007/3-540-06859-7_148}),
+type-checking Core serves as an internal consistency check for the desugaring
 and optimization passes.
 %
 The Core typechecker provides a verification layer for the correctness of
@@ -1104,7 +1104,7 @@ overview of the phases.
 \parawith{Parser.} The Haskell source files are first processed by the lexer
 and the parser. The lexer transforms the input file into a sequence of valid
 Haskell tokens. The parser processes the tokens to create an abstract syntax
-tree representing the original code, as long as the input is a syntatically
+tree representing the original code, as long as the input is a syntactically
 valid Haskell program.
 
 \parawith{Renamer.} The renamer's main task is to resolve names to fully
@@ -1135,7 +1135,7 @@ transformed into Core by the desugarer. We've discussed in
 Section~\ref{sec:core} the relationship between Haskell and Core in detail, so we
 refrain from repeating it here. It suffices to say that the desugarer
 transforms the large Haskell language into the small Core language by
-simplifying all syntatic constructs to their equivalent Core form (e.g.  @newtype@
+simplifying all syntactic constructs to their equivalent Core form (e.g.  @newtype@
 constructors are transformed into coercions).
 
 \subsection{Core-To-Core Transformations}
@@ -1427,15 +1427,54 @@ the function closure, while a fully saturated one equates to a function call.
 $\eta$-reduction is the inverse transformation to $\eta$-expansion, i.e., a
 $\lambda$-abstraction $(\lambda x.  f~x)$ can be $\eta$-reduced to simply $f$.
 
-\parawith{Case-of-case.}
+\parawith{Case-of-case.} The case-of-case transformation fires when a case
+expression is scrutinizing another case expression. In this situation, the
+transformation duplicates the outermost case into each of the inner case
+branches:
+\[
+\begin{array}{lcl}
+\ccase{\left( \begin{array}{c}\ccase{e_c}{\\~alt_{c_1} \to e_{c_1}
+                                          \\~\dots
+                                          \\~alt_{c_n} \to e_{c_n}}\end{array} \right)}{\\~alt_1 \to e_1
+                                                                                        \\~\dots
+                                                                                        \\~alt_n \to e_n}
+\end{array}
+\Longrightarrow
+\begin{array}{lcl}
+\ccase{e_c}{\\~alt_{c_1} \to \left( \begin{array}{c}\ccase{e_{c_1}}{\\~alt_1 \to e_1
+                                                         \\~\dots
+                                                         \\~alt_n \to e_n}\end{array} \right)
+            \\~\dots
+            \\~alt_{c_n} \to \left( \begin{array}{c}\ccase{e_{c_n}}{\\~alt_1 \to e_1
+                                                         \\~\dots
+                                                         \\~alt_n \to e_n}\end{array} \right)}
+\end{array}
+\]
+This transformation exposes other optimizations, e.g., if $e_{c_n}$ is a known
+constructor we can readily apply \emph{case-of-known-constructor}. However,
+this transformation also potentially duplicates a lot of code. To this effect,
+we apply an transformation that creates join points, shared bindings outside
+the case expressions that are used in the branch alternatives, and that are
+compiled to efficient code using labels and jumps.
 
-\parawith{Common Sub-expression elimination.}
+\parawith{Common sub-expression elimination.}
+%
+Common sub-expression elimination (CSE) is a transformation morally inverse to
+\emph{inlining}. This transformation factors out expensive expressions into a
+shared binding. In practice, lazy functional languages don't benefit nearly as
+much as strict imperative languages from CSE and, thus, it isn't very important
+in GHC~\cite{aquilo}.
 
 \parawith{Lambda lifting.}
 
 \parawith{Binder-swap.}
 
-\parawith{Worker/wrapper split.}
+\parawith{Worker/wrapper split.} 
+
+\begin{figure}{t}
+\caption{Example succession of transformations}
+\label{fig:eg:transformations}
+\end{figure}
 
 \subsection{Code Generation}
 
