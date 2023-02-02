@@ -1169,14 +1169,19 @@ problem~\cite{} is present in most optimizing compilers.
 % transformation based approach to optimization allows each producing a Core
 % program fed to the next optimizing transformation.
 
-Foreshadowing that Core is the main object of our study, we want to type-check linearity in Core
-before \emph{and} after each optimizing transformation is applied (Section~\ref{sec:core}).
+Foreshadowing that Core is the main object of our study, we want to type-check
+linearity in Core before \emph{and} after each optimizing transformation is
+applied (Section~\ref{sec:core}).
 %
-In that light, we describe below some of the
-individual Core-to-Core transformations, using $\Longrightarrow$ to denote a
-program transformation. In the literature, the first set of Core-to-Core optimizations is described
-in~\cite{santos1995compilation,peytonjones1997a}. These were
-subsequently refined and expanded~\cite{peytonjones2002secrets,baker-finch2004constructed,maurer2017compiling,Breitner2016_1000054251,sergey_vytiniotis_jones_breitner_2017}.
+In that light, we describe below some of the individual Core-to-Core
+transformations, using $\Longrightarrow$ to denote a program transformation. In
+the literature, the first set of Core-to-Core optimizations is described
+in~\cite{santos1995compilation,peytonjones1997a}. These were subsequently
+refined and
+expanded~\cite{peytonjones2002secrets,baker-finch2004constructed,maurer2017compiling,Breitner2016_1000054251,sergey_vytiniotis_jones_breitner_2017}.
+In Figure~\ref{fig:eg:transformations} we present an example that is optimized
+by multiple transformations to highlight how the compilation by transformation
+process produces performant programs.
 
 % \begin{figure}[h]
 % \begin{tikzpicture}
@@ -1321,8 +1326,7 @@ Effective inlining is crucial to optimization because, by bringing the
 definition of a variable to the context in which it is used, many other local
 optimizations are unlocked. The work~\cite{peytonjones2002secrets} further
 discusses the intricacies of inlining and provides algorithms used for inlining
-in GHC. Below we present an example that makes use of inlining in conjunction
-with other optimizations to highlight its importance.
+in GHC.
 
 \parawith{$\beta$-reduction.} $\beta$-reduction is an optimization that
 consists of reducing an application of a term $\lambda$-abstraction or
@@ -1471,7 +1475,24 @@ in GHC~\cite{aquilo}.
 
 \parawith{Worker/wrapper split.} 
 
-\begin{figure}{t}
+\begin{figure}[t]
+
+\[
+\begin{array}{lc}
+\begin{array}{l}\textrm{if}~(not~x)~\textrm{then}~e_1~\textrm{else}~e_2\end{array} & \overset{Desugar}{\Longrightarrow}\\
+\\
+\begin{array}{l}\ccase{not~x}{\\~~\textrm{True}\to e_1\\~~\textrm{False}\to e_2}\end{array} & \overset{Inline~not}{\Longrightarrow} \\
+\\
+\begin{array}{l}\ccase{\left(\begin{array}{l}\lambda y. \ccase{y}{\\~\textrm{True}\to\textrm{False}\\~\textrm{False}\to\textrm{True}}\end{array}\right)~x}{\\~~\textrm{True}\to e_1\\~~\textrm{False}\to e_2}\end{array} & \overset{\beta-reduction}{\Longrightarrow} \\
+\\
+\begin{array}{l}\ccase{\left(\begin{array}{l}\ccase{x}{\\~\textrm{True}\to\textrm{False}\\~\textrm{False}\to\textrm{True}}\end{array}\right)}{\\~~\textrm{True}\to e_1\\~~\textrm{False}\to e_2}\end{array} & \overset{Case-of-case}{\Longrightarrow} \\
+\\
+\begin{array}{l}\ccase{x}{\\~~\textrm{True}\to\left(\begin{array}{l}\ccase{\textrm{False}}{\\~\textrm{True}\to e_1\\~\textrm{False}\to e_2}\end{array}\right)\\~~\textrm{False}\to\left(\begin{array}{l}\ccase{\textrm{True}}{\\~\textrm{True}\to e_1\\~\textrm{False}\to e_2}\end{array}\right)}\end{array} & \overset{Case-of-known-constructor}{\Longrightarrow} \\
+\\
+\begin{array}{l}\ccase{x}{\\~~\textrm{True}\to e_2\\~~\textrm{False}\to e_1}\end{array} & \square \\
+\end{array}
+\]
+
 \caption{Example succession of transformations}
 \label{fig:eg:transformations}
 \end{figure}
