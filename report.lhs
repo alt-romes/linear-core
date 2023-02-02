@@ -1325,7 +1325,7 @@ inlining and provides algorithms used for inlining in GHC. Below we present an
 example that makes use of inlining in conjunction with other optimizations to
 highlight its importance.
 
-\parawith{$\beta$-reduction.} $\beta$-reduction is an optimization that
+\parawith{Beta-reduction.} $\beta$-reduction is an optimization that
 consists of reducing an application of a $\lambda$-abstraction (term-level
 $\lambda$ or type-level $\Lambda$ as seen in Figure~\ref{fig:systemfc-terms})
 by replacing the $\lambda$-bound variable with the argument the function is
@@ -1417,21 +1417,34 @@ by~\cite{cite:let-floating}. We distinguish three let-floating transformations:
   These transformations do not change the number of allocations but potentially
   create opportunities for other optimizations to fire, such as expose a lambda
   abstraction~\cite{cite:let-floating}.
-
 \end{itemize}
 
-\parawith{Case-of-case}
+\parawith{Eta-expansion and eta-reduction.} $\eta$-expansion is transformation
+that expands an function expression $f$ to $(\lambda x. f~x)$, where $x$ is not
+a free variable in $f$. This transformation can improve efficiency because it
+can fully saturates functions which would previously create a partial
+application with the variable bound to the expanded $\lambda$. $\eta$-reduction
+is the inverse transformation to $\eta$-expansion, i.e., a
+$\lambda$-abstraction $(\lambda x. f~x)$ can be $\eta$-reduced to simply $f$.
 
-\parawith{Common Sub-expression elimination}
+\parawith{Case-of-case.}
 
-\parawith{Lambda lifting}
-\parawith{Eta-reduction/Eta-expansion}
+\parawith{Common Sub-expression elimination.}
 
-\parawith{Binder-swap}
+\parawith{Lambda lifting.}
 
-\parawith{Worker/wrapper split}
+\parawith{Binder-swap.}
+
+\parawith{Worker/wrapper split.}
 
 \subsection{Code Generation}
+
+After the core-to-core pipeline is run on the Core program and produces
+optimized Core, the program is compiled down to its Spineless, Tagless,
+G-Machine (STG) representation~\cite{10.1145/291251.289439}. STG ....
+Afterwards, STG is compiled to C--, an C-like language designed for code
+generation. From C--, code is compiled to one of the multiple native backends,
+e.g. LLVM, x86, JS, WASM
 
 \section{Related Work}
 
