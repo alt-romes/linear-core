@@ -876,45 +876,49 @@ The linearity annotations~\texttt{1} and \texttt{Many} are just a
 specialization of the more general so-called \emph{multiplicity annotations}. A
 multiplicity of \texttt{1} entails that the function argument must be consumed
 once, and a function annotated with it ($\to_1$) is called a linear function
-(also known as $\lolli$). A function with multiplicity of \texttt{Many}
-($\to_\omega$) allows the function argument to be consumed unrestrictedly.
-Unrestricted functions are equivalent to the common function type and, in fact,
+(often written with $\lolli$). A function with multiplicity of \texttt{Many}
+($\to_\omega$) is an unrestricted function, which may consume its argument 0 or more times.
+Unrestricted functions are equivalent to the standard function type and, in fact,
 the usual function arrow ($\to$) implicitly has multiplicity \texttt{Many}.
 Multiplicities naturally allow for \emph{multiplicity polymorphism}, which we
 explain below.
 
 Consider the functions $f$ and $g$ which take as an argument a function from
-@Bool@ to @Int@ which is, respectively, a linear function ($Bool~\to_1~Int$)
-and an unrestricted one ($Bool~\to_\omega~Int$), and the function $h$ is a
-function from @Bool@ to @Int@ that we want to pass as an argument to both $f$
+@Bool@ to @Int@. Function $f$ expects a linear function ($Bool~\to_1~Int$),
+whereas $g$ expects an unrestricted function ($Bool~\to_\omega~Int$).
+Function $h$ is a function from @Bool@ to @Int@ that we want to pass as an argument to both $f$
 and $g$.
 
-\begin{minipage}{0.47\textwidth}
+\begin{minipage}{0.3\linewidth}
 \begin{code}
 f :: (Bool %1 -> Int) -> Int
 f c = c True
 \end{code}
 \end{minipage}
-\begin{minipage}{0.47\textwidth}
+\begin{minipage}{0.3\linewidth}
 \begin{code}
 g :: (Bool -> Int) -> Int
 g c = c False
 \end{code}
 \end{minipage}
-
-For the call of both $f$ and $g$ on $h$ to be well typed, the multiplicity of
-$h$ ($\to_?$) should match both $f$'s ($\to_1$) and $g$'s ($\to_\omega$).
-Multiplicity polymorphism allows us to use \emph{multiplicity variables} when
-annotating arrows to indicate that the function can both be typed as linear and
-as an unrestricted function, much the same way type variables can be used to
-define polymorphic functions. Thus, we define $h$ as multiplicity
-polymorphic function ($\to_m$) such that $h$ is a well-typed argument to both
-$f$ and $g$ ($m$ will unify with $1$ and $\omega$ at the call sites).
-
+\begin{minipage}{0.3\linewidth}
 \begin{code}
 h :: Bool %m -> Int
 h x = case x of False -> 0; True -> 1
 \end{code}
+\end{minipage}
+
+For the application of $f$ and $g$ to $h$ to be well typed, the multiplicity of
+$h$ ($\to_?$) should match the multiplicity of both $f$ ($\to_1$) and
+$g$ ($\to_\omega$).
+Multiplicity polymorphism allows us to use \emph{multiplicity variables} when
+annotating arrows to indicate that the function can both be typed as linear and
+as an unrestricted function, much the same way type variables can be used to
+define polymorphic functions. Thus, we define $h$ as a multiplicity
+polymorphic function ($\to_m$), making $h$ a well-typed argument to both
+$f$ and $g$ ($m$ will unify with $1$ and $\omega$ at the call sites).
+
+
  
 % TODO: Is this enough about multiplicities?
 
@@ -950,20 +954,21 @@ have decidedly proved themselves over time~\cite{,}.\todo{something more}
 \begin{itemize}
 \item Core allows us to reason about the entirety of Haskell in a much smaller
 functional language. Performing analysis, optimizing transformations, and code
-generation is done on Core, not Haskell. The implementation of such passes ends
-up simpler and concise for Core being smaller.
+generation is done on Core, not Haskell. The implementation of these compiler passes is
+significantly simplified by the minimality of Core.
  
-\item Of equal importance is Core being an (explicitly) typed language in the style
-of System~F, making Core an internal consistency tool that validates desugaring
+\item Since Core is an (explicitly) typed language
+  (c.f.~System~F~\cite{}), type-checking Core serves as an internal
+  consistency check for the desugaring
 and optimization passes.
 %
 The Core typechecker provides a verification layer for the correctness of
 desugaring and optimizing transformations (and their implementations) because
 both desugaring and optimizing transformations must produce well-typed Core.
  
-\item Finally, Core's expressive but simple type-system serves as a sanity-check for
-all the extensions to the source language type system -- if we can desugar a
-type system feature into Core then the feature must be sound by reducibility.
+\item Finally, Core's expressiveness serves as a sanity-check for
+all the extensions to the source language -- if we can desugar a
+feature into Core then the feature must be sound by reducibility.
 Effectively, any feature added to Haskell is only syntatic sugar if it can be
 desugared to Core.
 \end{itemize}
@@ -980,18 +985,19 @@ presence of arbitrary-rank polymorphism, existential types, type-level
 functions, and GADTs, which are known to introduce significant challenges for
 type inference algorithms~\cite{cite:outsideinx}.
 %
-Haskell is typechecked in addition to Core to (i) do type inference and (ii)
+Haskell is typechecked in addition to Core to (i) perform type inference and (ii)
 provide meaningful type errors. If Haskell wasn't typechecked and instead we
 only typechecked Core, everything (e.g.  all binders) would have to be
-explicitly typed and all error messages would refer to the intermediate language
+explicitly typed and error messages would refer to the intermediate language
 rather than the written program.
 %, which is known to be undesirable.
 
 The Core language is based on $System~F_C$, a polymorphic lambda calculus with
 explicit type-equality coercions that, like types, are erased at compile time
-(i.e. types and coercions alike don't incur any cost at run-time). System
-$F_C$'s term syntax is given in Figure~\ref{fig:systemfc-terms}, which
-corresponds exactly to the syntax of System F with term and type abstraction as
+(i.e. types and coercions alike don't incur any cost at run-time). The
+syntax of System
+$F_C$ terms is given in Figure~\ref{fig:systemfc-terms}, which
+corresponds exactly to the syntax of System F with term and (kind-annotated) type abstraction as
 well as term and type application, extended with algebraic data types, let-bound
 expressions, pattern matching and coercions or casts.
 
@@ -1012,9 +1018,9 @@ expressions, pattern matching and coercions or casts.
 \caption{System $F_C$'s Terms\label{fig:systemfc-terms}}
 \end{figure}
 
-Explicit type-equality coercions (or simply coercions) are concrete evidence of
-equality between two types $\sigma_1$ and $\sigma_2$, written
-$\sigma_1\sim\sigma_2$. A coercion $\sigma_1\sim\sigma_2$ can be used to safely
+Explicit type-equality coercions (or simply coercions), written
+$\sigma_1 \sim \sigma_2$, serve as evidence of
+equality between two types $\sigma_1$ and $\sigma_2$. A coercion $\sigma_1\sim\sigma_2$ can be used to safely
 \emph{cast} an expression $e$ of type $\sigma_1$ to type $\sigma_2$, where
 casting $e$ to $\sigma_2$ using $\sigma_1\sim\sigma_2$ is written
 $e\blacktriangleright\sigma_1\sim\sigma_2$. The syntax of \emph{coercions} is
@@ -1039,13 +1045,7 @@ $(e{:}\sigma\blacktriangleright\textbf{sym}~\tau\sim\sigma){:}\tau$.
 \end{figure}
 
 
-Core further extends $System~F_C$ with \emph{jumps} and \emph{join
-points}~\cite{maurer2017compiling}, allowing new optimizations to be performed
-which ultimately result in efficient code using labels and jumps, and
-with a construct used for internal notes such as profiling information.
-
-$System~F_C$'s coercions are the key to desugar a multitude of more
-type-complex Haskell features such as GADTs, type families and newtypes~\cite{cite:systemfc}. In
+$System~F_C$'s coercions are key in desugaring  advanced type-level Haskell features such as GADTs, type families and newtypes~\cite{cite:systemfc}. In
 short, these three features are desugared as follows:
 % TODO: Use itemize in this paragraph
 \begin{itemize}
@@ -1062,18 +1062,22 @@ short, these three features are desugared as follows:
   expressions of type $\texttt{F~Int}$ to $\texttt{Bool}$.
 \end{itemize}
 
+Core further extends $System~F_C$ with \emph{jumps} and \emph{join
+points}~\cite{maurer2017compiling}, allowing new optimizations to be performed
+which ultimately result in efficient code using labels and jumps, and
+with a construct used for internal notes such as profiling information.
+
 % $System~F_C$ is expressive enough as a target for Haskell
 
-In the context of linear types as they exist in Haskell, and revisiting the
-idea that all of Haskell is desugared into Core/System~$F_C$ as a means of
-having a well defined foundation, simplifying analysis, optimization and code
-generation, and overall validating Haskell's implementation, we highlight the
-inherent incompatibility of linearity with Core/System~$F_C$ as a current flaw
-in GHC that invalidates all benefits of Core when it comes to linearity.
-Consequently, we must extend System $F_C$ (and, therefore, Core) to account for
-linearity, to validate that desugaring and optimizing transformations don't
-destroy linearity and ensure we can reason about linearly typed Haskell in its
-Core representation.
+In the context of Linear Haskell, and recalling that Haskell is fully
+desugared into Core/System~$F_C$ as part of its validation and
+compilation strategy, we highlight the inherent incompatibility of
+linearity with Core/System~$F_C$ as a current flaw in GHC that
+invalidates all the benefits of Core wrt linearity.  Thus, we must
+extend System $F_C$ (and, therefore, Core) with linearity in order to
+adequately validate the desugaring and optimizing transformations as
+linearity preserving, ensuring we can reason about Linear Haskell in
+its Core representation.
 
 % \begin{itemize}
 % \item Referencia figura, as can be seen in bla, is a lambda calculus type system with coercions
@@ -1100,14 +1104,14 @@ Core representation.
 \section{GHC Pipeline}
 
 The GHC compiler processes Haskell source files in a series of phases that feed
-each other in a pipeline fashion each transforming their input before passing
-it on to the next stage. This pipeline (Figure~\ref{fig:ghc-pipeline}) is the
-crucial in the overall design GHC and we'll discuss from a bird's view each of
-the phases.
+each other in a pipeline fashion, each transforming their input before passing
+it on to the next stage. This pipeline (Figure~\ref{fig:ghc-pipeline}) is 
+crucial in the overall design of GHC. We now give a high-level
+overview of the phases.
 
 \subsection{Haskell to Core}
 
-\parawith{Parsing.} The Haskell source files are first processed by the lexer
+\parawith{Parser.} The Haskell source files are first processed by the lexer
 and the parser. The lexer transforms the input file into a sequence of valid
 Haskell tokens. The parser processes the tokens to create an abstract syntax
 tree representing the original code, as long as the input is a syntatically
@@ -1119,7 +1123,7 @@ module being compiled and identifiers exported by other modules. Additionally,
 name ambiguity, variables out of scope, unused bindings or imports, etc., are
 all checked and reported as errors or warnings.
 
-\parawith{Type-checking Haskell.} With the abstract syntax tree validated by
+\parawith{Type-checker.} With the abstract syntax tree validated by
 the renamer and with the names fully qualified, the Haskell program is
 type-checked before being desugared into Core.  Type-checking the Haskell
 program guarantees that the program is well-typed. Otherwise, type-checking
@@ -1138,45 +1142,51 @@ for an IDE to report the type of an identifier.
 
 \parawith{Desugaring.} The type-checked Haskell abstract syntax tree is then
 transformed into Core by the desugarer. We've discussed in
-Section~\ref{sec:core} the relationship between Haskell and Core detail, so we
+Section~\ref{sec:core} the relationship between Haskell and Core in detail, so we
 refrain from repeating it here. It suffices to say that the desugarer
 transforms the large Haskell language into the small Core language by
-simplifying all syntatic constructs to their Core form (e.g.  @newtype@
+simplifying all syntatic constructs to their equivalent Core form (e.g.  @newtype@
 constructors are transformed into coercions).
 
 \subsection{Core-To-Core Transformations}
 
-The so-called Core-to-Core transformations are the most important set of
+The Core-to-Core transformations are the most important set of
 optimizing transformations that GHC performs during compilation. By design, the
 frontend of the pipeline (parsing, renaming, typechecking and desugaring) does
-not include any optimizations -- rather all optimizing work is done in Core.
+not include any optimizations -- all optimizations are done in Core.
 The transformational approach focused on Core, known as \emph{compilation by
-transformation}, allows transformations to be modular and simple, but very
-powerful when combined, with each transformation potentially unlocking other
-transformations that further unlock more.
+  transformation}, allows transformations to be both modular and simple.
+Each transformation focuses on optimizing a specific (set of)
+constructs, applying a transformation often exposes opportunities for
+other transformations to fire. Since transformations are modular, they
+can be chained and iterated in order to maximize the optimization potential.
+
+
 
 % I know this paragraph is useless :)
-Despite having great results when combined, the order in which transformations
-are applied determines how well the resulting program is optimized because
-transformations are destructive (i.e. after applying a transformation we never
-undo it). As such, certain orderings of optimizations can hide potential
-optimization opportunities and block them from firing.  This phase-ordering
-problem~\cite{} is present in most optimizing compilers.  Techniques such as
-equality saturation~\cite{} bypass the phase-ordering problem because all
-optimizing transformations are applied non-destructively; however, it's a much
-more expensive technique that has not been .
+However, due to the destructive nature of transformations (i.e. applying a
+transformation is not reversible), the order in which transformations
+are applied determines how well the resulting program is optimized.
+As such, certain orderings of optimizations can hide 
+optimization opportunities and block them from firing. This phase-ordering
+problem~\cite{} is present in most optimizing compilers.
+
+% Techniques such as
+% equality saturation~\cite{} bypass the phase-ordering problem because all
+% optimizing transformations are applied non-destructively; however, it's a much
+% more expensive technique that has not been .
 %
 % transformation based approach to optimization allows each producing a Core
 % program fed to the next optimizing transformation.
 
-Core is the main object of our study: we want to type-check linearity in Core
-before \emph{and} after each optimizing transformation is applied, as motivated
-in Section~\ref{sec:core}. In that light, we describe below some of the
-individual optimizations Core undergoes, using $\Longrightarrow$ to denote a
-program transformation. The first optimizations are described
-in~\cite{santos1995compilation,peytonjones1997a}, but many were refined and
-created
-later~\cite{peytonjones2002secrets,baker-finch2004constructed,maurer2017compiling,Breitner2016_1000054251,sergey_vytiniotis_jones_breitner_2017}.
+Foreshadowing that Core is the main object of our study, we want to type-check linearity in Core
+before \emph{and} after each optimizing transformation is applied (Section~\ref{sec:core}).
+%
+In that light, we describe below some of the
+individual Core-to-Core transformations, using $\Longrightarrow$ to denote a
+program transformation. In the literature, the first set of Core-to-Core optimizations is described
+in~\cite{santos1995compilation,peytonjones1997a}. These were
+subsequently refined and expanded~\cite{peytonjones2002secrets,baker-finch2004constructed,maurer2017compiling,Breitner2016_1000054251,sergey_vytiniotis_jones_breitner_2017}.
 
 % \begin{figure}[h]
 % \begin{tikzpicture}
