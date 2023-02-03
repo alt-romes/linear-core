@@ -427,25 +427,6 @@ journal = {Proc. of ICFP'96},
 doi = {10.1145/232629.232630}
 }
 
-@article{10.1145/291251.289439,
-author = {Mountjoy, Jon},
-title = {The Spineless Tagless G-Machine, Naturally},
-year = {1998},
-issue_date = {Jan. 1999},
-publisher = {Association for Computing Machinery},
-address = {New York, NY, USA},
-volume = {34},
-number = {1},
-issn = {0362-1340},
-url = {https://doi.org/10.1145/291251.289439},
-doi = {10.1145/291251.289439},
-abstract = {The application of natural semantic specifications of lazy evaluation to areas such as usage analysis, formal profiling and abstract machine construction has shown it to be a useful formalism. This paper introduces several variants and extensions of this specification.The first variant is derived from observations of the Spineless Tagless G-machine (STG), used in the Glasgow Haskell compiler. We present a modified natural semantic specification which can be formally manipulated to derive an STG-like machine.The second variant is the development of a natural semantic specification which allows functions to be applied to more than one argument at once. The STG and TIM abstract machines both allow this kind of behaviour, and we illustrate a use of this semantics by again modifying this semantics following observations of the STG machine. The resulting semantics can be used to formally derive the STG machine. This effectively proves the STG machine correct with respect to Launchbury's semantics.En route, we also show that update markers in the STG machine are necessary for termination, and show how well-known abstract machine instructions, such as the squeeze operation, appear quite naturally as optimisations of the derived abstract machine.},
-journal = {SIGPLAN Not.},
-month = {sep},
-pages = {163–173},
-numpages = {11}
-}
-
 @InProceedings{10.1007/3-540-06859-7_148,
 author="Reynolds, John C.",
 editor="Robinet, B.",
@@ -475,4 +456,48 @@ isbn="978-3-540-37819-8"
 }
 
 
+@article{jones_1992, title={Implementing lazy functional languages on stock hardware: the Spineless Tagless G-machine}, volume={2}, DOI={10.1017/S0956796800000319}, number={2}, journal={Journal of Functional Programming}, publisher={Cambridge University Press}, author={Jones, Simon L. Peyton}, year={1992}, pages={127–202}}
+
+@InProceedings{10.1007/3-540-15975-4_37,
+author="Johnsson, Thomas",
+editor="Jouannaud, Jean-Pierre",
+title="Lambda lifting: Transforming programs to recursive equations",
+booktitle="Functional Programming Languages and Computer Architecture",
+year="1985",
+publisher="Springer Berlin Heidelberg",
+address="Berlin, Heidelberg",
+pages="190--203",
+abstract="Lambda lifting is a technique for transforming a functional program with local function definitions, possibly with free variables in the function definitions, into a program consisting only of global function (combinator) definitions which will be used as rewrite rules. Different ways of doing lambda lifting are presented, as well as reasons for rejecting or selecting the method used in our Lazy ML compiler. A functional program implementing the chosen algorithm is given.",
+isbn="978-3-540-39677-2"
+}
+
+@InProceedings{10.1007/3540543961_30,
+author="Jones, Simon L. Peyton
+and Launchbury, John",
+editor="Hughes, John",
+title="Unboxed values as first class citizens in a non-strict functional language",
+booktitle="Functional Programming Languages and Computer Architecture",
+year="1991",
+publisher="Springer Berlin Heidelberg",
+address="Berlin, Heidelberg",
+pages="636--666",
+abstract="The code compiled from a non-strict functional program usually manipulates heap-allocated boxed numbers. Compilers for such languages often go to considerable trouble to optimise operations on boxed numbers into simpler operations on their unboxed forms. These optimisations are usually handled in an ad hoc manner in the code generator, because earlier phases of the compiler have no way to talk about unboxed values.",
+isbn="978-3-540-47599-6"
+}
+
+@misc{peytonjones1993measuring,
+author = {Peyton Jones, Simon and Partain, Will},
+title = {Measuring the effectiveness of a simple strictness analyser},
+series = {Workshops in Computing},
+year = {1993},
+month = {January},
+abstract = {We describe a simple strictness analyser for purely-functional programs, who how its results are used to improve programs, and provide measurements of the effects of these improvements. These measurements are given both in terms of overall run-time, and in terms of internal operations such as allocations, updates, etc. Despite its simplicity, the analyser handles higher-order functions, and non-flat domains provided they are non-recursive.},
+publisher = {Springer},
+url = {https://www.microsoft.com/en-us/research/publication/measuring-the-effectiveness-of-a-simple-strictness-analyser/},
+pages = {201-220},
+edition = {Functional Programming, Glasgow 1993},
+note = {Functional Programming, Glasgow 1993},
+}
+
 % TODO: cite:ghc-source-code
+

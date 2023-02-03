@@ -1469,11 +1469,33 @@ shared binding. In practice, lazy functional languages don't benefit nearly as
 much as strict imperative languages from CSE and, thus, it isn't very important
 in GHC~\cite{aquilo}.
 
-\parawith{Lambda lifting.}
+\parawith{Static argument and lambda lifting.} \emph{Lambda lifting} is a
+transformation that abstracts over free variables in functions by making them
+$\lambda$-bound
+arguments~\cite{10.1007/3-540-15975-4_37,santos1995compilation}. This allows
+functions to be ``lifted'' to the top-level of the program (because they no
+longer have free variables). Lambda lifting may unlock inlining opportunities
+and allocate less function closures, since the definition is then created only
+once at the top-level and shared across uses.
+%
+The \emph{static argument} transformation identifies function arguments which
+are \emph{static} across calls, and eliminates said \emph{static argument} to
+avoid passing the same fixed value as an argument in every function call, which
+is especially significant in recursive functions. To this effect, the
+\emph{static argument} is bound outside of the function definition and becomes
+a free variable in its body. It can be thought of as the transformation inverse
+to \emph{lambda lifting}.
 
-\parawith{Binder-swap.}
+% \parawith{Binder-swap.}
 
-\parawith{Worker/wrapper split.} 
+\parawith{Strictness analysis and worker/wrapper split.} The strictness
+analyser, in lazy programming languages, identifies functions that always
+evaluate their arguments, i.e.  functions with (morally) \emph{strict
+arguments}. Arguments passed to functions that necessarily evaluate them can be
+evaluated before the call. This enables 
+~\cite{peytonjones1993measuring}
+
+unboxed / boxed : ~\cite{10.1007/3540543961_30}
 
 \begin{figure}[t]
 
@@ -1493,7 +1515,7 @@ in GHC~\cite{aquilo}.
 \end{array}
 \]
 
-\caption{Example succession of transformations}
+\caption{Example sequence of transformations}
 \label{fig:eg:transformations}
 \end{figure}
 
@@ -1501,7 +1523,7 @@ in GHC~\cite{aquilo}.
 
 After the core-to-core pipeline is run on the Core program and produces
 optimized Core, the program is compiled down to its Spineless, Tagless,
-G-Machine (STG) representation~\cite{10.1145/291251.289439}. STG ....
+G-Machine (STG) representation~\cite{jones_1992}. STG ....
 Afterwards, STG is compiled to C--, an C-like language designed for code
 generation. From C--, code is compiled to one of the multiple native backends,
 e.g. LLVM, x86, JS, WASM
