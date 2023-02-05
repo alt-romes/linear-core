@@ -1060,9 +1060,9 @@ with a construct used for internal notes such as profiling information.
 % $System~F_C$ is expressive enough as a target for Haskell
 
 In the context of Linear Haskell, and recalling that Haskell is fully
-desugared into Core/System~$F_C$ as part of its validation and
+desugared into Core / System~$F_C$ as part of its validation and
 compilation strategy, we highlight the inherent incompatibility of
-linearity with Core/System~$F_C$ as a current flaw in GHC that
+linearity with Core / System~$F_C$ as a current flaw in GHC that
 invalidates all the benefits of Core wrt linearity.  Thus, we must
 extend System $F_C$ (and, therefore, Core) with linearity in order to
 adequately validate the desugaring and optimizing transformations as
@@ -1147,7 +1147,7 @@ not include any optimizations -- all optimizations are done in Core.
 The transformational approach focused on Core, known as \emph{compilation by
   transformation}, allows transformations to be both modular and simple.
 Each transformation focuses on optimizing a specific (set of)
-constructs, applying a transformation often exposes opportunities for
+constructs, where applying a transformation often exposes opportunities for
 other transformations to fire. Since transformations are modular, they
 can be chained and iterated in order to maximize the optimization potential.
 
@@ -1169,13 +1169,13 @@ problem~\cite{} is present in most optimizing compilers.
 % transformation based approach to optimization allows each producing a Core
 % program fed to the next optimizing transformation.
 
-Foreshadowing that Core is the main object of our study, we want to type-check
+Foreshadowing the fact that Core is the main object of our study, we want to type-check
 linearity in Core before \emph{and} after each optimizing transformation is
 applied (Section~\ref{sec:core}).
 %
 In that light, we describe below some of the individual Core-to-Core
 transformations, using $\Longrightarrow$ to denote a program transformation. In
-the literature, the first set of Core-to-Core optimizations is described
+the literature, the first set of Core-to-Core optimizations was described
 in~\cite{santos1995compilation,peytonjones1997a}. These were subsequently
 refined and
 expanded~\cite{peytonjones2002secrets,baker-finch2004constructed,maurer2017compiling,Breitner2016_1000054251,sergey_vytiniotis_jones_breitner_2017}.
@@ -1455,16 +1455,19 @@ branches:
 \end{array}
 \]
 This transformation exposes other optimizations, e.g., if $e_{c_n}$ is a known
-constructor we can readily apply \emph{case-of-known-constructor}. However,
-this transformation also potentially duplicates a lot of code. To this effect,
-we apply an transformation that creates join points, shared bindings outside
-the case expressions that are used in the branch alternatives, and that are
+constructor we can readily apply the \emph{case-of-known-constructor}
+optimization. However,
+this transformation also potentially introduces significant code
+duplication. To this effect,
+we apply a transformation that creates \emph{join points} (i.e.,~shared bindings outside
+the case expressions that are used in the branch alternatives) that are
 compiled to efficient code using labels and jumps.
 
 \parawith{Common sub-expression elimination.}
 %
-Common sub-expression elimination (CSE) is a transformation morally inverse to
-\emph{inlining}. This transformation factors out expensive expressions into a
+Common sub-expression elimination (CSE) is a transformation that is
+effectively inverse to \emph{inlining}.
+This transformation factors out expensive expressions into a
 shared binding. In practice, lazy functional languages don't benefit nearly as
 much as strict imperative languages from CSE and, thus, it isn't very important
 in GHC~\cite{aquilo}.
@@ -1600,7 +1603,7 @@ They say they are doing work on a linear type system to identify places where
 the lambda is linearly used and therefore floating-in is beneficial and
 floating-out not as productive.
 
-\chapter{Technical Details}
+\chapter{Proposed Work}
 
 % \section{Foreword}
 
@@ -1613,7 +1616,13 @@ floating-out not as productive.
 % Core and to showcase the preliminary progress I have made so far.
 
 
-\section{Summary}
+\section{Motivation}
+
+\todo[inline]{ Objectivo desta seccao: contextualizar e descrever o
+  problema.
+  
+Penso que alguma repeticao dos conceitos como a
+      definicao textual de linearidade podem cair}
 
 
 Since the publication of Linear Haskell~\cite{cite:linearhaskell} and its release in GHC 9.0,
@@ -1626,6 +1635,11 @@ function is linear if it consumes its arguments exactly once when it itself is
 consumed exactly once.
 % TODO: for some definition of \emph{consume} that I should revise here.
 
+\todo[inline]{As mentioned in Section bla, GHC Haskell features two
+  typed languages in its pipeline: Haskell and Core. 
+  The addition of linear types to GHC Haskell required
+  changing the Haskell type system. However ... }
+
 Linearly typed programs are proven/checked to be linear by the type system, so
 the addition of linear types evidently required changing the type checker to
 support linearity. There exist, however, two distinct type checkers in GHC.
@@ -1633,6 +1647,12 @@ The first is run on the surface language, i.e. the Haskell we write, and is a
 complex type checker that now also supports typing linearity. The second is
 run on programs written in the intermediate language \emph{Core}, that
 are obtained from \emph{desugaring} Haskell.
+
+\todo[inline]{Nao e necessario reexplicar o que e o Core, o que e
+  preciso aqui e explicar que o desugaring tem anotacoes de
+  linearidade mas que sao ignoradas e explicar porque. Em particular,
+  algum do texto que esta mais a frente a dizer as variaveis sao
+  anotadas no Core mas que e tudo ignorado deve ficar claro nesta altura}
 
 Core is a much smaller language than the whole of Haskell (even though we
 can compile the whole of Haskell to it!) and its type checker is
@@ -1663,7 +1683,11 @@ linearity syntactically (i.e.,~multiple occurrences of linear
 variables in the program text), but ultimately preserve it in a
 semantic sense, where a linear term is still consumed exactly once --
 this is compounded by lazy evaluation driving a non-trivial mismatch
-between syntactic and semantic linearity. Therefore, linear linting
+between syntactic and semantic linearity.
+
+\todo[inline]{Um exemplo ou dois para ilustrar o problema}
+
+Therefore, linear linting
 rejects various valid programs (with regard to linearity) after
 desugaring. The current solution to this is to effectively disable the
 linear linter, since otherwise disabling optimisations can incur significant
@@ -1671,23 +1695,72 @@ performance costs. However, we believe that GHC's transformations are
 correct, and it is the linear linter and its underlying type system
 that cannot sufficiently accommodate the
 resulting programs.
-% diverse problems with linearity spring up when we get past the desugarer and
-% the
-% linter rejects valid programs which is quite undesirable.
 
-% For example, optimizing transformations, coercions and type families, recursive
-% lets, and empty case expressions don't currently fit in with linearity.
+\section{Goals}
 
-We propose to extend Core's type system with additional linearity
+In the upcoming dissertation we will:
+
+\begin{itemize}
+\item Propose an extension of Core's type system and type checking algorithm
+with additional linearity
 information in order to accommodate linear programs in Core that
-result from optimising transformations. We will prove the system's
-soundness/type safety and show how it validates some core-to-core optimisation
-passes. We also plan to implement the extension into GHC's
-linter. Concretely, we will extend Core's linear type system with
+result from the optimising transformations described in~\autoref{};
+\item Argue the soundness of the resulting system (i.e.~no
+  semantically non-linear programs are deemed linear);
+\item Show how it validates Core-to-Core optimisation
+  passes;
+\item Implement the extension into GHC's
+Core linter.
+\end{itemize}
+
+
+\subsection{Extending Core's type system}
+
+The key design goal of the extension of Core's type system is to
+provide enough information so that seemingly syntactically
+non-linear but semantically linear programs are equipped with enough
+typing information so that they are deemed linearly well-typed, while
+ruling out programs that violate linearity from being considered as
+linearly typed.
+%
+To this end, we propose to extend Core's linear type system with
 \emph{usage annotations} for let, letrec and case binder bound
-variables. Additionally, we will explore a new kind of coercion for
+variables\todo{dizer pq estes binders especificamente}. Given time, we will also explore a new kind of coercion for
 multiplicities to validate programs that combine GADTs with
 multiplicities.
+
+\subsubsection{Usage Annotations / Typing Usage Environments}
+
+\todo[inline]{Mover para aqui a parte do que sao as usage annotations
+  e como funcionam. Acho que deves apresentar em 2 partes, uma e que
+  se tivesses os usage envs bem calculados para tudo, resolvia
+  problemas. Outra parte: calcular os usage environments e desafios
+  associados. A tua abordagem passa entao por inferir os usage
+  environments once and for all quando constrois um letrec, etc, e
+  depois usar ``a regra''. Penso que nao precisas de apresentar os
+  algoritmos em detalhe. Para apresentares regras, explica bem o que
+  elas significam.}
+
+
+\subsection{Validating the Work}
+
+
+\todo[inline]{Falar um pouco de como tencionas validar o que
+  fazes. Diria que ha a validacao qualitativa obvia -- que
+  transformacoes podem agora ser linted ou nao, mas podera ser util
+  fazer alguma validacao mais quantitativa e ser util
+medir tempos de execucao de coisas (e.g.a construcao dos usage envs)}
+
+\subsection{Tasks and Chronogram}
+
+\todo[inline}{Fazer uma ``expansao'' da lista itemizada que fiz antes mas com mais
+detalhe / passos, explicando numa frase ou duas o que cada tarefa e.
+Tens uma divisao natural em passos pelos varios binders, alternar com
+implementacao no GHC, etc. Nao esquecer de incluir a escrita do
+documento final!}
+
+
+
 %
 The ultimate measure of success is the \verb=-dlinear-core-lint= flag,
 which activates the linear linter. In its current implementation,
