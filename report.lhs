@@ -127,10 +127,12 @@ and channel-based communication protocols are deadlock-free~\cite{},
 among other high-level correctness properties.
 % handle mutable state safely~\cite{}
 
+% TODO: Chegar mais rápido ao que vou fazer? Aqui?
+
 As an example, consider the following C-like program in which allocated memory
 is freed twice. We know this to be the dreaded double-free error which will
-crash our programs and crush our dreams. Regardless, a C-like type system will
-accept this program without any issue.
+crash the program at runtime. Regardless, a C-like type system will accept this
+program without any issue.
 \begin{code}
 let p = malloc(4);
 in free(p);
@@ -138,19 +140,19 @@ in free(p);
 \end{code}
 
 Under the lens of a linear type system, consider the variable $p$ to be a
-linear resource created by the call to \texttt{malloc}. Since $p$ is
-linear, it must be used \emph{exactly once}.
-However, the program above uses $p$ twice, in the two
-different calls to \texttt{free}. With a linear type system, the
-program above \emph{does not typecheck}! In this sense, linear typing effectively ensures the program
-does not compile with a double-free error. In Section~\ref{linear-types} we
-give a formal account of linear types and provide additional examples.
+linear resource created by the call to \texttt{malloc}. Since $p$ is linear, it
+must be used \emph{exactly once}.  However, the program above uses $p$ twice,
+in the two different calls to \texttt{free}. With a linear type system, the
+program above \emph{does not typecheck}! In this sense, linear typing
+effectively ensures the program does not compile with a double-free error.
+% TODO: Do I need this:
+In Section~\ref{linear-types} we give a formal account of linear types and provide additional examples.
 
 Despite their promise and their extensive presence in research
-literature~\cite{}, the effective design of the
-combination of linear and non-linear typing
-is both challenging and necessary to bring the advantages of linear
-typing to mainstream languages.
+literature~\cite{}, the effective design of the combination of linear and
+non-linear typing is both challenging and necessary to bring the advantages of
+linear typing to mainstream languages.
+%
 Consequently, few general purpose programming languages have linear
 type systems. Among them are Idris 2~\cite{brady:LIPIcs.ECOOP.2021.9},
 a linearly and dependently typed language based on Quantitative Type
@@ -195,21 +197,23 @@ due to the following reasons:
 %
 
 % Linear core good
-Aligned with the philosophy of having a \emph{typed} intermediate
-language, the integration of linearity in Haskell required extending
-\textbf{Core} with linear types. Just as \emph{typed} Core ensures
-that the translation of Haskell (dubbed \emph{desugaring}) and the
-subsequent optimizing transformations are correctly implemented,
-\emph{linearly typed} Core guarantees that linear resource usage in
-the source language is not violated by the translation process and the
-compiler optimization passes.
+Aligned with the philosophy of having a \emph{typed} intermediate language, the
+integration of linearity in Haskell required extending \textbf{Core} with
+linear types. Just as \emph{typed} Core ensures that the translation of Haskell
+(dubbed \emph{desugaring}) and the subsequent optimizing transformations are
+correctly implemented, \emph{linearly typed} Core guarantees that linear
+resource usage in the source language is not violated by the translation
+process and the compiler optimization passes.
 %
-It is crucial that the
-program behaviour enforced by linear types is \emph{not} changed by
-the compiler in the desugaring or optimization stages 
-(optimizations should not destroy linearity!) and a linearity aware Core
-typechecker is key in providing such guarantees.
+It is crucial that the program behaviour enforced by linear types is \emph{not}
+changed by the compiler in the desugaring or optimization stages (optimizations
+should not destroy linearity!) and a linearity aware Core typechecker is key in
+providing such guarantees.
 %TODO: linearidade pode informar otimizacoes
+%
+Additionally, a linear Core can inform Core-to-core optimizing
+transformations~\cite{cite:let-floating,peytonjones1997a} in order to produce
+more performant programs.
 
 
 % Linear core actually not so good
@@ -227,19 +231,19 @@ typechecker is key in providing such guarantees.
 % integrated in the analysis and used as a (non-heuristic) cardinality
 % \emph{declaration}.
 
-While the current version of Core is linearity-aware (i.e.,~Core has
-so-called multiplicity annotations in variable binders), its type
-system does not (fully) validate the linearity constraints in the
-desugared program and essentially fails to type-check programs
-resulting from several optimizing transformations that are necessary
-to produce efficient object code. The reason for this latter point 
-is not evidently clear:
-if we can typecheck linearity in the surface level Haskell why do we
-fail to do so in Core?
-The desugaring process from surface level Haskell to Core and the
-subsequent Core-to-Core optimizing transformations eliminate and
-rearrange most of the syntactic constructs through which linearity checking is
-performed.
+While the current version of Core is linearity-aware (i.e.,~Core has so-called
+multiplicity annotations in variable binders), its type system does not (fully)
+validate the linearity constraints in the desugared program and essentially
+fails to type-check programs resulting from several optimizing transformations
+that are necessary to produce efficient object code. The reason for this latter
+point is not evidently clear:
+%
+if we can typecheck linearity in the surface level Haskell why do we fail to do
+so in Core?
+%
+The desugaring process from surface level Haskell to Core and the subsequent
+Core-to-Core optimizing transformations eliminate and rearrange most of the
+syntactic constructs through which linearity checking is performed.
 
 \begin{itemize}
 \item Exemplo de um programa que fica borked pelas otimizacoes
@@ -1603,34 +1607,38 @@ targetting it.}, such as LLVM, x86 and x64, or (recently) JavaScript and WebAsse
 % TODO: A brief introduction to the related work section?
 
 \parawith{Formalization of Core}
+
+System $F_C$~\cite{cite:systemfc} (Section~\ref{sec:core}) does not account for
+linearity in its formalization, and an extension to System $F_C$ including
+linear types has not yet been published. As such, there exists no formal
+definition of Core with linearity that accounts for. In this context, we intend to introduce a
+linearly typed System $F_C$ with multiplicity annotations and typing rules to
+serve as a basis for a linear Core. Critically, this Core linear language must
+account for call-by-need evaluation semantics and be valid in light of
+Core-to-Core optimizing transformations.
+
 % \parawith{System FC}
 
-\begin{itemize}
-\item SystemFC tal como está não tem linearidade de todo
-\item Formalmente nao temos published definição de linearidade no Core
-\item Regras para sistema tipo FC com linearidade
-\item mas uma extensão tipo linear lambda calculus nao consegui exprimir as transformações do core
-\end{itemize}
+% \begin{itemize}
+% \item SystemFC tal como está não tem linearidade de todo
+% \item Formalmente nao temos published definição de linearidade no Core
+% \item Regras para sistema tipo FC com linearidade
+% \item mas uma extensão tipo linear lambda calculus nao consegui exprimir as transformações do core
+% \end{itemize}
 
-Haskell Core's foundational language was imbued with linear types, but it does
-not account for linearity with the whole of the type system
-
-Multiplicity annotations in SystemFC?
-
-Rules?
+% Haskell Core's foundational language was imbued with linear types, but it does
+% not account for linearity with the whole of the type system
+% 
+% Multiplicity annotations in SystemFC?
+% 
+% Rules?
 
 \parawith{Linear Haskell\label{sec:related-work-linear-haskell}}
 
-\begin{itemize}
-\item Surface language + langauge design
-\item linear haskell implementação requiriu extender o Core, mas não "foi até ao fim"
-\end{itemize}
-
-Haskell, contrary to most programming languages with linear types or
-linearity-based types (such as ownership types), has existed for 31 years of its
-life \emph{without} linear types. As such, the introduction of linear types to
-Haskell comes with added challenges that can't exist in linearly-typed languages
-that were designed with linear types from the start:
+Haskell, contrary to most programming languages with linear types, has existed
+for 31 years of its life \emph{without} linear types. As such, the introduction
+of linear types to Haskell comes with added challenges that can not exist in
+linearly-typed languages that were designed with linear types from the start:
 %
 \begin{itemize}
     \item Backwards compatibility. The addition of linear types shouldn't break
@@ -1645,15 +1653,21 @@ that were designed with linear types from the start:
         Haskell takes care to accomodate possible future features, in
         particular, its design is forward compatible with affine and dependent
         types.
+\end{itemize}
 %
 Linear Haskell is thus concerned with retrofitting linear types to Haskell
-taking into consideration the above design goals.
+taking into consideration the above design goals, but not to Haskell's
+intermediate language which presents its own challenges.
 
-However, Linear Haskell does not change Core...
-but couldn't account for optimizations in the Core. It originally did not set
-out to modify Core but had to, and it's better this way bc we get optimizations
-typechecking safety guarantees.
-\end{itemize}
+Nonetheless, while the Linear Haskell paper keeps Core unchanged, its
+implementation in GHC does modify and extend Core with linearity/multiplicity
+annotations, and said extension of Core with linear types does not account for
+optimizing transformations and the non-strict semantics of Core.
+
+Our work on linear Core intends to overcome the limitations of linear types as
+they exist in Core, i.e. integrating call-by-need semantics and validating the
+Core-to-Core passes, ultimately doubling as a validation of the implementation
+of Linear Haskell.
 
 
 % \subsection{OutsideIn(X)\label{related-work-gadts}}
