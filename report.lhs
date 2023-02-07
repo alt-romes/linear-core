@@ -1492,13 +1492,19 @@ to \emph{lambda lifting}.
 % \parawith{Binder-swap.}
 
 \parawith{Strictness analysis and worker/wrapper split.} The strictness
-analyser, in lazy programming languages, identifies functions that always
+analysis, in lazy programming languages, identifies functions that always
 evaluate their arguments, i.e.  functions with (morally) \emph{strict
 arguments}. Arguments passed to functions that necessarily evaluate them can be
-evaluated before the call. This enables 
-~\cite{peytonjones1993measuring}
-
-unboxed / boxed : ~\cite{10.1007/3540543961_30}
+evaluated before the call and therefore avoid some heap allocations. The
+strictness analysis may be used to apply the worker/wrapper split
+transformation~\cite{peytonjones1993measuring}. This transformation creates two
+functions from an original one: a worker and a wrapper. The worker receives
+unboxed values~\cite{10.1007/3540543961_30} as arguments, while the wrapper
+receives boxed values, unwraps them, and simply calls the worker function
+(hence the wrapper being named as such). This allows the worker to be called in
+expressions other than the wrapper, saving allocations and being possibly much
+faster, especially if the worker recursively ends up calling itself rather than
+the wrapper.
 
 \begin{figure}[t]
 
@@ -1524,12 +1530,21 @@ unboxed / boxed : ~\cite{10.1007/3540543961_30}
 
 \subsection{Code Generation}
 
+The code generation needn't be changed to account for the work we will do in
+the context of this thesis, so we only briefly describe it.
+
 After the core-to-core pipeline is run on the Core program and produces
-optimized Core, the program is compiled down to its Spineless, Tagless,
-G-Machine (STG) representation~\cite{jones_1992}. STG ....
-Afterwards, STG is compiled to C--, an C-like language designed for code
-generation. From C--, code is compiled to one of the multiple native backends,
-e.g. LLVM, x86, JS, WASM
+optimized Core, the program is translated down to the Spineless Tagless
+G-Machine (STG) language~\cite{jones_1992}. STG language is a small functional
+language that serves as the abstract machine code for the STG abstract machine
+that ultimately defines the evaluation model and compilation of Haskell through
+operational semantics.
+
+From the abstract state machine, we generate C\texttt{--} (read C minus minus), a C-like language designed
+for native code generation, which is finally passed as input to one of the code
+generation backends\footnote{GHC is not \emph{yet} runtime retargetable, i.e.
+to use a particular native code generation backend the compiler must be built
+targetting it.}, such as LLVM, x86 and x64, or (recently) JavaScript and WebAssembly.
 
 \section{Related Work}
 
@@ -1753,7 +1768,7 @@ medir tempos de execucao de coisas (e.g.a construcao dos usage envs)}
 
 \subsection{Tasks and Chronogram}
 
-\todo[inline}{Fazer uma ``expansao'' da lista itemizada que fiz antes mas com mais
+\todo[inline]{Fazer uma ``expansao'' da lista itemizada que fiz antes mas com mais
 detalhe / passos, explicando numa frase ou duas o que cada tarefa e.
 Tens uma divisao natural em passos pelos varios binders, alternar com
 implementacao no GHC, etc. Nao esquecer de incluir a escrita do
