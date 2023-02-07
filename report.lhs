@@ -120,12 +120,11 @@ twice are flagged as type errors. Linear types can thus be used to,
 for example, statically guarantee
 that file handles, socket descriptors, and allocated memory is freed exactly
 once (leaks and double-frees become type errors)~\cite{},
-channel-based communication protocols are deadlock-free~\cite{},
+and channel-based communication protocols are deadlock-free~\cite{},
 % implement safe
 % high-performance language interoperability~\cite{}, 
-guarantee that quantum
-entangled states are not duplicated~\cite{}, among other high-level
-correctness properties.
+%guarantee that quantum entangled states are not duplicated~\cite{}
+among other high-level correctness properties.
 % handle mutable state safely~\cite{}
 
 As an example, consider the following C-like program in which allocated memory
@@ -328,6 +327,13 @@ performed.
 \end{itemize}
 
 \chapter{Background and Related Work}
+
+In this section we review the concepts required to understand our work. In
+short, we discuss linear types, the Haskell programming language, linear types
+as they exist in Haskell (dubbed Linear Haskell), Haskell's main intermediate
+language (Core) and its formal foundation (System $F_C$) and, finally, an
+overview of GHC's pipeline with explanations of some Core-to-Core optimizing
+transformations.
 
 \section{Linear Types\label{sec:linear-types}}
 
@@ -1594,9 +1600,17 @@ targetting it.}, such as LLVM, x86 and x64, or (recently) JavaScript and WebAsse
 
 \section{Related Work}
 
-A brief introduction to the related work section?
+% TODO: A brief introduction to the related work section?
 
-\parawith{System FC}
+\parawith{Formalization of Core}
+% \parawith{System FC}
+
+\begin{itemize}
+\item SystemFC tal como está não tem linearidade de todo
+\item Formalmente nao temos published definição de linearidade no Core
+\item Regras para sistema tipo FC com linearidade
+\item mas uma extensão tipo linear lambda calculus nao consegui exprimir as transformações do core
+\end{itemize}
 
 Haskell Core's foundational language was imbued with linear types, but it does
 not account for linearity with the whole of the type system
@@ -1607,17 +1621,17 @@ Rules?
 
 \parawith{Linear Haskell\label{sec:related-work-linear-haskell}}
 
-The paper is concerned with retrofitted linear types but couldn't account for
-optimizations in the Core. It originally did not set out to modify Core but had
-to, and it's better this way bc we get optimizations typechecking safety
-guarantees.
+\begin{itemize}
+\item Surface language + langauge design
+\item linear haskell implementação requiriu extender o Core, mas não "foi até ao fim"
+\end{itemize}
 
 Haskell, contrary to most programming languages with linear types or
 linearity-based types (such as ownership types), has existed for 31 years of its
 life \emph{without} linear types. As such, the introduction of linear types to
 Haskell comes with added challenges that can't exist in linearly-typed languages
 that were designed with linear types from the start:
-
+%
 \begin{itemize}
     \item Backwards compatibility. The addition of linear types shouldn't break
         all existing Haskell code.
@@ -1625,15 +1639,20 @@ that were designed with linear types from the start:
         its non-linearly-typed counterpart should fit in together and it must be
         possible to define functions readily usable by both sides
         simultaneously.
-\end{itemize}
-
-\begin{itemize}
     \item Forwards compatibility -- Haskell, despite being an
         industrial-strength language, is also a petri-dish for experimentation
         and innovation in the field of programming languages. Therefore, Linear
         Haskell takes care to accomodate possible future features, in
         particular, its design is forward compatible with affine and dependent
         types.
+%
+Linear Haskell is thus concerned with retrofitting linear types to Haskell
+taking into consideration the above design goals.
+
+However, Linear Haskell does not change Core...
+but couldn't account for optimizations in the Core. It originally did not set
+out to modify Core but had to, and it's better this way bc we get optimizations
+typechecking safety guarantees.
 \end{itemize}
 
 
@@ -1651,7 +1670,18 @@ that were designed with linear types from the start:
 % How do they handle linearity plus optimizations
 % They probabluy don't typecheck linearity in Core
 
+\parawith{Linearity optimizations}
+\begin{itemize}
+\item Transfs. core to core aparecem em vários artigos, e são desenhadas no contexto de uma linguagem tipificada mas que não é linearly typed.
+\item nestes dois artigos é observado que se houvesse a capacidade de explorar linearidade podiamos fazer as coisas de forma diferente
+\item Todas estas optimizaçoes de decadas foram desenhadas sem linear types e há sitios onde linear types podiam ajudar mas não existiam na altura
+\item POdemos usar linear types multiplicitpiadads para lazy language core q definimos para nao ter de fazer sistemas lineares de proposito para optimizações
+\item Ser ad-hoc incompleto ou nao feito de todo
+\end{itemize}
+
+Linearity optimizations
 \parawith{A transformation based optimizer for Haskell}
+
 
 They discuss a cardinality analysis based on a linear type system but create (an
 ad-hoc?) one suited. Comparison in the measure of creating optimizations based
@@ -1686,15 +1716,15 @@ Penso que alguma repeticao dos conceitos como a
       definicao textual de linearidade podem cair}
 
 
-Since the publication of Linear Haskell~\cite{cite:linearhaskell} and its release in GHC 9.0,
-Haskell's type system supports linearity annotations in functions -- bringing
-linear types to a mainstream, pure, and lazy functional language. Concretely,
-function types can be annotated with a multiplicity (a multiplicity of One
-requires the argument to be consumed exactly once, a multiplicity of Many allows
-the argument to be consumed unrestrictedly, i.e., zero or more times). A
-function is linear if it consumes its arguments exactly once when it itself is
-consumed exactly once.
-% TODO: for some definition of \emph{consume} that I should revise here.
+Since the publication of Linear Haskell~\cite{cite:linearhaskell} and its
+release in GHC 9.0, Haskell's type system supports linearity annotations in
+functions, bringing linear types to a mainstream, pure, and lazy functional
+language. Concretely, function types can be annotated with a multiplicity (a
+multiplicity of One requires the argument to be consumed exactly once, a
+multiplicity of Many allows the argument to be consumed unrestrictedly, i.e.,
+zero or more times). A function is linear if it consumes its arguments exactly
+once when it itself is consumed exactly once.
+
 
 \todo[inline]{As mentioned in Section bla, GHC Haskell features two
   typed languages in its pipeline: Haskell and Core. 
