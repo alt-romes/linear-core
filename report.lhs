@@ -99,19 +99,33 @@
 
 %\section{Introduction}
 
-Static type systems have brought programmers ...
-Programming languages rely on type systems to statically eliminate classes of
-errors ...
+Statically safe programming languages provide compile time correctness
+guarantees by having the compiler rule out certain classes of errors
+or invalid programs. Moreover, static typing
+allows programmers to state and enforce (compile-time) invariants
+relevant to their problem domain.
+In this sense, type safety entails that all
+possible executions of a type-correct program cannot exhibit behaviors
+deemed ``wrong'' by the type system design. This idea is captured in
+the motto ``well-typed programs do not go wrong''~\cite{}.
+
 
 Linear type systems~\cite{cite:linear-logic,cite:barberdill} add expressiveness to existing type systems by
-stating that linear resources must be used \emph{exactly once}. In programming
+enforcing that certain \emph{resources} (e.g.~a file handle) must be
+used \emph{exactly once}.
+In
+programming 
 languages with a linear type system, not using certain resources or using them
-twice are type errors. Linear types can thus be used to, for example, guarantee
-that file handles, socket descriptors, and allocated memory are freed exactly
-once (leaks and double-frees become type errors)~\cite{}, implement safe
-high-performance language interoperability~\cite{}, guarantee that quantum
-entangled states are not duplicated~\cite{}, something on session types
-guarantees~\cite{}, and much more.
+twice are flagged as type errors. Linear types can thus be used to,
+for example, statically guarantee
+that file handles, socket descriptors, and allocated memory is freed exactly
+once (leaks and double-frees become type errors)~\cite{},
+channel-based communication protocols are deadlock-free~\cite{},
+% implement safe
+% high-performance language interoperability~\cite{}, 
+guarantee that quantum
+entangled states are not duplicated~\cite{}, among other high-level
+correctness properties.
 % handle mutable state safely~\cite{}
 
 As an example, consider the following C-like program in which allocated memory
@@ -125,24 +139,30 @@ in free(p);
 \end{code}
 
 Under the lens of a linear type system, consider the variable $p$ to be a
-linear resource created by the \texttt{malloc} keyword. Because $p$ is a linear
-variable, it must be used exactly once. However, we are using it in two
-different calls to \texttt{free}. With our new linearity assumptions, the
-example program \emph{would not typecheck}! -- effectively ensuring the program
-does not compile with a double-free error. In section~\ref{linear-types} we
-describe the fundamentals of linear types in more detail with a formal
-definition and many examples.
+linear resource created by the call to \texttt{malloc}. Since $p$ is
+linear, it must be used \emph{exactly once}.
+However, the program above uses $p$ twice, in the two
+different calls to \texttt{free}. With a linear type system, the
+program above \emph{does not typecheck}! In this sense, linear typing effectively ensures the program
+does not compile with a double-free error. In Section~\ref{linear-types} we
+give a formal account of linear types and provide additional examples.
 
-Despite their great promise and research literature, it is hard to balance
-linear and non-linear types in practice and, consequently, few programming
-languages have linear type systems. Among them are Idris 2~\cite{brady:LIPIcs.ECOOP.2021.9}, a linearly and
-dependently typed language based on Quantitative Type Theory, Rust~\cite{10.1145/2692956.2663188}, a
-language whose ownership types build on linear ones to guarantee memory safety
+Despite their promise and their extensive presence in research
+literature~\cite{}, the effective design of the
+combination of linear and non-linear typing
+is both challenging and necessary to bring the advantages of linear
+typing to mainstream languages.
+Consequently, few general purpose programming languages have linear
+type systems. Among them are Idris 2~\cite{brady:LIPIcs.ECOOP.2021.9},
+a linearly and dependently typed language based on Quantitative Type
+Theory, Rust~\cite{10.1145/2692956.2663188}, a language whose
+ownership types build on linear types to guarantee memory safety
 without garbage collection or reference counting, and, more recently,
-Haskell~\cite{cite:linearhaskell}, a \emph{purely functional} and \emph{lazy} language.
+Haskell~\cite{cite:linearhaskell}, a \emph{purely functional} and
+\emph{lazy} language.
 
 Linearity in Haskell stands out from linearity in Rust and Idris 2
-two distinct reasons:
+due to the following reasons:
 
 \begin{itemize}
     \item Linear types were only added to the language roughly \emph{31 years
@@ -156,68 +176,94 @@ two distinct reasons:
         linear type system designed with retaining backwards-compatibility and
         allowing code reuse across linear and non-linear users of the same
         libraries in mind was described. We describe Linear Haskell in detail in
-        section~\ref{sec:linear-haskell}.
+        Section~\ref{sec:linear-haskell}.
 
     \item Linear types permeate Haskell down to (its) \textbf{Core}, the
-        intermediate language Haskell is desugared to. \textbf{Core} is a very
-        small explicitly typed functional language to which multiple
-        Core-to-Core optimizing transformations are applied in succession. The
-        final Core program can be typechecked very fast (because of the explicit
-        type annotations) and doing so serves as a sanity check to the
+        intermediate language into which Haskell is
+        translated. \textbf{Core} is a minimal, explicitly typed,
+        functional language, on which multiple
+        Core-to-Core optimizing transformations are
+        defined. Due to Core's minimal design, typechecking 
+        Core programs is very efficient and doing so serves as a sanity check to the
         correction of the source transformations. If the resulting optimized
-        Core program doesn't typecheck, something \emph{very wrong} has happened
-        in a transformation!  We discuss Core and System~$F_C$ in detail in
-        section~\ref{sec:core}.
+        Core program fails to typecheck, the optimizing
+        transformations (are very likely to) have introduced an error
+        in the resulting program. We present Core (and its formal
+        basis, System~$F_C$) in Section~\ref{sec:core}.
         % TODO: \item values in rust are linear by default while non-linear is
         % the haskell default?
 \end{itemize}
+%
 
-Core was imbued with linear types to guarantee linear programs remain linear after being
-desugared and optimized: much the same way a \emph{typed} Core ensures that
-desugaring, and optimizing transformations, are correctly implemented and result
-in a \emph{well-typed} program -- a design decision that has well served the
-compiler developers with a safety net for a long time. It is crucial that a
-program behaviour enforced by linear types, regarding the usage of certain
-resources, is \emph{not} changed in the desugaring or optimization process
+% Linear core good
+Aligned with the philosophy of having a \emph{typed} intermediate
+language, the integration of linearity in Haskell required extending
+\textbf{Core} with linear types. Just as \emph{typed} Core ensures
+that the translation of Haskell (dubbed \emph{desugaring}) and the
+subsequent optimizing transformations are correctly implemented,
+\emph{linearly typed} Core guarantees that linear resource usage in
+the source language is not violated by the translation process and the
+compiler optimization passes.
+%
+It is crucial that the
+program behaviour enforced by linear types is \emph{not} changed by
+the compiler in the desugaring or optimization stages 
 (optimizations should not destroy linearity!) and a linearity aware Core
-typechecker can guarantee that.
+typechecker is key in providing such guarantees.
+%TODO: linearidade pode informar otimizacoes
 
-% TODO: Rewrite this whole second part of the introduction.
-% It needs to be much clearer
 
-Additionally, while not yet a reality, linearity in Core could be used to inform
-certain program optimizations, i.e. having linear types in Core could be used to
-further optimize certain programs and, therefore, benefit the runtime
-performance characteristics of our programs. For example, Linear Haskell\cite{}
-describes as future work an improvement to the inlining optimization: Inlining
-is a centerpiece program optimization primarily because of the subsequent
-optimizing opportunities unlocked by inlining. However, it relies on a heuristic
-process known as \emph{cardinality analysis} to discover safe inlining
-opportunities. Unfortunately, heuristics can be volatile and fail in identifying
-crucial inlining opportunities resulting in programs that fall short of their
-performance potential. On the contrary, the linearity information could be
-integrated in the analysis and used as a (non-heuristic) cardinality
-\emph{declaration}.
+% Linear core actually not so good
+% Additionally, while not yet a reality, linearity in Core could be used to inform
+% certain program optimizations, i.e. having linear types in Core could be used to
+% further optimize certain programs and, therefore, benefit the runtime
+% performance characteristics of our programs. For example, Linear Haskell\cite{}
+% describes as future work an improvement to the inlining optimization: Inlining
+% is a centerpiece program optimization primarily because of the subsequent
+% optimizing opportunities unlocked by inlining. However, it relies on a heuristic
+% process known as \emph{cardinality analysis} to discover safe inlining
+% opportunities. Unfortunately, heuristics can be volatile and fail in identifying
+% crucial inlining opportunities resulting in programs that fall short of their
+% performance potential. On the contrary, the linearity information could be
+% integrated in the analysis and used as a (non-heuristic) cardinality
+% \emph{declaration}.
 
-However, currently, programs transformed by optimizations can fail to typecheck
-in Core because of the newly added linearity! The reason is not evidently clear:
-if we can typecheck linearity in the surface level Haskell why can't we in Core?
-In fact, if we were to typecheck the programs in Core as they were at the
-surface level, we would succeed, but programs are \emph{transformed} (by
-semantic-preserving optimizing transformations) and hence end up different from
-how they were originally written. For example, the following recursive let
-definition, where $x$ is a linear variable that must be used exactly once, would
-not typecheck in a source Haskell program since the typechecker cannot tell that
-$x$ is used linearly, but this program might occur naturally in Core from
-transformations on a program that did succesfully typecheck:
-\begin{code}
-letrec f = \case
-        True -> f False
-        False -> x
-in f True
-\end{code}
+While the current version of Core is linearity-aware (i.e.,~Core has
+so-called multiplicity annotations in variable binders), its type
+system does not (fully) validate the linearity constraints in the
+desugared program and essentially fails to type-check programs
+resulting from several optimizing transformations that are necessary
+to produce efficient object code. The reason for this latter point 
+is not evidently clear:
+if we can typecheck linearity in the surface level Haskell why do we
+fail to do so in Core?
+The desugaring process from surface level Haskell to Core and the
+subsequent Core-to-Core optimizing transformations eliminate and
+rearrange most of the syntactic constructs through which linearity checking is
+performed.
 
-Is this program really still linear? Yes, but ...
+\begin{itemize}
+\item Exemplo de um programa que fica borked pelas otimizacoes
+\item Explicar que moralmente a linearidade nao foi borked, e so a
+  ``sintaxe'' que e insuficiente.
+\item Mencionar (muito brevemente) que com algumas extensoes a
+  informacao disponivel, era possivel validar coisas, que e
+  ultimamente o objectivo deste trabalho.
+ \end{itemize}
+
+% Consider the following recursive let
+% definition, where $x$ is a linear variable that must be used exactly once, would
+% not typecheck in a source Haskell program since the typechecker cannot tell that
+% $x$ is used linearly, but this program might occur naturally in Core from
+% transformations on a program that did succesfully typecheck:
+% \begin{code}
+% letrec f = \case
+%         True -> f False
+%         False -> x
+% in f True
+% \end{code}
+
+% Is this program really still linear? Yes, but ...
 
 % If one looks at it 
 
@@ -273,12 +319,12 @@ Is this program really still linear? Yes, but ...
 % about the usage of resources in a
 % programming language.
 
-\section{Motivation}
+\section*{Goals}
 
 
 \begin{itemize}
-    \item Are we really preserving linearity?
-    \item Inform/unlock other optimisations that take into account linearity
+\item bla bla and bla
+  
 \end{itemize}
 
 \chapter{Background and Related Work}
