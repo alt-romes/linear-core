@@ -124,14 +124,14 @@ in free(p);
    free(p);
 \end{code}
 
-Under the lens of a linear type system, consider the variable $p$ to be a linear
-resource created by the \texttt{malloc} keyword. Because $p$ is a linear
+Under the lens of a linear type system, consider the variable $p$ to be a
+linear resource created by the \texttt{malloc} keyword. Because $p$ is a linear
 variable, it must be used exactly once. However, we are using it in two
 different calls to \texttt{free}. With our new linearity assumptions, the
-% TODO:
-example program \emph{would not typecheck}! \todo{Some conclusion on linearity
-goodness.} In section~\ref{linear-types} we describe the fundamentals of linear
-types in more detail with a formal definition and many examples.
+example program \emph{would not typecheck}! -- effectively ensuring the program
+does not compile with a double-free error. In section~\ref{linear-types} we
+describe the fundamentals of linear types in more detail with a formal
+definition and many examples.
 
 Despite their great promise and research literature, it is hard to balance
 linear and non-linear types in practice and, consequently, few programming
