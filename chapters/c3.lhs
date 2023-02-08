@@ -87,6 +87,18 @@ However, we believe that GHC's transformations are correct, and it is the
 linear type-checker and its underlying type system that cannot sufficiently
 accommodate the resulting programs.
 
+Additionally, some Core-to-Core transformations such as let-floating and
+inlining already depend on linear type systems to produce more performant
+programs. Valid linearity annotations in Core could potentially inform and
+define more optimizations.
+
+% TODO: Unnecessary
+In Section~\ref{typingUsageEnvs} we describe usage environments and how they
+solve three distinct problems. In Section~\ref{multiplicityCoercions} we discuss
+the beginning of multiplicity coercions. In Section~\ref{examples} we take
+programs that are currently rejected and show how the type system with our
+extensions can accept them.
+
 \section{Goals}
 
 In the upcoming dissertation we will:
@@ -95,13 +107,12 @@ In the upcoming dissertation we will:
 \item Propose an extension of Core's type system and type checking algorithm
 with additional linearity
 information in order to accommodate linear programs in Core that
-result from the optimising transformations described in~\autoref{};
+result from the optimising transformations described in Section~\ref{sec:ghcpipeline};
 \item Argue the soundness of the resulting system (i.e.~no
   semantically non-linear programs are deemed linear);
 \item Show how it validates Core-to-Core optimisation
   passes;
-\item Implement the extension into GHC's
-Core linter.
+\item Implement the extension into GHC's Core type-checker (internally known as the Core linter).
 \end{itemize}
 
 
@@ -139,12 +150,40 @@ the complexity of Haskell might make this quite hard}
 
 \subsection{Validating the Work}
 
+The ultimate measure of success is the \verb=-dlinear-core-lint= flag, which
+activates and runs the linear type-checker after desugaring and each
+Core-to-Core transformation. In its current implementation, enabling this flag
+rejects many linearly valid programs. Ideally, by the end of our research and
+implementation, this flag could be enabled by default and accommodate all
+existing transformations. Realistically, we want to accept as many diverse
+transformations as possible while still preserving linearity, even if we are
+unable to account for all of them.
 
-\todo[inline]{Falar um pouco de como tencionas validar o que
-  fazes. Diria que ha a validacao qualitativa obvia -- que
-  transformacoes podem agora ser linted ou nao, mas podera ser util
-  fazer alguma validacao mais quantitativa e ser util
-medir tempos de execucao de coisas (e.g.a construcao dos usage envs)}
+For each transformation we successfully support in our type system, we will
+prove that it does indeed preserve linearity by type-checking the input program
+to the transformation and the ouptut program.
+
+Quantitively, we will benchmark the variation in compilation time and
+heap-allocations when our extended type-checker is enabled, in comparison to
+the compiler with the Core type-checker that ignores linearity annotations
+being run.
+
+The linear Core type-checker validation and benchmarks will be done by running
+the GHC testsuite and compiling the \emph{head.hackage} package set
+%
+\footnote{\emph{head.hackage} is a package set comprised of multiple relevant
+libraries of the Haskell ecosystem which are compiled by, and patched against,
+GHC's latest commit.}
+%
+with the \verb=-dlinear-core-lint= flag. The GHC project also automatically
+runs tests and benchmarks through its continuous integration (CI) pipeline,
+which we intend to use to further validate our implementation continuously.
+
+% \todo[inline]{Falar um pouco de como tencionas validar o que
+%   fazes. Diria que ha a validacao qualitativa obvia -- que
+%   transformacoes podem agora ser linted ou nao, mas podera ser util
+%   fazer alguma validacao mais quantitativa e ser util
+% medir tempos de execucao de coisas (e.g.a construcao dos usage envs)}
 
 \subsection{Tasks and Chronogram}
 
@@ -154,22 +193,6 @@ Tens uma divisao natural em passos pelos varios binders, alternar com
 implementacao no GHC, etc. Nao esquecer de incluir a escrita do
 documento final!}
 
-
-
-%
-The ultimate measure of success is the \verb=-dlinear-core-lint= flag,
-which activates the linear linter. In its current implementation,
-enabling this flag rejects many linearly valid programs. Ideally, by
-the end of our research and implementation, this flag could be enabled by
-default and accommodate all existing transformations. Realistically, we want to
-accept as many diverse transformations as possible while still preserving
-linearity, even if we are unable to account for all of them.
-
-In Section~\ref{typingUsageEnvs} we describe usage environments and how they
-solve three distinct problems. In Section~\ref{multiplicityCoercions} we discuss
-the beginning of multiplicity coercions. In Section~\ref{examples} we take
-programs that are currently rejected and show how the type system with our
-extensions can accept them.
 
 % to be able to preserve linearity accross the stages and to enable \emph{Lint} to
 % preserve our sanity regarding linearity and eventually inform with linearity new

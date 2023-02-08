@@ -817,7 +817,7 @@ its Core representation.
     % \item E das local equalities que são implicitas no front end
 % \end{itemize}
 
-\section{GHC Pipeline}
+\section{GHC Pipeline\label{sec:ghcpipeline}}
 
 The GHC compiler processes Haskell source files in a series of phases that feed
 each other in a pipeline fashion, each transforming their input before passing
