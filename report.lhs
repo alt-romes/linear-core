@@ -243,16 +243,39 @@ so in Core?
 %
 The desugaring process from surface level Haskell to Core and the subsequent
 Core-to-Core optimizing transformations eliminate and rearrange most of the
-syntactic constructs through which linearity checking is performed.
+syntactic constructs through which linearity checking is performed, often
+resulting in programs completely different from the original.
+
+Consider the minimal example of a function that let binds... this is all quite
+hard: the simple let example wouldn't type check in Haskell, so making it
+typecheck in Core would perhaps entail explaining that we also desire to
+typecheck more linearity in Core than in Haskell.
+\begin{code}
+f x = let y = x in y
+\end{code}
+Moreover, I'm re-thinking our definitions for usage and using usage
+environments to type let bindings. $\llet{y = x+1}{y + y}$ might either
+evaluate $x+1$ only once if $y$ is compiled to a heap allocation or twice if
+$y$ is inlined, and twice if it's inlined just once? If we're conservative we
+always assume it could be consumed the maximum amount of times, and our typing
+rule using usage environments would be correct. This simple example raises many
+questions.
 
 \begin{itemize}
 \item Exemplo de um programa que fica borked pelas otimizacoes
 \item Explicar que moralmente a linearidade nao foi borked, e so a
   ``sintaxe'' que e insuficiente.
-\item Mencionar (muito brevemente) que com algumas extensoes a
-  informacao disponivel, era possivel validar coisas, que e
-  ultimamente o objectivo deste trabalho.
- \end{itemize}
+% \item Mencionar (muito brevemente) que com algumas extensoes a
+%   informacao disponivel, era possivel validar coisas, que e
+%   ultimamente o objectivo deste trabalho.
+\end{itemize}
+
+Concluding, by extending Core / System $F_C$ with linearity and multiplicity
+annotations such that we can desugar all of Linear Haskell and validate it
+accross transformations taking into consideration Core's call-by-need
+semantics, we can validate the surface level linear type's implementation, we
+can guarantee optimizing transformations do not destroy linearity, and we might
+be able to inform optimizing transformations with the linearity annotations.
 
 % Consider the following recursive let
 % definition, where $x$ is a linear variable that must be used exactly once, would
@@ -324,6 +347,7 @@ syntactic constructs through which linearity checking is performed.
 
 \section*{Goals}
 
+Copiar do outro lado
 
 \begin{itemize}
 \item bla bla and bla
