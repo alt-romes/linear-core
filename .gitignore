@@ -5,4 +5,12 @@
 *.bbl
 *.blg
 *.toc
+*.glg
+*.glo
+*.gls
+*.ist
+*.lof
+*.lot
 report.tex
+chapters/c2.tex
+chapters/c3.tex
