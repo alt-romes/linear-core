@@ -1655,9 +1655,9 @@ linearly-typed languages that were designed with linear types from the start:
         types.
 \end{itemize}
 %
-Linear Haskell is thus concerned with retrofitting linear types to Haskell
-taking into consideration the above design goals, but not to Haskell's
-intermediate language which presents its own challenges.
+Linear Haskell~\cite{cite:linearhaskell} is thus concerned with retrofitting
+linear types to Haskell taking into consideration the above design goals, but
+not to Haskell's intermediate language which presents its own challenges.
 
 Nonetheless, while the Linear Haskell paper keeps Core unchanged, its
 implementation in GHC does modify and extend Core with linearity/multiplicity
@@ -1684,29 +1684,43 @@ of Linear Haskell.
 % How do they handle linearity plus optimizations
 % They probabluy don't typecheck linearity in Core
 
-\parawith{Linearity optimizations}
-\begin{itemize}
-\item Transfs. core to core aparecem em vários artigos, e são desenhadas no contexto de uma linguagem tipificada mas que não é linearly typed.
-\item nestes dois artigos é observado que se houvesse a capacidade de explorar linearidade podiamos fazer as coisas de forma diferente
-\item Todas estas optimizaçoes de decadas foram desenhadas sem linear types e há sitios onde linear types podiam ajudar mas não existiam na altura
-\item POdemos usar linear types multiplicitpiadads para lazy language core q definimos para nao ter de fazer sistemas lineares de proposito para optimizações
-\item Ser ad-hoc incompleto ou nao feito de todo
-\end{itemize}
+\parawith{Linearity-influenced optimizations}
 
-Linearity optimizations
-\parawith{A transformation based optimizer for Haskell}
+Core-to-Core transformations appear in many papers across the research
+literature~\cite{cite:let-floating,peytonjones1997a,santos1995compilation,peytonjones2002secrets,baker-finch2004constructed,maurer2017compiling,Breitner2016_1000054251,sergey_vytiniotis_jones_breitner_2017},
+all designed in the context of a typed language (Core) which does not have
+linear types. However,
+~\cite{cite:let-floating,peytonjones1997a,cite:linearhaskell} observe that
+certain optimizations (in particular, let-floating and inlining) greatly
+benefit from linearity analysis and, in order to improve those transformation,
+linear-type-inspired systems were created specifically for the purpose of the
+transformation.
 
+By fully supporting linear types in Core, these optimizing transformations
+could be informed by the language inherent linearity, and, consequently, avoid
+an ad-hoc or incomplete linear-type inference pass custom-built for
+optimizations. Additionally, the linearity information may potentially be used
+to the benefit of optimizing transformations that currently don't take any
+linearity into account.
 
-They discuss a cardinality analysis based on a linear type system but create (an
-ad-hoc?) one suited. Comparison in the measure of creating optimizations based
-on linearity.
+% \begin{itemize}
+% \item Transfs. core to core aparecem em vários artigos, e são desenhadas no contexto de uma linguagem tipificada mas que não é linearly typed.
+% \item nestes dois artigos é observado que se houvesse a capacidade de explorar linearidade podiamos fazer as coisas de forma diferente
+% \item Todas estas optimizaçoes de decadas foram desenhadas sem linear types e há sitios onde linear types podiam ajudar mas não existiam na altura
+% \item POdemos usar linear types multiplicitpiadads para lazy language core q definimos para nao ter de fazer sistemas lineares de proposito para optimizações
+% \item Ser ad-hoc incompleto ou nao feito de todo
+% \end{itemize}
 
-\parawith{Let-Floating: Moving Bindings to Give Faster Programs\label{sec:rw:let-floating}}
-
-In the paper~\cite{cite:let-floating}...
-They say they are doing work on a linear type system to identify places where
-the lambda is linearly used and therefore floating-in is beneficial and
-floating-out not as productive.
+% \parawith{A transformation based optimizer for Haskell}
+% They discuss a cardinality analysis based on a linear type system but create (an
+% ad-hoc?) one suited. Comparison in the measure of creating optimizations based
+% on linearity.
+% 
+% \parawith{Let-Floating: Moving Bindings to Give Faster Programs\label{sec:rw:let-floating}}
+% In the paper~\cite{cite:let-floating}...
+% They say they are doing work on a linear type system to identify places where
+% the lambda is linearly used and therefore floating-in is beneficial and
+% floating-out not as productive.
 
 \chapter{Proposed Work}
 
