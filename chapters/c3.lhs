@@ -15,83 +15,77 @@
 
 \section{Motivation}
 
-\todo[inline]{ Objectivo desta seccao: contextualizar e descrever o
-  problema.
-  
-Penso que alguma repeticao dos conceitos como a
-      definicao textual de linearidade podem cair}
-
-
 Since the publication of Linear Haskell~\cite{cite:linearhaskell} and its
-release in GHC 9.0, Haskell's type system supports linearity annotations in
-functions, bringing linear types to a mainstream, pure, and lazy functional
-language. Concretely, function types can be annotated with a multiplicity (a
-multiplicity of One requires the argument to be consumed exactly once, a
-multiplicity of Many allows the argument to be consumed unrestrictedly, i.e.,
-zero or more times). A function is linear if it consumes its arguments exactly
-once when it itself is consumed exactly once.
+implementation in GHC 9.0, Haskell's type system supports linearity annotations
+in functions. Linear Haskell effectively brings linear types to a mainstream,
+pure, and lazy functional language. Concretely, Haskell function types can be
+annotated with a multiplicity, where a multiplicity of \texttt{1} requires the
+argument to be consumed exactly once and a multiplicity of \texttt{Many} allows
+the function argument to be consumed unrestrictedly, i.e., zero or more times.
 
+% A function is linear if it consumes its arguments exactly once when it itself
+% is consumed exactly once.
 
-\todo[inline]{As mentioned in Section bla, GHC Haskell features two
-  typed languages in its pipeline: Haskell and Core. 
-  The addition of linear types to GHC Haskell required
-  changing the Haskell type system. However ... }
+As mentioned in Section~\ref{sec:core}, GHC Haskell features two typed
+languages in its pipeline: Haskell and Core.
+%
+Core is a much smaller language than the whole of Haskell (even though we can
+compile the whole of Haskell to Core).
+%
+The addition of linear types to
+GHC Haskell required changing the type system of both languages. However,
+Linear Haskell only describes an extension to the surface-level Haskell type
+system, not Core. Nonetheless, in practice, Core is linearity-aware.
 
-Linearly typed programs are proven/checked to be linear by the type system, so
-the addition of linear types evidently required changing the type checker to
-support linearity. There exist, however, two distinct type checkers in GHC.
-The first is run on the surface language, i.e. the Haskell we write, and is a
-complex type checker that now also supports typing linearity. The second is
-run on programs written in the intermediate language \emph{Core}, that
-are obtained from \emph{desugaring} Haskell.
+We want Core and its type system to give us guarantees about desugaring and
+optimizing transformations regard to linearity just as Core does for types -- a
+linearly typed Core ensures that linearly-typed programs remain correct both
+after desugaring and across all GHC optimizing transformations, i.e.~linearity
+is preserved when desugaring and optimisations should not destroy linearity.
 
-\todo[inline]{Nao e necessario reexplicar o que e o Core, o que e
-  preciso aqui e explicar que o desugaring tem anotacoes de
-  linearidade mas que sao ignoradas e explicar porque. Em particular,
-  algum do texto que esta mais a frente a dizer as variaveis sao
-  anotadas no Core mas que e tudo ignorado deve ficar claro nesta altura}
+% \todo[inline]{Nao e necessario reexplicar o que e o Core, o que e
+%   preciso aqui e explicar que o desugaring tem anotacoes de
+%   linearidade mas que sao ignoradas e explicar porque. Em particular,
+%   algum do texto que esta mais a frente a dizer as variaveis sao
+%   anotadas no Core mas que e tudo ignorado deve ficar claro nesta altura}
 
-Core is a much smaller language than the whole of Haskell (even though we
-can compile the whole of Haskell to it!) and its type checker is
-simple and fast due to Core being explicitly typed. In essence, Core
-is close to a higher-order polymorphic lambda calculus. This type
-checker (called \emph{Lint}) gives us guarantees of correctness in face of all
-the complex transformations a Haskell program undergoes, such as desugaring and
-core-to-core optimization passes, because the linter is always run on the resulting code
-before ultimately being compiled to (untyped) machine code.
+% This type
+% checker (called \emph{Lint}) gives us guarantees of correctness in face of all
+% the complex transformations a Haskell program undergoes, such as desugaring and
+% core-to-core optimization passes, because the linter is always run on the resulting code
+% before ultimately being compiled to (untyped) machine code.
 
 % System FC is the formal system in which the implementation of GHC's intermediate
 % representation language \emph{Core} is based on.
 
-We want Core and its type system to give us guarantees about
-desugaring and transformations with regard to linearity -- a linearly
-typed Core ensures that linearly-typed programs remain correct
-(i.e.,~linearity is preserved) after desugaring and all GHC
-transformations (i.e.,~optimisations should not destroy linearity).
 
-In this sense, Core is already annotated with linearity, but the \textbf{linter currently
-  ignores linearity annotations}.
+In this sense, Core is already annotated with linearity, but its type-checker
+\textbf{currently ignores linearity annotations}.
 %
 In spite of the strong formal foundations of linear types driving the
-implementation, their interaction with the whole of GHC is still far
-from trivial. The implemented type system cannot accomodate
-several optimising transformations that produce programs that violate
-linearity syntactically (i.e.,~multiple occurrences of linear
-variables in the program text), but ultimately preserve it in a
-semantic sense, where a linear term is still consumed exactly once --
-this is compounded by lazy evaluation driving a non-trivial mismatch
-between syntactic and semantic linearity.
+implementation, their interaction with the whole of GHC is still far from
+trivial. The implemented type system cannot accomodate several optimising
+transformations that produce programs which violate linearity
+\emph{syntactically} (i.e.~multiple occurrences of linear variables in the
+program text), but ultimately preserve it in a \emph{semantic} sense,
+%
+where a linear term is still \emph{consumed exactly once} -- this is compounded
+by lazy evaluation driving a non-trivial mismatch between syntactic and
+semantic linearity.
 
 \todo[inline]{Um exemplo ou dois para ilustrar o problema}
 
-Therefore, linear linting
-rejects various valid programs (with regard to linearity) after
-desugaring. The current solution to this is to effectively disable the
-linear linter, since otherwise disabling optimisations can incur significant
-performance costs. However, we believe that GHC's transformations are
-correct, and it is the linear linter and its underlying type system
-that cannot sufficiently accommodate the
-resulting programs.
+Therefore, the Core linear type-checker rejects various valid programs after
+desugaring and optimizing transformations, because linearity is seemingly
+violated.
+%
+The current solution to the linear type-checker rejecting valid programs is to effectively
+disable the linear linter, since otherwise disabling optimisations can incur
+significant performance costs.
+%
+However, we believe that GHC's transformations are correct, and it is the
+linear type-checker and its underlying type system that cannot sufficiently
+accommodate the resulting programs.
 
 \section{Goals}
 
@@ -125,6 +119,10 @@ To this end, we propose to extend Core's linear type system with
 variables\todo{dizer pq estes binders especificamente}. Given time, we will also explore a new kind of coercion for
 multiplicities to validate programs that combine GADTs with
 multiplicities.
+
+\todo[inline]{Much of the work to account for linearity in Core with regard to
+non-strict semantics of let-bindings might translate back to Haskell, though
+the complexity of Haskell might make this quite hard}
 
 \subsubsection{Usage Annotations / Typing Usage Environments}
 
