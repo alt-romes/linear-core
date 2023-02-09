@@ -171,7 +171,7 @@ being run.
 The linear Core type-checker validation and benchmarks will be done by running
 the GHC testsuite and compiling the \emph{head.hackage} package set
 %
-\footnote{\emph{head.hackage} is a package set comprised of multiple relevant
+\footnote{\emph{head.hackage} is a package set comprised of relevant
 libraries of the Haskell ecosystem which are compiled by, and patched against,
 GHC's latest commit.}
 %
@@ -187,11 +187,50 @@ which we intend to use to further validate our implementation continuously.
 
 \subsection{Tasks and Chronogram}
 
-\todo[inline]{Fazer uma ``expansao'' da lista itemizada que fiz antes mas com mais
-detalhe / passos, explicando numa frase ou duas o que cada tarefa e.
-Tens uma divisao natural em passos pelos varios binders, alternar com
-implementacao no GHC, etc. Nao esquecer de incluir a escrita do
-documento final!}
+In the dissertation, we will propose an extension to Core / System $F_C$'s type
+system and type-checking algorithm with additional linearity information (such
+as \emph{usage environments}) in order to accommodate linear programs in Core
+throughout the GHC pipeline (Section~\ref{sec:ghcpipeline}) stages of
+desugaring and optimization. This type-system entails augmenting Core's syntax
+to support additional linearity information and extending existing typing
+judgments and rules to account for linearity.
+
+Furthermore, the extended type-system must be proved to be sound, that is, our
+type-system must provably not accept any programs which aren't linear. We will
+prove the system to be sound using formal methods\todo{?}.
+
+Because we want to ensure our type system validates programs before and after
+optimizing transformations are applied, we will formally/informally validate
+that each optimizing transformation does not destroy linearity in programs wrt
+our type system.
+
+We will implement this extension to Core in GHC, the leading Haskell compiler.
+Core's type-system implementation, internally known as the Core linter, will
+serve as the base for our extension. Running the Core linter will enforce an
+iterative approach to implementing the extensions and allow us to validate our
+progress continuously.
+
+Defining and implementing this type-system in GHC can be done iteratively
+because each binder can be handled separately. The typing rules for let
+bindings, recursive let bindings, and case bindings are distinct, and
+optimizing transformations seldom interact with all three at the same time.
+%
+Consequently, we can interweave the formal specification, implementation in
+Core, and validation of individual optimizations and of our implementation.
+
+Throughout this, we will write the final dissertation document, using it as a
+driving force for the research which will cristalize our ideas and help
+communicate them. GHC is a large project with many involved parties -- it is
+crucial that we communicate our ideas and changes clearly, so we can benefit
+from other contributor's expert feedback, and ultimately merge our changes to
+Core upstream.
+
+
+% \todo[inline]{Fazer uma ``expansao'' da lista itemizada que fiz antes mas com mais
+% detalhe / passos, explicando numa frase ou duas o que cada tarefa e.
+% Tens uma divisao natural em passos pelos varios binders, alternar com
+% implementacao no GHC, etc. Nao esquecer de incluir a escrita do
+% documento final!}
 
 
 % to be able to preserve linearity accross the stages and to enable \emph{Lint} to

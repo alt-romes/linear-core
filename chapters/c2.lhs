@@ -524,8 +524,8 @@ definition of \emph{consuming a value} depends on the value as follows,
 paraphrasing Linear Haskell~\cite{cite:linearhaskell}:
 
 \begin{itemize}
-    \item To consume a value of atomic base type (like \texttt{Int} or
-        \texttt{Ptr}) exactly once, just evaluate it
+    \item To consume a value of atomic base type (such as~\texttt{Int} or
+        \texttt{Ptr}) exactly once, just evaluate~it.
     \item To consume a function value exactly once, apply it to one argument,
         and consume its result exactly once.
     \item To consume a value of an algebraic datatype exactly once,
