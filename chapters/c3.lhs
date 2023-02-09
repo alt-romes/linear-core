@@ -150,7 +150,7 @@ the complexity of Haskell might make this quite hard}
 
 \subsection{Validating the Work}
 
-The ultimate measure of success is the \verb=-dlinear-core-lint= flag, which
+The ultimate measure of success is enabling
 activates and runs the linear type-checker after desugaring and each
 Core-to-Core transformation. In its current implementation, enabling this flag
 rejects many linearly valid programs. Ideally, by the end of our research and

@@ -160,11 +160,11 @@ elimination rule ($\tensor E$) requires that both of the pair constituents be
 consumed exactly once.
 %
 \[
-    \infer*[right=($\tensor I$)]
+    \infer[($\tensor I$)]
     {\Gamma ; \Delta \vdash M : A \and \Gamma ; \Delta' \vdash N : B}
     {\Gamma ; \Delta , \Delta' \vdash (M \tensor N) : A \tensor B}
 \qquad
-    \infer*[right=($\tensor E$)]
+    \infer[($\tensor E$)]
     {\Gamma ; \Delta \vdash M : A \tensor B \and \Gamma ; \Delta', u{:}A, v{:}B \vdash N : C}
     {\Gamma ; \Delta , \Delta' \vdash \llet{u \tensor v}{N} : C}
 \]
@@ -200,7 +200,8 @@ lambda calculus and linear Haskell are the same, and by studying them in this
 minimal setting we can understand them at large.
 
 \begin{figure}[h]
-\[
+{\small
+  \[
   \begin{array}{c}
     \infer*[right=($u$)]
     { }
@@ -265,7 +266,7 @@ minimal setting we can understand them at large.
     {\Gamma ; \Delta \vdash M : \bang A \and \Gamma, u{:}A ; \Delta' \vdash N : C}
     {\Gamma ; \Delta, \Delta' \vdash \llet{!u = M}{N} : C}
   \end{array}
-\]
+\]}
 \caption{Typing rules for a linearly-typed lambda calculus}
 \label{fig:llcrules}
 \end{figure}
@@ -747,7 +748,7 @@ transitivity). For example, given $\tau\sim\sigma$, the coercion
 $\textbf{sym}~(\tau\sim\sigma)$ denotes a type-equality coercion from $\sigma$
 to $\tau$ using the axiom of symmetry of equality. Through it, the expression
 $e{:}\sigma$ can be cast to $e{:}\tau$, i.e.
-$(e{:}\sigma\blacktriangleright\textbf{sym}~\tau\sim\sigma){:}\tau$.
+$(e{:}\sigma\blacktriangleright\textbf{sym}~\tau\sim\sigma) : \tau$.
 
 \begin{figure}[h]
 \[
@@ -770,7 +771,7 @@ short, these three features are desugared as follows:
   type to the return type.
 
   \item Newtypes such as @newtype BoxI = BoxI Int@ introduce a global
-  type-equality $\texttt{BoxI}\sim\texttt{Int}$ and construction and
+  type-equality $\texttt{BoxI}$ $\sim \texttt{Int}$ and construction and
   deconstruction of said newtype are desugared into casts.
 
   \item Type family instances such as @type instance F Int = Bool@ introduce a
@@ -1278,14 +1279,17 @@ targetting it.}, such as LLVM, x86 and x64, or (recently) JavaScript and WebAsse
 
 \parawith{Formalization of Core}
 
-System $F_C$~\cite{cite:systemfc} (Section~\ref{sec:core}) does not account for
-linearity in its formalization, and an extension to System $F_C$ including
-linear types has not yet been published. As such, there exists no formal
-definition of Core with linearity that accounts for. In this context, we intend to introduce a
-linearly typed System $F_C$ with multiplicity annotations and typing rules to
-serve as a basis for a linear Core. Critically, this Core linear language must
-account for call-by-need evaluation semantics and be valid in light of
-Core-to-Core optimizing transformations.
+System $F_C$~\cite{cite:systemfc} (Section~\ref{sec:core}) does not
+account for linearity in its original design, and, to the best of our
+knowledge, no extension to System $F_C$ with linearity and non-strict
+semantics exists.
+%
+As such, there exists no formal definition of Core that
+accounts for linearity. In this context, we intend to introduce a linearly typed
+System $F_C$ with multiplicity annotations and typing rules to serve
+as a basis for a linear Core. Critically, this Core linear language
+must account for call-by-need evaluation semantics and be valid in
+light of Core-to-Core optimizing transformations.
 
 % \parawith{System FC}
 
@@ -1307,8 +1311,8 @@ Core-to-Core optimizing transformations.
 
 Haskell, contrary to most programming languages with linear types, has existed
 for 31 years of its life \emph{without} linear types. As such, the introduction
-of linear types to Haskell comes with added challenges that can not exist in
-linearly-typed languages that were designed with linear types from the start:
+of linear types to Haskell comes with added challenges that do not exist in
+languages that were designed with linear types from the start:
 %
 \begin{itemize}
     \item Backwards compatibility. The addition of linear types shouldn't break
@@ -1317,19 +1321,20 @@ linearly-typed languages that were designed with linear types from the start:
         its non-linearly-typed counterpart should fit in together and it must be
         possible to define functions readily usable by both sides
         simultaneously.
-    \item Forwards compatibility -- Haskell, despite being an
+    \item Future-proofing. Haskell, despite being an
         industrial-strength language, is also a petri-dish for experimentation
         and innovation in the field of programming languages. Therefore, Linear
         Haskell takes care to accomodate possible future features, in
-        particular, its design is forward compatible with affine and dependent
+        particular, its design is forwards compatible with affine and dependent
         types.
 \end{itemize}
 %
 Linear Haskell~\cite{cite:linearhaskell} is thus concerned with retrofitting
-linear types to Haskell taking into consideration the above design goals, but
-not to Haskell's intermediate language which presents its own challenges.
+linear types in Haskell, taking into consideration the above design goals, but
+is not concerned with extending Haskell's intermediate language(s),
+which presents its own challenges. 
 
-Nonetheless, while the Linear Haskell paper keeps Core unchanged, its
+Nonetheless, while the Linear Haskell work keeps Core unchanged, its
 implementation in GHC does modify and extend Core with linearity/multiplicity
 annotations, and said extension of Core with linear types does not account for
 optimizing transformations and the non-strict semantics of Core.
@@ -1356,7 +1361,7 @@ of Linear Haskell.
 
 \parawith{Linearity-influenced optimizations}
 
-Core-to-Core transformations appear in many papers across the research
+Core-to-Core transformations appear in many works across the research
 literature~\cite{cite:let-floating,peytonjones1997a,santos1995compilation,peytonjones2002secrets,baker-finch2004constructed,maurer2017compiling,Breitner2016_1000054251,sergey_vytiniotis_jones_breitner_2017},
 all designed in the context of a typed language (Core) which does not have
 linear types. However,
