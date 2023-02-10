@@ -16,6 +16,7 @@
 % Glossary
 \usepackage[toc]{glossaries}
 
+\usepackage{lipsum} % just for dummy text
 
 %%%%%%%%%%%%%%  Color-related things   %%%%%%%%%%%%%%
 
@@ -50,8 +51,9 @@
 \newcommand{\lletrec}[2]{\mathsf{letrec}~#1~\mathsf{in}~#2}
 \newcommand{\ccase}[2]{\mathsf{case}~#1~\mathsf{of}~#2}
 
-\title{Linting Linearity in Core/System FC}
-\author{Rodrigo Mesquita}
+\title{Type-checking Linearity in Core/System FC}
+\author{Rodrigo Mesquita \\ Bernardo Toninho}
+
 
 \makeglossaries
 
@@ -71,7 +73,27 @@
 
 \frontmatter
 
-% \maketitle
+\maketitle
+\cleardoublepage
+
+\abstractnum
+\begin{abstract}
+Linear types were added both to Haskell and to its Core intermediate language,
+which is used as an internal consistency tool to validate the transformations a
+Haskell program undergoes during compilation.
+%
+However, the current Core type-checker rejects many linearly valid programs
+that originate from Core-to-Core optimizing transformations. As such, linearity
+typing is effectively disabled, for otherwise disabling optimizations would be
+far more devastating.
+%
+% This dissertation presents an extension to Core's type system that accepts a
+The goal of our proposed dissertation is to develop an extension to Core's type
+system that accepts a larger amount of programs and verifies that optimizing
+transformations applied to well-typed linear Core produce well-typed linear
+Core.
+\end{abstract}
+\cleardoublepage
 
 \xtableofcontents
 \xlistoffigures

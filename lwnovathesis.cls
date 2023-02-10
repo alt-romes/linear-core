@@ -32,7 +32,8 @@
 % Use memoir as the base class, for documentation run `texdoc memoir`
 % The options set solve (4), (2), (1)
 % TODO: For the latex font, use 11pt or 10pt?
-\LoadClass[a4paper,11pt,twoside,onecolumn,openright,draft]{memoir}
+% \LoadClass[a4paper,11pt,twoside,onecolumn,openright,draft]{memoir}
+\LoadClass[a4paper,11pt,twoside,onecolumn,openright]{memoir}
 
 % This solves (6) by setting 1.5 line spacing for the main text
 % And solves (7) as well because footnotes' line spacing is unaltered
@@ -74,8 +75,13 @@
 % Use thesis pagestyle defined above
 \pagestyle{thesis}
 
+% Abstract
+\renewcommand{\abstracttextfont}{\normalfont}
+\setlength{\absleftindent}{0cm}
+\setlength{\absrightindent}{0cm}
+
 % Indices that open right on new page
-\newcommand{\xtableofcontents}{\tableofcontents\cleardoublepage}
+\newcommand{\xtableofcontents}{\tableofcontents*\cleardoublepage}
 \newcommand{\xlistoffigures}{\listoffigures\cleardoublepage}
 \newcommand{\xlistoftables}{\listoftables}
 
