@@ -92,6 +92,41 @@ The goal of our proposed dissertation is to develop an extension to Core's type
 system that accepts a larger amount of programs and verifies that optimizing
 transformations applied to well-typed linear Core produce well-typed linear
 Core.
+%
+Our extension will be based on attaching variable \emph{usage environments} to
+binders, which augment the type system with more  fine-grained contextual
+linearity information, allowing the system to accept programs which seem to
+syntactically violate linearity but preserve linear resource usage. We will
+also develop a usage environment inference procedure and integrate the
+procedure with the type checker.  We will validate our proposal by showing a
+range of Core-to-Core transformations can be typed by our system
+\end{abstract}
+\cleardoublepage
+
+\renewcommand{\abstractname}{Resumo}
+\begin{abstract}
+Tipos lineares foram integrados ambos no Haskell e na sua linguagem intermédia,
+Core, que serve como uma ferramenta de consistência interna do compilador que
+valida as transformações feitas nos programas ao longo do processo de
+compilação.
+%
+No entanto, o sistema de tipos do Core rejeita programas lineares válidos que
+são produto de optimizações Core-to-Core, de tal forma que a validação da
+linearidade ao nível do sistema de tipos não consegue ser desempenhada com
+sucesso, sendo que a alternativa, não aplicar optimizações, tem resultados
+bastante mais indesejáveis.
+%
+O objetivo da dissertação que nos propomos a fazer é extender ao sistema de
+tipos do Core de forma a aceitar mais programas lineares, e verificar que as
+optimizações usadas não destroem a linearidade dos programas.
+%
+A nossa extensão parte de adicionar \emph{ambientes de uso} às variáveis,
+aumentando o sistema de tipos com informação de linearidade suficiente para
+aceitar programas que aparentemente violam linearidade sintaticamente, mas que
+a preservam a um nível semântico. Para além do sistema de tipos, vamos
+desenvolver um algoritmo de inferência de \emph{ambientes de uso}. Vamos
+validar a nossa proposta através do conjunto de transformações Core-to-Core que
+o nosso sistema consegue tipificar.
 \end{abstract}
 \cleardoublepage
 

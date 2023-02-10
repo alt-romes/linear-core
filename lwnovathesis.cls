@@ -55,7 +55,6 @@
 % \setulmarginsandblock{2.5cm}{2.5cm}{*}
 \checkandfixthelayout
 
-
 % Use the commands \frontmatter, \mainmatter and \backmatter to define the
 % different parts of your thesis. They solve (8) and (9)
 %

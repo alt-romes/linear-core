@@ -462,24 +462,29 @@ Core upstream.
 
 We present a work plan in Figure~\ref{fig:work-plan}.
 
-\begin{figure}
+% \begin{figure}
+% \begin{ganttchart}[
+% expand chart=\textwidth
+% ]{1}{12}
+% \gantttitle{2011}{12} \\
+% \gantttitlelist{1,...,12}{1} \\
+% \ganttgroup{Group 1}{1}{7} \\
+% \ganttbar{Task 1}{1}{2} \\
+% \ganttlinkedbar{Task 2}{3}{7} \ganttnewline
+% \ganttmilestone{Milestone}{7} \ganttnewline
+% \ganttbar{Final Task}{8}{12}
+% \ganttlink{elem2}{elem3}
+% \ganttlink{elem3}{elem4}
+% \end{ganttchart}
+% 
+% \caption{Work Plan}
+% \label{fig:work-plan}
+% \end{figure}
 
-\begin{ganttchart}[
-expand chart=\textwidth
-]{1}{12}
-\gantttitle{2011}{12} \\
-\gantttitlelist{1,...,12}{1} \\
-\ganttgroup{Group 1}{1}{7} \\
-\ganttbar{Task 1}{1}{2} \\
-\ganttlinkedbar{Task 2}{3}{7} \ganttnewline
-\ganttmilestone{Milestone}{7} \ganttnewline
-\ganttbar{Final Task}{8}{12}
-\ganttlink{elem2}{elem3}
-\ganttlink{elem3}{elem4}
-\end{ganttchart}
-
-\caption{Work Plan}
-\label{fig:work-plan}
+\begin{figure} [hbtp]
+    \includegraphics[width=\textwidth,height=\textheight,keepaspectratio]{CRPTable}
+    \caption{Work Plan}
+    \label{fig:work-plan}
 \end{figure}
 
 % A value allocated to be passed to a linear function and then never again used could
