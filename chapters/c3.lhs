@@ -244,11 +244,49 @@ once in both branches.
 % What about using $x$ twice? Do we emit its environment twice? Or just once?
 % :) The let binding is a heap allocation that only occurs once.
 
+We have explored preliminary typing rules and usage environment inference rules
+for let, recursive let, and case binders. As we will show below, calculating
+usage environments is not trivial, especially in recursive let bindings.
 
+\parawith{Let} Regardless of the original Haskell programs desugared to Core,
+let bindings are always common in Core due to a myriad of optimizing
+transformations that create and manipulate let-bindings
+(Section~\ref{sec:ghcpipeline}).
+%
+Currently, every let-bound variable in Core is annotated with a multiplicity at
+its binding site. However, the multiplicity for let-bound variables must be
+ignored by the type-checker throughout the transformation pipeline (or
+otherwise too many valid programs would be rejected for violating linearity).
+%
+Programs with let bindings can be correctly typed by annotating the let-bound
+variables with a usage environment.
+%
+Instead of annotating every binder with a multiplicity, only $\lambda$-bound
+variables should be annotated with a multiplicity, while let-bound variables
+should be annotated with a usage environment.
+%
+To compute a usage environment for a let-bound variable, compute the usages of
+free variables in the body of the binder. To type-check an occurrence of a
+let-bound variable, emit that binder's usage environment. The typing rule
+combines these two statements:
+%
+\[
+    \infer*[right=(let)]
+    {\Gamma \vdash t : A \leadsto \{U\} \\
+     \Gamma ; x :_{U} A \vdash u : C \leadsto \{V\}}
+    {\Gamma \vdash \text{let } x :_{U} A = t \text{ in } u : C \leadsto \{V\}}
+\]
+%
+The rule is read ``An expression $\llet{x = t}{u}$ has type $C$ and emits a $V$
+usage environment under a $\Gamma$ context if the expression $t$ has type $A$
+and emits a usage environment under $\Gamma$ \emph{and} the expression $u$ has
+type $C$ and emits the usage environment $V$ under the context $\Gamma$
+extended with the let-bound variable $x$ which has type $A$ and usage
+environment $U$. ''
 
+\parawith{Recursive Let}
 
 \begin{itemize}
-\item calcular usage envs não é trivial
 \item ilustrar
 \end{itemize}
 
@@ -425,33 +463,33 @@ expand chart=\textwidth
 
 % TODO: When we type an expression we get both the type and usage environment
 
-\subsection{Let}
+% \subsection{Let}
+% 
+% Let bindings in Core are the first family of problems we tackle with usage
+% environment annotations. Multiple transformations can introduce let-bindings,
+% such as CSE and join points. By extending the type system to allow let-bindings in Core
+% we start paving the way to a linear linter.
 
-Let bindings in Core are the first family of problems we tackle with usage
-environment annotations. Multiple transformations can introduce let-bindings,
-such as CSE and join points. By extending the type system to allow let-bindings in Core
-we start paving the way to a linear linter.
+% Currently, every variable in Core is annotated with a multiplicity at its binding
+% site. The multiplicity for let-bound variables must be ignored throughout the
+% transformation pipeline or otherwise too many valid programs would be
+% rejected for violating linearity in its transformed type.
 
-Currently, every variable in Core is annotated with a multiplicity at its binding
-site. The multiplicity for let-bound variables must be ignored throughout the
-transformation pipeline or otherwise too many valid programs would be
-rejected for violating linearity in its transformed type.
+% However, programs with let bindings can be correctly typed by associating a
+% usage environment to the bound variables. Instead of associating a multiplicity
+% to every binder, we want to associate a multiplicity if the variable is lambda
+% bound and a usage environment when it is let-bound. We then instantiate the usage
+% environment solution to lets in particular -- a let bound variable is annotated
+% with the usage environment computed from the binder expression; in the let body
+% expression, when we find an occurrence of the let bound variable we emit its
+% usage environment. The typing rule is the following:
 
-However, programs with let bindings can be correctly typed by associating a
-usage environment to the bound variables. Instead of associating a multiplicity
-to every binder, we want to associate a multiplicity if the variable is lambda
-bound and a usage environment when it is let-bound. We then instantiate the usage
-environment solution to lets in particular -- a let bound variable is annotated
-with the usage environment computed from the binder expression; in the let body
-expression, when we find an occurrence of the let bound variable we emit its
-usage environment. The typing rule is the following:
-
-\begin{mathparpagebreakable}
-    \infer*[right=(let)]
-    {\Gamma \vdash t : A \leadsto \{U\} \\
-     \Gamma ; x :_{U} A \vdash u : C \leadsto \{V\}}
-    {\Gamma \vdash \text{let } x :_{U} A = t \text{ in } u : C \leadsto \{V\}}
-\end{mathparpagebreakable}
+% \begin{mathparpagebreakable}
+%     \infer*[right=(let)]
+%     {\Gamma \vdash t : A \leadsto \{U\} \\
+%      \Gamma ; x :_{U} A \vdash u : C \leadsto \{V\}}
+%     {\Gamma \vdash \text{let } x :_{U} A = t \text{ in } u : C \leadsto \{V\}}
+% \end{mathparpagebreakable}
 
 % Take for example an expression in which $y$ and $z$ are lambda-bound with a
 % multiplicity of one. In the following code it might not appear as if $y$
