@@ -1,4 +1,5 @@
 %include polycode.fmt
+%format letrec = "\mathbf{letrec}"
 
 \chapter{Proposed Work}
 
@@ -216,9 +217,7 @@ binders is to extend said binders with a \emph{usage environment}. A usage
 environment is a mapping from variables to multiplicities. The idea is to
 annotate let, recursive lets and case binders with a usage environment rather
 than a multiplicity (in contrast, a $\lambda$-bound variable has a multiplicity
-instead of a usage environment). Upon finding a variable annotated with a
-usage environment, we type linearity as though we were using all variables with
-corresponding multiplicities from that usage environment.
+instead of a usage environment).
 
 There are two sides to the usage environment solution. First, our type system
 must be able to type-check Core programs in a context where let, recursive let
@@ -244,9 +243,14 @@ once in both branches.
 % What about using $x$ twice? Do we emit its environment twice? Or just once?
 % :) The let binding is a heap allocation that only occurs once.
 
-We have explored preliminary typing rules and usage environment inference rules
-for let, recursive let, and case binders. As we will show below, calculating
-usage environments is not trivial, especially in recursive let bindings.
+We have explored preliminary typing rules with usage environment inference
+rules for let, recursive let, and case binders. As we will show below,
+calculating usage environments is not trivial, especially for recursive let
+bindings. Yet, at a high level, computing the usage environment of a definition
+entails collecting the usages, where using a $\lambda$-bound variable emits a
+mapping from that variable to its multiplicity and using a variable annotated
+with a usage environment emits all mappings from variables to their
+corresponding multiplicities from that usage environment.
 
 \parawith{Let} Regardless of the original Haskell programs desugared to Core,
 let bindings are always common in Core due to a myriad of optimizing
@@ -277,18 +281,81 @@ combines these two statements:
     {\Gamma \vdash \text{let } x :_{U} A = t \text{ in } u : C \leadsto \{V\}}
 \]
 %
-The rule is read ``An expression $\llet{x = t}{u}$ has type $C$ and emits a $V$
-usage environment under a $\Gamma$ context if the expression $t$ has type $A$
-and emits a usage environment under $\Gamma$ \emph{and} the expression $u$ has
-type $C$ and emits the usage environment $V$ under the context $\Gamma$
-extended with the let-bound variable $x$ which has type $A$ and usage
-environment $U$. ''
+The rule is read ``An expression $\llet{x = t}{u}$ has type $C$ with usage
+environment $V$ under a $\Gamma$ context, if the expression $t$ has type $A$
+with usage environment $U$ under $\Gamma$ \emph{and} the expression $u$ has
+type $C$ with usage environment $V$ under the context $\Gamma$ extended with
+the let-bound variable $x$ which has type $A$ and usage environment $U$''.
 
-\parawith{Recursive Let}
+\parawith{Recursive Let} A variable bound by a recursive-let is in scope in its
+own definition, allowing for self-reference.
+%
+Just as let bindings, recursive-let bindings with free linear variables in
+their assignment body can form in Core during the Core-to-Core passes, and,
+similarly, the linearity is ignored by the type-checker as the lesser of the
+two unfavorable options.
+%
+When the recursive-let-binder is annotated with a usage environment, to
+type-check $t$ in $\lletrec{x{:}_U A = v}{t}$, where $x$ has type $A$ with
+usage environment $U$, simply emit $x$'s usage environment when $x$ occurs in
+$t$.
+ 
+However, calculating the usage environment of a recursive-let binder is much
+more challenging -- a recursive-let-bound variable in its own definition does
+not yet have a usage environment when it's being computed. The following
+example uses $y$ linearly if we compute the usage environment of $f$ to be $[y
+\to 1]$, but can we programmatically reach that solution?
+\begin{code}
+letrec f z = case z of
+        True -> f False
+        False -> y
+in f True
+\end{code}
+%
+The preliminary idea to calculate the usage environment of a set of mutually
+recursive let binders is to perform the computation in two separate passes.
+First, calculate a \emph{naive usage environment} by emitting a multiplicity
+when $\lambda$-bound variables are used, usage environments when let-bound and
+case-bound variables are used, and, conversily, a multiplicity for each
+recursive-let-bound variable (rather than a usage environment).
+%
+Second, run algorithm~\ref{computeRecUsages} to produce a \emph{final usage
+environment}. The algorithm receives the recursive binders names and their
+corresponding naive environment.
+%
+Intuitively, the algorithm, for each recursive binder, iterates over all
+(initially naive) usage environments and substitutes the recursive binder by
+the corresponding usage environment (and possibly scaled up by the amount of times that
+recursive binder is used in the environment being updated\footnote{A point of
+contention is using a usage-environment-annotated variable more than once, a
+problem for which a solution is not evidently clear.
+%
+Let-bound variables are heap-allocated and executed only once when evaluated.
+%
+Should using a let-bound variable twice entail using the resources of the
+binder's definition twice? Tentatively no, because the value is only
+effectively computed once.
+}).
+%
+% TODO: I should probably use the re-computed usageEnvs instead of the naiveUsageEnvs.
+% I'm pretty sure it might fail in some inputs if I keep using the naiveUsageEnvs.
+\begin{algorithm}[t]
+$usageEnvs \gets naiveUsageEnvs.map(fst)$\;
+\For{$(bind, U) \in naiveUsageEnvs^*$}{\For{$V \in usageEnvs$}{$V \gets sup(V[bind]*U\setminus\{bind\}, V\setminus\{bind\})$\;}}
+\label{computeRecUsages}
+\caption{computeRecUsages}
+\end{algorithm}
+%
+The type-checking and usage environment inference algorithm combine in the following rule:
+\[
+    \infer*[right=(letrec)]
+    {\Gamma ; x_1 : A_1 \dots x_n : A_n \vdash t_i : A_i \leadsto \{U_{i_\text{naive}}\} \\
+     (U_1 \dots U_n) = \mathit{computeRecUsages}(U_{1_\text{naive}} \dots U_{n_\text{naive}}) \\
+     \Gamma ; x_1 :_{U_1} A_1 \dots x_n :_{U_n} A_n \vdash u : C \leadsto \{V\}}
+    {\Gamma \vdash \text{let } x_1 :_{U_1} A_1 = t_1 \dots x_n :_{U_n} A_n = t_n \text{ in } u : C \leadsto \{V\}}
+\]
 
-\begin{itemize}
-\item ilustrar
-\end{itemize}
+% TODO: Mostrar exemplo a funcionar com o algoritmo?
 
 \subsection{Validating the Work}
 
@@ -413,88 +480,91 @@ expand chart=\textwidth
 % If we annotate the let bound variables with their usage and emit that usage when
 % we come across those variables, we can solve the linearity issues with inlining.
 
-\subsection{Recursive Lets}
+% \subsection{Recursive Lets}
 
-A recursive let binds a variable to an expression that might use the bound
-variable in its body. Certain optimisations can create a recursive let that uses
-linearly bound variables in its binder body. We want to treat recursive lets
-similarly to lets: attribute to bound variables a usage environment and emit it
-when the variable is used.
+% A recursive let binds a variable to an expression that might use the bound
+% variable in its body. Certain optimisations can create a recursive let that uses
+% linearly bound variables in its binder body. We want to treat recursive lets
+% similarly to lets: attribute to bound variables a usage environment and emit it
+% when the variable is used.
 % TODO: Replace "certain" with concrete examples
 
-The challenging part about determining the usage environment of the variables bound
-by a recursive let is knowing what usage to emit inside their own body, when
-computing said usage environment. The example below uses $x$ linearly % \ref{example_letrec}
-but how can we prove it? If we are able to somehow compute $f$'s usage
-environment to $x := 1$, we know $x$ is used once when $f$ is applied to
-$\mathit{True}$.
+% The challenging part about determining the usage environment of the variables bound
+% by a recursive let is knowing what usage to emit inside their own body, when
+% computing said usage environment. The example below uses $x$ linearly % \ref{example_letrec}
+% but how can we prove it? If we are able to somehow compute $f$'s usage
+% environment to $[x \to 1]$, we know $x$ is used once when $f$ is applied to
+% $\mathit{True}$.
 
-\begin{code}
-letrec f = \case
-        True -> f False
-        False -> x
-in f True
-\end{code}
+% \begin{code}
+% letrec f = \case
+%         True -> f False
+%         False -> x
+% in f True
+% \end{code}
 
-The key idea to computing the usage environment of multiple variables that use
-themselves in their definition body is to perform the computation in two separate passes. First,
-calculate a naive environment by emiting free variables multiplicities as usual
-while treating the recursive-let bound variables as free ones. Second, pass the
-variables names and their corresponding naive environment as input to
-algorithm~\ref{computeRecUsages} to get a final usage environment. Intuitively,
-the algorithm, for each recursive binder, iterates over all (initially naive) usage
-environments and substitutes the recursive binder by the corresponding usage
-environment, scaled up by the amount of times that recursive binder is used in
-the environment being updated.
+% The key idea to computing the usage environment of multiple variables that use
+% themselves in their definition body is to perform the computation in two
+% separate passes. First, calculate a naive environment by emiting free variables
+% multiplicities as usual while treating the recursive-let bound variables as
+% free ones. Second, pass the variables names and their corresponding naive
+% environment as input to algorithm~\ref{computeRecUsages} to get a final usage
+% environment. Intuitively, the algorithm, for each recursive binder, iterates
+% over all (initially naive) usage environments and substitutes the recursive
+% binder by the corresponding usage environment, scaled up by the amount of times
+% that recursive binder is used in the environment being updated.
 
-The algorithm for computing the usage environment of a set of
-recursive definitions works as follows. An at least informal proof
-that the algorithm is correct should eventually follow this.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% The algorithm for computing the usage environment of a set of
+% recursive definitions works as follows. An at least informal proof
+% that the algorithm is correct should eventually follow this.
+% 
+% \begin{itemize}
+%     \item Given a list of functions and their naive environment computed from
+%         the body and including the recursive function names ($(f, F), (g, G),
+%         (h, H)$ in which there might exist multiple occurrences of $f, g, h$ in $F, G, H$
+%     \item For each bound rec var and its environment, update all bindings and
+%         their usage as described in the algorithm
+%     \item After iterating through all bound rec vars, all usage environments
+%         will be free of recursive bind usages, and hence "final"
+% \end{itemize}
+% 
+% Note that the difficulty of calculating a usage environment for $n$
+% recursive-let bound variables increases quadratically, i.e. the algorithm has
+% $O(n^2)$ complexity, but this is not a problem since it's rare to have more than
+% a handful of binders in the same recursive let block.
+% 
+% % TODO: I should probably use the re-computed usageEnvs instead of the naiveUsageEnvs.
+% % I'm pretty sure it might fail in some inputs if I keep using the naiveUsageEnvs.
+% \begin{algorithm}
+% $usageEnvs \gets naiveUsageEnvs.map(fst)$\;
+% \For{$(bind, U) \in naiveUsageEnvs$}{
+%     \For{$V \in usageEnvs$}{
+%         $V \gets sup(V[bind]*U\setminus\{bind\}, V\setminus\{bind\})$
+%     }
+% }
+% \caption{computeRecUsages\label{computeRecUsages}}
+% \end{algorithm}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\begin{itemize}
-    \item Given a list of functions and their naive environment computed from
-        the body and including the recursive function names ($(f, F), (g, G),
-        (h, H)$ in which there might exist multiple occurrences of $f, g, h$ in $F, G, H$
-    \item For each bound rec var and its environment, update all bindings and
-        their usage as described in the algorithm
-    \item After iterating through all bound rec vars, all usage environments
-        will be free of recursive bind usages, and hence "final"
-\end{itemize}
+% Putting the usage environment idea together with the algorithm we obtain the following typing rule:
 
-Note that the difficulty of calculating a usage environment for $n$
-recursive-let bound variables increases quadratically, i.e. the algorithm has
-$O(n^2)$ complexity, but this is not a problem since it's rare to have more than
-a handful of binders in the same recursive let block.
-
-% TODO: I should probably use the re-computed usageEnvs instead of the naiveUsageEnvs.
-% I'm pretty sure it might fail in some inputs if I keep using the naiveUsageEnvs.
-\begin{algorithm}
-$usageEnvs \gets naiveUsageEnvs.map(fst)$\;
-\For{$(bind, U) \in naiveUsageEnvs$}{
-    \For{$V \in usageEnvs$}{
-        $V \gets sup(V[bind]*U\setminus\{bind\}, V\setminus\{bind\})$
-    }
-}
-\caption{computeRecUsages\label{computeRecUsages}}
-\end{algorithm}
-
-Putting the usage environment idea together with the algorithm we obtain the following typing rule:
-
-\begin{mathparpagebreakable}
-    \infer*[right=(letrec)]
-    {\Gamma ; x_1 : A_1 \dots x_n : A_n \vdash t_i : A_i \leadsto \{U_{i_\text{naive}}\} \\
-     (U_1 \dots U_n) = \mathit{computeRecUsages}(U_{1_\text{naive}} \dots U_{n_\text{naive}}) \\
-     \Gamma ; x_1 :_{U_1} A_1 \dots x_n :_{U_n} A_n \vdash u : C \leadsto \{V\}}
-    {\Gamma \vdash \text{let } x_1 :_{U_1} A_1 = t_1 \dots x_n :_{U_n} A_n = t_n \text{ in } u : C \leadsto \{V\}}
-\end{mathparpagebreakable}
-
-Instantiating the usage environment solution according to the above description,
-here's an informal proof that the previous example is well typed: We %\ref{example_letrec}
-compute the naive usage environment of $f$ to be $x := 1, f := 1$. We compute
-its actual usage environment by scaling the naive environment of $f$ without $f$
-by the amount of times $f$ appears in the naive environment of $f$ ($1*[x :=
-1]$) and get $x := 1$. Finally, we emit $x := 1$ from applying $f$ in the let's
-body.
+% \begin{mathparpagebreakable}
+%     \infer*[right=(letrec)]
+%     {\Gamma ; x_1 : A_1 \dots x_n : A_n \vdash t_i : A_i \leadsto \{U_{i_\text{naive}}\} \\
+%      (U_1 \dots U_n) = \mathit{computeRecUsages}(U_{1_\text{naive}} \dots U_{n_\text{naive}}) \\
+%      \Gamma ; x_1 :_{U_1} A_1 \dots x_n :_{U_n} A_n \vdash u : C \leadsto \{V\}}
+%     {\Gamma \vdash \text{let } x_1 :_{U_1} A_1 = t_1 \dots x_n :_{U_n} A_n = t_n \text{ in } u : C \leadsto \{V\}}
+% \end{mathparpagebreakable}
+% 
+% TODO: Show example?
+% Instantiating the usage environment solution according to the above description,
+% here's an informal proof that the previous example is well typed: We %\ref{example_letrec}
+% compute the naive usage environment of $f$ to be $x := 1, f := 1$. We compute
+% its actual usage environment by scaling the naive environment of $f$ without $f$
+% by the amount of times $f$ appears in the naive environment of $f$ ($1*[x :=
+% 1]$) and get $x := 1$. Finally, we emit $x := 1$ from applying $f$ in the let's
+% body.
 
 % Following the idea of making let-bound variables remember the usage environment
 % here's an informal description that that example is well typed. We want to
@@ -520,23 +590,25 @@ body.
 % the second branch $[x := 1]$ and for the first branch $[rec := 1]$. Then, we'd
 % unify them with $rec \rightarrow [x := 1*1]$, and somehow result in $[x := 1]$
 
-The next example is a linearly invalid program because $x$ is a %~\ref{example_letrec_2}
-linearly bound variable that is used more than once, and shows how this method
-correctly rejects it.
-
-\begin{code}
-letrec f = \case
-         True -> f False + f False
-         False -> x
-    in f True
-\end{code}
-
-To compute the usage environment of $f$ we take its naive environment to be $x
-:= 1, f := 2$. Then, we compute the final environment to be $x := 1$ scaled by
-the usage of $f$, $2*[x := 1]$, resulting in $x := 2$. Now, to lint the
-linearity of the whole let we must ensure the body of the let uses $x$ linearly.
-We emit from the body the usage environment of $f$ ($x := 2$) which uses $x$
-more than once, i.e. not linearly.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% The next example is a linearly invalid program because $x$ is a %~\ref{example_letrec_2}
+% linearly bound variable that is used more than once, and shows how this method
+% correctly rejects it.
+% 
+% \begin{code}
+% letrec f = \case
+%          True -> f False + f False
+%          False -> x
+%     in f True
+% \end{code}
+% 
+% To compute the usage environment of $f$ we take its naive environment to be $x
+% := 1, f := 2$. Then, we compute the final environment to be $x := 1$ scaled by
+% the usage of $f$, $2*[x := 1]$, resulting in $x := 2$. Now, to lint the
+% linearity of the whole let we must ensure the body of the let uses $x$ linearly.
+% We emit from the body the usage environment of $f$ ($x := 2$) which uses $x$
+% more than once, i.e. not linearly.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % To compute the usage environment of $f$ we take the second branch usage
 % environment $[x := 1]$ and the first branch usage $[rec := 1+1]$ and unify them,

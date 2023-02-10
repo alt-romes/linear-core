@@ -46,6 +46,7 @@
 \newcommand{\bang}{{!}}
 
 \newcommand{\llet}[2]{\mathsf{let}~#1~\mathsf{in}~#2}
+\newcommand{\lletrec}[2]{\mathsf{letrec}~#1~\mathsf{in}~#2}
 \newcommand{\ccase}[2]{\mathsf{case}~#1~\mathsf{of}~#2}
 
 \title{Linting Linearity in Core/System FC}
