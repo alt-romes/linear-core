@@ -1,5 +1,6 @@
 \documentclass{lwnovathesis}
  
+\usepackage{pgfgantt} 
 \usepackage{todonotes}
 \usepackage{cmll}
 \usepackage{amssymb}
@@ -120,7 +121,7 @@ twice are flagged as type errors. Linear types can thus be used to,
 for example, statically guarantee
 that file handles, socket descriptors, and allocated memory is freed exactly
 once (leaks and double-frees become type errors)~\cite{},
-and channel-based communication protocols are deadlock-free~\cite{},
+and channel-based communication protocols are deadlock-free~\cite{10.1007/978-3-642-15375-4_16},
 % implement safe
 % high-performance language interoperability~\cite{}, 
 %guarantee that quantum entangled states are not duplicated~\cite{}
@@ -146,7 +147,8 @@ in the two different calls to \texttt{free}. With a linear type system, the
 program above \emph{does not typecheck}! In this sense, linear typing
 effectively ensures the program does not compile with a double-free error.
 % TODO: Do I need this:
-In Section~\ref{linear-types} we give a formal account of linear types and provide additional examples.
+In Section~\ref{sec:linear-types} we give a formal account of linear types and
+provide additional examples.
 
 Despite their promise and their extensive presence in research
 literature~\cite{}, the effective design of the combination of linear and
@@ -161,7 +163,10 @@ ownership types build on linear types to guarantee memory safety
 without garbage collection or reference counting, and, more recently,
 Haskell~\cite{cite:linearhaskell}, a \emph{purely functional} and
 \emph{lazy} language.
+% TODO: Extend above: it's the language of our focus
 
+% TODO: Better sentence here, why do we also want linearity in Haskell?
+% linear types
 Linearity in Haskell stands out from linearity in Rust and Idris 2
 due to the following reasons:
 
@@ -199,11 +204,11 @@ due to the following reasons:
 % Linear core good
 Aligned with the philosophy of having a \emph{typed} intermediate language, the
 integration of linearity in Haskell required extending \textbf{Core} with
-linear types. Just as \emph{typed} Core ensures that the translation of Haskell
-(dubbed \emph{desugaring}) and the subsequent optimizing transformations are
-correctly implemented, \emph{linearly typed} Core guarantees that linear
-resource usage in the source language is not violated by the translation
-process and the compiler optimization passes.
+linear types. Just as a \emph{typed} Core ensures that the translation from
+Haskell (dubbed \emph{desugaring}) and the subsequent optimizing
+transformations are correctly implemented, a \emph{linearly typed} Core
+guarantees that linear resource usage in the source language is not violated by
+the translation process and the compiler optimization passes.
 %
 It is crucial that the program behaviour enforced by linear types is \emph{not}
 changed by the compiler in the desugaring or optimization stages (optimizations
@@ -211,8 +216,8 @@ should not destroy linearity!) and a linearity aware Core typechecker is key in
 providing such guarantees.
 %TODO: linearidade pode informar otimizacoes
 %
-Additionally, a linear Core can inform Core-to-core optimizing
-transformations~\cite{cite:let-floating,peytonjones1997a} in order to produce
+Additionally, a linear Core can inform Core-to-Core optimizing
+transformations~\cite{cite:let-floating,peytonjones1997a,cite:linearhaskell} in order to produce
 more performant programs.
 
 
@@ -241,41 +246,55 @@ point is not evidently clear:
 if we can typecheck linearity in the surface level Haskell why do we fail to do
 so in Core?
 %
-The desugaring process from surface level Haskell to Core and the subsequent
-Core-to-Core optimizing transformations eliminate and rearrange most of the
-syntactic constructs through which linearity checking is performed, often
+The desugaring process from surface level Haskell to Core, and the subsequent
+Core-to-Core optimizing transformations, eliminate and rearrange most of the
+syntactic constructs through which linearity checking is performed -- often
 resulting in programs completely different from the original.
 
-Consider the minimal example of a function that let binds... this is all quite
-hard: the simple let example wouldn't type check in Haskell, so making it
-typecheck in Core would perhaps entail explaining that we also desire to
-typecheck more linearity in Core than in Haskell.
-\begin{code}
-f x = let y = x in y
-\end{code}
-Moreover, I'm re-thinking our definitions for usage and using usage
-environments to type let bindings. $\llet{y = x+1}{y + y}$ might either
-evaluate $x+1$ only once if $y$ is compiled to a heap allocation or twice if
-$y$ is inlined, and twice if it's inlined just once? If we're conservative we
-always assume it could be consumed the maximum amount of times, and our typing
-rule using usage environments would be correct. This simple example raises many
-questions.
+However, these transformed programs that no longer type-check because of
+linearity are \emph{semantically linear}, that is, linear resources are still
+used exactly once, despite the type-system no longer accepting those programs.
+In order to maintain Core linearly-typed accross transformations, Core must be
+extended with additional linearity information to allow type-checking linearity
+in Core where we currently do not.
 
-\begin{itemize}
-\item Exemplo de um programa que fica borked pelas otimizacoes
-\item Explicar que moralmente a linearidade nao foi borked, e so a
-  ``sintaxe'' que e insuficiente.
+% TODO:
+% Consider the minimal example of a function that let binds... this is all quite
+% hard: the simple let example wouldn't type check in Haskell, so making it
+% typecheck in Core would perhaps entail explaining that we also desire to
+% typecheck more linearity in Core than in Haskell.
+% \begin{code}
+% f x = let y = x in y
+% \end{code}
+% Moreover, I'm re-thinking our definitions for usage and using usage
+% environments to type let bindings. $\llet{y = x+1}{y + y}$ might either
+% evaluate $x+1$ only once if $y$ is compiled to a heap allocation or twice if
+% $y$ is inlined, and twice if it's inlined just once? If we're conservative we
+% always assume it could be consumed the maximum amount of times, and our typing
+% rule using usage environments would be correct. This simple example raises many
+% questions.
+
+% \begin{itemize}
+% \item Exemplo de um programa que fica borked pelas otimizacoes
+% \item Explicar que moralmente a linearidade nao foi borked, e so a
+%   ``sintaxe'' que e insuficiente.
 % \item Mencionar (muito brevemente) que com algumas extensoes a
 %   informacao disponivel, era possivel validar coisas, que e
 %   ultimamente o objectivo deste trabalho.
-\end{itemize}
+% \end{itemize}
+
+% \begin{itemize}
+% \item é necessário uma extensao ao Core que enriquece a informação de linearidade
+% \item para poder ter mais context no qual analisar os programas
+% \item mencionar multiplicity annotaitons só depois, e forward reference
+% \end{itemize}
 
 Concluding, by extending Core / System $F_C$ with linearity and multiplicity
 annotations such that we can desugar all of Linear Haskell and validate it
 accross transformations taking into consideration Core's call-by-need
 semantics, we can validate the surface level linear type's implementation, we
 can guarantee optimizing transformations do not destroy linearity, and we might
-be able to inform optimizing transformations with the linearity annotations.
+be able to inform optimizing transformations with linearity.
 
 % Consider the following recursive let
 % definition, where $x$ is a linear variable that must be used exactly once, would
@@ -347,16 +366,27 @@ be able to inform optimizing transformations with the linearity annotations.
 
 \section*{Goals}
 
-Copiar do outro lado
+From a high-level view, our goals for the dissertation include:
+
+% Copiar do outro lado. qual é o objetivo. extender coisas de type syhstem e type checking
+% Ser um bocadinho mais concreto sobre a implementação no Core.
 
 \begin{itemize}
-\item bla bla and bla
-  
+\item Extending Core's type system and type-checking algorithm with additional
+linearity information in order to successfully type-check linearity in Core
+across transformations;
+\item Validating that our type-system accepts programs before and after each
+transformation is applied;
+\item Arguing the soundness of the resulting system (i.e. no semantically
+non-linear programs are deemed linear);
+\item Implementing our extensions to Core in GHC, the leading Haskell Compiler.
 \end{itemize}
 
 
 \include{chapters/c2.tex}
+
 \include{chapters/c3.tex}
+
 
 \bibliographystyle{plain}
 \bibliography{references}

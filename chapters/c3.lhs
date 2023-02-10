@@ -27,9 +27,9 @@ the function argument to be consumed unrestrictedly, i.e., zero or more times.
 % is consumed exactly once.
 
 As mentioned in Section~\ref{sec:core}, GHC Haskell features two typed
-languages in its pipeline: Haskell and Core.
+languages in its pipeline: Haskell and its main intermediate language, Core
 %
-Core is a much smaller language than the whole of Haskell (even though we can
+(Core is a much smaller language than the whole of Haskell, even though we can
 compile the whole of Haskell to Core).
 %
 The addition of linear types to
@@ -38,10 +38,11 @@ Linear Haskell only describes an extension to the surface-level Haskell type
 system, not Core. Nonetheless, in practice, Core is linearity-aware.
 
 We want Core and its type system to give us guarantees about desugaring and
-optimizing transformations regard to linearity just as Core does for types -- a
-linearly typed Core ensures that linearly-typed programs remain correct both
-after desugaring and across all GHC optimizing transformations, i.e.~linearity
-is preserved when desugaring and optimisations should not destroy linearity.
+optimizing transformations with regard to linearity just as Core does for types
+-- a linearly typed Core ensures that linearly-typed programs remain correct
+both after desugaring and across all GHC optimizing transformations,
+i.e.~linearity is preserved when desugaring and optimisations should not
+destroy linearity.
 
 % \todo[inline]{Nao e necessario reexplicar o que e o Core, o que e
 %   preciso aqui e explicar que o desugaring tem anotacoes de
@@ -73,31 +74,82 @@ where a linear term is still \emph{consumed exactly once} -- this is compounded
 by lazy evaluation driving a non-trivial mismatch between syntactic and
 semantic linearity.
 
-\todo[inline]{Um exemplo ou dois para ilustrar o problema}
-
-Therefore, the Core linear type-checker rejects various valid programs after
-desugaring and optimizing transformations, because linearity is seemingly
-violated.
+Consider the example in Figure~\ref{fig:motivation-1}, an expression in which
+$y$ and $z$ are variables bound by a $\lambda$-abstraction, and both are
+annotated with a multiplicity of \texttt{1}. Note that let-binding $x$ doesn't
+necessarily consume $y$ and $z$ because of Core's call-by-need semantics.
 %
-The current solution to the linear type-checker rejecting valid programs is to effectively
-disable the linear linter, since otherwise disabling optimisations can incur
-significant performance costs.
+\begin{figure}[h]
+  \begin{minipage}[l]{0.49\textwidth}
+    \begin{code}
+    let x = (y, z) in
+    case e of
+      Pat1 -> … x …
+      Pat2 -> … y … z …
+    \end{code}
+  \end{minipage}
+  \begin{minipage}[r]{0.49\textwidth}
+    \caption{Example Inlining}
+  \end{minipage}
+\label{fig:motivation-1}
+\end{figure}
+%
+In the example, it might not seem as though $y$ and $z$ are both being
+consumed linearly but, in fact, they both are. Given that in the first branch
+we use $x$ -- which entails using $y$ and $z$ linearly -- and in the second
+branch we use $y$ and $z$ directly, in both branches we are consuming both $y$
+and $z$ linearly.
+
+Similarly, consider the program in Figure~\ref{fig:motivation-2} with a
+let-binding that uses $x$, a linearly bound $\lambda$-variable. In surface
+level Haskell, let-bindings always consume linear variables \texttt{Many} times
+to avoid dealing with the complexity of call-by-need semantics, so this program
+would not type-check, because $x$ is being consumed \texttt{Many} times instead
+of \texttt{1}.
+%
+\begin{figure}[h]
+  \begin{minipage}[l]{0.49\textwidth}
+    \begin{code}
+    f :: a %1 -> a
+    f x = let y = x+2 in y
+    \end{code}
+  \end{minipage}
+  \begin{minipage}[r]{0.49\textwidth}
+    \caption{Example Let}
+  \end{minipage}
+\label{fig:motivation-2}
+\end{figure}
+%
+Despite not being accepted by the surface-level language, linear programs using
+lets occur naturally in Core due to optimising transformations that create let
+bindings, such as $\beta$-reduction. In a similar fashion, programs which
+violate syntatic linearity for other reasons other than let bindings are
+produced by Core transformations.
+
+% Therefore, the Core linear type-checker rejects various valid programs after
+% desugaring and optimizing transformations, because linearity is seemingly
+% violated.
+%
+The current solution to valid programs being rejected by Core's linear
+type-checker is to effectively disable the linear type-checker since,
+alternatively, disabling optimizing transformations which violate linearity
+incurs significant performance costs.
 %
 However, we believe that GHC's transformations are correct, and it is the
 linear type-checker and its underlying type system that cannot sufficiently
 accommodate the resulting programs.
 
 Additionally, some Core-to-Core transformations such as let-floating and
-inlining already depend on linear type systems to produce more performant
-programs. Valid linearity annotations in Core could potentially inform and
-define more optimizations.
+inlining already depend on custom linear type systems to produce more
+performant programs. Valid linearity annotations in Core could potentially
+inform and define more optimizations.
 
 % TODO: Unnecessary
-In Section~\ref{typingUsageEnvs} we describe usage environments and how they
-solve three distinct problems. In Section~\ref{multiplicityCoercions} we discuss
-the beginning of multiplicity coercions. In Section~\ref{examples} we take
-programs that are currently rejected and show how the type system with our
-extensions can accept them.
+% In Section~\ref{typingUsageEnvs} we describe usage environments and how they
+% solve three distinct problems. In Section~\ref{multiplicityCoercions} we discuss
+% the beginning of multiplicity coercions. In Section~\ref{examples} we take
+% programs that are currently rejected and show how the type system with our
+% extensions can accept them.
 
 \section{Goals}
 
@@ -118,49 +170,102 @@ result from the optimising transformations described in Section~\ref{sec:ghcpipe
 
 \subsection{Extending Core's type system}
 
-The key design goal of the extension of Core's type system is to
-provide enough information so that seemingly syntactically
-non-linear but semantically linear programs are equipped with enough
-typing information so that they are deemed linearly well-typed, while
-ruling out programs that violate linearity from being considered as
-linearly typed.
+The key design goal of the extension of Core's type system is to provide enough
+information so that \emph{syntactically} non-linear but \emph{semantically}
+linear programs are equipped with enough typing information so that they are
+deemed linearly well-typed, while ruling out programs that violate linearity
+from being considered linearly typed.
 %
 To this end, we propose to extend Core's linear type system with
 \emph{usage annotations} for let, letrec and case binder bound
-variables\todo{dizer pq estes binders especificamente}. Given time, we will also explore a new kind of coercion for
+variables. Given time, we will also explore a new kind of coercion for
 multiplicities to validate programs that combine GADTs with
 multiplicities.
 
-\todo[inline]{Much of the work to account for linearity in Core with regard to
-non-strict semantics of let-bindings might translate back to Haskell, though
-the complexity of Haskell might make this quite hard}
+% \todo[inline]{Much of the work to account for linearity in Core with regard to
+% non-strict semantics of let-bindings might translate back to Haskell, though
+% the complexity of Haskell might make this quite hard}
 
-\subsubsection{Usage Annotations / Typing Usage Environments}
+\subsection{Typing Usage Environments}
 
-\todo[inline]{Mover para aqui a parte do que sao as usage annotations
-  e como funcionam. Acho que deves apresentar em 2 partes, uma e que
-  se tivesses os usage envs bem calculados para tudo, resolvia
-  problemas. Outra parte: calcular os usage environments e desafios
-  associados. A tua abordagem passa entao por inferir os usage
-  environments once and for all quando constrois um letrec, etc, e
-  depois usar ``a regra''. Penso que nao precisas de apresentar os
-  algoritmos em detalhe. Para apresentares regras, explica bem o que
-  elas significam.}
+% \todo[inline]{Mover para aqui a parte do que sao as usage annotations
+%   e como funcionam. Acho que deves apresentar em 2 partes, uma e que
+%   se tivesses os usage envs bem calculados para tudo, resolvia
+%   problemas. Outra parte: calcular os usage environments e desafios
+%   associados. A tua abordagem passa entao por inferir os usage
+%   environments once and for all quando constrois um letrec, etc, e
+%   depois usar ``a regra''. Penso que nao precisas de apresentar os
+%   algoritmos em detalhe. Para apresentares regras, explica bem o que
+%   elas significam.}
 
+% To give some further context, of the linear mini-core document, what isn't
+% implemented in `-dlinear-core-lint` is:
+%
+% - The let are partially implemented (the usage environment annotation is
+% inferred, not maintained, which is not enough for recursive let).
+% Difficulty: what happens to the usage annotation if the right-hand side of a
+% let binding gets substituted?
+%
+% - The rule for the case-binder using a usage-environment annotation is not
+% implemented. The rule that is currently implemented is a much more clever
+% rule involving some algebra on multiplicities, but also quite a bit less
+% powerful.
+
+A solution to a handful of type-checking issues regarding certain variable
+binders is to extend said binders with a \emph{usage environment}. A usage
+environment is a mapping from variables to multiplicities. The idea is to
+annotate let, recursive lets and case binders with a usage environment rather
+than a multiplicity (in contrast, a $\lambda$-bound variable has a multiplicity
+instead of a usage environment). Upon finding a variable annotated with a
+usage environment, we type linearity as though we were using all variables with
+corresponding multiplicities from that usage environment.
+
+There are two sides to the usage environment solution. First, our type system
+must be able to type-check Core programs in a context where let, recursive let
+and case binders have usage environments. Secondly, the usage environments must
+be inferred by the type-checking algorithm when relevant binders are created
+and maintained throughout the Core-to-Core passes to ultimately be used by the
+typing rules.
+
+With usage environments, the example in Figure~\ref{fig:motivation-2}, in which
+$x$ is a linear variable, would type-check by annotating $y$ with a usage
+environment of $[x \to 1]$, because the expression bound by $y$ uses $x$
+exactly once, \emph{and} emitting that $x$ is used once when $y$ is used, that
+is, emitting $y$'s usage environment upon using $y$.
+
+The example in Figure~\ref{fig:motivation-2} would similarly type-check by
+annotating $x$ with the usage environment $[y \to 1, z \to 1]$ -- to linearly
+type-check that $y$ and $z$ are used linearly, both branches must use $y$ and
+$z$ linearly. Using usage environments, in the first branch, using $x$ amounts
+to using its usage environment (using $y$ and $z$ once) and, in the second
+branch, $y$ and $z$ are used exactly once; meaning $y$ and $z$ are used exactly
+once in both branches.
+
+% What about using $x$ twice? Do we emit its environment twice? Or just once?
+% :) The let binding is a heap allocation that only occurs once.
+
+
+
+
+\begin{itemize}
+\item calcular usage envs não é trivial
+\item ilustrar
+\end{itemize}
 
 \subsection{Validating the Work}
 
-The ultimate measure of success is enabling
-activates and runs the linear type-checker after desugaring and each
-Core-to-Core transformation. In its current implementation, enabling this flag
-rejects many linearly valid programs. Ideally, by the end of our research and
-implementation, this flag could be enabled by default and accommodate all
-existing transformations. Realistically, we want to accept as many diverse
+The greatest measure of success is validating linearity in all programs
+compiled with GHC, by enabling the linear type-checker after desugaring and
+each Core-to-Core transformation. In its current implementation, the linear
+Core type-checker, which is enabled through a flag, rejects many linearly valid
+programs. Ideally, by the end of our research and implementation, this flag
+could be enabled by default and accommodate all programs to which existing
+transformations are applied. Realistically, we want to accept as many diverse
 transformations as possible while still preserving linearity, even if we are
 unable to account for all of them.
 
 For each transformation we successfully support in our type system, we will
-prove that it does indeed preserve linearity by type-checking the input program
+argue that it does indeed preserve linearity by type-checking the input program
 to the transformation and the ouptut program.
 
 Quantitively, we will benchmark the variation in compilation time and
@@ -171,13 +276,14 @@ being run.
 The linear Core type-checker validation and benchmarks will be done by running
 the GHC testsuite and compiling the \emph{head.hackage} package set
 %
-\footnote{\emph{head.hackage} is a package set comprised of relevant
-libraries of the Haskell ecosystem which are compiled by, and patched against,
-GHC's latest commit.}
+\footnote{\emph{head.hackage} is a package set comprised of relevant libraries
+of the Haskell ecosystem which are compiled by, and patched against, GHC's
+latest commit.}
 %
-with the \verb=-dlinear-core-lint= flag. The GHC project also automatically
-runs tests and benchmarks through its continuous integration (CI) pipeline,
-which we intend to use to further validate our implementation continuously.
+with the \verb=-dlinear-core-lint= flag (which enables the linear Core
+type-checker). The GHC project also automatically runs tests and benchmarks
+through its continuous integration (CI) pipeline, which we intend to use to
+further validate our implementation continuously.
 
 % \todo[inline]{Falar um pouco de como tencionas validar o que
 %   fazes. Diria que ha a validacao qualitativa obvia -- que
@@ -187,6 +293,7 @@ which we intend to use to further validate our implementation continuously.
 
 \subsection{Tasks and Chronogram}
 
+% TODO: 2 coisas, type checking e inferir os usage environments
 In the dissertation, we will propose an extension to Core / System $F_C$'s type
 system and type-checking algorithm with additional linearity information (such
 as \emph{usage environments}) in order to accommodate linear programs in Core
@@ -195,14 +302,12 @@ desugaring and optimization. This type-system entails augmenting Core's syntax
 to support additional linearity information and extending existing typing
 judgments and rules to account for linearity.
 
-Furthermore, the extended type-system must be proved to be sound, that is, our
-type-system must provably not accept any programs which aren't linear. We will
-prove the system to be sound using formal methods\todo{?}.
+Furthermore, we will argue the soundness of our system, that is, our
+type-system must provably not accept any programs which aren't linear.
 
 Because we want to ensure our type system validates programs before and after
-optimizing transformations are applied, we will formally/informally validate
-that each optimizing transformation does not destroy linearity in programs wrt
-our type system.
+optimizing transformations are applied, we will validate that each optimizing
+transformation does not destroy linearity in programs wrt our type system.
 
 We will implement this extension to Core in GHC, the leading Haskell compiler.
 Core's type-system implementation, internally known as the Core linter, will
@@ -222,8 +327,30 @@ Throughout this, we will write the final dissertation document, using it as a
 driving force for the research which will cristalize our ideas and help
 communicate them. GHC is a large project with many involved parties -- it is
 crucial that we communicate our ideas and changes clearly, so we can benefit
-from other contributor's expert feedback, and ultimately merge our changes to
+from other contributors expert feedback, and ultimately merge our changes to
 Core upstream.
+
+We present a work plan in Figure~\ref{fig:work-plan}.
+
+\begin{figure}
+
+\begin{ganttchart}[
+expand chart=\textwidth
+]{1}{12}
+\gantttitle{2011}{12} \\
+\gantttitlelist{1,...,12}{1} \\
+\ganttgroup{Group 1}{1}{7} \\
+\ganttbar{Task 1}{1}{2} \\
+\ganttlinkedbar{Task 2}{3}{7} \ganttnewline
+\ganttmilestone{Milestone}{7} \ganttnewline
+\ganttbar{Final Task}{8}{12}
+\ganttlink{elem2}{elem3}
+\ganttlink{elem3}{elem4}
+\end{ganttchart}
+
+\caption{Work Plan}
+\label{fig:work-plan}
+\end{figure}
 
 
 % \todo[inline]{Fazer uma ``expansao'' da lista itemizada que fiz antes mas com mais
@@ -245,36 +372,36 @@ Core upstream.
 % to make those transformations more effective. Next, we formalize this ap-
 % proach; subsequent sections develop the consequences.
 
-\section{Typing Usage Environments\label{typingUsageEnvs}}
+% \section{Typing Usage Environments\label{typingUsageEnvs}}
 
-Haskell has call-by-need semantics that entail that an expression is not
-evaluated when it is let-bound but rather when the binding variable is used.
-This makes it challenging to reason about linearity for let-bound variables. The
-following example fails to typecheck in Haskell, but semantically it is indeed
-linear due to lazy evaluation:
+% Haskell has call-by-need semantics that entail that an expression is not
+% evaluated when it is let-bound but rather when the binding variable is used.
+% This makes it challenging to reason about linearity for let-bound variables. The
+% following example fails to typecheck in Haskell, but semantically it is indeed
+% linear due to lazy evaluation:
 
-\begin{code}
-f :: a %1 -> a
-f x = let y = x in y
-\end{code}
+% \begin{code}
+% f :: a %1 -> a
+% f x = let y = x in y
+% \end{code}
 
-Despite not being accepted by the surface-level language, linear programs using
-lets occur naturally in Core due to optimising transformations that create let
-bindings. In a similar fashion, programs which violate syntatic linearity
-for other reasons other than let bindings are produced by Core transformations.
+% Despite not being accepted by the surface-level language, linear programs using
+% lets occur naturally in Core due to optimising transformations that create let
+% bindings. In a similar fashion, programs which violate syntatic linearity
+% for other reasons other than let bindings are produced by Core transformations.
 
-The solution we found to a handful of problems regarding binders is to have a
-\emph{usage environment}. A usage environment is a mapping from variables to
-multiplicities. The main idea is to annotate those binders with a usage
-annotation rather than a multiplicity (in contrast, a lambda-bound variable has
-exactly one multiplicity). When we find a bound variable with a usage
-environment, we type linearity as if we were using all variables with
-corresponding multiplicities from that usage environment.
+% A solution to a handful of type-checking issues regarding binders is to extend
+% binders with a \emph{usage environment}. A usage environment is a mapping from
+% variables to multiplicities. The main idea is to annotate those binders with a
+% usage annotation rather than a multiplicity (in contrast, a lambda-bound
+% variable has exactly one multiplicity). When we find a bound variable with a
+% usage environment, we type linearity as if we were using all variables with
+% corresponding multiplicities from that usage environment.
 
-In the above example, this would amount to annotating $y$ with a usage
-environment $x := 1$ (because the expression bound by $y$ uses $x$ one time).
-Upon using $y$, we are actually using $x$ one time, and therefore linearity is
-preserved.
+% In the above example, this would amount to annotating $y$ with a usage
+% environment $x := 1$ (because the expression bound by $y$ uses $x$ one time).
+% Upon using $y$, we are actually using $x$ one time, and therefore linearity is
+% preserved.
 
 % The first set of problems appears in the core-to-core optimisation passes. GHC
 % applies many optimising transformations to \emph{Core} and we believe those
@@ -326,27 +453,27 @@ usage environment. The typing rule is the following:
     {\Gamma \vdash \text{let } x :_{U} A = t \text{ in } u : C \leadsto \{V\}}
 \end{mathparpagebreakable}
 
-Take for example an expression in which $y$ and $z$ are lambda-bound with a
-multiplicity of one. In the following code it might not appear as if $y$
-and $z$ are both being consumed linearly, but indeed they are since in the first
-branch we use $x$ -- which means using $y$ and $z$ linearly -- and we use $y$
-and $z$ directly on the second branch. Note again that let binding $x$ doesn't
-consume $y$ and $z$ because of lazy evaluation. Only \emph{using} $x$ consumes $y$ and
-$z$.
+% Take for example an expression in which $y$ and $z$ are lambda-bound with a
+% multiplicity of one. In the following code it might not appear as if $y$
+% and $z$ are both being consumed linearly, but indeed they are since in the first
+% branch we use $x$ -- which means using $y$ and $z$ linearly -- and we use $y$
+% and $z$ directly on the second branch. Note again that let binding $x$ doesn't
+% consume $y$ and $z$ because of lazy evaluation. Only \emph{using} $x$ consumes $y$ and
+% $z$.
+% 
+% \begin{code}
+% let x = (y, z) in
+% case e of
+%   Pat1 -> … x …
+%   Pat2 -> … y … z …
+% \end{code}
 
-\begin{code}
-let x = (y, z) in
-case e of
-  Pat1 -> … x …
-  Pat2 -> … y … z …
-\end{code}
-
-If we annotate the $x$ bound by the let with a usage environment $\delta$
-mapping all free variables in its binder to a multiplicity ($\delta = [y := 1, z
-:= 1]$), we could, upon finding $x$, simply emit that $y$ and $z$ are consumed
-once. When typing the second branch we'd also see that $y$ and $z$ are used
-exactly once. Because both branches use $y$ and $z$ linearly, the whole case
-expression uses $y$ and $z$ linearly.
+% If we annotate the $x$ bound by the let with a usage environment $\delta$
+% mapping all free variables in its binder to a multiplicity ($\delta = [y := 1, z
+% := 1]$), we could, upon finding $x$, simply emit that $y$ and $z$ are consumed
+% once. When typing the second branch we'd also see that $y$ and $z$ are used
+% exactly once. Because both branches use $y$ and $z$ linearly, the whole case
+% expression uses $y$ and $z$ linearly.
 
 % Currently, in GHC, we don't annotate let-bound variables with a usage
 % environment, but we already calculate a usage environment and use it to check
@@ -629,32 +756,35 @@ In the second example, we know annotate the only branch with usage environment
 $U_z = [x := 1, y := 1]$. Upon the usage of $z$ we emit $x$ and $y$ --
 effectively using both -- thus linearity is preserved.
 
-\section{Multiplicity Coercions\label{multiplicityCoercions}}
 
-The second set of problems arises from our inability to coerce a multiplicity
-into another (or say that one is submultiple of another?).
-
-% When we pattern match on a GADT we ...
-
-Taking the following example we can see that we don't know how to say
-that x is indeed linear in one case and unrestricted in the other, even though
-it is according to its type. We'd need some sort of coercion to coerce through
-the multiplicity to the new one we uncover when we pattern match on the GADT
-evidence (...)
-
-\begin{code}
-data SBool :: Bool -> Type where
-  STrue :: SBool True
-  SFalse :: SBool False
-
-type family If b t f where
-  If True t _ = t
-  If False _ f = f
-
-dep :: SBool b -> Int %(If b One Many) -> Int
-dep STrue x = x
-dep SFalse _ = 0
-\end{code}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% \section{Multiplicity Coercions\label{multiplicityCoercions}}
+% 
+% The second set of problems arises from our inability to coerce a multiplicity
+% into another (or say that one is submultiple of another?).
+% 
+% % When we pattern match on a GADT we ...
+% 
+% Taking the following example we can see that we don't know how to say
+% that x is indeed linear in one case and unrestricted in the other, even though
+% it is according to its type. We'd need some sort of coercion to coerce through
+% the multiplicity to the new one we uncover when we pattern match on the GADT
+% evidence (...)
+% 
+% \begin{code}
+% data SBool :: Bool -> Type where
+%   STrue :: SBool True
+%   SFalse :: SBool False
+% 
+% type family If b t f where
+%   If True t _ = t
+%   If False _ f = f
+% 
+% dep :: SBool b -> Int %(If b One Many) -> Int
+% dep STrue x = x
+% dep SFalse _ = 0
+% \end{code}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
 % \section{Novel rules}
@@ -672,193 +802,195 @@ dep SFalse _ = 0
 % \end{mathparpagebreakable}
 
 
-\section{Examples\label{examples}}
-
-In this section we present worked examples of programs that currently fail to
-compile with \textbf{-dlinear-core-lint} but would succeed according to the
-novel typing rules we introduced above. Each example belongs to a subsection
-that indicates after which transformation the linting failed.
-
-\subsection{After the desugarer (before optimizations)}
-
-The definition for $\$!$ in \textbf{linear-base}\cite{linearbase} fails to lint after the
-desugarer (before any optimisation takes place) with \emph{Linearity failure in
-lambda: x 'Many $\not\subseteq$ p}
-\begin{code}
-($!) :: forall {rep} a (b :: TYPE rep) p q. (a %p -> b) %q -> a %p -> b
-($!) f !x = f x
-\end{code}
-
-The desugared version of that function follows below. It violates (naive?)
-linearity by using $x$ twice, once to force the value and a second time to call
-$f$. However, the $x$ passed as an argument is actually the case binder and it
-must be handled in its own way. The case binder is the key (as seen
-in~\ref{casebinder}) to solving this
-and many other examples.
-\begin{code}
-($!)
-  :: forall {rep :: RuntimeRep} a (b :: TYPE rep) (p :: Multiplicity)
-            (q :: Multiplicity).
-     (a %p -> b) %q -> a %p -> b
-($!)
-  = \ (@(rep :: RuntimeRep))
-      (@a)
-      (@(b :: TYPE rep))
-      (@(p :: Multiplicity))
-      (@(q :: Multiplicity))
-      (f :: a %p -> b)
-      (x :: a) ->
-      case x of x { __DEFAULT -> f x }
-\end{code}
-
-% Intuitively, this program is linear because forcing the polymorphic value to
-% WHNF ...? Need better semantics of consuming
-%
-The case binder usage rule typechecks this program because $x$ is consumed once,
-the usage environment of the case binder is empty ($x :_\emptyset a$) and,
-therefore, when $x$ is used in $f(x)$, we use its usage environment which is
-empty, so we don't use anything new.
-
-\emph{How are strictness annotations typed in the frontend? The issue is this program
-consumes to value once to force it, and then again to determine the return
-value.}
-
-% Work better the meaning of consumption (does it mean for a value to be reduced
-% to WHNF?). Is consuming = forcing? Why is the above program linear?
-
-As a finishing note on this example, we show the resulting program from
-\textbf{-ddump-simpl} that simply uses a different name for the case binder.
-\begin{code}
-($!)
-  :: forall {rep :: RuntimeRep} a (b :: TYPE rep)
-            (p :: Multiplicity) (q :: Multiplicity).
-     (a %p -> b) %q -> a %p -> b
-($!)
-  = \ (@(rep :: RuntimeRep))
-      (@a)
-      (@(b :: TYPE rep_aSJ))
-      (@(p :: Multiplicity))
-      (@(q :: Multiplicity))
-      (f :: a %p -> b)
-      (x :: a) ->
-      case x of y { __DEFAULT -> f_aDV y }
-\end{code}
-% So in this program we use another name for the case binder, but it still stands
-% for the resulting of evaluating to WHNF; how is it technically different?
-
-\subsection{Common Sub-expression Elimination}
-
-Currently, the CSE seems to transform a linear program that pattern matches on
-constant and returns the same constant into a program that breaks linearity that
-pattern matches on the argument and returns the argument (where in the frontend
-a constant equal to the argument would be returned)
-
-The definition for $\&\&$ in \textbf{linear-base} fails to lint after the common
-sub-expression elimination (CSE) pass transforms the program.
-\begin{code}
-(&&) :: Bool %1 -> Bool %1 -> Bool
-False && False = False
-False && True = False
-True && x = x
-\end{code}
-The issue with the program resulting from the transformation is $x$ being used
-twice in the first branch of the first case expression. We pattern match on y to
-force it (since it's a type without constructor arguments, forcing is consuming)
-and then return $x$ rather than the constant $False$
-\begin{code}
-(&&) :: Bool %1 -> Bool %1 -> Bool
-(&&) = \ (x :: Bool) (y :: Bool) ->
-  case x of w1 {
-    False -> case y of w2 { __DEFAULT -> x };
-    True -> y
-  }
-\end{code}
-At a first glance, the resulting program is impossible to typecheck linearly.
-
-The key observation is that after $x$ is forced into either $True$ or $False$,
-we know $x$ to be a constructor without arguments (which can be created
-without restrictions) and know that where we see $x$ we can as well have
-$True$ or $False$ depending on the branch. However, using $x$ here is very
-unsatisfactory (and linearly unsound?) because $x$ might be an expression, and
-we can't really associate $x$ to the value we pattern matched on (be it $True$
-or $False$). What we really want to have instead of $x$ is the $w1$ case binder --
-it relates directly to the value we pattern matched on, it's a variable rather
-than an expression, and, most importantly, our case-binder-usage idea could be
-applied here as well
-
-% Idea: if $x$ was anotated with some information regarding the CSE then perhaps
-% it could be typechecked (in a system that considered said anotations) -- This is
-% too specific and the case binder environment solution is much cleaner. It just
-% requires that the example is changed into using the case binder $w1$ rather than
-% $x$.
-
-The solution with the unifying case binder usage idea means annotating the case
-binder with its usage environment. For $True$ and $False$ (and other data
-constructors without arguments) the usage environment is always empty (using
-them doesn't entail using any other variable), meaning we can always use the
-case binder instead of the actual constant constructor without issues.
-%
-Concretely, if we had $w1$ instead of the second occurrence of $x$, we'd have
-an empty usage environment for $w1$ in the $False$ branch ($w1 :_\emptyset
-Bool$) and upon using $w1$ we wouldn't use any extra resources
-
-
-To make this work, we'd have to look at the current transformations and see
-whether it would be possible to ensure that CSEing the case scrutinee would
-entail using the case binder instead of the scrutinee. I don't know of a
-situation in which we'd really want the scrutinee rather than the case binder,
-so I hypothetize the modified transformation would work out in practice and
-solve this linearity issue.
-
-
-% In this exact example, the binder has usage environment empty ($w1 := []$),
-% meaning that in the False branch, when we use $x$, if we instead used $w1$ which
-% is equivalent and seems more correct (since it doesn't need the case scrutinee
-% expression to be a variable), then the usage of $w1$ would imply the usage of
-% $[]$ which is nothing and therefore we would preserve linearity
-
-Curiously, the optimised program resulting from running all transformations
-actually does what we expected it with regard to using the constant constructors
-and preserving linearity. So is the issue from running linear lint after a
-particular CSE but it would be fine in the end?
-\begin{code}
-(&&) :: Bool %1 -> Bool %1 -> Bool
-(&&) = \ (x :: Bool) (y :: Bool) ->
-  case x of {
-    False -> case y of { __DEFAULT -> GHC.Types.False };
-    True -> y
-  }
-\end{code}
-
-\subsection{Compiling ghc with -dlinear-core-lint}
-
-From the definition of $\mathit{groupBy}$ in $\mathit{GHC.Data.List.Infinite}$:
-
-\begin{code}
-groupBy :: (a -> a -> Bool) -> Infinite a -> Infinite (NonEmpty a)
-groupBy eq = go
-  where
-    go (Inf a as) = Inf (a:|bs) (go cs)
-      where (bs, cs) = span (eq a) as
-\end{code}
-
-We get a somewhat large resulting core expression, in the middle of which the
-following expression with a linear type -- which currently syntatically violates
-linearity.
-
-\begin{code}
-jp :: ([a], Infinite a) \%1 -> (# [a], Infinite a #)
-jp (wwj :: ([a], Infinite a)) =
-    case wwj of wwj {
-        DEFAULT -> case wwj of { (wA, wB) -> (# wA, wB #) }
-    }
-\end{code}
-
-Using the case binder usage solution, the case binder is annotated with a usage
-environment for the only branch ($U_wwj = \emptyset$) and using $wwj$ is equal
-to using the $\emptyset$. Here it would mean that second \textbf{case of} $wwj$
-doesn't actually use any variables and hence the first $wwj$ isn't used twice.
-
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% \section{Examples\label{examples}}
+% 
+% In this section we present worked examples of programs that currently fail to
+% compile with \textbf{-dlinear-core-lint} but would succeed according to the
+% novel typing rules we introduced above. Each example belongs to a subsection
+% that indicates after which transformation the linting failed.
+% 
+% \subsection{After the desugarer (before optimizations)}
+% 
+% The definition for $\$!$ in \textbf{linear-base}\cite{linearbase} fails to lint after the
+% desugarer (before any optimisation takes place) with \emph{Linearity failure in
+% lambda: x 'Many $\not\subseteq$ p}
+% \begin{code}
+% ($!) :: forall {rep} a (b :: TYPE rep) p q. (a %p -> b) %q -> a %p -> b
+% ($!) f !x = f x
+% \end{code}
+% 
+% The desugared version of that function follows below. It violates (naive?)
+% linearity by using $x$ twice, once to force the value and a second time to call
+% $f$. However, the $x$ passed as an argument is actually the case binder and it
+% must be handled in its own way. The case binder is the key (as seen
+% in~\ref{casebinder}) to solving this
+% and many other examples.
+% \begin{code}
+% ($!)
+%   :: forall {rep :: RuntimeRep} a (b :: TYPE rep) (p :: Multiplicity)
+%             (q :: Multiplicity).
+%      (a %p -> b) %q -> a %p -> b
+% ($!)
+%   = \ (@(rep :: RuntimeRep))
+%       (@a)
+%       (@(b :: TYPE rep))
+%       (@(p :: Multiplicity))
+%       (@(q :: Multiplicity))
+%       (f :: a %p -> b)
+%       (x :: a) ->
+%       case x of x { __DEFAULT -> f x }
+% \end{code}
+% 
+% % Intuitively, this program is linear because forcing the polymorphic value to
+% % WHNF ...? Need better semantics of consuming
+% %
+% The case binder usage rule typechecks this program because $x$ is consumed once,
+% the usage environment of the case binder is empty ($x :_\emptyset a$) and,
+% therefore, when $x$ is used in $f(x)$, we use its usage environment which is
+% empty, so we don't use anything new.
+% 
+% \emph{How are strictness annotations typed in the frontend? The issue is this program
+% consumes to value once to force it, and then again to determine the return
+% value.}
+% 
+% % Work better the meaning of consumption (does it mean for a value to be reduced
+% % to WHNF?). Is consuming = forcing? Why is the above program linear?
+% 
+% As a finishing note on this example, we show the resulting program from
+% \textbf{-ddump-simpl} that simply uses a different name for the case binder.
+% \begin{code}
+% ($!)
+%   :: forall {rep :: RuntimeRep} a (b :: TYPE rep)
+%             (p :: Multiplicity) (q :: Multiplicity).
+%      (a %p -> b) %q -> a %p -> b
+% ($!)
+%   = \ (@(rep :: RuntimeRep))
+%       (@a)
+%       (@(b :: TYPE rep_aSJ))
+%       (@(p :: Multiplicity))
+%       (@(q :: Multiplicity))
+%       (f :: a %p -> b)
+%       (x :: a) ->
+%       case x of y { __DEFAULT -> f_aDV y }
+% \end{code}
+% % So in this program we use another name for the case binder, but it still stands
+% % for the resulting of evaluating to WHNF; how is it technically different?
+% 
+% \subsection{Common Sub-expression Elimination}
+% 
+% Currently, the CSE seems to transform a linear program that pattern matches on
+% constant and returns the same constant into a program that breaks linearity that
+% pattern matches on the argument and returns the argument (where in the frontend
+% a constant equal to the argument would be returned)
+% 
+% The definition for $\&\&$ in \textbf{linear-base} fails to lint after the common
+% sub-expression elimination (CSE) pass transforms the program.
+% \begin{code}
+% (&&) :: Bool %1 -> Bool %1 -> Bool
+% False && False = False
+% False && True = False
+% True && x = x
+% \end{code}
+% The issue with the program resulting from the transformation is $x$ being used
+% twice in the first branch of the first case expression. We pattern match on y to
+% force it (since it's a type without constructor arguments, forcing is consuming)
+% and then return $x$ rather than the constant $False$
+% \begin{code}
+% (&&) :: Bool %1 -> Bool %1 -> Bool
+% (&&) = \ (x :: Bool) (y :: Bool) ->
+%   case x of w1 {
+%     False -> case y of w2 { __DEFAULT -> x };
+%     True -> y
+%   }
+% \end{code}
+% At a first glance, the resulting program is impossible to typecheck linearly.
+% 
+% The key observation is that after $x$ is forced into either $True$ or $False$,
+% we know $x$ to be a constructor without arguments (which can be created
+% without restrictions) and know that where we see $x$ we can as well have
+% $True$ or $False$ depending on the branch. However, using $x$ here is very
+% unsatisfactory (and linearly unsound?) because $x$ might be an expression, and
+% we can't really associate $x$ to the value we pattern matched on (be it $True$
+% or $False$). What we really want to have instead of $x$ is the $w1$ case binder --
+% it relates directly to the value we pattern matched on, it's a variable rather
+% than an expression, and, most importantly, our case-binder-usage idea could be
+% applied here as well
+% 
+% % Idea: if $x$ was anotated with some information regarding the CSE then perhaps
+% % it could be typechecked (in a system that considered said anotations) -- This is
+% % too specific and the case binder environment solution is much cleaner. It just
+% % requires that the example is changed into using the case binder $w1$ rather than
+% % $x$.
+% 
+% The solution with the unifying case binder usage idea means annotating the case
+% binder with its usage environment. For $True$ and $False$ (and other data
+% constructors without arguments) the usage environment is always empty (using
+% them doesn't entail using any other variable), meaning we can always use the
+% case binder instead of the actual constant constructor without issues.
+% %
+% Concretely, if we had $w1$ instead of the second occurrence of $x$, we'd have
+% an empty usage environment for $w1$ in the $False$ branch ($w1 :_\emptyset
+% Bool$) and upon using $w1$ we wouldn't use any extra resources
+% 
+% 
+% To make this work, we'd have to look at the current transformations and see
+% whether it would be possible to ensure that CSEing the case scrutinee would
+% entail using the case binder instead of the scrutinee. I don't know of a
+% situation in which we'd really want the scrutinee rather than the case binder,
+% so I hypothetize the modified transformation would work out in practice and
+% solve this linearity issue.
+% 
+% 
+% % In this exact example, the binder has usage environment empty ($w1 := []$),
+% % meaning that in the False branch, when we use $x$, if we instead used $w1$ which
+% % is equivalent and seems more correct (since it doesn't need the case scrutinee
+% % expression to be a variable), then the usage of $w1$ would imply the usage of
+% % $[]$ which is nothing and therefore we would preserve linearity
+% 
+% Curiously, the optimised program resulting from running all transformations
+% actually does what we expected it with regard to using the constant constructors
+% and preserving linearity. So is the issue from running linear lint after a
+% particular CSE but it would be fine in the end?
+% \begin{code}
+% (&&) :: Bool %1 -> Bool %1 -> Bool
+% (&&) = \ (x :: Bool) (y :: Bool) ->
+%   case x of {
+%     False -> case y of { __DEFAULT -> GHC.Types.False };
+%     True -> y
+%   }
+% \end{code}
+% 
+% \subsection{Compiling ghc with -dlinear-core-lint}
+% 
+% From the definition of $\mathit{groupBy}$ in $\mathit{GHC.Data.List.Infinite}$:
+% 
+% \begin{code}
+% groupBy :: (a -> a -> Bool) -> Infinite a -> Infinite (NonEmpty a)
+% groupBy eq = go
+%   where
+%     go (Inf a as) = Inf (a:|bs) (go cs)
+%       where (bs, cs) = span (eq a) as
+% \end{code}
+% 
+% We get a somewhat large resulting core expression, in the middle of which the
+% following expression with a linear type -- which currently syntatically violates
+% linearity.
+% 
+% \begin{code}
+% jp :: ([a], Infinite a) \%1 -> (# [a], Infinite a #)
+% jp (wwj :: ([a], Infinite a)) =
+%     case wwj of wwj {
+%         DEFAULT -> case wwj of { (wA, wB) -> (# wA, wB #) }
+%     }
+% \end{code}
+% 
+% Using the case binder usage solution, the case binder is annotated with a usage
+% environment for the only branch ($U_wwj = \emptyset$) and using $wwj$ is equal
+% to using the $\emptyset$. Here it would mean that second \textbf{case of} $wwj$
+% doesn't actually use any variables and hence the first $wwj$ isn't used twice.
+% 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % \begin{code}
 % groupBy = \ (@a) (eq :: a -> a -> Bool) (eta :: Infinite a) ->
@@ -935,61 +1067,63 @@ doesn't actually use any variables and hence the first $wwj$ isn't used twice.
 % formalised....
 
 
-\subsection{Artificial examples}
-
-Following the difficulties in consuming or not consuming the case binder and its
-associated bound variables linearly we constructed some additional examples that
-bring out the problem quite clearly.
-\begin{code}
-case x of w1
-    (x1,x2) -> case y:Bool of
-                DEFAULT -> (x1,x2)
-\end{code}
-Is equal to (note that the case binder is being used rather than the $x$ case
-scrutinee which could be an arbitrary expression and hence really cannot be
-consumed multiple times?)
-\begin{code}
-case x of w1
-    (x1,x2) -> case y:Bool of
-                DEFAULT -> w1
-\end{code}
-
-We initially wondered whether x was being consumed if the pattern match ignored
-some of its variables. We pose that if it does have wildcards then it isn't
-consuming x fully
-\begin{code}
-case x of w1
-    (_,x2) -> Is x being consumed? no because not all of its components are
-    being consumed?
-\end{code}
-
-Can we have a solution that even handles weird cases in which we pattern match
-twice on the same expression but only on one constructor argument per time? I
-don't think so.
-\begin{code}
-case exp of w1
-    (x1,_) -> case w1 of w2
-                (_, x2) -> (x1, x2)
-\end{code}
-
-A double let rec in which both use a linear bound variable $y$
-\begin{code}
-letrec f = \case
-        True  -> y
-        False -> g True
-       g = \case
-        True -> f True
-        False -> y
-    in f False
-\end{code}
-
-We have to compute the usage environment of f and g.
-For f, we have the first branch with usage environment $y$ and the second with
-usage $g$, meaning we have $F = \{g := 1, y := 1\}$
-For g, we have $G = \{f := 1, y := 1\}$. To calculate the usage environment of
-$f$ to emit upon $f False$, we calculate ...
-
-Refer to the algorithm for computing recursive environment
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% \subsection{Artificial examples}
+% 
+% Following the difficulties in consuming or not consuming the case binder and its
+% associated bound variables linearly we constructed some additional examples that
+% bring out the problem quite clearly.
+% \begin{code}
+% case x of w1
+%     (x1,x2) -> case y:Bool of
+%                 DEFAULT -> (x1,x2)
+% \end{code}
+% Is equal to (note that the case binder is being used rather than the $x$ case
+% scrutinee which could be an arbitrary expression and hence really cannot be
+% consumed multiple times?)
+% \begin{code}
+% case x of w1
+%     (x1,x2) -> case y:Bool of
+%                 DEFAULT -> w1
+% \end{code}
+% 
+% We initially wondered whether x was being consumed if the pattern match ignored
+% some of its variables. We pose that if it does have wildcards then it isn't
+% consuming x fully
+% \begin{code}
+% case x of w1
+%     (_,x2) -> Is x being consumed? no because not all of its components are
+%     being consumed?
+% \end{code}
+% 
+% Can we have a solution that even handles weird cases in which we pattern match
+% twice on the same expression but only on one constructor argument per time? I
+% don't think so.
+% \begin{code}
+% case exp of w1
+%     (x1,_) -> case w1 of w2
+%                 (_, x2) -> (x1, x2)
+% \end{code}
+% 
+% A double let rec in which both use a linear bound variable $y$
+% \begin{code}
+% letrec f = \case
+%         True  -> y
+%         False -> g True
+%        g = \case
+%         True -> f True
+%         False -> y
+%     in f False
+% \end{code}
+% 
+% We have to compute the usage environment of f and g.
+% For f, we have the first branch with usage environment $y$ and the second with
+% usage $g$, meaning we have $F = \{g := 1, y := 1\}$
+% For g, we have $G = \{f := 1, y := 1\}$. To calculate the usage environment of
+% $f$ to emit upon $f False$, we calculate ...
+% 
+% Refer to the algorithm for computing recursive environment
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
 % \section{Work in progress}
@@ -1086,3 +1220,17 @@ Refer to the algorithm for computing recursive environment
 % And that supposedly if we had a usage environment in the case expression we
 % could avoid the error. How is it typed without the transformation in face
 % of the bottom? (Even knowing that theoretically it's because of divergence?)
+
+
+
+
+
+% Exemplo
+% Extending core + usage anns:
+% Explicar ideia revisitando o exemplo da introdção
+% Falar de 2 coisas, dado o usage environment consegues validar mais coisas, 2) não há usage environments:como os calculo?
+
+% Factorizar em 2 passos. Type-checking e construir os usage environments
+
+
+

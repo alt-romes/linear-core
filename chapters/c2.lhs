@@ -822,7 +822,9 @@ its Core representation.
 
 The GHC compiler processes Haskell source files in a series of phases that feed
 each other in a pipeline fashion, each transforming their input before passing
-it on to the next stage. This pipeline (Figure~\ref{fig:ghc-pipeline}) is 
+it on to the next stage.
+%
+This pipeline is % (Figure~\ref{fig:ghc-pipeline})
 crucial in the overall design of GHC. We now give a high-level
 overview of the phases.
 
