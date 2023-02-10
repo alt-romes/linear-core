@@ -23,6 +23,7 @@
 
 %subst keyword a = "\textcolor{BlueViolet}{\textbf{" a "}}"
 
+\newcommand{\myFor}[2]{\For{$#1$}{$#2$}}
 \newcommand{\id}[1]{\textsf{\textsl{#1}}}
 
 \renewcommand{\Varid}[1]{\textcolor{Sepia}{\id{#1}}}

@@ -252,7 +252,7 @@ mapping from that variable to its multiplicity and using a variable annotated
 with a usage environment emits all mappings from variables to their
 corresponding multiplicities from that usage environment.
 
-\parawith{Let} Regardless of the original Haskell programs desugared to Core,
+\parawith{Let Binder} Regardless of the original Haskell programs desugared to Core,
 let bindings are always common in Core due to a myriad of optimizing
 transformations that create and manipulate let-bindings
 (Section~\ref{sec:ghcpipeline}).
@@ -287,7 +287,7 @@ with usage environment $U$ under $\Gamma$ \emph{and} the expression $u$ has
 type $C$ with usage environment $V$ under the context $\Gamma$ extended with
 the let-bound variable $x$ which has type $A$ and usage environment $U$''.
 
-\parawith{Recursive Let} A variable bound by a recursive-let is in scope in its
+\parawith{Recursive Let Binder} A variable bound by a recursive-let is in scope in its
 own definition, allowing for self-reference.
 %
 Just as let bindings, recursive-let bindings with free linear variables in
@@ -341,7 +341,7 @@ effectively computed once.
 % I'm pretty sure it might fail in some inputs if I keep using the naiveUsageEnvs.
 \begin{algorithm}[t]
 $usageEnvs \gets naiveUsageEnvs.map(fst)$\;
-\For{$(bind, U) \in naiveUsageEnvs^*$}{\For{$V \in usageEnvs$}{$V \gets sup(V[bind]*U\setminus\{bind\}, V\setminus\{bind\})$\;}}
+\For{$(bind, U) \in naiveUsageEnvs^*$}{\myFor{V \in usageEnvs}{V \gets sup(V[bind]*U\setminus\{bind\}, V\setminus\{bind\})\;}}
 \label{computeRecUsages}
 \caption{computeRecUsages}
 \end{algorithm}
@@ -356,6 +356,32 @@ The type-checking and usage environment inference algorithm combine in the follo
 \]
 
 % TODO: Mostrar exemplo a funcionar com o algoritmo?
+
+\parawith{Case Binder} In Core, all case expressions create a bound variable,
+the value of which is the evaluated case scrutinee. This case binder is used by
+some optimizations to refer to the value pattern matched on. If the case
+scrutinee must be used linearly, we must consider how to type-check linearity
+when the case-binder is also used in the case alternatives.
+
+Our preliminary idea is to annotate the case binder with \emph{independent
+usage environments for each pattern match}. When type-checking the case
+alternatives, using the case binder equates to using the usage environment
+associated with that particular alternative. To construct the usage environment
+of the complete case expression, we take a usage environment which is a
+superset of the usage environment constructed in each branch. Finally, the
+usage environment of the case binder in a branch that matched a nullary data
+constructor is empty, while in branches that matched a non-nullary constructor,
+the usage environment is a mapping from the variables bound by the pattern to
+their multiplicities. The typing rule that merges these ideas is:
+%
+\[
+    \infer*[right=(case)]
+    {\Gamma \vdash t : D_{\pi_1 \dots \pi_n} \leadsto \{U\} \\
+     \Gamma ; z :_{U_k} D_{\pi_1 \dots \pi_n} \vdash b_k : C \leadsto \{V_k\}
+     \and V_k \leq V}
+    {\Gamma \vdash \ccase{t}{z :_{(U_1\dots U_n)} D_{\pi_1 \dots \pi_n} \{b_k\}_1^m : C \leadsto \{U + V\}}}
+\]
+
 
 \subsection{Validating the Work}
 
@@ -667,89 +693,91 @@ expand chart=\textwidth
 % scale m = M.map (*m)
 % \end{code}
 
-\subsection{Handling the case binder\label{casebinder}}
+% \subsection{Handling the case binder\label{casebinder}}
 
 % (though in the rule seems to only start counting after the second usage which
 % would make the rule wrong for a case expression that doesn't use the binder --
 % the scrutinee should also be consumed)
-The current typing rule for case expressions describes that using the case
-binder is as using the case scrutinee multiple times, so we scale the usage of
-the case scrutinee by the superior multiplicity of using the case binder across
-all branches. However, we hypothetize that this prevents us from typing many
-valid programs and ultimately does not correctly capture the usage of a
-variable and present a seemingly viable alternative.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% The current typing rule for case expressions describes that using the case
+% binder is as using the case scrutinee multiple times, so we scale the usage of
+% the case scrutinee by the superior multiplicity of using the case binder across
+% all branches. However, we hypothetize that this prevents us from typing many
+% valid programs and ultimately does not correctly capture the usage of a
+% variable and present a seemingly viable alternative.
+% 
+% Firstly, we recall the definition of \emph{consuming a value} from Linear
+% Haskell as
+% \begin{itemize}
+%     \item Consuming an atomic value is forcing it to Normal Form (NF)
+%     \item Consuming a value that is constructed with more than 1 argument is
+%         consuming all of its arguments
+% \end{itemize}
+% and further note that when an expression is scrutinized by a case expression it
+% is evaluated to Weak Head Normal Form (WHNF), which in the case of a nullary data
+% constructor is equal to NF.
+% 
+% Now, with the following example, my interpretation of the current rule dictates
+% that the case expression consumes the scrutinee twice because the case binder is
+% used. However, we know that in the branch where $z$ is used, $z$ is equal to
+% False, and using False does not violate linearity since we can unrestrictedly
+% create nullary data constructors. A situation similar to this one below happens
+% after the CSE transformation.
+% \begin{code}
+%     case <complex expression> of z {
+%         False -> case y of z' { DEFAULT -> z }
+%         True  -> y
+%     }
+% \end{code}
+% % $\leadsto U$ 
+% 
+% A different example is using the case binder $z$ instead of the arguments we
+% pattern matched on $x,y$. This currently violates linearity because both $x$ and
+% $y$ aren't used and because $z$ is used twice. This doesn't typecheck in the
+% frontend either. However, we know that in this branch, using $z$ is effectively
+% the same as using $(x,y)$!
+% \begin{code}
+%     case <complex expression> of z {
+%         (x,y) -> z
+%     }
+% \end{code}
+% % $\leadsto U$ 
+% 
+% The good news is that both these programs (and a handful of others listed in
+% Section~\ref{examples}) are accepted with a new rule we have devised for the
+% linear linter. We still need to prove we don't accept any invalid programs as
+% valid.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-Firstly, we recall the definition of \emph{consuming a value} from Linear
-Haskell as
-\begin{itemize}
-    \item Consuming an atomic value is forcing it to Normal Form (NF)
-    \item Consuming a value that is constructed with more than 1 argument is
-        consuming all of its arguments
-\end{itemize}
-and further note that when an expression is scrutinized by a case expression it
-is evaluated to Weak Head Normal Form (WHNF), which in the case of a nullary data
-constructor is equal to NF.
+% The key idea of the case-binder-usage solution is \textbf{annotating the case binder
+% with independent usage environments for each pattern match}. That is, for
+% each of the possible branches, using the case binder $z$ will equate to
+% using its usage environment in that branch. That makes it so that using the
+% case binder instead of a nullary data constructor is the same, using the case
+% binder instead of reconstructing the value with the bound pattern variables too,
+% and other situations in which we previously couldn't typecheck linearity are
+% now accepted.
+% 
+% The typing rule for the case expression using the case binder solution:
 
-Now, with the following example, my interpretation of the current rule dictates
-that the case expression consumes the scrutinee twice because the case binder is
-used. However, we know that in the branch where $z$ is used, $z$ is equal to
-False, and using False does not violate linearity since we can unrestrictedly
-create nullary data constructors. A situation similar to this one below happens
-after the CSE transformation.
-\begin{code}
-    case <complex expression> of z {
-        False -> case y of z' { DEFAULT -> z }
-        True  -> y
-    }
-\end{code}
-% $\leadsto U$ 
+% \begin{mathparpagebreakable}
+%     \infer*[right=(case)]
+%     {\Gamma \vdash t : D_{\pi_1 \dots \pi_n} \leadsto \{U\} \\
+%      \Gamma ; z :_{U_k} D_{\pi_1 \dots \pi_n} \vdash b_k : C \leadsto \{V_k\}
+%      \and V_k \leq V}
+%     {\Gamma \vdash \text{case } t \text{ of } z :_{(U_1\dots U_n)} D_{\pi_1 \dots \pi_n} \{b_k\}_1^m : C \leadsto \{U + V\}}
+% \end{mathparpagebreakable}
 
-A different example is using the case binder $z$ instead of the arguments we
-pattern matched on $x,y$. This currently violates linearity because both $x$ and
-$y$ aren't used and because $z$ is used twice. This doesn't typecheck in the
-frontend either. However, we know that in this branch, using $z$ is effectively
-the same as using $(x,y)$!
-\begin{code}
-    case <complex expression> of z {
-        (x,y) -> z
-    }
-\end{code}
-% $\leadsto U$ 
-
-The good news is that both these programs (and a handful of others listed in
-Section~\ref{examples}) are accepted with a new rule we have devised for the
-linear linter. We still need to prove we don't accept any invalid programs as
-valid.
-
-The key idea of the case-binder-usage solution is \textbf{annotating the case binder
-with independent usage environments for each pattern match}. That is, for
-each of the possible branches, using the case binder $z$ will equate to
-using its usage environment in that branch. That makes it so that using the
-case binder instead of a nullary data constructor is the same, using the case
-binder instead of reconstructing the value with the bound pattern variables too,
-and other situations in which we previously couldn't typecheck linearity are
-now accepted.
-
-The typing rule for the case expression using the case binder solution:
-
-\begin{mathparpagebreakable}
-    \infer*[right=(case)]
-    {\Gamma \vdash t : D_{\pi_1 \dots \pi_n} \leadsto \{U\} \\
-     \Gamma ; z :_{U_k} D_{\pi_1 \dots \pi_n} \vdash b_k : C \leadsto \{V_k\}
-     \and V_k \leq V}
-    {\Gamma \vdash \text{case } t \text{ of } z :_{(U_1\dots U_n)} D_{\pi_1 \dots \pi_n} \{b_k\}_1^m : C \leadsto \{U + V\}}
-\end{mathparpagebreakable}
-
-Taking the first example in this section, we annotate both branches (True and
-False) with $U_z = \emptyset$ because the pattern match doesn't introduce any
-new variables. We consume \emph{complex expression} once and $y$ once, and then use
-$z$ once. However, using $z$ once equates to not using anything (semantically
-this relates to being able to use False or True unrestrictedly) and therefore
-linearity is preserved.
-
-In the second example, we know annotate the only branch with usage environment
-$U_z = [x := 1, y := 1]$. Upon the usage of $z$ we emit $x$ and $y$ --
-effectively using both -- thus linearity is preserved.
+% Taking the first example in this section, we annotate both branches (True and
+% False) with $U_z = \emptyset$ because the pattern match doesn't introduce any
+% new variables. We consume \emph{complex expression} once and $y$ once, and then use
+% $z$ once. However, using $z$ once equates to not using anything (semantically
+% this relates to being able to use False or True unrestrictedly) and therefore
+% linearity is preserved.
+% 
+% In the second example, we know annotate the only branch with usage environment
+% $U_z = [x := 1, y := 1]$. Upon the usage of $z$ we emit $x$ and $y$ --
+% effectively using both -- thus linearity is preserved.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
