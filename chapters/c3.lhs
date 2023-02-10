@@ -390,18 +390,6 @@ expand chart=\textwidth
 \label{fig:work-plan}
 \end{figure}
 
-
-% \todo[inline]{Fazer uma ``expansao'' da lista itemizada que fiz antes mas com mais
-% detalhe / passos, explicando numa frase ou duas o que cada tarefa e.
-% Tens uma divisao natural em passos pelos varios binders, alternar com
-% implementacao no GHC, etc. Nao esquecer de incluir a escrita do
-% documento final!}
-
-
-% to be able to preserve linearity accross the stages and to enable \emph{Lint} to
-% preserve our sanity regarding linearity and eventually inform with linearity new
-% transformations.
-
 % A value allocated to be passed to a linear function and then never again used could
 % bypass garbage collection.
 
@@ -409,109 +397,6 @@ expand chart=\textwidth
 % we both preserve join points through subsequent transformations and exploit them
 % to make those transformations more effective. Next, we formalize this ap-
 % proach; subsequent sections develop the consequences.
-
-% \section{Typing Usage Environments\label{typingUsageEnvs}}
-
-% Haskell has call-by-need semantics that entail that an expression is not
-% evaluated when it is let-bound but rather when the binding variable is used.
-% This makes it challenging to reason about linearity for let-bound variables. The
-% following example fails to typecheck in Haskell, but semantically it is indeed
-% linear due to lazy evaluation:
-
-% \begin{code}
-% f :: a %1 -> a
-% f x = let y = x in y
-% \end{code}
-
-% Despite not being accepted by the surface-level language, linear programs using
-% lets occur naturally in Core due to optimising transformations that create let
-% bindings. In a similar fashion, programs which violate syntatic linearity
-% for other reasons other than let bindings are produced by Core transformations.
-
-% A solution to a handful of type-checking issues regarding binders is to extend
-% binders with a \emph{usage environment}. A usage environment is a mapping from
-% variables to multiplicities. The main idea is to annotate those binders with a
-% usage annotation rather than a multiplicity (in contrast, a lambda-bound
-% variable has exactly one multiplicity). When we find a bound variable with a
-% usage environment, we type linearity as if we were using all variables with
-% corresponding multiplicities from that usage environment.
-
-% In the above example, this would amount to annotating $y$ with a usage
-% environment $x := 1$ (because the expression bound by $y$ uses $x$ one time).
-% Upon using $y$, we are actually using $x$ one time, and therefore linearity is
-% preserved.
-
-% The first set of problems appears in the core-to-core optimisation passes. GHC
-% applies many optimising transformations to \emph{Core} and we believe those
-% transformations preserve linearity. However, Core's linear type system cannot check
-% that they indeed preserve linearity.
-
-% The simpler examples come from straightforward and common optimising
-% transformations. Then we have recursive let definitions that don't accommodate
-% linearity even though it might converge to only use the value once. Finally, we
-% have the empty case expression introduced with the \emph{EmptyCase} language
-% extension that Core currently can't typecheck either.
-
-% The key idea is to annotate every variable with either its multiplicity, if it's
-% lambda bound, or with its usage environment, if it's let bound.
-
-% A usage environment is a mapping from variables to multiplicities.
-
-% When we lint a core expression, we get both its type and its usage environment.
-% That means that to lint linearity in an expression, whenever we come across a
-% free variable we compute its usage environment and take it into account
-
-% TODO: When we type an expression we get both the type and usage environment
-
-% \subsection{Let}
-% 
-% Let bindings in Core are the first family of problems we tackle with usage
-% environment annotations. Multiple transformations can introduce let-bindings,
-% such as CSE and join points. By extending the type system to allow let-bindings in Core
-% we start paving the way to a linear linter.
-
-% Currently, every variable in Core is annotated with a multiplicity at its binding
-% site. The multiplicity for let-bound variables must be ignored throughout the
-% transformation pipeline or otherwise too many valid programs would be
-% rejected for violating linearity in its transformed type.
-
-% However, programs with let bindings can be correctly typed by associating a
-% usage environment to the bound variables. Instead of associating a multiplicity
-% to every binder, we want to associate a multiplicity if the variable is lambda
-% bound and a usage environment when it is let-bound. We then instantiate the usage
-% environment solution to lets in particular -- a let bound variable is annotated
-% with the usage environment computed from the binder expression; in the let body
-% expression, when we find an occurrence of the let bound variable we emit its
-% usage environment. The typing rule is the following:
-
-% \begin{mathparpagebreakable}
-%     \infer*[right=(let)]
-%     {\Gamma \vdash t : A \leadsto \{U\} \\
-%      \Gamma ; x :_{U} A \vdash u : C \leadsto \{V\}}
-%     {\Gamma \vdash \text{let } x :_{U} A = t \text{ in } u : C \leadsto \{V\}}
-% \end{mathparpagebreakable}
-
-% Take for example an expression in which $y$ and $z$ are lambda-bound with a
-% multiplicity of one. In the following code it might not appear as if $y$
-% and $z$ are both being consumed linearly, but indeed they are since in the first
-% branch we use $x$ -- which means using $y$ and $z$ linearly -- and we use $y$
-% and $z$ directly on the second branch. Note again that let binding $x$ doesn't
-% consume $y$ and $z$ because of lazy evaluation. Only \emph{using} $x$ consumes $y$ and
-% $z$.
-% 
-% \begin{code}
-% let x = (y, z) in
-% case e of
-%   Pat1 -> … x …
-%   Pat2 -> … y … z …
-% \end{code}
-
-% If we annotate the $x$ bound by the let with a usage environment $\delta$
-% mapping all free variables in its binder to a multiplicity ($\delta = [y := 1, z
-% := 1]$), we could, upon finding $x$, simply emit that $y$ and $z$ are consumed
-% once. When typing the second branch we'd also see that $y$ and $z$ are used
-% exactly once. Because both branches use $y$ and $z$ linearly, the whole case
-% expression uses $y$ and $z$ linearly.
 
 % Currently, in GHC, we don't annotate let-bound variables with a usage
 % environment, but we already calculate a usage environment and use it to check
