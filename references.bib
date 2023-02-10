@@ -1,3 +1,5 @@
+@PREAMBLE{ {\providecommand{\noopsort}[1]{}} }
+
 @misc{jones1999haskell,
   title={Haskell 98},
   author={Jones, Simon Peyton and Hughes, John and Augustsson, Lennart and Barton, Dave and Boutel, Brian and Burton, Warren and Fasel, Joseph and Hammond, Kevin and Hinze, Ralf and Hudak, Paul and others},
@@ -499,7 +501,6 @@ edition = {Functional Programming, Glasgow 1993},
 note = {Functional Programming, Glasgow 1993},
 }
 
-% TODO: cite:ghc-source-code
 
 @InProceedings{10.1007/978-3-642-15375-4_16,
 author="Caires, Lu{\'i}s
@@ -516,3 +517,218 @@ abstract="Several type disciplines for $\pi$-calculi have been proposed in which
 isbn="978-3-642-15375-4"
 }
 
+@inproceedings{10.1145/3373718.3394765,
+author = {Fu, Peng and Kishida, Kohei and Selinger, Peter},
+title = {Linear Dependent Type Theory for Quantum Programming Languages: Extended Abstract},
+year = {2020},
+isbn = {9781450371049},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+url = {https://doi.org/10.1145/3373718.3394765},
+doi = {10.1145/3373718.3394765},
+abstract = {Modern quantum programming languages integrate quantum resources and classical control. They must, on the one hand, be linearly typed to reflect the no-cloning property of quantum resources. On the other hand, high-level and practical languages should also support quantum circuits as first-class citizens, as well as families of circuits that are indexed by some classical parameters. Quantum programming languages thus need linear dependent type theory. This paper defines a general semantic structure for such a type theory via certain fibrations of monoidal categories. The categorical model of the quantum circuit description language Proto-Quipper-M in [28] constitutes an example of such a fibration, which means that the language can readily be integrated with dependent types. We then devise both a general linear dependent type system and a dependently typed extension of Proto-Quipper-M, and provide them with operational semantics as well as a prototype implementation.},
+booktitle = {Proceedings of the 35th Annual ACM/IEEE Symposium on Logic in Computer Science},
+pages = {440–453},
+numpages = {14},
+keywords = {fibration, Quantum programming languages, linear dependent types, categorical model},
+location = {Saarbr\"{u}cken, Germany},
+series = {LICS '20}
+}
+
+@inproceedings{10.1145/2003476.2003499,
+author = {Toninho, Bernardo and Caires, Lu\'{\i}s and Pfenning, Frank},
+title = {Dependent Session Types via Intuitionistic Linear Type Theory},
+year = {2011},
+isbn = {9781450307765},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+url = {https://doi.org/10.1145/2003476.2003499},
+doi = {10.1145/2003476.2003499},
+abstract = {We develop an interpretation of linear type theory as dependent session types for a term passing extension of the pi-calculus. The type system allows us to express rich constraints on sessions, such as interface contracts and proof-carrying certification, which go beyond existing session type systems, and are here justified on purely logical grounds. We can further refine our interpretation using proof irrelevance to eliminate communication overhead for proofs between trusted parties. Our technical results include type preservation and global progress, which in our setting naturally imply compliance to all properties declared in interface contracts expressed by dependent types.},
+booktitle = {Proceedings of the 13th International ACM SIGPLAN Symposium on Principles and Practices of Declarative Programming},
+pages = {161–172},
+numpages = {12},
+keywords = {process calculus, type theory},
+location = {Odense, Denmark},
+series = {PPDP '11}
+}
+
+@inproceedings{Wadler1990LinearTC,
+  title={Linear Types can Change the World!},
+  author={Philip Wadler},
+  booktitle={Programming Concepts and Methods},
+  year={1990}
+}
+
+@article{10.1145/3527313,
+author = {Li, Jialin and Lattuada, Andrea and Zhou, Yi and Cameron, Jonathan and Howell, Jon and Parno, Bryan and Hawblitzel, Chris},
+title = {Linear Types for Large-Scale Systems Verification},
+year = {2022},
+issue_date = {April 2022},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+volume = {6},
+number = {OOPSLA1},
+url = {https://doi.org/10.1145/3527313},
+doi = {10.1145/3527313},
+abstract = {Reasoning about memory aliasing and mutation in software verification is a hard problem. This is especially true for systems using SMT-based automated theorem provers. Memory reasoning in SMT verification typically requires a nontrivial amount of manual effort to specify heap invariants, as well as extensive alias reasoning from the SMT solver. In this paper, we present a hybrid approach that combines linear types with SMT-based verification for memory reasoning. We integrate linear types into Dafny, a verification language with an SMT backend, and show that the two approaches complement each other. By separating memory reasoning from verification conditions, linear types reduce the SMT solving time. At the same time, the expressiveness of SMT queries extends the flexibility of the linear type system. In particular, it allows our linear type system to easily and correctly mix linear and nonlinear data in novel ways, encapsulating linear data inside nonlinear data and vice-versa. We formalize the core of our extensions, prove soundness, and provide algorithms for linear type checking. We evaluate our approach by converting the implementation of a verified storage system (about 24K lines of code and proof) written in Dafny, to use our extended Dafny. The resulting system uses linear types for 91% of the code and SMT-based heap reasoning for the remaining 9%. We show that the converted system has 28% fewer lines of proofs and 30% shorter verification time overall. We discuss the development overhead in the original system due to SMT-based heap reasoning and highlight the improved developer experience when using linear types.},
+journal = {Proc. ACM Program. Lang.},
+month = {apr},
+articleno = {69},
+numpages = {28},
+keywords = {linear types, systems verification}
+}
+
+@article{CERVESATO2000133,
+title = {Efficient resource management for linear logic proof search},
+journal = {Theoretical Computer Science},
+volume = {232},
+number = {1},
+pages = {133-163},
+year = {2000},
+issn = {0304-3975},
+doi = {https://doi.org/10.1016/S0304-3975(99)00173-5},
+url = {https://www.sciencedirect.com/science/article/pii/S0304397599001735},
+author = {Iliano Cervesato and Joshua S. Hodas and Frank Pfenning},
+keywords = {Linear logic, Theorem proving, Logic programming},
+abstract = {The design of linear logic programming languages and theorem provers opens a number of new implementation challenges not present in more traditional logic languages such as Horn clauses (Prolog) and hereditary Harrop formulas (λProlog and Elf). Among these, the problem of efficiently managing the linear context when solving a goal is of crucial importance for the use of these systems in non-trivial applications. This paper studies this problem in the case of Lolli [10], though its results have application to other systems including those based on linear type theory. We first give a proof-theoretic presentation of the operational semantics of this language as a resolution calculus. We then present a series of resource management systems designed to eliminate the non-determinism in the distribution of linear formulas that undermines the efficiency of a direct implementation of this system.}
+}
+
+@article{10.1093/logcom/2.3.297,
+    author = {ANDREOLI, JEAN-MARC},
+    title = "{Logic Programming with Focusing Proofs in Linear Logic}",
+    journal = {Journal of Logic and Computation},
+    volume = {2},
+    number = {3},
+    pages = {297-347},
+    year = {1992},
+    month = {06},
+    abstract = "{The deep symmetry of linear logic [18] makes it suitable for providing abstract models of computation, free from implementation details which are, by nature, oriented and non-symmetrical. I propose here one such model, in the area of logic programming, where the basic computational priciple isComputation = Proof searchProofs cinsidered here are those of the Gentzen style sequent calculus for linear logic. However, proofs in this system may be redundant, in that two proofs canbe syntactically different although identical up to some irrelevant reordering or simplification of the applications of the inferences rules. This leads to an untractable proof search where the search procedure is forced to make costly choices whch turn out to be irrelevant. To overcome this problem, a subclass of proofs, called the ‘focusing’ proofs, which is both complete (any derivable formla in linear logic has a focusing proof) and tractable (many irrelevant choices in the search are eliminated when aimed at focusing proofs) is identified. The main constraint underlying the specificatuon of focusing proofs has been to preserve the symmetry of linear logic, which is its most salient feature. In particular, dual connectives have dual properties with respect to focusing proofsThen, a progrmming language, called LinLog, consisting of a fragment of linear logic, in which focussing proofs have a more compact form, is presented. Linlog deals with formulae which have a syntax similar to the of the definite clauses and goals of Horn logic, but the crucial difference here is that it allows clauses with multiple atoms in the head, connected by the ‘par’ (multiplicative disjuction). It is then shown that the syntyactic restriction induced by LinLog is not performed at the cost of any expressive power: a mapping from full linear logic to LinLog, preserving focusing proofs, and analogous to the normalization to clausal form for classical logic, is presented.}",
+    issn = {0955-792X},
+    doi = {10.1093/logcom/2.3.297},
+    url = {https://doi.org/10.1093/logcom/2.3.297},
+    eprint = {https://academic.oup.com/logcom/article-pdf/2/3/297/6137548/2-3-297.pdf},
+}
+
+
+@InProceedings{10.1007/3-540-57880-3_16,
+author="Hall, Cordelia
+and Hammond, Kevin
+and Jones, Simon Peyton
+and Wadler, Philip",
+editor="Sannella, Donald",
+title="Type classes in Haskell",
+booktitle="Programming Languages and Systems --- ESOP '94",
+year="1994",
+publisher="Springer Berlin Heidelberg",
+address="Berlin, Heidelberg",
+pages="241--256",
+abstract="This paper defines a set of type inference rules for resolving over-loading introduced by type classes. Programs including type classes are transformed into ones which may be typed by the Hindley-Milner inference rules. In contrast to other work on type classes, the rules presented here relate directly to user programs. An innovative aspect of this work is the use of second-order lambda calculus to record type information in the program.",
+isbn="978-3-540-48376-2"
+}
+
+@article{10.1145/1090189.1086397,
+author = {Chakravarty, Manuel M. T. and Keller, Gabriele and Jones, Simon Peyton},
+title = {Associated Type Synonyms},
+year = {2005},
+issue_date = {September 2005},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+volume = {40},
+number = {9},
+issn = {0362-1340},
+url = {https://doi.org/10.1145/1090189.1086397},
+doi = {10.1145/1090189.1086397},
+abstract = {Haskell programmers often use a multi-parameter type class in which one or more type parameters are functionally dependent on the first. Although such functional dependencies have proved quite popular in practice, they express the programmer's intent somewhat indirectly. Developing earlier work on associated data types, we propose to add functionally dependent types as type synonyms to type-class bodies. These associated type synonyms constitute an interesting new alternative to explicit functional dependencies.},
+journal = {SIGPLAN Not.},
+month = {sep},
+pages = {241–253},
+numpages = {13},
+keywords = {associated types, type functions, generic programming, type inference, type classes}
+}
+
+
+@inproceedings{10.1145/1040305.1040306,
+author = {Chakravarty, Manuel M. T. and Keller, Gabriele and Jones, Simon Peyton and Marlow, Simon},
+title = {Associated Types with Class},
+year = {2005},
+isbn = {158113830X},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+url = {https://doi.org/10.1145/1040305.1040306},
+doi = {10.1145/1040305.1040306},
+abstract = {Haskell's type classes allow ad-hoc overloading, or type-indexing, of functions. A natural generalisation is to allow type-indexing of data types as well. It turns out that this idea directly supports a powerful form of abstraction called associated types, which are available in C++ using traits classes. Associated types are useful in many applications, especially for self-optimising libraries that adapt their data representations and algorithms in a type-directed manner.In this paper, we introduce and motivate associated types as a rather natural generalisation of Haskell's existing type classes. Formally, we present a type system that includes a type-directed translation into an explicitly typed target language akin to System F; the existence of this translation ensures that the addition of associated data types to an existing Haskell compiler only requires changes to the front end.},
+booktitle = {Proceedings of the 32nd ACM SIGPLAN-SIGACT Symposium on Principles of Programming Languages},
+pages = {1–13},
+numpages = {13},
+keywords = {self-optimising libraries, type-indexed types, associated types, type-directed translation, type classes},
+location = {Long Beach, California, USA},
+series = {POPL '05}
+}
+
+@inproceedings{10.1145/2633357.2633361,
+author = {Eisenberg, Richard A. and Stolarek, Jan},
+title = {Promoting Functions to Type Families in Haskell},
+year = {2014},
+isbn = {9781450330411},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+url = {https://doi.org/10.1145/2633357.2633361},
+doi = {10.1145/2633357.2633361},
+abstract = {Haskell, as implemented in the Glasgow Haskell Compiler (GHC), is enriched with many extensions that support type-level programming, such as promoted datatypes, kind polymorphism, and type families. Yet, the expressiveness of the type-level language remains limited. It is missing many features present at the term level, including case expressions, anonymous functions, partially-applied functions, and let expressions. In this paper, we present an algorithm - with a proof of correctness - to encode these term-level constructs at the type level. Our approach is automated and capable of promoting a wide array of functions to type families. We also highlight and discuss those term-level features that are not promotable. In so doing, we offer a critique on GHC's existing type system, showing what it is already capable of and where it may want improvement.We believe that delineating the mismatch between GHC's term level and its type level is a key step toward supporting dependently typed programming.},
+booktitle = {Proceedings of the 2014 ACM SIGPLAN Symposium on Haskell},
+pages = {95–106},
+numpages = {12},
+keywords = {type-level programming, Haskell, defunctionalization},
+location = {Gothenburg, Sweden},
+series = {Haskell '14}
+}  
+
+@inproceedings{Cheney2003FirstClassPT,
+  title={First-Class Phantom Types},
+  author={James Cheney and Ralf Hinze},
+  year={2003}
+}
+
+@InProceedings{10.1007/BFb0055424,
+author="Chitil, Olaf",
+editor="Clack, Chris
+and Hammond, Kevin
+and Davie, Tony",
+title="Common subexpressions are uncommon in lazy functional languages",
+booktitle="Implementation of Functional Languages",
+year="1998",
+publisher="Springer Berlin Heidelberg",
+address="Berlin, Heidelberg",
+pages="53--71",
+abstract="Common subexpression elimination is a well-known compiler optimisation that saves time by avoiding the repetition of the same computation. In lazy functional languages, referential transparency renders the identification of common subexpressions very simple. More common subexpressions can be recognised because they can be of arbitrary type whereas standard common subexpression elimination only shares primitive values. However, because lazy functional languages decouple program structure from data space allocation and control flow, analysing its effects and deciding under which conditions the elimination of a common subexpression is beneficial proves to be quite difficult. We developed and implemented the transformation for the language Haskell by extending the Glasgow Haskell compiler. On real-world programs the transformation showed nearly no effect. The reason is that common subexpressions whose elimination could speed up programs are uncommon in lazy functional languages.",
+isbn="978-3-540-68528-9"
+}
+
+@misc{cite:practicaldependenttypesinhaskell,
+   author={Le, Justin},
+   title={Practical Dependent Types in Haskell},
+   howpublished = {\url{https://blog.jle.im/entry/practical-dependent-types-in-haskell-1.html}},
+   year = {2016}
+}
+
+@misc{cite:hmatrix,
+   author={Ruiz, Alberto and Steinitz, Dominic},
+   title={hmatrix: Numeric Linear Algebra},
+   howpublished = {\url{https://hackage.haskell.org/package/hmatrix}},
+   year = {2021}
+}
+
+@misc{cite:ghengin,
+   author={Mesquita, Rodrigo},
+   title={Ghengin: A vulkan-based, shader-centric, type-heavy, Haskell game engine},
+   howpublished = {\url{https://github.com/alt-romes/ghengin}},
+   year = {2022}
+}
+
+@misc{cite:ghc-source,
+   author={The Glasgow Haskell Compiler contributors},
+   title={Glasgow Haskell Compiler / GHC Source},
+   howpublished = {\url{https://gitlab.haskell.org/ghc/ghc}},
+   year = {2022}
+}

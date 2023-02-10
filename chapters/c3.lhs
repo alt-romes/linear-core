@@ -405,14 +405,13 @@ the compiler with the Core type-checker that ignores linearity annotations
 being run.
 
 The linear Core type-checker validation and benchmarks will be done by running
-the GHC testsuite and compiling the \emph{head.hackage} package set
+the GHC testsuite and compiling the \emph{head.hackage} package
+set\footnote{\emph{head.hackage} is a package set comprised of relevant
+libraries of the Haskell ecosystem which are compiled by, and patched against,
+GHC's latest commit.}
 %
-\footnote{\emph{head.hackage} is a package set comprised of relevant libraries
-of the Haskell ecosystem which are compiled by, and patched against, GHC's
-latest commit.}
-%
-with the \verb=-dlinear-core-lint= flag (which enables the linear Core
-type-checker). The GHC project also automatically runs tests and benchmarks
+with the flag which enables the linear Core
+type-checker. The GHC project also automatically runs tests and benchmarks
 through its continuous integration (CI) pipeline, which we intend to use to
 further validate our implementation continuously.
 

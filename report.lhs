@@ -67,19 +67,20 @@
     description={Generalized Algebraic Data Types}
 }
 
-
 \begin{document}
 
 \frontmatter
 
-\maketitle
+% \maketitle
 
 \xtableofcontents
 \xlistoffigures
-\xlistoftables
-\printglossaries
+% \xlistoftables
+% \printglossaries
 
 \mainmatter
+
+% \OnehalfSpacing
 
 % TODO: linear functions to allow safe/controlled use of reified language
 % implementation objects like *single-use continuations* (single use
@@ -113,21 +114,20 @@ deemed ``wrong'' by the type system design. This idea is captured in
 the motto ``well-typed programs do not go wrong''~\cite{}.
 
 
-Linear type systems~\cite{cite:linear-logic,cite:barberdill} add expressiveness to existing type systems by
-enforcing that certain \emph{resources} (e.g.~a file handle) must be
-used \emph{exactly once}.
-In
-programming 
-languages with a linear type system, not using certain resources or using them
-twice are flagged as type errors. Linear types can thus be used to,
-for example, statically guarantee
-that file handles, socket descriptors, and allocated memory is freed exactly
-once (leaks and double-frees become type errors)~\cite{},
-and channel-based communication protocols are deadlock-free~\cite{10.1007/978-3-642-15375-4_16},
+Linear type systems~\cite{cite:linear-logic,cite:barberdill} add expressiveness
+to existing type systems by enforcing that certain \emph{resources} (e.g.~a
+file handle) must be used \emph{exactly once}.
+%
+In programming languages with a linear type system, not using certain resources
+or using them twice are flagged as type errors. Linear types can thus be used
+to, for example, statically guarantee that file handles, socket descriptors,
+and allocated memory is freed exactly once (leaks and double-frees become type
+errors), and channel-based communication protocols are
+deadlock-free~\cite{10.1007/978-3-642-15375-4_16},
 % implement safe
 % high-performance language interoperability~\cite{}, 
 %guarantee that quantum entangled states are not duplicated~\cite{}
-among other high-level correctness properties.
+among other high-level correctness properties~\cite{10.1145/3373718.3394765,10.1145/3527313,cite:linearhaskell}.
 % handle mutable state safely~\cite{}
 
 % TODO: Chegar mais rápido ao que vou fazer? Aqui?
@@ -153,9 +153,10 @@ In Section~\ref{sec:linear-types} we give a formal account of linear types and
 provide additional examples.
 
 Despite their promise and their extensive presence in research
-literature~\cite{}, the effective design of the combination of linear and
-non-linear typing is both challenging and necessary to bring the advantages of
-linear typing to mainstream languages.
+literature~\cite{Wadler1990LinearTC,CERVESATO2000133,10.1093/logcom/2.3.297},
+the effective design of the combination of linear and non-linear typing is both
+challenging and necessary to bring the advantages of linear typing to
+mainstream languages.
 %
 Consequently, few general purpose programming languages have linear
 type systems. Among them are Idris 2~\cite{brady:LIPIcs.ECOOP.2021.9},
@@ -179,7 +180,7 @@ due to the following reasons:
         endeavour to add linear types to a well-established language with a
         large library ecosystem and many active users, rather than to develop
         the language from the ground up with linear types in mind, and the
-        successful approach as implemented in \Gls{GHC} 9.0, the leading Haskell
+        successful approach as implemented in GHC 9.0, the leading Haskell
         compiler, was based on Linear Haskell~\cite{cite:linearhaskell}, where a
         linear type system designed with retaining backwards-compatibility and
         allowing code reuse across linear and non-linear users of the same
@@ -197,7 +198,7 @@ due to the following reasons:
         Core program fails to typecheck, the optimizing
         transformations (are very likely to) have introduced an error
         in the resulting program. We present Core (and its formal
-        basis, System~$F_C$) in Section~\ref{sec:core}.
+        basis, System~$F_C$~\cite{cite:systemfc}) in Section~\ref{sec:core}.
         % TODO: \item values in rust are linear by default while non-linear is
         % the haskell default?
 \end{itemize}
@@ -390,8 +391,10 @@ non-linear programs are deemed linear);
 \include{chapters/c3.tex}
 
 
-\bibliographystyle{plain}
+\begin{SingleSpace}
+\bibliographystyle{abbrv}
 \bibliography{references}
+\end{SingleSpace}
 
 \end{document}
 

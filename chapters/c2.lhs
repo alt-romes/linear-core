@@ -58,10 +58,8 @@ The key observation to invalidating these programs is to focus on the function
 type going between \texttt{Handle} and $\star$ and augment it to indicate that
 \emph{the argument must be used exactly once}, or, in other words, that the
 argument of the function must be linear. We take the function type $A \to B$
-and replace the function arrow ($\to$) with the linear function arrow ($\lolli$)
-%
-\footnote{Since linear types are born from a correspondence with linear
-logic\cite{cite:linear-logic} (the Curry-Howard isomorphism\cite{curry:34,howard:80}), we
+and replace the function arrow ($\to$) with the linear function arrow ($\lolli$)\footnote{Since linear types are born from a correspondence with linear
+logic~\cite{cite:linear-logic} (the Curry-Howard isomorphism~\cite{curry:34,howard:80}), we
 borrow the $\lolli$ symbol and other linear logic connectives to describe linear
 types.}
 %
@@ -113,8 +111,8 @@ must be used exactly once.
       M,N & ::= & \star \mid \llet{\star = M}{N} \\
         & \mid & u \\
         & \mid & \lambda u. M \mid M~N\\
-        & \mid & \textrm{inl}~M \mid \textrm{inr}~M \mid
-        \ccase{M}{\textrm{inl}~u_1 \to N_1;\textrm{inr}~u_2 \to N_2}\\
+        & \mid & \textrm{inl}~M \mid \textrm{inr}~M\\
+        & \mid & \ccase{M}{\textrm{inl}~u_1 \to N_1;\textrm{inr}~u_2 \to N_2}\\
         & \mid & M \tensor N \mid \llet{u_1 \tensor u_2 = M}{N}\\
         & \mid & M \with N \mid \textrm{fst}~M \mid \textrm{snd}~M \\
         & \mid & \bang M \mid \llet{!u = M}{N} \\
@@ -305,9 +303,7 @@ is used (e.g.  $\texttt{f~::~Int}\to \texttt{Bool}$ is read \texttt{f} \emph{has
 type} function from \texttt{Int} to \texttt{Bool}).
 
 Because Haskell is a pure programming language, input/ouptut side-effects are
-modelled at the type-level through the non-nullary
-%
-\footnote{\texttt{IO} has kind $\texttt{Type}\to\texttt{Type}$, that is, it is
+modelled at the type-level through the non-nullary\footnote{\texttt{IO} has kind $\texttt{Type}\to\texttt{Type}$, that is, it is
 only a type after another type is passed as a parameter (e.g.  \texttt{IO~Int},
 \texttt{IO~Bool}); \texttt{IO} by itself is a \emph{type constructor}}
 %
@@ -362,9 +358,11 @@ advanced type level features, such as:
         multiplicity polymorphism~\cite{cite:linearhaskell}, and, more recently, impredicative
         polymorphism~\cite{10.1145/3408971}.
 
-    \item Type level computation by means of type classes and Haskell's type
-        families~\cite{,,}, which permit a direct encoding of type-level
-        functions resembling rewrite rules.
+    \item Type level computation by means of type
+        classes~\cite{10.1007/3-540-57880-3_16} and Haskell's type
+        families~\cite{10.1145/1090189.1086397,10.1145/1040305.1040306,10.1145/2633357.2633361},
+        which permit a direct encoding of type-level functions resembling rewrite
+        rules.
 
     \item Local equality constraints and existential types by using GADTs, which
         we explain ahead in more detail. A design for first class existential
@@ -379,7 +377,7 @@ advanced type level features, such as:
 These advanced features have become commonplace in Haskell code, enforcing
 application level invariants and program correctness through the types. As an
 example to work through this section while we introduce compile-time invariants
-with \gls{GADT}s, consider the definition of \texttt{head} in the standard library, a
+with GADTs, consider the definition of \texttt{head} in the standard library, a
 function which takes the first element of a list by pattern matching on the list
 constructors.
 
@@ -404,7 +402,7 @@ by expressing that the size of the list must be at least one, at the type level.
 
 \subsection{Generalized Algebraic Data Types}
 
-\textbf{GADTs}~\cite{10.1145/1159803.1159811,,,} are an advanced Haskell feature
+\textbf{GADTs}~\cite{Cheney2003FirstClassPT,10.1145/1159803.1159811,cite:outsideinx} are an advanced Haskell feature
 that allows users to define data types as they would common algebraic data
 types, with the added abilitiy to give explicit type signatures for the data
 constructors where the result type may differ in the type parameters (e.g., we
@@ -417,10 +415,10 @@ their subsequent deconstruction through pattern matching.
 %
 % TODO: Rewrite this bit below
 Pattern matching against GADTs can introduce local type refinements, that is,
-pattern matching against certain data constructors will refine the type
-information used for typechecking individual case alternatives. We develop the
-length-indexed lists example without discussing the type system and type
-inference details of GADTs which we later explore in~\ref{related-work-gadts}.
+refines the type information used for typechecking individual case alternatives.
+We develop the length-indexed lists example without discussing the type system
+and type inference details of GADTs as desribed in~\cite{cite:outsideinx}.
+% which we later explore in~\ref{related-work-gadts}.
 
 % First, we define the natural numbers inductively: a natural number is either
 % zero (\texttt{Z}) or a successor (\texttt{S}) of another natural number (e.g.
@@ -482,10 +480,11 @@ does not allow calling \texttt{head} on \texttt{Nil} (once again, its type,
 In practice, the idea of using more expressive types to enforce invariants at
 compile time, that is illustrated by this simple example, can be taken much
 further, e.g., to implement type-safe artificial neural
-networks\cite{https://blog.jle.im/entry/practical-dependent-types-in-haskell-1.html},
-enforce size compatibility in operations between matrices and vectors\cite{}, to
+networks\cite{cite:practicaldependenttypesinhaskell},
+enforce size compatibility in operations between matrices and
+vectors\cite{cite:hmatrix}, to
 implement red-black trees guaranteeing its invariants at compile-time, or to
-implement a material system in a game engine\cite{}.
+implement a material system in a game engine\cite{cite:ghengin}.
 % TODO: cite: https://blog.jle.im/entry/practical-dependent-types-in-haskell-1.html
 % TODO: haskell-servant?
 
@@ -664,11 +663,12 @@ representation.
 To illustrate the difference in complexity, in GHC's implementation of Haskell,
 the abstract syntax tree is defined through dozens of datatypes and hundreds of
 constructors, while the GHC's implementation of Core is defined in 3 types
-(expressions, types, and coercions) and 15 constructors~\cite{cite:ghc-source-code}.
+(expressions, types, and coercions) and 15 constructors~\cite{cite:ghc-source}.
 %
-The existence of Core and its use is a major design decision in GHC Haskell
-with significant benefits which have decidedly proved themselves over
-time~\cite{,}:
+The existence of Core and its use is a major design decision in GHC Haskell with
+significant benefits which have proved themselves in the development of the
+compiler.
+%~\cite{,}:
 
 \begin{itemize}
 \item Core allows us to reason about the entirety of Haskell in a much smaller
@@ -888,7 +888,7 @@ transformation is not reversible), the order in which transformations
 are applied determines how well the resulting program is optimized.
 As such, certain orderings of optimizations can hide 
 optimization opportunities and block them from firing. This phase-ordering
-problem~\cite{} is present in most optimizing compilers.
+problem is present in most optimizing compilers.
 
 % Techniques such as
 % equality saturation~\cite{} bypass the phase-ordering problem because all
@@ -1124,7 +1124,7 @@ by~\cite{cite:let-floating}. We distinguish three let-floating transformations:
   ~\cite{cite:let-floating}. However, care must be taken when floating a
   let-binding inside a $\lambda$-abstraction because every time that
   abstraction is applied the value (or thunk) of the binding will be allocated
-  in the heap (we briefly revisit this in Section~\ref{sec:rw:let-floating})
+  in the heap.
 
   \item \emph{Full laziness} transformation, also known as \emph{float-out},
   consists of moving let-bindings outside of enclosing $\lambda$-abstractions.
@@ -1158,7 +1158,7 @@ variable bound to the expanded $\lambda$. A partially applied function is often
 more costly than a fully saturated one because it entails a heap allocation for
 the function closure, while a fully saturated one equates to a function call.
 $\eta$-reduction is the inverse transformation to $\eta$-expansion, i.e., a
-$\lambda$-abstraction $(\lambda x.  f~x)$ can be $\eta$-reduced to simply $f$.
+$\lambda$-abstraction $(\lambda x.  f~x)$ can be $\eta$-reduced to simply~$f$.
 
 \parawith{Case-of-case.} The case-of-case transformation fires when a case
 expression is scrutinizing another case expression. In this situation, the
@@ -1199,7 +1199,7 @@ effectively inverse to \emph{inlining}.
 This transformation factors out expensive expressions into a
 shared binding. In practice, lazy functional languages don't benefit nearly as
 much as strict imperative languages from CSE and, thus, it isn't very important
-in GHC~\cite{aquilo}.
+in GHC~\cite{10.1007/BFb0055424}.
 
 \parawith{Static argument and lambda lifting.} \emph{Lambda lifting} is a
 transformation that abstracts over free variables in functions by making them
