@@ -1,0 +1,66 @@
+\documentclass[14pt,aspectratio=169]{beamer}
+\usetheme{Copenhagen}
+\usecolortheme{beaver}
+\setbeamertemplate{navigation symbols}{}
+\setbeamercovered{transparent}
+
+\usepackage[utf8]{inputenc}
+
+\title{Type-checking Linearity in Haskell's\\ Core Intermediate Language}
+\author{Rodrigo Mesquita and Bernardo Toninho}
+\institute{\small NOVA School of Science and Technology}
+\date{\small February 2023}
+
+\begin{document}
+\begin{frame}
+    \titlepage
+    \begin{figure}[htpb]
+        \begin{center}
+            % \vspace*{-0.5cm}
+            \includegraphics[width=0.4\linewidth]{../logo_nova.png}
+        \end{center}
+    \end{figure}
+\end{frame}
+
+\begin{frame}{Context}
+
+\begin{itemize}
+    \item<1-> Statically typed programs eliminate errors at compile time
+    \item<2-> Linear types are expressive types that can enforce invariants wrt
+        resource usage
+    \item<3-> Haskell is a lazy, purely functional programming language
+    \item<4-> Linear types were recently introduced in GHC Haskell, \emph{31 years} after Haskell's inception.
+                % Which came with new challenges such as backwards compatibility, future
+                % proofing and code re-use
+\end{itemize}
+
+\end{frame}
+
+\begin{frame}{Motivation}
+\begin{itemize}
+    \item<1-> However, linear types were also introduced in \textbf<1>{Core}, a
+        explicitly typed language that serves as Haskell's main intermediate
+        representation
+        % Core is explicitly typed
+        % Core is very important because it serves as an internal consistency
+        % tool and validation layer of the implementation
+    \item<2-> Core programs undergo a myriad of (Core-to-Core)
+        optimizing transformations
+        % Which might introduce lazy let bindings (through e.g. beta reduction),
+        % inline definitions, move bindings around (let-floating
+        % transformations), 
+    \item<3-> \textbf<3>{Core's linear type-checker doesn't accept linear
+        programs} after optimizing transformations are applied
+        % Optimizing transformations destroy linearity as the type-checker sees
+        % it. However, we believe optimizing transformations *don't* destroy
+        % linearity, it's just a limitation of the type system
+    \item<4-> \textbf<4>{Core's linear type-checker is disabled} because
+        otherwise disabling optimizations is far worse
+        % it doesn't accept transformed Core programs
+        % GHC's Core type-checker is disabled because it doesn't accept Core
+        % programs that undergo optimizing transformations in Core
+        % and otherwise disabling optimizing transformations is not feasible.
+\end{itemize}
+\end{frame}
+
+\end{document}
