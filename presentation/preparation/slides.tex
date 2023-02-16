@@ -2,7 +2,7 @@
 \usetheme{Copenhagen}
 \usecolortheme{beaver}
 \setbeamertemplate{navigation symbols}{}
-\setbeamercovered{transparent}
+% \setbeamercovered{transparent}
 
 \usepackage[utf8]{inputenc}
 
@@ -22,14 +22,17 @@
     \end{figure}
 \end{frame}
 
+\section{Introduction}
+
 \begin{frame}{Context}
 
 \begin{itemize}
     \item<1-> Statically typed programs eliminate errors at compile time
-    \item<2-> Linear types are expressive types that can enforce invariants wrt
-        resource usage
+    \item<2-> Linear types can enforce resource usage invariants
+        % Are expressive types
     \item<3-> Haskell is a lazy, purely functional programming language
-    \item<4-> Linear types were recently introduced in GHC Haskell, \emph{31 years} after Haskell's inception.
+    \item<4-> Linear types were introduced in Haskell, 31 \emph<4>{years} after Haskell's inception.
+                % recently introduced
                 % Which came with new challenges such as backwards compatibility, future
                 % proofing and code re-use
 \end{itemize}
@@ -38,14 +41,15 @@
 
 \begin{frame}{Motivation}
 \begin{itemize}
-    \item<1-> However, linear types were also introduced in \textbf<1>{Core}, a
-        explicitly typed language that serves as Haskell's main intermediate
-        representation
+    \item<1-> However, linear types were also introduced in \textbf<1>{Core}
+        % a typed language that serves as Haskell's main intermediate representation
         % Core is explicitly typed
         % Core is very important because it serves as an internal consistency
         % tool and validation layer of the implementation
-    \item<2-> Core programs undergo a myriad of (Core-to-Core)
-        optimizing transformations
+    \item<2-> Core programs undergo a myriad of optimizing transformations
+        % These (core-to-core) transformations follow a modular approach, where
+        % each transformation produces Core that is further used as input to
+        % other transformations
         % Which might introduce lazy let bindings (through e.g. beta reduction),
         % inline definitions, move bindings around (let-floating
         % transformations), 
@@ -61,6 +65,24 @@
         % programs that undergo optimizing transformations in Core
         % and otherwise disabling optimizing transformations is not feasible.
 \end{itemize}
+\end{frame}
+
+\begin{frame}{Objectives}
+\begin{itemize}
+    \item<1-> Extend Core's type-system to accommodate more linear Core programs
+        % Big distinction between syntatically valid linearity and semantically
+        % valid. Transformations result in many semantically valid but
+        % syntatically invalid programs, and we need to extend Core to
+        % account for this semantic linearity.
+    \item<2-> Validate optimizing transformations with the improved Core linear type-system
+    \item<3-> Implement the extensions to Core in GHC, the leading Haskell
+        compiler
+\end{itemize}
+\end{frame}
+
+\section{Background}
+
+\begin{frame}{}
 \end{frame}
 
 \end{document}
