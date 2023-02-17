@@ -16,8 +16,6 @@
 % Glossary
 \usepackage[toc]{glossaries}
 
-\usepackage{lipsum} % just for dummy text
-
 %%%%%%%%%%%%%%  Color-related things   %%%%%%%%%%%%%%
 
 %include polycode.fmt

@@ -1,10 +1,29 @@
 \documentclass[14pt,aspectratio=169,dvipsnames]{beamer}
+
+\usepackage{todonotes}
+\usepackage{cmll}
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{mathpartir}
+\usepackage{fancyvrb}
+\usepackage{cleveref}
+
+\newcommand{\parawith}[1]{\paragraph{\emph{#1}}}
+\newcommand{\lolli}{\multimap}
+\newcommand{\tensor}{\otimes}
+\newcommand{\one}{\mathbf{1}}
+\newcommand{\bang}{{!}}
+
+\newcommand{\llet}[2]{\mathsf{let}~#1~\mathsf{in}~#2}
+\newcommand{\lletrec}[2]{\mathsf{letrec}~#1~\mathsf{in}~#2}
+\newcommand{\ccase}[2]{\mathsf{case}~#1~\mathsf{of}~#2}
+
 \usetheme{Copenhagen}
 %\usetheme{Singapore}
 \usecolortheme{spruce}
 \usecolortheme{seahorse}
 \setbeamertemplate{navigation symbols}{}
-\setbeamertemplate{itemize items}[default]
+\setbeamertemplate{itemize items}[circle]
 % \setbeamercovered{transparent}
 % \setbeameroption{show notes on second screen}
 % \setbeameroption{show notes}
@@ -45,7 +64,7 @@
 
 \begin{itemize}
     \item<1-> Statically typed programs eliminate errors at compile time
-    \item<2-> Linear types can \emph<2>{enforce} resource usage invariants
+    \item<2-> Linear types can enforce resource usage invariants
         % Are expressive types
     % \item<3-> Haskell is a lazy, purely functional programming language
     \item<3-> Linear types were \emph<3>{only recently} introduced in Haskell
@@ -101,18 +120,122 @@
 \section{Background}
 
 \begin{frame}{Linear Types}
-\begin{code}
-let p = malloc(4);
-in free(p);
-   free(p);
-\end{code}
+\begin{definition}<1->
+% In a linear type system,
+Linear resources must be consumed \emph{exactly once}.
+\end{definition}
+\only<2>{
+\begin{example}[Rejected by type-system]
+  \begin{code}
+  let p = malloc(4);
+  in free(p);
+     free(p);
+  \end{code}
+\end{example}
+}
+\only<3>{
+\begin{example}[Accepted by type-system]
+  \begin{code}
+  let p = malloc(4);
+      p' = put(p,5);
+  in free(p');
+  \end{code}
+\end{example}
+}
 \end{frame}
 
-\begin{frame}{Haskell}
-
-\end{frame}
+% {
+% \begin{frame}{Linear Lambda Calculus}
+% \only<1>{
+% \begin{block}{Syntax}
+% \vspace*{-0.5cm}
+% \[
+% \begin{array}{c}
+%   \begin{array}{lcl}
+%     A,B & ::= & T\\
+%         & \mid & A \lolli B\\
+%         & \mid & \bang A\\
+%    \end{array}
+% \quad
+%   \begin{array}{lcl}
+%       M,N & ::= & u\\
+%         & \mid & \lambda u. M\\
+%         & \mid & M~N\\
+%         & \mid & \bang M \mid \llet{!u = M}{N} \\
+%    \end{array}
+% \end{array}
+% \]
+% \end{block}
+% }
+% \only<1->{
+% \begin{block}{$\lolli$ Introduction Rule}
+% \[
+%     \infer*[right=($\lolli I$)]
+%     {\Gamma ; \Delta , u{:}A \vdash M : B}
+%     {\Gamma ; \Delta \vdash \lambda u. M : A \lolli B}
+% % \quad
+% %     \infer*[right=($\lolli E$)]
+% %     {\Gamma ; \Delta \vdash M : A \lolli B \and \Gamma ; \Delta' \vdash N : A}
+% %     {\Gamma ; \Delta, \Delta' \vdash M~N : B}
+% \]
+% \end{block}
+% }
+% \only<2>{
+% \begin{example}
+% \[
+%     \lambda h.~\mathsf{return}~\star;
+%     \qquad
+%     \lambda h.~\mathsf{close}~h;~\mathsf{close}~h;
+% \]
+% \end{example}
+% }
+% \end{frame}
+% }
 
 \begin{frame}{Linear Haskell}
+
+\only<1-4>{
+\begin{itemize}
+\item<1-> Linear types were retroffited to Haskell by introducing a
+    \emph{multiplicity} in the function type
+    \begin{itemize}
+    \item<2-> A multiplicity of \texttt{1} indicates a linear function
+    \item<3-> A multiplicity of \texttt{Many} indicates an unrestricted function
+    \end{itemize}
+    % Which has good benefits such as backwards compatibility and code
+    % re-use, which are very important in the context of
+\item<4-> A linear function must consume its argument \emph{exactly once}
+\end{itemize}
+}
+
+\only<5-7>{
+\begin{definition}[Consuming a value]
+  \begin{itemize}
+    \item<5-> To consume a value of atomic base type, just evaluate it
+    \item<6-> To consume a function exactly once, apply it, and consume the
+    result
+    \item<7-> To consume a value of an algebraic data type, pattern-match on
+    it, and consume its linear components
+  \end{itemize}
+\end{definition}
+}
+
+\only<8>{
+\begin{example}
+  \begin{minipage}{0.47\textwidth}
+  \begin{code}
+      f :: a %1 -> (a, a)
+      f x = (x, x)
+  \end{code}
+  \end{minipage}
+  \begin{minipage}{0.47\textwidth}
+  \begin{code}
+      g :: a %Many -> (a, a)
+      g x = (x, x)
+  \end{code}
+  \end{minipage}
+\end{example}
+}
 
 \end{frame}
 
