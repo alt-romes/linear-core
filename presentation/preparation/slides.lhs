@@ -304,6 +304,145 @@ h x = case x of
 
 \end{frame}
 
+% \begin{frame}{Linear Core}
+% \item<1-> Core's type-system guarantees 
+% \item<2-> A linear Haskell validates
+% \end{frame}
+
+\begin{frame}{GHC Pipeline}
+\begin{itemize}
+  \item<1-> Parser $\to$ Renamer $\to$ Type-checker $\to$ Desugarer
+  \item<2-> Core-to-Core transformations
+      % (transformational approach)
+      % Focus of our work since they transform Core
+      % And we want to validate Core produced by them is still linear
+  \item<3-> Core $\to$ STG $\to$ Cmm $\to$ Backends (x64, ARM, WASM, $\dots$)
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Optimizations}
+\begin{definition}[Term $\beta$-reduction]<1->
+\[
+(\lambda x{:}\tau.~e)~y~\Longrightarrow~e[y/x]
+\]
+\end{definition}
+\begin{definition}[Inlining]<2->
+\[
+\llet{x = e}{\dots x \dots}~\Longrightarrow~\llet{x = e}{\dots e \dots}
+\]
+\end{definition}
+\end{frame}
+
+\section{Proposed Work}
+
+\begin{frame}{Challenges}
+\begin{itemize}
+\item Core-to-Core transformations produce programs that aren't accepted by
+Core's linear type system
+\item We believe the transformations preserve linearity
+\item Core's type-checker needs more information to understand linearity in Core
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Linearity in Core}
+\only<1>{
+\begin{example}[Inlining violating linearity]
+\begin{code}
+let x = (y, z) in
+case e of
+  Pat1 -> … x …
+  Pat2 -> … y … z …
+\end{code}
+\end{example}
+}
+\only<2>{
+\begin{example}[$\beta$-reduction violating linearity] % because of laziness
+    \begin{code}
+    f :: a %1 -> a
+    f x = let y = x+2 in y
+    \end{code}
+\end{example}
+}
+\only<3>{
+\begin{example}[Linearity in the presence of laziness] % because of laziness
+    \begin{code}
+    f :: a %1 -> a
+    f x = let y = x+2 in y+y
+    \end{code}
+\end{example}
+}
+\end{frame}
+
+\begin{frame}{Proposed Solution}
+\begin{itemize}
+\item Extend Core's let, letrec and case binders with \emph{usage environments}
+\item Augment type system with usage environments to deem more programs linear
+\item Augment the type-checking algorithm to infer usage environments for said bindings
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Let Binders}
+\begin{definition}[Preliminary Let Typing Rule]<1->
+\[
+    \infer*[right=(let)]
+    {\Gamma \vdash t : A \leadsto \{U\} \\
+     \Gamma ; x :_{U} A \vdash u : C \leadsto \{V\}}
+    {\Gamma \vdash \text{let } x :_{U} A = t \text{ in } u : C \leadsto \{V\}}
+\]
+\end{definition}
+
+\begin{example}<2->
+\small
+\begin{code}
+let x = (y, z) in
+case e of
+  Pat1 -> … x …
+  Pat2 -> … y … z …
+\end{code}
+\end{example}
+\end{frame}
+
+\begin{frame}{Recursive Let Binders}
+\only<1>{
+\begin{definition}[Preliminary Letrec Typing Rule]
+\[
+    \infer*[right=(letrec)]
+    {\Gamma ; x_1 : A_1 \dots x_n : A_n \vdash t_i : A_i \leadsto \{U_{i_\text{naive}}\} \\
+     (U_1 \dots U_n) = \mathit{computeRecUsages}(U_{1_\text{naive}} \dots U_{n_\text{naive}}) \\
+     \Gamma ; x_1 :_{U_1} A_1 \dots x_n :_{U_n} A_n \vdash u : C \leadsto \{V\}}
+    {\Gamma \vdash \text{let } x_1 :_{U_1} A_1 = t_1 \dots x_n :_{U_n} A_n = t_n \text{ in } u : C \leadsto \{V\}}
+\]
+\end{definition}
+}
+\only<2>{
+\begin{example}
+\begin{code}
+letrec f z = case z of
+        True -> f False
+        False -> y
+in f True
+\end{code}
+\end{example}
+}
+\end{frame}
+
+\begin{frame}{Case Binders}
+\begin{definition}[Preliminary Case Typing Rule]
+\[
+    \infer*[right=(case)]
+    {\Gamma \vdash t : D_{\pi_1 \dots \pi_n} \leadsto \{U\} \\
+     \Gamma ; z :_{U_k} D_{\pi_1 \dots \pi_n} \vdash b_k : C \leadsto \{V_k\}
+     \and V_k \leq V}
+    {\Gamma \vdash \ccase{t}{z :_{(U_1\dots U_n)} D_{\pi_1 \dots \pi_n} \{b_k\}_1^m : C \leadsto \{U + V\}}}
+\]
+\end{definition}
+\end{frame}
+
+\begin{frame}{The End}
+\end{frame}
+
+
+% Acho que n
 \begin{frame}{System FC}
 
 \only<1-2>{
@@ -337,21 +476,6 @@ written $e\blacktriangleright\sigma_1\sim\sigma_2$.
 }
 
 \end{frame}
-
-% \begin{frame}{Linear Core}
-% \item<1-> Core's type-system guarantees 
-% \item<2-> A linear Haskell validates
-% \end{frame}
-
-\begin{frame}{GHC Optimizations}
-\begin{itemize}
-  \item<1-> Parser $\to$ Renamer $\to$ Type-checker $\to$ Desugarer
-  \item<2-> Core-to-Core transformations (transformational approach)
-  \item<3-> Core $\to$ STG $\to$ Cmm $\to$ Backends (x86_64, ARM, WASM,$\dots$)
-\end{itemize}
-\end{frame}
-
-\section{Proposed Work}
 
 
 \end{document}
