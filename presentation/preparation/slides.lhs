@@ -365,16 +365,17 @@ A linear resource must be used \emph{exactly once}.
 \begin{itemize}
 \item Core-to-Core transformations produce programs that aren't accepted by
 Core's linear type system
-\item We believe the transformations preserve linearity
+\item The optimizing transformations preserve linearity
 \item Core's type-checker needs more information to understand linearity in Core
 \end{itemize}
 \end{frame}
 
-\begin{frame}{Linearity in Core}
+\begin{frame}{Challenges}
 \only<1>{
 \begin{example}
 \begin{code}
 let x = (y, z) in
+
 case e of
   Pat1 -> … x …
   Pat2 -> … y … z …
@@ -401,10 +402,41 @@ case e of
 
 \begin{frame}{Proposed Solution}
 \begin{itemize}
-\item Extend Core's let, letrec and case binders with \emph{usage environments}
-\item Augment type system with usage environments to deem more programs linear
-\item Augment the type-checking algorithm to infer usage environments for said bindings
+\item Extend Core's binders with \emph{usage environments}
+% Preciso usar e construir
+% Entails using the usage environments and 
+% \item Augment type system with usage environments to deem more programs linear
+% \item Augment the type-checking algorithm to infer usage environments for said bindings
 \end{itemize}
+\only<2>{
+\begin{example}
+\[
+\begin{array}{lcl}
+\llet{x = (y,z)}{...} & & U_x = {y\to1,z\to1}
+\end{array}
+\]
+\end{example}
+}
+\end{frame}
+
+\begin{frame}{Proposed Solution}
+\begin{example}[Using usage environments]
+\[
+\begin{array}{l}
+\llet{x_{\{y \to 1, z \to 1\}} = (y,z)}{\\ \ccase{e}{\\ ~~Pat1 \to \dots x^{\{y \to 1, z \to 1\}} \dots\\ ~~Pat2 \to \dots y^{\{y \to 1\}} \dots z^{\{z \to 1\}} \dots} }
+\end{array}
+\]
+\end{example}
+\end{frame}
+
+\begin{frame}{Proposed Solution}
+\begin{example}[Constructing usage environments]
+\[
+\begin{array}{l}
+\llet{x = (y^{\{y\to1\}},z^{\{z\to1\}})}{\\ \ccase{e}{\\ ~~Pat1 \to \dots x \dots\\ ~~Pat2 \to \dots y \dots z \dots} }
+\end{array}
+\]
+\end{example}
 \end{frame}
 
 \begin{frame}{The End}
