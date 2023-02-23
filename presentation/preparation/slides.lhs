@@ -58,17 +58,17 @@
     \end{figure}
 \end{frame}
 
-\section{Introduction}
+% \section{Introduction}
 
 \begin{frame}{Context}
 
 \begin{itemize}
-\item Haskell is a lazy functional language, with an advanced type system to
+\item<1-> Haskell is a lazy functional language, with an advanced type system to
 which \emph{linear types} were introduced
-\item The whole of Haskell is transformed to the minimal Core language, which
+\item<2-> The whole of Haskell is transformed to the minimal Core language, which
 is also functional, typed and lazy
       % Which allows us to reason about the entirety of Haskell, including all the type features and laziness
-\item Core \emph{needs} linear types to completely represent Haskell
+\item<3-> Core \emph{needs} linear types to completely represent Haskell
 \end{itemize}
 
 \end{frame}
@@ -163,14 +163,14 @@ is also functional, typed and lazy
 \end{itemize}
 \end{frame}
 
-\section{Background}
+% \section{Background}
 
 \begin{frame}{Linear Typing}
 \begin{block}{Linear Resource}<1->
 % In a linear type system,
 A linear resource must be used \emph{exactly once}.
 \end{block}
-\only<2>{
+\only<1>{
 \begin{example} % [Rejected by type-system]
   \begin{code}
   let p = malloc(4);
@@ -179,7 +179,7 @@ A linear resource must be used \emph{exactly once}.
   \end{code}
 \end{example}
 }
-\only<3>{
+\only<2>{
 \begin{example} % [Accepted by type-system]
   \begin{code}
   let p = malloc(4);
@@ -346,20 +346,20 @@ A linear resource must be used \emph{exactly once}.
 % \end{itemize}
 % \end{frame}
 
-\begin{frame}{Optimizing Transformations}
-% \begin{definition}[Term $\beta$-reduction]<1->
+% \begin{frame}{Optimizing Transformations}
+% % \begin{definition}[Term $\beta$-reduction]<1->
+% % \[
+% % (\lambda x{:}\tau.~e)~y~\Longrightarrow~e[y/x]
+% % \]
+% % \end{definition}
+% \begin{example}[Inlining]<1->
 % \[
-% (\lambda x{:}\tau.~e)~y~\Longrightarrow~e[y/x]
+% \llet{x = 5}{x + x}~\Longrightarrow~\llet{x = 5}{5 + 5}
 % \]
-% \end{definition}
-\begin{example}[Inlining]<1->
-\[
-\llet{x = 5}{x + x}~\Longrightarrow~\llet{x = 5}{5 + 5}
-\]
-\end{example}
-\end{frame}
+% \end{example}
+% \end{frame}
 
-\section{Proposed Work}
+% \section{Proposed Work}
 
 \begin{frame}{Challenges}
 \begin{itemize}
@@ -371,8 +371,13 @@ Core's linear type system
 \end{frame}
 
 \begin{frame}{Challenges}
-\only<1>{
-\begin{example}
+\begin{example}[Inlining]<1->
+\[
+\llet{x = 5}{x + x}~\Longrightarrow~\llet{x = 5}{5 + 5}
+\]
+\end{example}
+
+\begin{example}[Non-trivial linearity]<2>
 \begin{code}
 let x = (y, z) in
 
@@ -381,7 +386,6 @@ case e of
   Pat2 -> … y … z …
 \end{code}
 \end{example}
-}
 % \only<2>{
 % \begin{example}[$\beta$-reduction violating linearity] % because of laziness
 %     \begin{code}
@@ -408,15 +412,14 @@ case e of
 % \item Augment type system with usage environments to deem more programs linear
 % \item Augment the type-checking algorithm to infer usage environments for said bindings
 \end{itemize}
-\only<2>{
-\begin{example}
+
+\begin{example}[Usage environments]<2>
 \[
 \begin{array}{lcl}
 \llet{x = (y,z)}{...} & & U_x = {y\to1,z\to1}
 \end{array}
 \]
 \end{example}
-}
 \end{frame}
 
 \begin{frame}{Proposed Solution}
