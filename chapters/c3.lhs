@@ -75,7 +75,7 @@ where a linear term is still \emph{consumed exactly once} -- this is compounded
 by lazy evaluation driving a non-trivial mismatch between syntactic and
 semantic linearity.
 
-Consider the example in Figure~\ref{fig:motivation-1}, an expression in which
+Consider the example in Figure~\ref{fig:first-motivation}, an expression in which
 $y$ and $z$ are variables bound by a $\lambda$-abstraction, and both are
 annotated with a multiplicity of \texttt{1}. Note that let-binding $x$ doesn't
 necessarily consume $y$ and $z$ because of Core's call-by-need semantics.
@@ -92,7 +92,7 @@ necessarily consume $y$ and $z$ because of Core's call-by-need semantics.
   \begin{minipage}[r]{0.49\textwidth}
     \caption{Example Inlining}
   \end{minipage}
-\label{fig:motivation-1}
+\label{fig:first-motivation}
 \end{figure}
 %
 In the example, it might not seem as though $y$ and $z$ are both being
@@ -101,7 +101,8 @@ we use $x$ -- which entails using $y$ and $z$ linearly -- and in the second
 branch we use $y$ and $z$ directly, in both branches we are consuming both $y$
 and $z$ linearly.
 
-Similarly, consider the program in Figure~\ref{fig:motivation-2} with a
+% TODO:HELP: Fix links to motivation-2 showing up as links to motivation-1
+Similarly, consider the program in Figure~\ref{fig:second-motivation} with a
 let-binding that uses $x$, a linearly bound $\lambda$-variable. In surface
 level Haskell, let-bindings always consume linear variables \texttt{Many} times
 to avoid dealing with the complexity of call-by-need semantics, so this program
@@ -118,7 +119,7 @@ of \texttt{1}.
   \begin{minipage}[r]{0.49\textwidth}
     \caption{Example Let}
   \end{minipage}
-\label{fig:motivation-2}
+\label{fig:second-motivation}
 \end{figure}
 %
 Despite not being accepted by the surface-level language, linear programs using
@@ -226,13 +227,13 @@ be inferred by the type-checking algorithm when relevant binders are created
 and maintained throughout the Core-to-Core passes to ultimately be used by the
 typing rules.
 
-With usage environments, the example in Figure~\ref{fig:motivation-2}, in which
+With usage environments, the example in Figure~\ref{fig:second-motivation}, in which
 $x$ is a linear variable, would type-check by annotating $y$ with a usage
 environment of $[x \to 1]$, because the expression bound by $y$ uses $x$
 exactly once, \emph{and} emitting that $x$ is used once when $y$ is used, that
 is, emitting $y$'s usage environment upon using $y$.
 
-The example in Figure~\ref{fig:motivation-2} would similarly type-check by
+The example in Figure~\ref{fig:first-motivation} would similarly type-check by
 annotating $x$ with the usage environment $[y \to 1, z \to 1]$ -- to linearly
 type-check that $y$ and $z$ are used linearly, both branches must use $y$ and
 $z$ linearly. Using usage environments, in the first branch, using $x$ amounts
@@ -460,7 +461,7 @@ crucial that we communicate our ideas and changes clearly, so we can benefit
 from other contributors expert feedback, and ultimately merge our changes to
 Core upstream.
 
-We present a work plan in Figure~\ref{fig:work-plan}.
+% We present a work plan in Figure~\ref{fig:work-plan}.
 
 % \begin{figure}
 % \begin{ganttchart}[
@@ -481,11 +482,11 @@ We present a work plan in Figure~\ref{fig:work-plan}.
 % \label{fig:work-plan}
 % \end{figure}
 
-\begin{figure} [hbtp]
-    \includegraphics[width=\textwidth,height=\textheight,keepaspectratio]{CRPTable}
-    \caption{Work Plan}
-    \label{fig:work-plan}
-\end{figure}
+% \begin{figure} [hbtp]
+%     \includegraphics[width=\textwidth,height=\textheight,keepaspectratio]{CRPTable}
+%     \caption{Work Plan}
+%     \label{fig:work-plan}
+% \end{figure}
 
 % A value allocated to be passed to a linear function and then never again used could
 % bypass garbage collection.

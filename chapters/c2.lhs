@@ -648,6 +648,11 @@ $f$ and $g$ ($m$ will unify with $1$ and $\omega$ at the call sites).
 
 \section{Core and System $F_C$\label{sec:core}}
 
+% The section on coercions should probably mention roles, although I imagine you
+% deliberately tried to avoid that. For example: p. 14 "Newtypes ... introduce a
+% global type equality ... BoxI ~ Int" This is IMO quite misleading, as the
+% equality is of a different nature than for GADTs and TypeFamilies.
+
 Haskell is a large and expressive language with many syntatic constructs and
 features. However, the whole of Haskell can be desugared down to a minimal,
 explicitly typed, intermediate language called \textbf{Core}.
@@ -699,16 +704,22 @@ a notion of type coercion), while Haskell is implicitly typed and its type
 system is based on the constraint-based type inference system
 $OutsideIn(X)$~\cite{cite:outsideinx}. Therefore, typechecking Core is simple,
 fast and requires no type inference, whereas Haskell's typechecker must account
-for the entirety of Haskell's syntax and must perform type-inference in the
-presence of arbitrary-rank polymorphism, existential types, type-level
-functions, and GADTs, which are known to introduce significant challenges for
-type inference algorithms~\cite{cite:outsideinx}.
+for almost the entirety of Haskell's syntax,
+% some features such as record updates, overloaded labels and overloaded
+% rebindable syntax are desugared before the typechecker
+and must perform type-inference in the presence of arbitrary-rank polymorphism,
+existential types, type-level functions, and GADTs, which are known to
+introduce significant challenges for type inference
+algorithms~\cite{cite:outsideinx}.
 %
-Haskell is typechecked in addition to Core to (i) perform type inference and (ii)
-provide meaningful type errors. If Haskell wasn't typechecked and instead we
-only typechecked Core, everything (e.g.  all binders) would have to be
-explicitly typed and error messages would refer to the intermediate language
-rather than the written program.
+Haskell is typechecked in addition to Core to elaborate the user program. This
+might involve performing type inference to make implicit types explicit and
+solving constraints to pass implicit dictionary arguments explicitly.
+Furthermore, type-checking the source language allows us to provide meaningful
+type errors. If Haskell wasn't typechecked and instead we only typechecked
+Core, everything (e.g. all binders) would have to be explicitly typed and type
+error messages would refer to the intermediate language rather than the written
+program.
 
 The Core language is based on $System~F_C$, a polymorphic lambda calculus with
 explicit type-equality coercions that, like types, are erased at compile time
@@ -836,11 +847,12 @@ Haskell tokens. The parser processes the tokens to create an abstract syntax
 tree representing the original code, as long as the input is a syntactically
 valid Haskell program.
 
-\parawith{Renamer.} The renamer's main task is to resolve names to fully
-qualified names, taking into consideration both existing identifiers in the
-module being compiled and identifiers exported by other modules. Additionally,
-name ambiguity, variables out of scope, unused bindings or imports, etc., are
-all checked and reported as errors or warnings.
+\parawith{Renamer.} The renamer's main tasks are to resolve names to fully
+qualified names, resolve name shadowing, and resolve namespaces (such as the
+types and terms namespaces), taking into consideration both existing
+identifiers in the module being compiled and identifiers exported by other
+modules. Additionally, name ambiguity, variables out of scope, unused bindings
+or imports, etc., are checked and reported as errors or warnings.
 
 \parawith{Type-checker.} With the abstract syntax tree validated by
 the renamer and with the names fully qualified, the Haskell program is
@@ -869,16 +881,20 @@ constructors are transformed into coercions).
 
 \subsection{Core-To-Core Transformations}
 
+% TODO: Rewrite rules which also operate on Core
+% TODO: Split worker/wrapper into its own section?
+
 The Core-to-Core transformations are the most important set of
 optimizing transformations that GHC performs during compilation. By design, the
 frontend of the pipeline (parsing, renaming, typechecking and desugaring) does
 not include any optimizations -- all optimizations are done in Core.
 The transformational approach focused on Core, known as \emph{compilation by
   transformation}, allows transformations to be both modular and simple.
-Each transformation focuses on optimizing a specific (set of)
+Each transformation focuses on optimizing a specific set of
 constructs, where applying a transformation often exposes opportunities for
 other transformations to fire. Since transformations are modular, they
-can be chained and iterated in order to maximize the optimization potential.
+can be chained and iterated in order to maximize the optimization potential (as
+shown in Figure~\ref{fig:eg:transformations}).
 
 
 
