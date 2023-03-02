@@ -1,22 +1,22 @@
 \documentclass[14pt,aspectratio=169,dvipsnames]{beamer}
 
-\usepackage{todonotes}
-\usepackage{cmll}
-\usepackage{amssymb}
 \usepackage{amsmath}
-\usepackage{mathpartir}
-\usepackage{fancyvrb}
+\usepackage{amssymb}
 \usepackage{cleveref}
+\usepackage{cmll}
+\usepackage{fancyvrb}
+\usepackage{mathpartir}
+\usepackage{todonotes}
 
-\newcommand{\parawith}[1]{\paragraph{\emph{#1}}}
-\newcommand{\lolli}{\multimap}
-\newcommand{\tensor}{\otimes}
-\newcommand{\one}{\mathbf{1}}
 \newcommand{\bang}{{!}}
+\newcommand{\lolli}{\multimap}
+\newcommand{\one}{\mathbf{1}}
+\newcommand{\parawith}[1]{\paragraph{\emph{#1}}}
+\newcommand{\tensor}{\otimes}
 
-\newcommand{\llet}[2]{\mathsf{let}~#1~\mathsf{in}~#2}
-\newcommand{\lletrec}[2]{\mathsf{letrec}~#1~\mathsf{in}~#2}
 \newcommand{\ccase}[2]{\mathsf{case}~#1~\mathsf{of}~#2}
+\newcommand{\lletrec}[2]{\mathsf{letrec}~#1~\mathsf{in}~#2}
+\newcommand{\llet}[2]{\mathsf{let}~#1~\mathsf{in}~#2}
 
 \usetheme{Copenhagen}
 %\usetheme{Singapore}
@@ -32,6 +32,10 @@
 %include polycode.fmt
 
 %subst keyword a = "\textcolor{BlueViolet}{\textbf{" a "}}"
+%format forall = "\forall"
+%format %-> = "\multimap"
+%format . = ".\;"
+%format /\ = "\Lambda"
 
 \newcommand{\myFor}[2]{\For{$#1$}{$#2$}}
 \newcommand{\id}[1]{\textsf{\textsl{#1}}}
@@ -44,44 +48,183 @@
 
 \title{Type-checking Linearity in Haskell's\\ Core Intermediate Language}
 \author{Rodrigo Mesquita\\ Advisor: Bernardo Toninho}
-\institute{NOVA School of Science and Technology}
-\date{\small February 2023}
+\institute{
+% NOVA School of Science and Technology
+% \\
+\includegraphics[width=0.4\linewidth]{../logo_nova.png}
+}
+\date{ }
 
 \begin{document}
+
 \begin{frame}
     \titlepage
-    \begin{figure}[htpb]
-        \begin{center}
-            \vspace*{-1.5cm}
-            \includegraphics[width=0.4\linewidth]{../logo_nova.png}
-        \end{center}
-    \end{figure}
 \end{frame}
 
 % \section{Introduction}
 
-\begin{frame}{Context}
+\begin{frame}{Haskell is desugared to Core}
 
 \begin{itemize}
-\item<1-> Haskell is a lazy functional language, with an advanced type system to
-which \emph{linear types} were introduced
+\item<1-> Haskell is a lazy functional language, with an advanced type system
+% to which \emph{linear types} were introduced
 \item<2-> The whole of Haskell is transformed to the minimal Core language, which
 is also functional, typed and lazy
       % Which allows us to reason about the entirety of Haskell, including all the type features and laziness
-\item<3-> Core \emph{needs} linear types to completely represent Haskell
+% \item<3-> Core \emph{needs} linear types to completely represent Haskell
 \end{itemize}
-
 \end{frame}
 
-\begin{frame}{Context}
+\begin{frame}{Haskell is desugared to Core}
+\begin{example}[Haskell vs Core]
+\begin{minipage}{0.47\textwidth}
+\begin{code}
+null :: [a] -> Bool
+null x = case x of
+  [] -> True
+  _  -> False
+\end{code}
+\end{minipage}
+\begin{minipage}{0.47\textwidth}
+\begin{code}
+null :: forall a . [a] -> Bool
+null = /\ a. \ (x :: [a]) ->
+  case x of
+    [] -> True
+    (:) y ys -> False
+\end{code}
+\end{minipage}
+\end{example}
+\end{frame}
+
+\begin{frame}{Core's type-checker validates GHC}
 \begin{itemize}
-\item<1-> \textbf<1>{Core's linear type-checker doesn't accept linear
-    programs} after optimizing transformations are applied
+\item<1-> Core is \emph{really} important in the design of GHC
+\item<2-> Core allows us to reason about the entirety of Haskell in a much smaller language.
+\item<3-> Optimization and code generation is performed on Core
+\item<3-> Type-checking Core serves as an internal consistency tool
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Linear Types were introduced in Haskell}
+\begin{itemize}
+\item<1-> Haskell's type system was extended with \emph{linear types}
+\item<2-> \textbf{Core also needs linear types} to completely represent Haskell
+% Otherwise it isn't expressive enough to represent Haskell
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Linear Typing}
+\begin{block}{Linear Resource}<1->
+% In a linear type system,
+A linear resource must be used \emph{exactly once}.
+\end{block}
+\only<1>{
+\begin{example}[Rejected by type-system]
+  \begin{code}
+  let p = malloc(4);
+  in free(p);
+     free(p);
+  \end{code}
+\end{example}
+}
+\only<2>{
+\begin{example}[Accepted by type-system]
+  \begin{code}
+  let p = malloc(4);
+      p' = put(p,5);
+  in free(p');
+  \end{code}
+\end{example}
+}
+\end{frame}
+
+\begin{frame}{Linear Haskell}
+
+\only<1-2>{
+\begin{itemize}
+\item<1-> Linear types were retroffited to Haskell by introducing linearity in the function type
+    % \begin{itemize}
+    % \item<2-> A multiplicity of \texttt{1} indicates a linear function ($\to_1$)
+    % \item<3-> A multiplicity of \texttt{Many} indicates an unrestricted function ($\to_\omega$)
+    % \end{itemize}
+    % Which has good benefits such as backwards compatibility and code
+    % re-use, which are very important in the context of
+\item<2-> A linear function $\lolli$ must use its argument \emph{exactly once}
+\item<2-> An unrestricted function $\to$ can use its argument unrestrictedly
+% \begin{example}
+% \begin{code}
+% id :: a %1 -> a
+% \end{code}
+% \end{example}
+\end{itemize}
+}
+
+% \only<6-8>{
+% \begin{definition}[Consuming a value]
+%   \begin{itemize}
+%     \item<6-> To consume a value of atomic base type, just evaluate it
+%     \item<7-> To consume a function exactly once, apply it, and consume the
+%     result
+%     \item<8-> To consume a value of an algebraic data type, pattern-match on
+%     it, and consume its linear components
+%   \end{itemize}
+% \end{definition}
+% }
+
+\only<3>{
+\begin{example}[Linear types in Haskell]
+  \begin{minipage}{0.47\textwidth}
+  \begin{code}
+      f :: Int %-> Int
+      f x = x*2
+  \end{code}
+  \end{minipage}
+  \begin{minipage}{0.47\textwidth}
+  \begin{code}
+      g :: Int -> Int
+      g x = x*x + 2
+  \end{code}
+  \end{minipage}
+\end{example}
+}
+
+% \only<10>{
+% \begin{example}[Multiplicity polymorphism]
+% \begin{minipage}{0.47\textwidth}
+% \begin{code}
+% f :: (Bool %1 -> Int) -> Int
+% f c = c True
+% 
+% g :: (Bool -> Int) -> Int
+% g c = c False
+% \end{code}
+% \end{minipage}
+% \begin{minipage}{0.47\textwidth}
+% \begin{code}
+% h :: Bool %m -> Int
+% h x = case x of
+%   False -> 0
+%   True -> 1
+% \end{code}
+% \end{minipage}
+% \end{example}
+% }
+\end{frame}
+
+%Meta: Devia ler os pontos nos slides depois de concluir aquilo que tenho para
+%dizer naquele slide ou dizer no início e depois explicar? parece-me que a
+%primeira opção é melhor
+
+\begin{frame}{Linear Core is incomplete}
+\begin{itemize}
+\item<2-> \textbf<2>{Core's linear type-checker doesn't accept most linear
+    programs}
     % Optimizing transformations destroy linearity as the type-checker sees
     % it. However, we believe optimizing transformations *don't* destroy
     % linearity, it's just a limitation of the type system
-% \item<1-> \textbf<2>{Core's linear type-checker is disabled} because
-%     otherwise disabling optimizations is far worse
+\item<3-> \textbf<3>{Core's linear type-checker is disabled} because
+    otherwise disabling optimizations is far worse
     % it doesn't accept transformed Core programs
     % GHC's Core type-checker is disabled because it doesn't accept Core
     % programs that undergo optimizing transformations in Core
@@ -89,16 +232,18 @@ is also functional, typed and lazy
 \end{itemize}
 \end{frame}
 
-\begin{frame}{Compiling Haskell}
+\begin{frame}{Linear Core is a worthwhile goal}
 
 \begin{itemize}
-\item<1-> Core is \emph{really} important in the design of GHC
-\item<2-> Core allows us to reason about the entirety of Haskell in a much smaller language.
+\item<1-> A Linear Core allows us to reason about linear types in Haskell
     % \item<4-> The entirety of Haskell can be compactly expressed in Core
     % transformational approach to optimization
     % for the desugaring and optimization passes
-\item<3-> Analysis, optimization and code generation is performed on Core
-\item<3-> Type-checking Core serves as internal consistency tool
+\item<2-> Type-checking linearity in Core serves as internal consistency tool
+\begin{itemize}
+\item<3-> Validate Linear Haskell's implementation
+\item<3-> Validate that optimizing transformations don't destroy linearity
+\end{itemize}
 % \item<6-> Core type-checker is much faster than Haskell
 % \item<6-> Core is based on the $System~F_C$ type-system
 \end{itemize}
@@ -152,7 +297,7 @@ is also functional, typed and lazy
 
 \begin{frame}{Objectives}
 \begin{itemize}
-    \item<1-> Extend Core's type-system to accommodate linear Core
+    \item<1-> Extend Core's type-system to accommodate Linear Core
         % Big distinction between syntatically valid linearity and semantically
         % valid. Transformations result in many semantically valid but
         % syntatically invalid programs, and we need to extend Core to
@@ -164,31 +309,6 @@ is also functional, typed and lazy
 \end{frame}
 
 % \section{Background}
-
-\begin{frame}{Linear Typing}
-\begin{block}{Linear Resource}<1->
-% In a linear type system,
-A linear resource must be used \emph{exactly once}.
-\end{block}
-\only<1>{
-\begin{example} % [Rejected by type-system]
-  \begin{code}
-  let p = malloc(4);
-  in free(p);
-     free(p);
-  \end{code}
-\end{example}
-}
-\only<2>{
-\begin{example} % [Accepted by type-system]
-  \begin{code}
-  let p = malloc(4);
-      p' = put(p,5);
-  in free(p');
-  \end{code}
-\end{example}
-}
-\end{frame}
 
 % {
 % \begin{frame}{Linear Lambda Calculus}
@@ -257,78 +377,6 @@ A linear resource must be used \emph{exactly once}.
 % \end{example}
 % \end{frame}
 
-\begin{frame}{Linear Haskell}
-
-\only<1-2>{
-\begin{itemize}
-\item<1-> Linear types were retroffited to Haskell by introducing linearity in the function type
-    % \begin{itemize}
-    % \item<2-> A multiplicity of \texttt{1} indicates a linear function ($\to_1$)
-    % \item<3-> A multiplicity of \texttt{Many} indicates an unrestricted function ($\to_\omega$)
-    % \end{itemize}
-    % Which has good benefits such as backwards compatibility and code
-    % re-use, which are very important in the context of
-\item<2-> A linear function $\lolli$ must use its argument \emph{exactly once}
-\item<2-> An unrestricted function $\to$ can use its argument unrestrictedly
-% \begin{example}
-% \begin{code}
-% id :: a %1 -> a
-% \end{code}
-% \end{example}
-\end{itemize}
-}
-
-% \only<6-8>{
-% \begin{definition}[Consuming a value]
-%   \begin{itemize}
-%     \item<6-> To consume a value of atomic base type, just evaluate it
-%     \item<7-> To consume a function exactly once, apply it, and consume the
-%     result
-%     \item<8-> To consume a value of an algebraic data type, pattern-match on
-%     it, and consume its linear components
-%   \end{itemize}
-% \end{definition}
-% }
-
-\only<3>{
-\begin{example}[Linear types in Haskell]
-  \begin{minipage}{0.47\textwidth}
-  \begin{code}
-      f :: Int -o Int
-      f x = x*2
-  \end{code}
-  \end{minipage}
-  \begin{minipage}{0.47\textwidth}
-  \begin{code}
-      g :: Int -> Int
-      g x = x*x + 2
-  \end{code}
-  \end{minipage}
-\end{example}
-}
-
-% \only<10>{
-% \begin{example}[Multiplicity polymorphism]
-% \begin{minipage}{0.47\textwidth}
-% \begin{code}
-% f :: (Bool %1 -> Int) -> Int
-% f c = c True
-% 
-% g :: (Bool -> Int) -> Int
-% g c = c False
-% \end{code}
-% \end{minipage}
-% \begin{minipage}{0.47\textwidth}
-% \begin{code}
-% h :: Bool %m -> Int
-% h x = case x of
-%   False -> 0
-%   True -> 1
-% \end{code}
-% \end{minipage}
-% \end{example}
-% }
-\end{frame}
 
 % \begin{frame}{Linear Core}
 % \item<1-> Core's type-system guarantees 
@@ -361,7 +409,7 @@ A linear resource must be used \emph{exactly once}.
 
 % \section{Proposed Work}
 
-\begin{frame}{Challenges}
+\begin{frame}{Typing linearity in Core isn't trivial}
 \begin{itemize}
 \item Core-to-Core transformations produce programs that aren't accepted by
 Core's linear type system
@@ -370,7 +418,7 @@ Core's linear type system
 \end{itemize}
 \end{frame}
 
-\begin{frame}{Challenges}
+\begin{frame}{Typing linearity in Core isn't trivial}
 \begin{example}[Inlining]<1->
 \[
 \llet{x = 5}{x + x}~\Longrightarrow~\llet{x = 5}{5 + 5}
