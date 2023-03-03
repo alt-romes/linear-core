@@ -25,6 +25,7 @@
 \setbeamertemplate{navigation symbols}{}
 \setbeamertemplate{itemize items}[circle]
 \setbeamercovered{transparent}
+\setbeamertemplate{footline}[frame number]
 % \setbeameroption{show notes on second screen}
 % \setbeameroption{show notes}
 
