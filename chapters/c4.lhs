@@ -23,14 +23,14 @@
 \begin{array}{lcll}
     u               & ::=  & x \mid K                           & \textrm{Variables and data constructors}\\
     e               & ::=  & u                                  & \textrm{Term atoms}\\
-                    & \mid & \Lambda a.~e~\mid~e~\varphi  & \textrm{Multiplicity abstraction/application}\\
+                    & \mid & \Lambda p.~e~\mid~e~\pi  & \textrm{Multiplicity abstraction/application}\\
                     & \mid & \lambda x{:}_\pi\sigma.~e~\mid~e_1~e_2 & \textrm{Term abstraction/application}\\
                     & \mid & \llet{x{:}_\Delta\sigma = e_1}{e_2}       & \textrm{Let} \\
                     & \mid & \lletrec{\overline{x{:}_\Delta\sigma = e_1}}{e_2}  & \textrm{Recursive Let} \\
-                    & \mid & \ccase{e_1}{z~\{\overline{p\to e_2}\}}   & \textrm{Case} \\
+                    & \mid & \ccase{e_1}{z~\{\overline{pat\to e_2}\}}   & \textrm{Case} \\
                     &      &                                    & \\
 %    p               & ::= & K~\overline{b{:}\kappa}~\overline{x{:}\sigma} & \textrm{Pattern} \\
-    p               & ::= & K~\overline{b}~\overline{x{:}\sigma} & \textrm{Pattern with existential multiplicities} \\
+    pat             & ::= & K~\overline{b}~\overline{x{:}\sigma} & \textrm{Pattern with existential multiplicities} \\
 % Currently we don't care about the existential multiplicity variables, but later on we might
 \end{array}\\\\
 %
@@ -40,12 +40,77 @@
          & \mid & \Gamma,u{:}_\pi\sigma & \textrm{Lambda bound variable} \\
          & \mid & \Gamma,u{:}_\Delta\sigma & \textrm{Let(rec) bound variable}\\
          & \mid & \Gamma,u{:}_{\overline{\Delta}}\sigma & \textrm{Case bound variables}
+\end{array}\\\\
+%
+\textbf{Multiplicities}\\
+\begin{array}{lcll}
+  \pi, \mu & ::= & 1 \mid \omega \mid p \mid \pi + \mu \mid \pi \cdot \mu\\
+% We don't use + and cdot yet, but we will
+\end{array}\\\\
+%
+\textbf{Usage Environments}\\
+\begin{array}{lcll}
+  \Delta & ::= & \epsilon \mid \Delta, x{:}_\pi\sigma \\
 \end{array}
 %
 \end{array}
 \]
 \end{framed}
 \caption{Linear Core* Syntax}
+\label{linear-core-syntax}
+\end{figure}
+
+
+
+\begin{figure}[h]
+\begin{framed}
+\small
+\[
+\begin{array}{c}
+    \infer*[right=($Weaken_\omega$)]
+    {\Gamma \vdash u : \sigma}
+    {\Gamma , u{:}_\omega \sigma \vdash u : \sigma}
+\qquad
+    \infer*[right=($Weaken_\Delta$)]
+    {\Gamma \vdash u : \sigma}
+    {\Gamma , u{:}_\Delta \sigma \vdash u : \sigma}
+\\[1em]
+    \infer*[right=($Contract_\omega$)]
+    {\Gamma , u{:}_\omega \sigma, u{:}_\omega \sigma \vdash u : \sigma}
+    {\Gamma , u{:}_\omega \sigma \vdash u : \sigma}
+\qquad
+    \infer*[right=($Contract_\Delta$)]
+    {\Gamma , u{:}_\Delta \sigma, u{:}_\Delta \sigma \vdash u : \sigma}
+    {\Gamma , u{:}_\Delta \sigma \vdash u : \sigma}
+\\[1em]
+    % estranho para multiplicidades que não 1 e \omega, pode estar errado
+    \infer*[right=($Var_\pi$)]
+    { \{u{:}_\pi\}_1^\pi = \Gamma }
+    {\Gamma , u{:}_\pi \sigma \vdash u : \sigma}
+\qquad
+    \infer*[right=($Var_\Delta$)]
+    { \Delta = \Gamma }
+    {\Gamma , u{:}_\Delta \sigma \vdash u : \sigma}
+\\[1em]
+%     \infer*[right=($\Lambda I$)]
+%     {\Gamma, x{:}_\pi\sigma_1 \vdash e : \sigma_2}
+%     {\Gamma \vdash \lambda x{:}_\pi\sigma_1.~e : \sigma_1 \to_\pi \sigma_2}
+% \qquad
+%     \infer*[right=($\Lambda E$)]
+%     {\Gamma \vdash e_1 : \forall p.~\sigma \and \Gamma' \vdash e_2 : \sigma_2}
+%     {\Gamma,\Gamma' \vdash e_1~\pi : \sigma_1}
+% \\[1em]
+    \infer*[right=($\lambda I$)]
+    {\Gamma, x{:}_\pi\sigma_1 \vdash e : \sigma_2}
+    {\Gamma \vdash \lambda x{:}_\pi\sigma_1.~e : \sigma_1 \to_\pi \sigma_2}
+\qquad
+    \infer*[right=($\lambda E$)]
+    {\Gamma \vdash e_1 : \sigma_2 \to_\pi \sigma_1 \and \Gamma' \vdash e_2 : \sigma_2}
+    {\Gamma,\Gamma' \vdash e_1~e_2 : \sigma_1}
+\end{array}
+\]
+\end{framed}
+\caption{Linear Core* Typing Rules}
 \label{linear-core-syntax}
 \end{figure}
 
