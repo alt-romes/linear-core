@@ -1,0 +1,9 @@
+Romes.fmt -- lhs2tex format in the style of https://github.com/goldfirere/thesis/blob/master/tex/rae.fmt
+
+
+Declarativamente posso fazer isto sem pensar na construção de usage environments.
+Se tivesse os usage environments, como faria isto?
+* Usar os usage environments para tipificar
+* Argumentar que isto faz sentido
+
+

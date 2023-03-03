@@ -11,6 +11,10 @@
 *.ist
 *.lof
 *.lot
+*.nav
+*.snm
 report.tex
-chapters/c2.tex
-chapters/c3.tex
+chapters/c*.tex
+presentation/preparation/TODO
+presentation/preparation/slides.tex
+presentation/toninho

@@ -97,7 +97,7 @@ linearity information, allowing the system to accept programs which seem to
 syntactically violate linearity but preserve linear resource usage. We will
 also develop a usage environment inference procedure and integrate the
 procedure with the type checker.  We will validate our proposal by showing a
-range of Core-to-Core transformations can be typed by our system
+range of Core-to-Core transformations can be typed by our system.
 \end{abstract}
 \cleardoublepage
 
@@ -166,7 +166,7 @@ relevant to their problem domain.
 In this sense, type safety entails that all
 possible executions of a type-correct program cannot exhibit behaviors
 deemed ``wrong'' by the type system design. This idea is captured in
-the motto ``well-typed programs do not go wrong''~\cite{}.
+the motto ``well-typed programs do not go wrong''.%~\cite{}.
 
 
 Linear type systems~\cite{cite:linear-logic,cite:barberdill} add expressiveness
@@ -444,6 +444,8 @@ non-linear programs are deemed linear);
 \include{chapters/c2.tex}
 
 \include{chapters/c3.tex}
+
+\include{chapters/c4.tex}
 
 
 \begin{SingleSpace}
