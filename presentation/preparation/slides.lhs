@@ -26,6 +26,7 @@
 \setbeamertemplate{itemize items}[circle]
 \setbeamercovered{transparent}
 \setbeamertemplate{footline}[frame number]
+\usepackage{appendixnumberbeamer}
 % \setbeameroption{show notes on second screen}
 % \setbeameroption{show notes}
 
@@ -296,7 +297,7 @@ A linear resource must be used \emph{exactly once}.
 % \end{itemize}
 % \end{frame}
 
-\begin{frame}{Objectives}
+\begin{frame}{Our objectives}
 \begin{itemize}
     \item<1-> Extend Core's type-system to accommodate Linear Core
         % Big distinction between syntatically valid linearity and semantically
@@ -412,10 +413,10 @@ A linear resource must be used \emph{exactly once}.
 
 \begin{frame}{Typing linearity in Core isn't trivial}
 \begin{itemize}
-\item Core-to-Core transformations produce programs that aren't accepted by
+\item<1-> Core-to-Core transformations produce programs that aren't accepted by
 Core's linear type system
-\item The optimizing transformations preserve linearity
-\item Core's type-checker needs more information to understand linearity in Core
+\item<2-> The optimizing transformations preserve linearity
+\item<3> Core's type-checker needs more information to understand linearity in Core
 \end{itemize}
 \end{frame}
 
@@ -492,8 +493,11 @@ case e of
 \end{frame}
 
 \begin{frame}{The End}
+\center
+Thank you for your attention
 \end{frame}
 
+\appendix
 
 % Acho que n
 \begin{frame}{System FC}
