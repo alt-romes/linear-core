@@ -1,6 +1,6 @@
 \documentclass{lwnovathesis}
  
-\usepackage{pgfgantt} 
+\usepackage{boldline}
 \usepackage{todonotes}
 \usepackage{cmll}
 \usepackage{amssymb}
