@@ -13,7 +13,7 @@
 %
 \textbf{Types} \\
 \begin{array}{lcll}
-    \varphi,\sigma & ::= & D~p_1 \dots p_2 & \textrm{Datatype} \\
+    \varphi,\sigma & ::= & T~p_1 \dots p_2 & \textrm{Datatype} \\
                    & \mid & \varphi \to_\pi \sigma & \textrm{Function with multiplicity}\\
                    & \mid & \forall p.~\varphi & \textrm{Multiplicity universal scheme}\\
                    % TODO: Eventually Coercions
@@ -128,12 +128,75 @@
     {\Gamma \vdash \lletrec{\overline{x_n{:}_{\Delta_n}\sigma_n = u_n}}{e} : \varphi}
 \\[1em]
     \infer*[right=($Case$)]
-    { }
-    {\Gamma \vdash \ccase{e_1}{z{:}_{\overline{\Delta}}~\{\overline{pat\to e_2}\}} : \varphi}
+    % ROMES:TODO: pErcebe-se?
+    { \Gamma \vdash u : \sigma \and \overline{\Gamma', z{:}_{\Delta} \vdash_{alt} pat_\Delta \to e_2 : \sigma \to \varphi} }
+    {\Gamma, \Gamma' \vdash \ccase{e_1}{z{:}_{\overline{\Delta}}~\{\overline{pat_\Delta\to e_2}\}} : \varphi}
+% TODO: Separate judgmenet
+\\[1em]
+    \infer*[right=$(Alt$)]
+    { K:\overline{\sigma}\to T~\overline{a}\in\Gamma \and \theta=[a/v] \and \Gamma, \overline{x{:}_\pi\theta(\sigma)} \vdash e : \varphi}
+    {\Gamma \vdash_{alt} K~\overline{x{:}_\pi\theta(\sigma)} \to e : T~\overline{v} \to \varphi}
 \end{array}
 \]
 \end{framed}
 \caption{Linear Core* Typing Rules}
-\label{linear-core-syntax}
+\label{linear-core-typing-rules}
 \end{figure}
 
+
+\begin{figure}[h]
+\begin{framed}
+\small
+\[
+\begin{array}{l}
+%
+\textbf{Values} \\
+\begin{array}{lcl}
+    v & ::= & \Lambda a.~e \mid \lambda x.~e \mid K~\overline{e} \\
+\end{array}\\\\
+%
+\textbf{Evaluation Contexts}\\
+\begin{array}{llcl}
+\infer{e \longrightarrow e'}{E[e] \longrightarrow E[e']} & E & ::= & [] \mid E~e \mid E~\sigma \\
+\end{array}\\\\
+%
+\textbf{Expression reductions}\\
+\begin{array}{lcll}
+    u               & ::=  & x,y,z \mid K                           & \textrm{Variables and data constructors}\\
+    e               & ::=  & u                                  & \textrm{Term atoms}\\
+                    & \mid & \Lambda p.~e~\mid~e~\pi  & \textrm{Multiplicity abstraction/application}\\
+                    & \mid & \lambda x{:}_\pi\sigma.~e~\mid~e_1~e_2 & \textrm{Term abstraction/application}\\
+                    & \mid & \llet{x{:}_\Delta\sigma = e_1}{e_2}       & \textrm{Let} \\
+                    & \mid & \lletrec{\overline{x{:}_\Delta\sigma = e_1}}{e_2}  & \textrm{Recursive Let} \\
+                    & \mid & \ccase{e_1}{z{:}_{\overline{\Delta}}~\{\overline{pat\to e_2}\}}   & \textrm{Case} \\
+                    &      &                                    & \\
+%    p               & ::= & K~\overline{b{:}\kappa}~\overline{x{:}\sigma} & \textrm{Pattern} \\
+    pat             & ::= & K~\overline{b}~\overline{x{:}\sigma} & \textrm{Pattern with existential multiplicities} \\
+% Currently we don't care about the existential multiplicity variables, but later on we might
+\end{array}\\\\
+%
+\textbf{Environments}\\
+\begin{array}{lcll}
+  \Gamma & ::= & \epsilon & \textrm{Empty environment} \\
+         & \mid & \Gamma,u{:}_\pi\sigma & \textrm{Lambda bound variable} \\
+         & \mid & \Gamma,u{:}_\Delta\sigma & \textrm{Let(rec) bound variable}\\
+         & \mid & \Gamma,u{:}_{\overline{\Delta}}\sigma & \textrm{Case bound variables}
+\end{array}\\\\
+%
+\textbf{Multiplicities}\\
+\begin{array}{lcll}
+  \pi, \mu & ::= & 1 \mid \omega \mid p \mid \pi + \mu \mid \pi \cdot \mu\\
+% We don't use + and cdot yet, but we will
+\end{array}\\\\
+%
+\textbf{Usage Environments}\\
+\begin{array}{lcll}
+  \Delta & ::= & \epsilon \mid \Delta, x{:}_\pi\sigma \\
+\end{array}
+%
+\end{array}
+\]
+\end{framed}
+\caption{Linear Core* Operational Semantics \small(call-by-name)}
+\label{linear-core-operational-semantics}
+\end{figure}
