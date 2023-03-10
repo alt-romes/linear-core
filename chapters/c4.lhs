@@ -9,6 +9,9 @@
     \hlineB{2.7}
     \end{tabular}
 }
+\newcommand{\datatype}[2]{
+  \mathbf{data}~#1~\mathbf{where}~#2
+}
 
 \chapter{Linear Core*}
 
@@ -42,12 +45,12 @@
 %
 \textbf{Environments}\\
 \begin{array}{lcll}
-  \Gamma & ::= & \epsilon & \textrm{Empty environment} \\
+  \Gamma & ::= & \cdot & \textrm{Empty environment} \\
          & \mid & \Gamma,x{:}_\pi\sigma & \textrm{Lambda bound variable} \\
          & \mid & \Gamma,x{:}_\Delta\sigma & \textrm{Let(rec) bound variable}\\
          % & \mid & \Gamma,x{:}_{\overline{\Delta}}\sigma & \textrm{Case bound variables} -- NOPE
          & \mid & \Gamma,K{:}\sigma & \textrm{Data constructor}\\
-         & \mid & \Gamma,\rho & \textrm{Multiplicity variable}\\
+         & \mid & \Gamma,p & \textrm{Multiplicity variable}\\
 \end{array}\\\\
 %
 \textbf{Multiplicities}\\
@@ -58,7 +61,13 @@
 %
 \textbf{Usage Environments}\\
 \begin{array}{lcl}
-  \Delta & ::= & \epsilon \mid \Delta, x{:}_\pi\sigma\\
+  \Delta & ::= & \cdot \mid \Delta, x{:}_\pi\sigma\\
+\end{array}\\\\
+%
+\textbf{Declarations}\\
+\begin{array}{lcl}
+  pgm & ::= & \overline{decl}; e \\
+  decl & ::= & \datatype{T~\overline{p}}{\overline{K:\overline{\sigma \to_\pi}~T~\overline{p}}}
 \end{array}
 %
 \end{array}
@@ -116,7 +125,7 @@
 % Não acho que percebo totalmente o suficiente estas regras
     \infer*[right=($\Lambda E$)]
     {\Gamma \vdash e : \forall p.~\sigma \and \Gamma \vdash_{mult} \pi}
-    {\Gamma \vdash e~\pi : \sigma[\pi/p]}
+    {\Gamma \vdash e~\pi : \sigma[\pi/p]} % ROMES:TODO: Subsittution the other way around?
 \\[1em]
     \infer*[right=($\lambda I$)]
     {\Gamma, x{:}_\pi\sigma_1 \vdash e : \sigma_2}
@@ -167,6 +176,12 @@
     { }
     {\Gamma, \rho \vdash \rho}
 \\[1em]
+\begin{array}{cc}
+\judgment{\Gamma \vdash decl : \Gamma'} & \judgment{\Gamma \vdash pgm : \sigma}\\
+\\[0.05em]
+\infer*[right=$(Data)$]{ }{\Gamma \vdash (\datatype{T~\overline{p}}{\overline{K:\sigma}}) : (\overline{K:\sigma}) } &
+\infer*[right=$(Pgm)$]{\overline{\Gamma \vdash decl:\Gamma_d} \and \Gamma = \Gamma_0,\overline{\Gamma_d}\\\\ \Gamma~\mathsf{is~consistent?} \and \Gamma \vdash e : \sigma}{\Gamma_0 \vdash \overline{decl}; e : \sigma}
+\end{array}
 \end{array}
 \]
 \end{framed}
@@ -183,34 +198,21 @@
 %
 \textbf{Values} \\
 \begin{array}{lcl}
-    v & ::= & \Lambda a.~e \mid \lambda x.~e \mid K~\overline{v} \\
+    v & ::= & \Lambda p.~e \mid \lambda x.~e \mid K~\overline{v} \\
 \end{array}\\\\
 %
 \textbf{Evaluation Contexts}\\
 \begin{array}{llcl}
-\infer{e \longrightarrow e'}{E[e] \longrightarrow E[e']} & E & ::= & [] \mid E~e \mid E~\sigma \\
+\infer{e \longrightarrow e'}{E[e] \longrightarrow E[e']} & E & ::= & \square \mid E~e \mid E~\pi \mid \ccase{E}{z{:}_{\overline{\Delta}}\sigma \{\overline{\rho \to e}\}} \\
 \end{array}\\\\
 %
-\textbf{Environments}\\
-\begin{array}{lcll}
-  \Gamma & ::= & \epsilon & \textrm{Empty environment} \\
-         & \mid & \Gamma,u{:}_\pi\sigma & \textrm{Lambda bound variable} \\
-         & \mid & \Gamma,u{:}_\Delta\sigma & \textrm{Let(rec) bound variable}\\
-         % & \mid & \Gamma,u{:}_{\overline{\Delta}}\sigma & \textrm{Case bound variables} -- NOPE
-         & \mid &
-\end{array}\\\\
-%
-\textbf{Multiplicities}\\
-\begin{array}{lcll}
-  \pi, \mu & ::= & 1 \mid \omega \mid p \mid \pi + \mu \mid \pi \cdot \mu\\
-% We don't use + and cdot yet, but we will
-\end{array}\\\\
-%
-\textbf{Usage Environments}\\
-\begin{array}{lcll}
-  \Delta & ::= & \epsilon \mid \Delta, x{:}_\pi\sigma \\
+\textbf{Expression Reductions}\\
+\begin{array}{lcl}
+(\Lambda p.~e)~\pi & \longrightarrow & [\pi/p]e\\
+(\lambda x.~e)~e' & \longrightarrow & [e'/x]e\\
+\ccase{K~\overline{e}}{\dots K~\overline{x{:}_\pi\sigma} \to e'} & \longrightarrow & [\overline{e}/\overline{x{:}_\pi\sigma}]e'\\
+% ROMES:TODO: Então e as let bound things? Parece que não conseguimos avançar num let?
 \end{array}
-%
 \end{array}
 \]
 \end{framed}

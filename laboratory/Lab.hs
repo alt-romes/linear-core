@@ -8,9 +8,9 @@ f :: (∀ p. Int %p -> Int) -> (∀ p. Int %p -> Int)
 f = id
 
 g x = case x of z {
-        Atom    -> ...
-        C a b c -> ...
-        D z x   -> ...
+        z@Atom    -> ..z.
+        z@C a b c -> ...z
+        z@D d e   -> ...z
                   }
 
 main :: IO ()
