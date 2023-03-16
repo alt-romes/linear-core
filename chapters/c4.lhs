@@ -39,7 +39,7 @@
                     & \mid & \ccase{e_1}{z{:}_{\overline{\Delta}}~\{\overline{\rho\to e_2}\}}   & \textrm{Case} \\
                     &      &                                    & \\
 %    p               & ::= & K~\overline{b{:}\kappa}~\overline{x{:}\sigma} & \textrm{Pattern} \\
-    \rho            & ::= & K~\overline{x{:}_\pi\sigma} & \textrm{Simple pattern} \\
+    \rho            & ::= & K~\overline{x{:}_\pi\sigma} \mid \_ & \textrm{Pattern and wildcard} \\
 % Currently we don't care about the existential multiplicity variables, but later on we might
 \end{array}\\\\
 %
@@ -61,7 +61,7 @@
 %
 \textbf{Usage Environments}\\
 \begin{array}{lcl}
-  \Delta & ::= & \cdot \mid \Delta, x{:}_\pi\sigma\\
+  \Delta & ::= & \cdot \mid \Delta, x{:}_\pi\sigma \mid \Delta+\Delta' \mid \pi\Delta\\
 \end{array}\\\\
 %
 \textbf{Declarations}\\
@@ -102,7 +102,6 @@
     {\Gamma , x{:}_\Delta \sigma, x{:}_\Delta \sigma \vdash e : \sigma}
     {\Gamma , x{:}_\Delta \sigma \vdash e : \sigma}
 \\[1em]
-    % estranho para multiplicidades que não 1 e \omega, pode estar errado
     \infer*[right=($Var_1$)]
     { }
     {\cdot, x{:}_1 \sigma \vdash x : \sigma}
@@ -115,14 +114,10 @@
     { \Delta\!\upharpoonright_1 = \Gamma }
     {\Gamma , x{:}_\Delta \sigma \vdash x : \sigma}
 \\[1em]
-% ROMES:TODO: Isto significa que precisamos de uma variável de multiplicidade no environment?
-% Preciso de p \noin \Gamma?
     \infer*[right=($\Lambda I$)]
     {\Gamma, p \vdash e : \sigma \and p \notin \Gamma}
     {\Gamma \vdash \Lambda p.~e : \forall p. \sigma}
 \qquad
-% ROMES:TODO: Parece-me que precisamos de pensar melhor nas multiplicity abstractions, e de alguma forma tê-las no environment pode fazer sentido
-% Não acho que percebo totalmente o suficiente estas regras
     \infer*[right=($\Lambda E$)]
     {\Gamma \vdash e : \forall p.~\sigma \and \Gamma \vdash_{mult} \pi}
     {\Gamma \vdash e~\pi : \sigma[\pi/p]} % ROMES:TODO: Subsittution the other way around?
@@ -146,7 +141,7 @@
     % \infer*[right=($LetRec$)]
     % {\Gamma, \overline{x_n{:}_{\Delta_n}\sigma_n } \vdash e : \varphi \and \overline{\Delta_n \vdash u_n : \sigma_n}}
     % {\Gamma \vdash \lletrec{\overline{x_n{:}_{\Delta_n}\sigma_n = u_n}}{e} : \varphi}
-    % ROMES:TODO:FIXME
+    % ROMES:TODO:FIXME:(later...what???)
     \infer*[right=($LetRec$)]
     {\Gamma, \overline{x{:}_{\Delta}\sigma} \vdash e : \varphi \and \overline{\Delta, \overline{x{:}_{\Delta}\sigma} \vdash e' : \sigma} \and \overline{\Delta \subset \Gamma}}
     {\Gamma \vdash \lletrec{\overline{x{:}_{\Delta}\sigma = e'}}{e} : \varphi}
@@ -154,13 +149,16 @@
     \infer*[right=($Case$)]
     { \Gamma \vdash e_1 : \sigma \and \overline{\Gamma', z{:}_{\Delta_i}\sigma \vdash_{alt} \rho_i \to e_i : \sigma \Rightarrow \varphi} }
     {\Gamma, \Gamma' \vdash \ccase{e_1}{z{:}_{\overline{\Delta}^n}\sigma~\{\overline{\rho_i\to e_i}^n\}} : \varphi}
-% TODO: Separate judgmenet
 \\[1em]
     \judgment{\Gamma \vdash_{alt} \rho \to e : \sigma \Rightarrow \varphi}
 \\[1em]
-    \infer*[right=$(Alt$)]
+    \infer*[right=$(Alt)$]
     { K:\overline{\sigma\to_\pi}~T~\overline{p}\in\Gamma \and \Gamma, \overline{x{:}_\pi\sigma} \vdash e : \varphi}
     {\Gamma \vdash_{alt} K~\overline{x{:}_\pi\sigma} \to e : T~\overline{p} \Rightarrow \varphi}
+\qquad
+    \infer*[right=$(Alt_\_)$]
+    { \Gamma \vdash e : \varphi }
+    {\Gamma \vdash_{alt} \_ \to e : T~\overline{p} \Rightarrow \varphi}
 \\[1em]
     \judgment{\Gamma \vdash_{mult} \pi}
 \\[1em]
@@ -216,6 +214,85 @@
 \end{array}
 \]
 \end{framed}
+%TODO: Addition and scaling usage environments
 \caption{Linear Core* Operational Semantics \small(call-by-name)}
 \label{linear-core-operational-semantics}
 \end{figure}
+
+\begin{figure}[h]
+\begin{framed}
+\small
+\[
+\begin{array}{c}
+    \judgment{\Gamma \vdash e : \sigma \leadsto \Delta}
+\\[1em]
+    \infer*[right=($Var_\pi$)]
+    { }
+    {\Gamma, x{:}_\pi \sigma \vdash x : \sigma \leadsto \cdot,x{:}_\pi\sigma}
+\qquad
+    \infer*[right=($Var_\Delta$)]
+    { }
+    {\Gamma , x{:}_\Delta \sigma \vdash x : \sigma \leadsto \Delta}
+\\[1em]
+    % \Delta might have p, so on application be careful to substitute
+    \infer*[right=($\Lambda I$)]
+    {\Gamma, p \vdash e : \sigma \leadsto \Delta \and p \notin \Gamma}
+    {\Gamma \vdash \Lambda p.~e : \forall p. \sigma \leadsto \Delta}
+\qquad
+    \infer*[right=($\Lambda E$)]
+    {\Gamma \vdash e : \forall p.~\sigma \leadsto \Delta \and \Gamma \vdash_{mult} \pi}
+    {\Gamma \vdash e~\pi : \sigma[\pi/p] \leadsto \Delta[\pi/p]}
+\\[1em]
+    \infer*[right=($\lambda I_1$)]
+    {\Gamma, x{:}_1\sigma_1 \vdash e : \sigma_2 \leadsto \Delta,x{:}_1\sigma_1 \and x{:}_1\sigma_1\notin\Delta}
+    {\Gamma \vdash \lambda x{:}_1\sigma_1.~e : \sigma_1 \to_\pi \sigma_2 \leadsto \Delta}
+\\[1em]
+    \infer*[right=($\lambda I_\omega$)]
+    {\Gamma, x{:}_\omega\sigma_1 \vdash e : \sigma_2 \leadsto \Delta}
+    {\Gamma \vdash \lambda x{:}_\omega\sigma_1.~e : \sigma_1 \to_\pi \sigma_2 \leadsto \Delta\!\upharpoonright_{\neq x}}
+\\[1em]
+    \infer*[right=($\lambda E$)]
+    {\Gamma \vdash e_1 : \sigma_2 \to_\pi \sigma_1 \leadsto \Delta \and \Gamma \vdash e_2 : \sigma_2 \leadsto \Delta'}
+    {\Gamma \vdash e_1~e_2 : \sigma_1 \leadsto \Delta + \Delta'}
+\\[1em]
+    \infer*[right=($Let$)]
+    {\Gamma \vdash e_1 : \sigma_1 \leadsto \Delta \and \Gamma, x{:}_\Delta\sigma_1 \vdash e_2 : \sigma_2 \leadsto \Delta'}
+    {\Gamma \vdash \llet{x{:}_\Delta\sigma_1 = e_1}{e_2} : \sigma_2 \leadsto \Delta'}
+\\[1em]
+    \infer*[right=($LetRec$)]
+    { \overline{\Gamma, \overline{x{:}_1\sigma} \vdash e' : \sigma \leadsto \Delta_{naive}}\\
+      \overline{\Delta} = \mathsf{computeRecUsages}(\overline{\Delta_{naive}}) \\
+      \Gamma, \overline{x{:}_{\Delta}\sigma} \vdash e : \varphi \leadsto \Delta'
+      }
+    {\Gamma \vdash \lletrec{\overline{x{:}_{\Delta}\sigma = e'}}{e} : \varphi \leadsto \Delta'}
+\\[1em]
+    \infer*[right=($Case$)]
+    { \Gamma \vdash e_1 : \sigma \leadsto \Delta \\
+      \overline{\Gamma \vdash_{pat} \rho_i : \sigma \leadsto \Delta_i} \\\\
+      \overline{\Gamma', z{:}_{\Delta_i}\sigma \vdash_{alt} \rho_i \to e_i : \sigma \Rightarrow \varphi \leadsto \Delta'} \and
+      \overline{\Delta' \leq \Delta''}
+      }
+    {\Gamma, \Gamma' \vdash \ccase{e_1}{z{:}_{\overline{\Delta}^n}\sigma~\{\overline{\rho_i\to e_i}^n\}} : \varphi \leadsto \Delta + \Delta''}
+\\[1em]
+    \judgment{\Gamma \vdash_{pat} \rho : \sigma \leadsto \Delta}
+\\[1em]
+    \infer*[right=($pat$)]
+    { }
+    {\Gamma, K{:}\overline{\sigma\to_\pi}\varphi \vdash_{pat} K~\overline{x{:}_\pi\sigma}:\varphi \leadsto \cdot,\overline{x{:}_\pi\sigma}}
+\\[1em]
+    \judgment{\Gamma \vdash_{alt} \rho \to e : \sigma \Rightarrow \varphi}
+\\[1em]
+    \infer*[right=$(Alt$)]
+    { K:\overline{\sigma\to_\pi}~T~\overline{p}\in\Gamma \and \Gamma, \overline{x{:}_\pi\sigma} \vdash e : \varphi \leadsto \Delta}
+    {\Gamma \vdash_{alt} K~\overline{x{:}_\pi\sigma} \to e : T~\overline{p} \Rightarrow \varphi \leadsto \Delta}\\
+\qquad
+    \infer*[right=$(Alt_\_)$]
+    { \Gamma \vdash e : \varphi \leadsto \Delta }
+    {\Gamma \vdash_{alt} \_ \to e : T~\overline{p} \Rightarrow \varphi \leadsto \Delta}
+\end{array}
+\]
+\end{framed}
+\caption{Linear Core* - Infer Usage Environments}
+\label{linear-core-construct-usage-envs}
+\end{figure}
+
