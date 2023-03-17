@@ -1,10 +1,10 @@
 \documentclass{lwnovathesis}
- 
 \usepackage{boldline}
 \usepackage{todonotes}
 \usepackage{cmll}
 \usepackage{amssymb}
 \usepackage{amsmath}
+\usepackage{amsthm}
 \usepackage{mathpartir}
 \usepackage[ruled,vlined]{algorithm2e}
 \usepackage{fancyvrb}

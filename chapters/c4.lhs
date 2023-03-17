@@ -12,6 +12,7 @@
 \newcommand{\datatype}[2]{
   \mathbf{data}~#1~\mathbf{where}~#2
 }
+\newtheorem{theorem}{Theorem}
 
 \chapter{Linear Core*}
 
@@ -280,7 +281,7 @@
     { }
     {\Gamma, K{:}\overline{\sigma\to_\pi}\varphi \vdash_{pat} K~\overline{x{:}_\pi\sigma}:\varphi \leadsto \cdot,\overline{x{:}_\pi\sigma}}
 \\[1em]
-    \judgment{\Gamma \vdash_{alt} \rho \to e : \sigma \Rightarrow \varphi}
+    \judgment{\Gamma \vdash_{alt} \rho \to e : \sigma \Rightarrow \varphi \leadsto \Delta}
 \\[1em]
     \infer*[right=$(Alt$)]
     { K:\overline{\sigma\to_\pi}~T~\overline{p}\in\Gamma \and \Gamma, \overline{x{:}_\pi\sigma} \vdash e : \varphi \leadsto \Delta}
@@ -295,4 +296,28 @@
 \caption{Linear Core* - Infer Usage Environments}
 \label{linear-core-construct-usage-envs}
 \end{figure}
+
+\section{Type Soundness}
+
+\begin{theorem}[Type preservation]
+\emph{If $\vdash e : \sigma$ and $e \to^* e'$ then $\vdash e' : \sigma'$}
+\end{theorem}
+
+\begin{proof}
+\begin{itemize}
+\item Substitution?
+\item Context?
+\item Structural ?
+\item 
+\end{itemize}
+\end{proof}
+
+\begin{theorem}[Progress]
+\emph{Evaluation does not block. If $\vdash e : \sigma$ then $e$ is a value or there exists $e'$ such that $e \to e'$}
+\end{theorem}
+
+\begin{proof}
+\begin{itemize}
+\end{itemize}
+\end{proof}
 
