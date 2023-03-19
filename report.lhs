@@ -13,6 +13,9 @@
 \usepackage{tikz-qtree}
 \usetikzlibrary{trees}	% this is to allow the fork right path
 
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}[theorem]{Lemma}
+
 % Glossary
 \usepackage[toc]{glossaries}
 

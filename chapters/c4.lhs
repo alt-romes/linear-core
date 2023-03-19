@@ -1,4 +1,5 @@
 %include polycode.fmt
+\input{proof}
 \renewcommand{\llet}[2]{\mathbf{let}~#1~\mathbf{in}~#2}
 \renewcommand{\lletrec}[2]{\mathbf{let~rec}~#1~\mathbf{in}~#2}
 \renewcommand{\ccase}[2]{\mathbf{case}~#1~\mathbf{of}~#2}
@@ -12,7 +13,6 @@
 \newcommand{\datatype}[2]{
   \mathbf{data}~#1~\mathbf{where}~#2
 }
-\newtheorem{theorem}{Theorem}
 
 \chapter{Linear Core*}
 
@@ -207,10 +207,12 @@
 %
 \textbf{Expression Reductions}\\
 \begin{array}{lcl}
-(\Lambda p.~e)~\pi & \longrightarrow & [\pi/p]e\\
-(\lambda x.~e)~e' & \longrightarrow & [e'/x]e\\
-\ccase{K~\overline{e}}{\dots K~\overline{x{:}_\pi\sigma} \to e'} & \longrightarrow & [\overline{e}/\overline{x{:}_\pi\sigma}]e'\\
-% ROMES:TODO: Então e as let bound things? Parece que não conseguimos avançar num let?
+(\Lambda p.~e)~\pi & \longrightarrow & e[\pi/p]\\
+(\lambda x.~e)~e' & \longrightarrow & e[e'/x]\\
+\llet{x{:}_\Delta\sigma = e}{e'} & \longrightarrow & e'[e/x]\\
+\lletrec{\overline{x{:}_\Delta\sigma = e}}{e'} & \longrightarrow & e'\overline{[\lletrec{\overline{x{:}_\Delta\sigma = e}}{e}/x]}\\
+\ccase{K~\overline{e}}{\dots K~\overline{x{:}_\pi\sigma} \to e'} &
+\longrightarrow & e'[\overline{e}/\overline{x{:}_\pi\sigma}][K~\overline{e}/z]\\
 \end{array}
 \end{array}
 \]
@@ -300,24 +302,100 @@
 \section{Type Soundness}
 
 \begin{theorem}[Type preservation]
-\emph{If $\vdash e : \sigma$ and $e \to^* e'$ then $\vdash e' : \sigma'$}
+\emph{If $\Gamma \vdash e : \sigma$ and $e \to^* e'$ then $\Gamma \vdash e' : \sigma'$}
 \end{theorem}
 
 \begin{proof}
+By structural induction on the small-step reduction
 \begin{itemize}
-\item Substitution?
-\item Context?
-\item Structural ?
-\item 
+\item Substitution
+\item Structural
 \end{itemize}
 \end{proof}
 
+\clearpage
 \begin{theorem}[Progress]
-\emph{Evaluation does not block. If $\vdash e : \sigma$ then $e$ is a value or there exists $e'$ such that $e \to e'$}
+\emph{Evaluation of a well-typed term does not block. If $\cdot \vdash e : \sigma$ then $e$ is a value or there exists $e'$ such that $e \to e'$.}
 \end{theorem}
 
 \begin{proof}
-\begin{itemize}
-\end{itemize}
+By structural induction on the (only) typing derivation
+
+\[
+\pcase{\Lambda I}{
+\pline{1}{\cdot \vdash (\Lambda p.~e) : \forall p.~\sigma}{by assumption}
+\pline{2}{(\Lambda p.~e)~\textrm{is a value}}{by definition}
+}
+\]
+
+\[
+\pcase{\Lambda E}{
+\pline{1}{\cdot \vdash e_1~\pi : \sigma[\pi/p]}{by assumption}
+\pline{2}{\cdot \vdash e_1 : \forall p.~\sigma}{by inversion on ($\Lambda E$)}
+\pline{3}{\cdot \vdash_{mult} \pi}{by inversion on ($\Lambda E$)}
+\pline{4}{e_1~\textrm{is a value or}~\exists e_1'. e_1 \longrightarrow e_1'}{by the induction hypothesis (2)}
+\textrm{Subcase $e_1$ is a value:}\\
+\pline{5}{e_1 = \Lambda p.~e_2}{by the canonical forms lemma (2)}
+\pline{6}{(\Lambda p.~e_2)~\pi \longrightarrow e_2[\pi/p]}{by $\beta$-reduction on multiplicity (5,3)}
+\textrm{Subcase $e_1 \longrightarrow e_1'$:}\\
+% TODO: Have I've concluded two different things in the proof because
+% the reductions don't match (on one we have explicit substitution)?
+\pline{5}{e_1~\pi \longrightarrow e_1'~\pi}{by context reduction on mult. application}
+}
+\]
+
+\[
+\pcase{\lambda I}{
+\pline{1}{\cdot \vdash (\lambda x{:}_\pi\sigma.~e) : \sigma\to_\pi\varphi}{by assumption}
+\pline{2}{(\lambda x{:}_\pi\sigma.~e)~\textrm{is a value}}{by definition}
+}
+\]
+
+\[
+\pcase{\lambda E}{
+\pline{1}{\cdot \vdash e_1~e_2 : \varphi}{by assumption}
+\pline{2}{\cdot \vdash e_1 : \sigma \to_\pi \varphi}{by inversion on ($\lambda E$)}
+\pline{3}{\cdot \vdash e_2 : \sigma}{by inversion on ($\lambda E$)}
+\pline{4}{e_1~\textrm{is a value or}~\exists e_1'. e_1\longrightarrow e_1'}{by the induction hypothesis (2)}
+\textrm{Subcase $e_1$ is a value:}\\
+\pline{5}{e_1 = \lambda x{:}_\pi\sigma.~e}{by the canonical forms lemma}
+\pline{6}{e_1~e_2 \longrightarrow e[e_2/x]}{by term $\beta$-reduction (5,3)}
+\textrm{Subcase $e_1\longrightarrow e_1'$:}\\
+\pline{5}{e_1~e_2\longrightarrow e_1'~e_2}{by context reduction on term application}
+}
+\]
+
+\[
+\pcase{Let}{
+\pline{1}{\cdot \vdash \llet{x{:}_\Delta\sigma = e}{e'} : \varphi}{by assumption}
+\pline{2}{\llet{x{:}_\Delta\sigma = e}{e'}\longrightarrow e'[e/x]}{by definition of reduction. Wait, what?}
+}
+\]
+
+\[
+\pcase{LetRec}{
+\pline{1}{\cdot \vdash \lletrec{\overline{x{:}_\Delta\sigma = e}}{e'} : \varphi}{by assumption}
+\pline{2}{\lletrec{\overline{x{:}_\Delta\sigma = e}}{e'} \longrightarrow e'\overline{[\lletrec{\overline{x{:}_\Delta\sigma = e}}{e}/x]}}{by definition of reduction.}
+}
+\]
+
+\[
+\pcase{Case}{
+\pline{1}{\cdot \vdash \ccase{e}{z{:}_{\overline{\Delta}}\sigma~\{\overline{\rho_i \to e_i}\}} : \varphi}{by assumption}
+\pline{2}{\cdot \vdash e_1 : T~\overline{p}}{by inversion of (case)}
+% ROMES:TODO What to do about z
+\pline{3}{\overline{\cdot, z{:}_{\overline{\Delta}}\sigma \vdash_{alt} \rho_i\to e_i : \sigma \Longrightarrow \varphi}}{by inversion of (case)}
+\pline{4}{e_1~\textrm{is a value or}~\exists e_1'. e_1 \longrightarrow e_1'}{by induction hypothesis (2)}
+\textrm{Subcase $e_1$ is a value:}\\
+\pline{5}{e_1 = K~\overline{e}}{by canonical forms lemma}
+\pline{6}{\ccase{e_1}{z{:}_{\overline{\Delta}}\sigma~\{\overline{\rho_i \to
+e_i}\}} \longrightarrow e'[\overline{e}/\overline{x{:}_\pi\sigma}][K~\overline{e}/z]}{by case reduction (5)}
+\textrm{Subcase $e_1 \to e_1'$:}\\
+\pline{5}{\ccase{e_1}{z{:}_{\overline{\Delta}}\sigma~\{\overline{\rho_i \to
+e_1}\}} \longrightarrow \ccase{e_1'}{z{:}_{\overline{\Delta}}\sigma~\{\rho_i \to
+e_i\}}}{by context reduction}
+}
+\]
+
 \end{proof}
 
