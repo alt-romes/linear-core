@@ -88,20 +88,20 @@
     \judgment{\Gamma \vdash e : \sigma}
 \\[1em]
     \infer*[right=($Weaken_\omega$)]
-    {\Gamma \vdash e : \sigma}
-    {\Gamma , x{:}_\omega \sigma \vdash e : \sigma}
+    {\Gamma \vdash e : \varphi}
+    {\Gamma , x{:}_\omega \sigma \vdash e : \varphi}
 \qquad
     \infer*[right=($Weaken_\Delta$)]
-    {\Gamma \vdash e : \sigma}
-    {\Gamma , x{:}_\Delta \sigma \vdash e : \sigma}
+    {\Gamma \vdash e : \varphi}
+    {\Gamma , x{:}_\Delta \sigma \vdash e : \varphi}
 \\[1em]
     \infer*[right=($Contract_\omega$)]
-    {\Gamma , x{:}_\omega \sigma, x{:}_\omega \sigma \vdash e : \sigma}
-    {\Gamma , x{:}_\omega \sigma \vdash e : \sigma}
+    {\Gamma , x{:}_\omega \sigma, x{:}_\omega \sigma \vdash e : \varphi}
+    {\Gamma , x{:}_\omega \sigma \vdash e : \varphi}
 \qquad
     \infer*[right=($Contract_\Delta$)]
-    {\Gamma , x{:}_\Delta \sigma, x{:}_\Delta \sigma \vdash e : \sigma}
-    {\Gamma , x{:}_\Delta \sigma \vdash e : \sigma}
+    {\Gamma , x{:}_\Delta \sigma, x{:}_\Delta \sigma \vdash e : \varphi}
+    {\Gamma , x{:}_\Delta \sigma \vdash e : \varphi}
 \\[1em]
     \infer*[right=($Var_1$)]
     { }
@@ -132,7 +132,8 @@
     {\Gamma,\Gamma' \vdash e_1~e_2 : \sigma_1}
 \\[1em]
     \infer*[right=($Let$)]
-    {\Gamma, x{:}_\Delta\sigma_1 \vdash e_2 : \sigma_2 \and \Delta \vdash e_1 : \sigma_1 \and \Delta \subset \Gamma}
+    {\Gamma, x{:}_\Delta\sigma_1 \vdash e_2 : \sigma_2 \and \Delta \vdash e_1 :
+    \sigma_1 \and \Delta \subseteq \Gamma}
     {\Gamma \vdash \llet{x{:}_\Delta\sigma_1 = e_1}{e_2} : \sigma_2}
     % em alternativa a isto que está errado (separar o \Gamma em \Gamma, \Delta)
     % \infer*[right=($Let_{Wrong}$)]
@@ -144,7 +145,9 @@
     % {\Gamma \vdash \lletrec{\overline{x_n{:}_{\Delta_n}\sigma_n = u_n}}{e} : \varphi}
     % ROMES:TODO:FIXME:(later...what???)
     \infer*[right=($LetRec$)]
-    {\Gamma, \overline{x{:}_{\Delta}\sigma} \vdash e : \varphi \and \overline{\Delta, \overline{x{:}_{\Delta}\sigma} \vdash e' : \sigma} \and \overline{\Delta \subset \Gamma}}
+    {\Gamma, \overline{x{:}_{\Delta}\sigma} \vdash e : \varphi \and
+    \overline{\Delta, \overline{x{:}_{\Delta}\sigma} \vdash e' : \sigma} \and
+    \overline{\Delta \subseteq \Gamma}}
     {\Gamma \vdash \lletrec{\overline{x{:}_{\Delta}\sigma = e'}}{e} : \varphi}
 \\[1em]
     \infer*[right=($Case$)]
@@ -301,16 +304,108 @@
 
 \section{Type Soundness}
 
+\clearpage
 \begin{theorem}[Type preservation]
-\emph{If $\Gamma \vdash e : \sigma$ and $e \to^* e'$ then $\Gamma \vdash e' : \sigma'$}
+\emph{If $\Gamma \vdash e : \sigma$ and $e \to^* e'$ then $\Gamma \vdash e' : \sigma$}
 \end{theorem}
 
 \begin{proof}
-By structural induction on the small-step reduction
-\begin{itemize}
-\item Substitution
-\item Structural
-\end{itemize}
+By structural induction on the small-step reduction.
+
+\[
+\pcase{(\lambda x{:}_\pi\sigma.~e)~e' \longrightarrow e[e'/x]}{
+\pline{1}{\Gamma, \Gamma' \vdash (\lambda x{:}_\pi\sigma.~e)~e' : \varphi}{by assumption}
+\pline{2}{\Gamma \vdash (\lambda x{:}_\pi\sigma.~e) : \sigma\to_\pi\varphi}{by inversion on ($\lambda E$)}
+\pline{3}{\Gamma, x{:}_\pi\sigma \vdash e : \varphi}{by inversion on ($\lambda I$)}
+\pline{4}{\Gamma' \vdash e' : \sigma}{by inversion on ($\lambda E$)}
+\pline{5}{\Gamma, \Gamma' \vdash e[e'/x] : \varphi}{by subst. lemma (3,4)}
+}
+\]
+
+\[
+\pcase{(\Lambda p.~e)~\pi \longrightarrow e[\pi/p]}{
+\pline{1}{\Gamma \vdash (\Lambda p.~e)~\pi : \sigma[\pi/p]}{by assumption}
+\pline{2}{\Gamma \vdash (\Lambda p.~e) : \forall p.~\sigma}{by inversion on ($\Lambda E$)}
+\pline{3}{\Gamma \vdash_{mult} \pi}{by inversion on ($\Lambda E$)}
+\pline{4}{\Gamma, p \vdash e : \sigma}{by inversion on ($\Lambda I$)}
+% TODO: How to use these things
+\pline{5}{p \notin \Gamma}{by inversion on ($\Lambda I$)}
+\pline{6}{\Gamma \vdash e[\pi/p]:\sigma[\pi/p]}{by subst. lemma (3,4)}
+}
+\]
+
+\[
+\pcase{\llet{x{:}_\Delta\sigma = e}{e'}\longrightarrow e'[e/x]}{
+\pline{1}{\Gamma \vdash \llet{x{:}_\Delta\sigma = e}{e'} : \varphi}{by assumption}
+\pline{2}{\Gamma, x{:}_\Delta\sigma \vdash e' : \varphi}{by inversion on (let)}
+\pline{3}{\Delta \vdash e : \sigma}{by inversion on (let)}
+\pline{4}{\Delta \subseteq \Gamma}{by inversion on (let)}
+\pline{5}{\Gamma \vdash e'[e/x] : \varphi}{by subst. lemma (2,3,4?)}
+}
+\]
+
+\[
+\pcase{\llet{\overline{x{:}_\Delta\sigma = e}}{e'} \longrightarrow e'\overline{[\lletrec{\overline{x{:}_\Delta\sigma = e}}{e}/x]}}{
+\pline{1}{\Gamma \vdash \llet{\overline{x{:}_\Delta\sigma = e}}{e'} : \varphi}{by assumption}
+\pline{2}{\Gamma, \overline{x{:}_\Delta\sigma} \vdash e : \varphi}{by inversion on (letrec)}
+\pline{3}{\overline{\Delta, \overline{x{:}_\Delta\sigma \vdash e' : \sigma}}}{by inversion on (letrec)}
+\pline{4}{\overline{\Delta\subseteq\Gamma}}{by inversion on (letrec)}
+\pline{5}{\Gamma \vdash e'\overline{[\lletrec{\overline{x{:}_\Delta\sigma = e}}{e}/x]}}{by subst. lemma (2,3,4?)}
+}
+\]
+
+\[
+\pcase{\ccase{K~\overline{e}}{z{:}_{\overline{\Delta}}\sigma}~\{\dots,K~\overline{x{:}_\pi\sigma}\}
+\longrightarrow e'[\overline{e}/\overline{x}][K~\overline{e}/z]}{
+\pline{1}{\Gamma,\Gamma' \vdash \ccase{K~\overline{e}}{z{:}_{\overline{\Delta}}\sigma~\{\dots,K~\overline{x{:}_\pi\sigma}\to e'\}} : \varphi}{by assumption}
+\pline{2}{\Gamma \vdash K~\overline{e} : \sigma}{by inversion on (case)}
+\pline{3}{\Gamma', z{:}_\Delta\sigma \vdash_{alt} K~\overline{x{:}_\pi\sigma} \to e' : \sigma \Longrightarrow \varphi}{by inversion on (case)}
+% TODO: Como é que uso estes casos
+\pline{4}{K : \overline{\sigma \to_\pi} T~\overline{p} \in \Gamma'}{by inversion on (alt)}
+\pline{5}{\Gamma',z{:}_\Delta\sigma,\overline{x{:}_\pi\sigma} \vdash e' : \varphi}{by inversion on (alt)}
+% TODO: Delta_i?
+\pline{6}{\Gamma, z{:}_{\Delta_i}\sigma, \Gamma' \vdash e'[\overline{e}/\overline{x}] : \varphi}{by subst. lemma (2,5)}
+% TODO: HOW? Missing something (inversion on case). Hard!
+\pline{7}{\Gamma, \Gamma' \vdash e'[\overline{e}/\overline{x}][????/z]}{by subst. lemma (6,2)}
+}
+\]
+
+\[
+\pcase{e_1~e_2 \longrightarrow e_1'~e_2}{
+\pline{1}{e_1 \longrightarrow e_1'}{by inversion on $\beta$-reduction}
+\pline{2}{\Gamma,\Gamma' \vdash e_1~e_2 : \varphi}{by assumption}
+\pline{3}{\Gamma \vdash e_1 : \sigma \to_\pi \varphi}{by inversion on ($\lambda E$)}
+\pline{4}{\Gamma' \vdash e_2 : \sigma}{by inversion on ($\lambda E$)}
+\pline{5}{\Gamma \vdash e_1' : \sigma \to_\pi \varphi}{by induction hypothesis in (3,1)}
+\pline{6}{\Gamma, \Gamma' \vdash e_1'~e_2 : \varphi}{by ($\lambda E$) (4,3)}
+}
+\]
+
+\[
+\pcase{e~\pi \longrightarrow e'~\pi}{
+\pline{1}{e \longrightarrow e'}{by inversion on mult. $\beta$-reduction}
+\pline{2}{\Gamma \vdash e~\pi : \sigma[\pi/p]}{by assumption}
+\pline{3}{\Gamma \vdash e : \forall p.~\sigma}{by inversion on ($\Lambda E$)}
+\pline{4}{\Gamma \vdash_{mult} \pi}{by inversion on ($\Lambda E$)}
+\pline{5}{\Gamma \vdash e' : \forall p.~\sigma}{by induction hypothesis (3,1)}
+\pline{6}{\Gamma \vdash e'~\pi : \sigma[\pi/p]}{by ($\Lambda E$) (5,4)}
+}
+\]
+
+\[
+\pcase{\ccase{e}{z{:}_{\overline{\Delta}}\sigma~\{\rho_i\to e'_i\}}
+\longrightarrow \ccase{e'}{z{:}_{\overline{\Delta}}\sigma~\{\rho_i\to e'_i\}}}{
+\pline{1}{e \longrightarrow e'}{by inversion on case reduction}
+\pline{2}{\Gamma, \Gamma' \vdash \ccase{e}{z{:}_{\overline{\Delta}}\sigma~\{\rho_i\to e'_i\}} : \varphi}{by assumption}
+\pline{3}{\Gamma \vdash e : \sigma}{by inversion on case}
+% TODO: HOW i?
+\pline{4}{\overline{\Gamma', z{:}_{\Delta_i}\sigma \vdash_{alt} \rho_i \to e'_i : \varphi}}{by inversion on case}
+\pline{5}{\Gamma \vdash e' : \sigma}{by induction hypothesis (3,1)}
+\pline{6}{\Gamma, \Gamma' \vdash
+\ccase{e'}{z{:}_{\overline{\Delta}}\sigma~\{\rho_i\to e'_i\}} : \varphi}{by case (4,3)}
+}
+\]
+
 \end{proof}
 
 \clearpage
