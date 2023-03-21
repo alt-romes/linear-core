@@ -312,99 +312,103 @@
 \begin{proof}
 By structural induction on the small-step reduction.
 
-\[
-\pcase{(\lambda x{:}_\pi\sigma.~e)~e' \longrightarrow e[e'/x]}{
-\pline{1}{\Gamma, \Gamma' \vdash (\lambda x{:}_\pi\sigma.~e)~e' : \varphi}{by assumption}
-\pline{2}{\Gamma \vdash (\lambda x{:}_\pi\sigma.~e) : \sigma\to_\pi\varphi}{by inversion on ($\lambda E$)}
-\pline{3}{\Gamma, x{:}_\pi\sigma \vdash e : \varphi}{by inversion on ($\lambda I$)}
-\pline{4}{\Gamma' \vdash e' : \sigma}{by inversion on ($\lambda E$)}
-\pline{5}{\Gamma, \Gamma' \vdash e[e'/x] : \varphi}{by subst. lemma (3,4)}
-}
-\]
+%   \begin{description}
+%   \item[Case:] $\imp$-{\sc param}
+%     \begin{tabbing}
+%       $\Delta \vdash \alpha \imp \alpha$ \` this case\\
+%       $\TERASE{\Delta}{\alpha} = t_I$, with $\bounds_\Delta(\alpha) =
+%       t_I(\ov{\tau})$ \` by definition\\
+%       $t_I \imp t_I$ \` by rule $\imp_I$
+%     \end{tabbing}
+%
+%   \item[Case:] ...
 
-\[
-\pcase{(\Lambda p.~e)~\pi \longrightarrow e[\pi/p]}{
-\pline{1}{\Gamma \vdash (\Lambda p.~e)~\pi : \sigma[\pi/p]}{by assumption}
-\pline{2}{\Gamma \vdash (\Lambda p.~e) : \forall p.~\sigma}{by inversion on ($\Lambda E$)}
-\pline{3}{\Gamma \vdash_{mult} \pi}{by inversion on ($\Lambda E$)}
-\pline{4}{\Gamma, p \vdash e : \sigma}{by inversion on ($\Lambda I$)}
-% TODO: How to use these things
-\pline{5}{p \notin \Gamma}{by inversion on ($\Lambda I$)}
-\pline{6}{\Gamma \vdash e[\pi/p]:\sigma[\pi/p]}{by subst. lemma (3,4)}
-}
-\]
+\begin{description}
 
-\[
-\pcase{\llet{x{:}_\Delta\sigma = e}{e'}\longrightarrow e'[e/x]}{
-\pline{1}{\Gamma \vdash \llet{x{:}_\Delta\sigma = e}{e'} : \varphi}{by assumption}
-\pline{2}{\Gamma, x{:}_\Delta\sigma \vdash e' : \varphi}{by inversion on (let)}
-\pline{3}{\Delta \vdash e : \sigma}{by inversion on (let)}
-\pline{4}{\Delta \subseteq \Gamma}{by inversion on (let)}
-\pline{5}{\Gamma \vdash e'[e/x] : \varphi}{by subst. lemma (2,3,4?)}
-}
-\]
+\item[Case:] $(\lambda x{:}_\pi\sigma.~e)~e' \longrightarrow e[e'/x]$
+\begin{tabbing}
+  (1) $\Gamma, \Gamma' \vdash (\lambda x{:}_\pi\sigma.~e)~e' : \varphi$ \` by assumption \\
+  (2) $\Gamma \vdash (\lambda x{:}_\pi\sigma.~e) : \sigma\to_\pi\varphi$ \` by inversion on ($\lambda E$) \\
+  (3) $\Gamma, x{:}_\pi\sigma \vdash e : \varphi$ \` by inversion on ($\lambda I$) \\
+  (4) $\Gamma' \vdash e' : \sigma$ \` by inversion on ($\lambda E$) \\
+  (5) $\Gamma, \Gamma' \vdash e[e'/x] : \varphi$ \` by subst. lemma (3,4) \\
+\end{tabbing}
 
-\[
-\pcase{\llet{\overline{x{:}_\Delta\sigma = e}}{e'} \longrightarrow e'\overline{[\lletrec{\overline{x{:}_\Delta\sigma = e}}{e}/x]}}{
-\pline{1}{\Gamma \vdash \llet{\overline{x{:}_\Delta\sigma = e}}{e'} : \varphi}{by assumption}
-\pline{2}{\Gamma, \overline{x{:}_\Delta\sigma} \vdash e : \varphi}{by inversion on (letrec)}
-\pline{3}{\overline{\Delta, \overline{x{:}_\Delta\sigma \vdash e' : \sigma}}}{by inversion on (letrec)}
-\pline{4}{\overline{\Delta\subseteq\Gamma}}{by inversion on (letrec)}
-\pline{5}{\Gamma \vdash e'\overline{[\lletrec{\overline{x{:}_\Delta\sigma = e}}{e}/x]}}{by subst. lemma (2,3,4?)}
-}
-\]
+\item[Case:] $(\Lambda p.~e)~\pi \longrightarrow e[\pi/p]$
+\begin{tabbing}
+(1) $\Gamma \vdash (\Lambda p.~e)~\pi : \sigma[\pi/p]$ \` by assumption \\
+(2) $\Gamma \vdash (\Lambda p.~e) : \forall p.~\sigma$ \` by inversion on ($\Lambda E$) \\
+(3) \` $\Gamma \vdash_{mult} \pi$ \` by inversion on ($\Lambda E$) \\
+(4) $\Gamma, p \vdash e : \sigma$ \` by inversion on ($\Lambda I$) \\
+% TODO: How to use these inversions
+(5) $p \notin \Gamma$ \` by inversion on ($\Lambda I$) \\
+(6) $\Gamma \vdash e[\pi/p]:\sigma[\pi/p]$ \` by subst. lemma (3,4) \\
+\end{tabbing}
 
-\[
-\pcase{\ccase{K~\overline{e}}{z{:}_{\overline{\Delta}}\sigma}~\{\dots,K~\overline{x{:}_\pi\sigma}\}
-\longrightarrow e'[\overline{e}/\overline{x}][K~\overline{e}/z]}{
-\pline{1}{\Gamma,\Gamma' \vdash \ccase{K~\overline{e}}{z{:}_{\overline{\Delta}}\sigma~\{\dots,K~\overline{x{:}_\pi\sigma}\to e'\}} : \varphi}{by assumption}
-\pline{2}{\Gamma \vdash K~\overline{e} : \sigma}{by inversion on (case)}
-\pline{3}{\Gamma', z{:}_\Delta\sigma \vdash_{alt} K~\overline{x{:}_\pi\sigma} \to e' : \sigma \Longrightarrow \varphi}{by inversion on (case)}
+\item[Case:] $\llet{x{:}_\Delta\sigma = e}{e'}\longrightarrow e'[e/x]$
+\begin{tabbing}
+(1) $\Gamma \vdash \llet{x{:}_\Delta\sigma = e}{e'} : \varphi$ \` by assumption \\
+(2) $\Gamma, x{:}_\Delta\sigma \vdash e' : \varphi$ \` by inversion on (let) \\
+(3) $\Delta \vdash e : \sigma$ \` by inversion on (let) \\
+(4) $\Delta \subseteq \Gamma$ \` by inversion on (let) \\
+(5) $\Gamma \vdash e'[e/x] : \varphi$ \` by subst. lemma (2,3,4?) \\
+\end{tabbing}
+
+\item[Case:] $\llet{\overline{x{:}_\Delta\sigma = e}}{e'} \longrightarrow e'\overline{[\lletrec{\overline{x{:}_\Delta\sigma = e}}{e}/x]}$
+\begin{tabbing}
+(1) $\Gamma \vdash \llet{\overline{x{:}_\Delta\sigma = e}}{e'} : \varphi$ \` by assumption \\
+(2) $\Gamma, \overline{x{:}_\Delta\sigma} \vdash e : \varphi$ \` by inversion on (letrec) \\
+(3) $\overline{\Delta, \overline{x{:}_\Delta\sigma \vdash e' : \sigma}}$ \` by inversion on (letrec) \\
+(4) $\overline{\Delta\subseteq\Gamma}$ \` by inversion on (letrec) \\
+(5) $\Gamma \vdash e'\overline{[\lletrec{\overline{x{:}_\Delta\sigma = e}}{e}/x]}$ \` by subst. lemma (2,3,4?) \\
+\end{tabbing}
+
+\item[Case:] $\ccase{K~\overline{e}}{z{:}_{\overline{\Delta}}\sigma}~\{\dots,K~\overline{x{:}_\pi\sigma}\}\ \longrightarrow e'[\overline{e}/\overline{x}][K~\overline{e}/z]$
+\begin{tabbing}
+(1) $\Gamma,\Gamma' \vdash \ccase{K~\overline{e}}{z{:}_{\overline{\Delta}}\sigma~\{\dots,K~\overline{x{:}_\pi\sigma}\to e'\}} : \varphi$ \` by assumption \\
+(2) $\Gamma \vdash K~\overline{e} : \sigma$ \` by inversion on (case) \\
+(3) $\Gamma', z{:}_\Delta\sigma \vdash_{alt} K~\overline{x{:}_\pi\sigma} \to e' : \sigma \Longrightarrow \varphi$ \` by inversion on (case) \\
 % TODO: Como é que uso estes casos
-\pline{4}{K : \overline{\sigma \to_\pi} T~\overline{p} \in \Gamma'}{by inversion on (alt)}
-\pline{5}{\Gamma',z{:}_\Delta\sigma,\overline{x{:}_\pi\sigma} \vdash e' : \varphi}{by inversion on (alt)}
+(4) $K : \overline{\sigma \to_\pi} T~\overline{p} \in \Gamma'$ \` by inversion on (alt) \\
+(5) $\Gamma',z{:}_\Delta\sigma,\overline{x{:}_\pi\sigma} \vdash e' : \varphi$ \` by inversion on (alt) \\
 % TODO: Delta_i?
-\pline{6}{\Gamma, z{:}_{\Delta_i}\sigma, \Gamma' \vdash e'[\overline{e}/\overline{x}] : \varphi}{by subst. lemma (2,5)}
+(6) $\Gamma, z{:}_{\Delta_i}\sigma, \Gamma' \vdash e'[\overline{e}/\overline{x}] : \varphi$ \` by subst. lemma (2,5) \\
 % TODO: HOW? Missing something (inversion on case). Hard!
-\pline{7}{\Gamma, \Gamma' \vdash e'[\overline{e}/\overline{x}][????/z]}{by subst. lemma (6,2)}
-}
-\]
+(7) $\Gamma, \Gamma' \vdash e'[\overline{e}/\overline{x}][???/z]$ \` by subst. lemma (6,2) \\
+\end{tabbing}
 
-\[
-\pcase{e_1~e_2 \longrightarrow e_1'~e_2}{
-\pline{1}{e_1 \longrightarrow e_1'}{by inversion on $\beta$-reduction}
-\pline{2}{\Gamma,\Gamma' \vdash e_1~e_2 : \varphi}{by assumption}
-\pline{3}{\Gamma \vdash e_1 : \sigma \to_\pi \varphi}{by inversion on ($\lambda E$)}
-\pline{4}{\Gamma' \vdash e_2 : \sigma}{by inversion on ($\lambda E$)}
-\pline{5}{\Gamma \vdash e_1' : \sigma \to_\pi \varphi}{by induction hypothesis in (3,1)}
-\pline{6}{\Gamma, \Gamma' \vdash e_1'~e_2 : \varphi}{by ($\lambda E$) (4,3)}
-}
-\]
+\item[Case:] $e_1~e_2 \longrightarrow e_1'~e_2$
+\begin{tabbing}
+(1) $e_1 \longrightarrow e_1'$ \` by inversion on $\beta$-reduction \\
+(2) $\Gamma,\Gamma' \vdash e_1~e_2 : \varphi$ \` by assumption \\
+(3) $\Gamma \vdash e_1 : \sigma \to_\pi \varphi$ \` by inversion on ($\lambda E$) \\
+(4) $\Gamma' \vdash e_2 : \sigma$ \` by inversion on ($\lambda E$) \\
+(5) $\Gamma \vdash e_1' : \sigma \to_\pi \varphi$ \` by induction hypothesis in (3,1) \\
+(6) $\Gamma, \Gamma' \vdash e_1'~e_2 : \varphi$ \` by ($\lambda E$) (4,3) \\
+\end{tabbing}
 
-\[
-\pcase{e~\pi \longrightarrow e'~\pi}{
-\pline{1}{e \longrightarrow e'}{by inversion on mult. $\beta$-reduction}
-\pline{2}{\Gamma \vdash e~\pi : \sigma[\pi/p]}{by assumption}
-\pline{3}{\Gamma \vdash e : \forall p.~\sigma}{by inversion on ($\Lambda E$)}
-\pline{4}{\Gamma \vdash_{mult} \pi}{by inversion on ($\Lambda E$)}
-\pline{5}{\Gamma \vdash e' : \forall p.~\sigma}{by induction hypothesis (3,1)}
-\pline{6}{\Gamma \vdash e'~\pi : \sigma[\pi/p]}{by ($\Lambda E$) (5,4)}
-}
-\]
+\item[Case:] $e~\pi \longrightarrow e'~\pi$
+\begin{tabbing}
+(1) $e \longrightarrow e'$ \` by inversion on mult. $\beta$-reduction \\
+(2) $\Gamma \vdash e~\pi : \sigma[\pi/p]$ \` by assumption \\
+(3) $\Gamma \vdash e : \forall p.~\sigma$ \` by inversion on ($\Lambda E$) \\
+(4) $\Gamma \vdash_{mult} \pi$ \` by inversion on ($\Lambda E$) \\
+(5) $\Gamma \vdash e' : \forall p.~\sigma$ \` by induction hypothesis (3,1) \\
+(6) $\Gamma \vdash e'~\pi : \sigma[\pi/p]$ \` by ($\Lambda E$) (5,4) \\
+\end{tabbing}
 
-\[
-\pcase{\ccase{e}{z{:}_{\overline{\Delta}}\sigma~\{\rho_i\to e'_i\}}
-\longrightarrow \ccase{e'}{z{:}_{\overline{\Delta}}\sigma~\{\rho_i\to e'_i\}}}{
-\pline{1}{e \longrightarrow e'}{by inversion on case reduction}
-\pline{2}{\Gamma, \Gamma' \vdash \ccase{e}{z{:}_{\overline{\Delta}}\sigma~\{\rho_i\to e'_i\}} : \varphi}{by assumption}
-\pline{3}{\Gamma \vdash e : \sigma}{by inversion on case}
+\item[Case:] $\ccase{e}{z{:}_{\overline{\Delta}}\sigma~\{\rho_i\to e'_i\}} \longrightarrow \ccase{e'}{z{:}_{\overline{\Delta}}\sigma~\{\rho_i\to e'_i\}}$
+\begin{tabbing}
+(1) $e \longrightarrow e'$ \` by inversion on case reduction \\
+(2) $\Gamma, \Gamma' \vdash \ccase{e}{z{:}_{\overline{\Delta}}\sigma~\{\rho_i\to e'_i\}} : \varphi$ \` by assumption \\
+(3) $\Gamma \vdash e : \sigma$ \` by inversion on case \\
 % TODO: HOW i?
-\pline{4}{\overline{\Gamma', z{:}_{\Delta_i}\sigma \vdash_{alt} \rho_i \to e'_i : \varphi}}{by inversion on case}
-\pline{5}{\Gamma \vdash e' : \sigma}{by induction hypothesis (3,1)}
-\pline{6}{\Gamma, \Gamma' \vdash
-\ccase{e'}{z{:}_{\overline{\Delta}}\sigma~\{\rho_i\to e'_i\}} : \varphi}{by case (4,3)}
-}
-\]
+(4) $\overline{\Gamma', z{:}_{\Delta_i}\sigma \vdash_{alt} \rho_i \to e'_i : \varphi}$ \` by inversion on case \\
+(5) $\Gamma \vdash e' : \sigma$ \` by induction hypothesis (3,1) \\
+(6) $\Gamma, \Gamma' \vdash \ccase{e'}{z{:}_{\overline{\Delta}}\sigma~\{\rho_i\to e'_i\}} : \varphi$ \` by case (4,3) \\
+\end{tabbing}
+
+\end{description}
 
 \end{proof}
 
@@ -416,81 +420,75 @@ By structural induction on the small-step reduction.
 \begin{proof}
 By structural induction on the (only) typing derivation
 
-\[
-\pcase{\Lambda I}{
-\pline{1}{\cdot \vdash (\Lambda p.~e) : \forall p.~\sigma}{by assumption}
-\pline{2}{(\Lambda p.~e)~\textrm{is a value}}{by definition}
-}
-\]
+\begin{description}
 
-\[
-\pcase{\Lambda E}{
-\pline{1}{\cdot \vdash e_1~\pi : \sigma[\pi/p]}{by assumption}
-\pline{2}{\cdot \vdash e_1 : \forall p.~\sigma}{by inversion on ($\Lambda E$)}
-\pline{3}{\cdot \vdash_{mult} \pi}{by inversion on ($\Lambda E$)}
-\pline{4}{e_1~\textrm{is a value or}~\exists e_1'. e_1 \longrightarrow e_1'}{by the induction hypothesis (2)}
+\item[Case:] $\Lambda I$
+\begin{tabbing}
+(1) $\cdot \vdash (\Lambda p.~e) : \forall p.~\sigma$ \` by assumption \\
+(2) $(\Lambda p.~e)~\textrm{is a value}$ \` by definition \\
+\end{tabbing}
+
+\item[Case:] $\Lambda E$
+\begin{tabbing}
+(1) $\cdot \vdash e_1~\pi : \sigma[\pi/p]$ \` by assumption \\
+(2) $\cdot \vdash e_1 : \forall p.~\sigma$ \` by inversion on ($\Lambda E$) \\
+(3) $\cdot \vdash_{mult} \pi$ \` by inversion on ($\Lambda E$) \\
+(4) $e_1~\textrm{is a value or}~\exists e_1'. e_1 \longrightarrow e_1'$ \` by the induction hypothesis (2) \\
 \textrm{Subcase $e_1$ is a value:}\\
-\pline{5}{e_1 = \Lambda p.~e_2}{by the canonical forms lemma (2)}
-\pline{6}{(\Lambda p.~e_2)~\pi \longrightarrow e_2[\pi/p]}{by $\beta$-reduction on multiplicity (5,3)}
+(5) $e_1 = \Lambda p.~e_2$ \` by the canonical forms lemma (2) \\
+(6) $(\Lambda p.~e_2)~\pi \longrightarrow e_2[\pi/p]$ \` by $\beta$-reduction on multiplicity (5,3) \\
 \textrm{Subcase $e_1 \longrightarrow e_1'$:}\\
 % TODO: Have I've concluded two different things in the proof because
 % the reductions don't match (on one we have explicit substitution)?
-\pline{5}{e_1~\pi \longrightarrow e_1'~\pi}{by context reduction on mult. application}
-}
-\]
+(5) $e_1~\pi \longrightarrow e_1'~\pi$ \` by context reduction on mult. application \\
+\end{tabbing}
 
-\[
-\pcase{\lambda I}{
-\pline{1}{\cdot \vdash (\lambda x{:}_\pi\sigma.~e) : \sigma\to_\pi\varphi}{by assumption}
-\pline{2}{(\lambda x{:}_\pi\sigma.~e)~\textrm{is a value}}{by definition}
-}
-\]
+\item[Case:] $\lambda I$
+\begin{tabbing}
+(1) $\cdot \vdash (\lambda x{:}_\pi\sigma.~e) : \sigma\to_\pi\varphi$ \` by assumption \\
+(2) $(\lambda x{:}_\pi\sigma.~e)~\textrm{is a value}$ \` by definition \\
+\end{tabbing}
 
-\[
-\pcase{\lambda E}{
-\pline{1}{\cdot \vdash e_1~e_2 : \varphi}{by assumption}
-\pline{2}{\cdot \vdash e_1 : \sigma \to_\pi \varphi}{by inversion on ($\lambda E$)}
-\pline{3}{\cdot \vdash e_2 : \sigma}{by inversion on ($\lambda E$)}
-\pline{4}{e_1~\textrm{is a value or}~\exists e_1'. e_1\longrightarrow e_1'}{by the induction hypothesis (2)}
+\item[Case:] $\lambda E$
+\begin{tabbing}
+(1) $\cdot \vdash e_1~e_2 : \varphi$ \` by assumption \\
+(2) $\cdot \vdash e_1 : \sigma \to_\pi \varphi$ \` by inversion on ($\lambda E$) \\
+(3) $\cdot \vdash e_2 : \sigma$ \` by inversion on ($\lambda E$) \\
+(4) $e_1~\textrm{is a value or}~\exists e_1'. e_1\longrightarrow e_1'$ \` by the induction hypothesis (2) \\
 \textrm{Subcase $e_1$ is a value:}\\
-\pline{5}{e_1 = \lambda x{:}_\pi\sigma.~e}{by the canonical forms lemma}
-\pline{6}{e_1~e_2 \longrightarrow e[e_2/x]}{by term $\beta$-reduction (5,3)}
+(5) $e_1 = \lambda x{:}_\pi\sigma.~e$ \` by the canonical forms lemma \\
+(6) $e_1~e_2 \longrightarrow e[e_2/x]$ \` by term $\beta$-reduction (5,3) \\
 \textrm{Subcase $e_1\longrightarrow e_1'$:}\\
-\pline{5}{e_1~e_2\longrightarrow e_1'~e_2}{by context reduction on term application}
-}
-\]
+(5) $e_1~e_2\longrightarrow e_1'~e_2$ \` by context reduction on term application \\
+\end{tabbing}
 
-\[
-\pcase{Let}{
-\pline{1}{\cdot \vdash \llet{x{:}_\Delta\sigma = e}{e'} : \varphi}{by assumption}
-\pline{2}{\llet{x{:}_\Delta\sigma = e}{e'}\longrightarrow e'[e/x]}{by definition of reduction. Wait, what?}
-}
-\]
+\item[Case:] $Let$
+\begin{tabbing}
+(1) $\cdot \vdash \llet{x{:}_\Delta\sigma = e}{e'} : \varphi$ \` by assumption \\
+(2) $\llet{x{:}_\Delta\sigma = e}{e'}\longrightarrow e'[e/x]$ \` by definition of reduction. Wait, what? \\
+\end{tabbing}
 
-\[
-\pcase{LetRec}{
-\pline{1}{\cdot \vdash \lletrec{\overline{x{:}_\Delta\sigma = e}}{e'} : \varphi}{by assumption}
-\pline{2}{\lletrec{\overline{x{:}_\Delta\sigma = e}}{e'} \longrightarrow e'\overline{[\lletrec{\overline{x{:}_\Delta\sigma = e}}{e}/x]}}{by definition of reduction.}
-}
-\]
+\item[Case:] $LetRec$
+\begin{tabbing}
+(1) $\cdot \vdash \lletrec{\overline{x{:}_\Delta\sigma = e}}{e'} : \varphi$ \` by assumption \\
+(2) $\lletrec{\overline{x{:}_\Delta\sigma = e}}{e'} \longrightarrow e'\overline{[\lletrec{\overline{x{:}_\Delta\sigma = e}}{e}/x]}$ \` by definition of reduction. \\
+\end{tabbing}
 
-\[
-\pcase{Case}{
-\pline{1}{\cdot \vdash \ccase{e}{z{:}_{\overline{\Delta}}\sigma~\{\overline{\rho_i \to e_i}\}} : \varphi}{by assumption}
-\pline{2}{\cdot \vdash e_1 : T~\overline{p}}{by inversion of (case)}
+\item[Case:] $Case$
+\begin{tabbing}
+(1) $\cdot \vdash \ccase{e}{z{:}_{\overline{\Delta}}\sigma~\{\overline{\rho_i \to e_i}\}} : \varphi$ \` by assumption \\
+(2) $\cdot \vdash e_1 : T~\overline{p}$ \` by inversion of (case) \\
 % ROMES:TODO What to do about z
-\pline{3}{\overline{\cdot, z{:}_{\overline{\Delta}}\sigma \vdash_{alt} \rho_i\to e_i : \sigma \Longrightarrow \varphi}}{by inversion of (case)}
-\pline{4}{e_1~\textrm{is a value or}~\exists e_1'. e_1 \longrightarrow e_1'}{by induction hypothesis (2)}
+(3) $\overline{\cdot, z{:}_{\overline{\Delta}}\sigma \vdash_{alt} \rho_i\to e_i : \sigma \Longrightarrow \varphi}$ \` by inversion of (case) \\
+(4) $e_1~\textrm{is a value or}~\exists e_1'. e_1 \longrightarrow e_1'$ \` by induction hypothesis (2) \\
 \textrm{Subcase $e_1$ is a value:}\\
-\pline{5}{e_1 = K~\overline{e}}{by canonical forms lemma}
-\pline{6}{\ccase{e_1}{z{:}_{\overline{\Delta}}\sigma~\{\overline{\rho_i \to
-e_i}\}} \longrightarrow e'[\overline{e}/\overline{x{:}_\pi\sigma}][K~\overline{e}/z]}{by case reduction (5)}
+(5) $e_1 = K~\overline{e}$ \` by canonical forms lemma \\
+(6) $\ccase{e_1}{z{:}_{\overline{\Delta}}\sigma~\{\overline{\rho_i \to e_i}\}} \longrightarrow e'[\overline{e}/\overline{x{:}_\pi\sigma}][K~\overline{e}/z]$ \` by case reduction (5) \\
 \textrm{Subcase $e_1 \to e_1'$:}\\
-\pline{5}{\ccase{e_1}{z{:}_{\overline{\Delta}}\sigma~\{\overline{\rho_i \to
-e_1}\}} \longrightarrow \ccase{e_1'}{z{:}_{\overline{\Delta}}\sigma~\{\rho_i \to
-e_i\}}}{by context reduction}
-}
-\]
+(5) $\ccase{e_1}{z{:}_{\overline{\Delta}}\sigma~\{\overline{\rho_i \to e_1}\}} \longrightarrow \ccase{e_1'}{z{:}_{\overline{\Delta}}\sigma~\{\rho_i \to e_i\}}$ \` by context reduction \\
+\end{tabbing}
+
+\end{description}
 
 \end{proof}
 
