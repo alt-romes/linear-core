@@ -494,7 +494,7 @@ By structural induction on the (only) typing derivation
 
 
 \clearpage
-\begin{lemma}[Substitution]
+\begin{lemma}[Substitution of linear variables preserves typing]
 \emph{If $\Gamma, x{:}_1\sigma \vdash e : \varphi$ and $\cdot \vdash e' : \sigma$ then $\Gamma \vdash e[e'/x] : \varphi$}
 \end{lemma}
 
@@ -604,3 +604,46 @@ Just like $Contract_\omega$ with \texttt{s/omega/Delta}
 
 \end{proof}
 
+\clearpage
+\begin{lemma}[Substitution of unrestricted variables preserves typing]
+\emph{If $\Gamma, x{:}_\omega\sigma \vdash e : \varphi$ and $\Gamma' \vdash e' : \sigma$ and $\forall y{:}_\pi\varphi \in \Gamma .~\pi \neq 1$ then $\Gamma \vdash e[e'/x] : \varphi$. Doesn't seem fully correct.}
+\end{lemma}
+
+\begin{proof}
+By structural induction on the first derivation.
+
+\begin{description}
+
+\item[Case:] $Var_\omega$ TODO
+\begin{tabbing}
+  (1) $\cdot,x{:}_1\sigma \vdash x : \sigma$ \` by assumption\\
+  (2) $\cdot \vdash e' : \sigma$ \` by assumption\\
+  (3) $x[e'/x] = e'$ \` by def. of substitution\\
+  (4) $\cdot \vdash e' : \sigma$ \` by (1,2,3)\\
+\end{tabbing}
+
+\end{description}
+
+\end{proof}
+
+\clearpage
+\begin{lemma}[Substitution of variables with usage environments preserves typing]
+\emph{If $\Gamma, x{:}_\Delta\sigma \vdash e : \varphi$ and $\Delta \vdash e' : \sigma$ and $\Delta\!\upharpoonright_1 = \Gamma$ then $\Gamma \vdash e[e'/x] : \varphi$}
+\emph{Or if $\Delta\!\upharpoonright_1, x{:}_\Delta\sigma \vdash e : \varphi$ and $\Delta \vdash e' : \sigma$ then $\Gamma \vdash e[e'/x] : \varphi$}
+\end{lemma}
+\begin{proof}
+By structural induction on the first derivation.
+
+\begin{description}
+
+\item[Case:] $Var_\Delta$
+\begin{tabbing}
+  (1) $\cdot,x{:}_1\sigma \vdash x : \sigma$ \` by assumption\\
+  (2) $\cdot \vdash e' : \sigma$ \` by assumption\\
+  (3) $x[e'/x] = e'$ \` by def. of substitution\\
+  (4) $\cdot \vdash e' : \sigma$ \` by (1,2,3)\\
+\end{tabbing}
+
+\end{description}
+
+\end{proof}
