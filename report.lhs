@@ -1,5 +1,6 @@
 \documentclass{lwnovathesis}
 \usepackage{boldline}
+\usepackage{xargs}
 \usepackage{todonotes}
 \usepackage{cmll}
 \usepackage{amssymb}

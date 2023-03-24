@@ -1,8 +1,19 @@
-\newcommand{\pline}[3]{(#1)~#2 & \textrm{#3}\\}
-\newcommand{\pcase}[2]{
-%
-\begin{array}{ll}
-\textrm{Case}~(#1)\\
-    #2
-\end{array}
-}
+% Environments
+\newcommand{\G}{\Gamma}
+\newcommand{\D}{\Delta}
+
+% Variables
+\newcommandx{\var}[3][1=x, 2=1, 3=\sigma]{\ensuremath{#1{:}_{#2}#3}}
+\newcommand{\x}{\var[x]}
+\newcommand{\y}{\var[y]}
+\newcommand{\z}{\var[z]}
+\newcommand{\xl}{\x[1]}
+\newcommand{\xo}{\x[\omega]}
+\newcommand{\xpi}{\x[\pi]}
+\newcommand{\xD}{\x[\Delta]}
+\newcommand{\zD}{\z[\overline{\Delta}]}
+\newcommand{\zDi}{\z[\Delta_i]}
+
+% Types
+\newcommand{\s}{\sigma}
+\newcommand{\vp}{\varphi}

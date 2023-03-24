@@ -513,7 +513,7 @@ By structural induction on the first derivation.
 
 \item[Case:] $Weaken_\omega$
 \begin{tabbing}
-  (1) $\Gamma, x{:}_1\omega, y{:}_\omega\sigma' \vdash e : \varphi$ \` by assumption\\
+  (1) $\Gamma, x{:}_1\sigma, y{:}_\omega\sigma' \vdash e : \varphi$ \` by assumption\\
   (2) $\cdot \vdash e' : \sigma$ \` by assumption\\
   (3) $\Gamma, x{:}_1\sigma \vdash e : \varphi$ \` by inversion on $Weaken_\omega$\\
   (4) $\Gamma \vdash e[e'/x] : \varphi$ \` by induction hypothesis by (2,3)\\
@@ -586,7 +586,8 @@ Just like $Contract_\omega$ with \texttt{s/omega/Delta}
   (4) $\Gamma' \vdash e'' : \sigma'$ \` by inversion on $\lambda E$\\
   (5) $\Gamma \vdash e[e'/x] : \sigma' \to_\pi \varphi$ \` by induction hypothesis by (2,3)\\
   (6) $\Gamma, \Gamma' \vdash e[e'/x]~e'' : \varphi$ \` by $\lambda E$\\
-  (7) $(e~e'')[e'/x] = (e[e'/x]~e'')$ \` by in def. of linear substitution 1\\
+  (7) $(e''[e'/x] == e'')$ \` because the linear variable $x$ cannot occur in $e''$\\
+  (8) $(e~e'')[e'/x] = (e[e'/x]~e'')$ \` by in def. of substitution and (7)\\
 \end{tabbing}
 
 \item[Case:] $\lambda E_2$ (linear variable occurs in argument)
@@ -597,16 +598,18 @@ Just like $Contract_\omega$ with \texttt{s/omega/Delta}
   (4) $\Gamma', x{:}_1\sigma \vdash e'' : \sigma'$ \` by inversion on $\lambda E$\\
   (5) $\Gamma' \vdash e''[e'/x] : \sigma'$ \` by induction hypothesis by (2,4)\\
   (6) $\Gamma, \Gamma' \vdash e~e''[e'/x] : \varphi$ \` by $\lambda E$\\
-  (7) $(e~e'')[e'/x] = (e~e''[e'/x])$ \` by def. of linear substitution 2\\
+  (7) $(e[e'/x] == e)$ \` because the linear variable $x$ cannot occur in $e$\\
+  (8) $(e~e'')[e'/x] = (e~e''[e'/x])$ \` by def. of substitution and (7)\\
 \end{tabbing}
 
 \end{description}
 
 \end{proof}
 
+\newcommand{\hasnolinearvars}[1]{\ensuremath{\forall y{:}_\pi\varphi \in #1 .~\pi \neq 1}}
 \clearpage
 \begin{lemma}[Substitution of unrestricted variables preserves typing]
-\emph{If $\Gamma, x{:}_\omega\sigma \vdash e : \varphi$ and $\Gamma' \vdash e' : \sigma$ and $\forall y{:}_\pi\varphi \in \Gamma .~\pi \neq 1$ then $\Gamma \vdash e[e'/x] : \varphi$. Doesn't seem fully correct.}
+\emph{If $\Gamma, x{:}_\omega\sigma \vdash e : \varphi$ and $\Gamma' \vdash e' : \sigma$ and $\hasnolinearvars{\Gamma'}$ then $\Gamma,\Gamma' \vdash e[e'/x] : \varphi$.}
 \end{lemma}
 
 \begin{proof}
@@ -614,12 +617,141 @@ By structural induction on the first derivation.
 
 \begin{description}
 
-\item[Case:] $Var_\omega$ TODO
+\item[Case:] $Var_\omega$
 \begin{tabbing}
-  (1) $\cdot,x{:}_1\sigma \vdash x : \sigma$ \` by assumption\\
-  (2) $\cdot \vdash e' : \sigma$ \` by assumption\\
-  (3) $x[e'/x] = e'$ \` by def. of substitution\\
-  (4) $\cdot \vdash e' : \sigma$ \` by (1,2,3)\\
+  (1) $\Gamma, x{:}_\omega\sigma \vdash x : \sigma$ \` by assumption\\
+  (2) $\G' \vdash e' : \s$ \` by assumption\\
+  (3) $\forall \y[\pi][\vp] \in \G'.~\pi \neq 1$ \` by assumption\\
+  (4) $\forall \y[\pi][\vp] \in \G.~\pi \neq 1$ \` by inversion on ($Var_\omega$)\\
+  (5) $x[e'/x] = e'$ \` by def. of substitution\\
+  (6) $\G,\G' \vdash e' : \sigma$ \` by (1,2,5)\\
+  (7) We can only have 6 because of (3,4), how to add to proof?
+\end{tabbing}
+
+\item[Case:] $Var_\omega$
+\begin{tabbing}
+  (1) $\G, \xo \vdash y : \vp$ \` by assumption\\
+  (2) $\G' \vdash e' : \s$ \` by assumption\\
+  (3) $y[e'/x] = y$ \` by def. of substitution\\
+  (4) $\G,\G' \vdash y : \vp$ \` by (1)\\
+  (5) Where does $\G'$ come from in (4)? Def. of substitution?
+\end{tabbing}
+
+\item[Case:] $Var_\Delta$
+\begin{tabbing}
+% TODO: Should I not expand this rule out so much?
+  (1) $\G, \y[\D][\s'], \xo \vdash y : \vp$ \` by assumption\\
+  (2) $\G' \vdash e' : \s$ \` by assumption\\
+  (3) $\hasnolinearvars{\G'}$ \` by assumption\\
+  (4) $\D\!\upharpoonright_1 = \G$ \` by inversion on ($Var_\Delta$)\\
+  (5) $y[e'/x] = y$ \` by def. of substitution\\
+  (6) $\G,\G' \vdash y : \vp$ \` by ???
+\end{tabbing}
+
+\item[Case:] $Var_1$
+\begin{tabbing}
+  (1) We couldn't have reached $Var_1$ with an unrestricted variable in the context, the split cannot allocate unrestricted variables here
+\end{tabbing}
+
+\item[Case:] $Weaken_\omega$
+\begin{tabbing}
+  (1) $\G, \xo, \y[\omega][\s'] \vdash e : \vp$ \` by assumption\\
+  (2) $\G' \vdash e' : \s$ \` by assumption\\
+  (3) $\hasnolinearvars{\G'}$ \` by assumption\\
+  (4) $\G, \xo \vdash e : \vp$ \` by inversion on $Weaken_\omega$\\
+  (5) $\G, \G' \vdash e[e'/x] : \vp$ \` by induction hypothesis (2,3,4)\\
+  (6) $\G, \y[\omega][\s'], \G' \vdash e[e'/x] : \vp$ by $Weaken_\omega$\\
+\end{tabbing}
+
+\item[Case:] $Weaken_\Delta$
+\begin{tabbing}
+  Just like $Weaken_\omega$ with \texttt{s/omega/Delta/g}.
+\end{tabbing}
+
+% \item[Case:] $Weaken_\Delta$
+% \begin{tabbing}
+%   (1) $\G, \xo, \y[\Delta][\s'] \vdash e : \vp$ \` by assumption\\
+%   (2) $\G' \vdash e' : \s$ \` by assumption\\
+%   (3) $\hasnolinearvars{\G'}$ \` by assumption\\
+%   (4) $\G, \xo \vdash e : \vp$ \` by inversion on $Weaken_\Delta$\\
+%   (5) $\G, \G' \vdash e[e'/x] : \vp$ \` by induction hypothesis (2,3,4)\\
+%   (6) $\G, \y[\Delta][\s'], \G' \vdash e[e'/x] : \vp$ by $Weaken_\Delta$\\
+% \end{tabbing}
+
+\item[Case:] $Contract_\omega$
+\begin{tabbing}
+  (1) $\G, \xo, \y[\omega][\s'] \vdash e : \vp$ \` by assumption\\
+  (2) $\G' \vdash e' : \s$ \` by assumption\\
+  (3) $\hasnolinearvars{\G'}$ \` by assumption\\
+  (4) $\G, \xo, \y[\omega][\s'], \y[\omega][\s'] \vdash e : \vp$ \` by inversion on $Contract_\omega$\\
+  (5) $\G, \y[\omega][\s'], \y[\omega][\s'], \G' \vdash e[e'/x] : \vp$ \` by induction hypothesis (2,3,4)\\
+  (6) $\G, \y[\omega][\s'], \G' \vdash e[e'/x] : \vp$ by $Contract_\omega$\\
+\end{tabbing}
+
+\item[Case:] $Contract_\Delta$
+\begin{tabbing}
+  Just like $Contract_\omega$ with \texttt{s/omega/Delta/g}.
+\end{tabbing}
+
+\item[Case:] $\Lambda I$
+\begin{tabbing}
+  (1) $\Gamma, \xo \vdash \Lambda p.~e : \forall p.~\varphi$ \` by assumption\\
+  (2) $\Gamma' \vdash e' : \sigma$ \` by assumption\\
+  (3) $\hasnolinearvars{\G'}$ \` by assumption\\
+  (4) $\Gamma, \xo, p \vdash e : \varphi$ \` by inversion on $\Lambda I$\\
+  (5) $p \notin \Gamma$ \` by inversion on $\Lambda I$\\
+  (6) $\Gamma, p, \Gamma' \vdash e[e'/x] : \varphi$ \` by induction hypothesis by (2,3,4)\\
+  (7) $\Gamma, \Gamma' \vdash \Lambda p.~e[e'/x] : \forall p.~\varphi$ \` by $\Lambda I$ (5,6)\\
+  (8) $(\Lambda p.~e)[e'/x] = (\Lambda p.~e[e'/x])$ \` by def. of substitution\\
+\end{tabbing}
+
+\item[Case:] $\Lambda E$
+\begin{tabbing}
+  (1) $\G, \xo \vdash e~\pi: \varphi[\pi/p]$ \` by assumption\\
+  (2) $\G' \vdash e' : \sigma$ \` by assumption\\
+  (3) $\hasnolinearvars{\G'}$ \` by assumption\\
+  (4) $\Gamma, \xo \vdash e : \forall p.~\varphi$ \` by inversion on $\Lambda E$\\
+  (5) $\Gamma, \xo \vdash_{mult} \pi$ \` by inversion on $\Lambda E$\\
+  (6) $\Gamma, \Gamma' \vdash e[e'/x] \forall p.~\varphi$ \` by induction hypothesis by (2,3,4)\\
+  (7) $\Gamma, \Gamma' \vdash e[e'/x]~\pi : \varphi[\pi/p]$ \` by $\Lambda E$ (5,6)\\
+  (8) $(e~\pi)[e'/x] = e[e'/x]~\pi$ \` by def. of substitution\\
+\end{tabbing}
+
+\item[Case:] $\lambda I$
+\begin{tabbing}
+  (1) $\G, \xo \vdash \lambda\y[\pi][\s'].~e : \s'\to_\pi\vp$ \` by assumption\\
+  (2) $\G' \vdash e' : \sigma$ \` by assumption\\
+  (3) $\hasnolinearvars{\G'}$ \` by assumption\\
+  (4) $\G, \xo, \y[\pi][\s'] \vdash e : \s'$ \` by inversion on $\lambda I$\\
+  (5) $\G, \G', \y[\pi][\s'] \vdash e[e'/x] : \s' \to_\pi \vp$ \` by induction hypothesis\\
+  (6) $\G, \G' \vdash \lambda\y[\pi][\s'].~e[e'/x] : \s' \to_\pi\vp$ \` by $\lambda I$\\
+  (7) $(\lambda \y[\pi][\s'].~e)[e'/x] = (\lambda \y[\pi][\s'].~e[e'/x])$ \` by def. of subst.\\
+\end{tabbing}
+
+\item[Case:] $\lambda E$
+\begin{tabbing}
+  (1) $\G, \xo, \G'' \vdash e~e'' : \vp$ \` by assumption\\
+  (2) $\G' \vdash e' : \s$ \` by assumption \\
+  (3) $\hasnolinearvars{\G'}$ \` by assumption\\
+  (4) $\G,\xo,\G'',\xo,\vdash$ \` by assumption\\
+  (5) $\G, \xo \vdash e : \s'\to_\pi\vp$ \` by inversion \\
+  (6) $\G'', \xo $ \` \\
+  (7) Auch, não posso duplicar a unrestricted value... como é que faço??
+\end{tabbing}
+
+\item[Case:] $Let$
+\begin{tabbing}
+  (1) $\G, \xo \vdash \llet{\y[\Delta][\s'] = e}{e''} : \vp$ \` by assumption\\
+  (2) $\G' \vdash e' : \s$ \` by assumption \\
+  (3) $\hasnolinearvars{\G'}$ \` by assumption\\
+  (4) $\G,\xo,\y[\Delta][\s'] \vdash e'' : \vp$ \` by inversion\\
+  (5) $\Delta \vdash e : \s'$ \` by inversion\\
+  (6) $\D \subseteq \G$ \` by inversion\\
+  (7) $\D,\xo \vdash e : \s'$ \` by $Weaken$\\
+  (8) $\G, \y[\D][\s'], \G' \vdash e''[e'/x] : \vp$ \` by induction hypothesis (4,2,3)\\
+  (9) $\D, \G' \vdash e[e'/x] : \s'$ \` by induction hypothesis\\
+  (10) $\D,\G' \subseteq \G,\G'$ \` by (6) and def. of $\subseteq$\\
+  (11) Stuck, we need to be able to say $\D,\G'$ is the same usage environment as the one annotated in $y[\D][\s']$.
 \end{tabbing}
 
 \end{description}
