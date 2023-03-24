@@ -6,35 +6,35 @@
 %
 \textbf{Types} \\
 \begin{array}{lcll}
-    \varphi,\sigma & ::= & T~\overline{p} & \textrm{Datatype} \\
-                   & \mid & \varphi \to_\pi \sigma & \textrm{Function with multiplicity}\\
-                   & \mid & \forall p.~\varphi & \textrm{Multiplicity universal scheme}\\
+    \varphi,\sigma  & ::=  & T~\overline{p}         & \textrm{Datatype} \\
+                    & \mid & \varphi \to_\pi \sigma & \textrm{Function with multiplicity}\\
+                    & \mid & \forall p.~\varphi     & \textrm{Multiplicity universal scheme}\\
                    % TODO: Eventually Coercions
 \end{array}\\\\
 %
 \textbf{Terms}\\
 \begin{array}{lcll}
-    u               & ::=  & x,y,z \mid K                           & \textrm{Variables and data constructors}\\
-    e               & ::=  & u                                  & \textrm{Term atoms}\\
-                    & \mid & \Lambda p.~e~\mid~e~\pi  & \textrm{Multiplicity abstraction/application}\\
-                    & \mid & \lambda x{:}_\pi\sigma.~e~\mid~e_1~e_2 & \textrm{Term abstraction/application}\\
-                    & \mid & \llet{x{:}_\Delta\sigma = e_1}{e_2}       & \textrm{Let} \\
-                    & \mid & \lletrec{\overline{x{:}_\Delta\sigma = e_1}}{e_2}  & \textrm{Recursive Let} \\
-                    & \mid & \ccase{e_1}{z{:}_{\overline{\Delta}}~\{\overline{\rho\to e_2}\}}   & \textrm{Case} \\
-                    &      &                                    & \\
-%    p               & ::= & K~\overline{b{:}\kappa}~\overline{x{:}\sigma} & \textrm{Pattern} \\
-    \rho            & ::= & K~\overline{x{:}_\pi\sigma} \mid \_ & \textrm{Pattern and wildcard} \\
+    u                & ::=  & x,y,z \mid K                                                     & \textrm{Variables and data constructors}\\
+    e                & ::=  & u                                                                & \textrm{Term atoms}\\
+                     & \mid & \Lambda p.~e~\mid~e~\pi                                          & \textrm{Multiplicity abstraction/application}\\
+                     & \mid & \lambda x{:}_\pi\sigma.~e~\mid~e_1~e_2                           & \textrm{Term abstraction/application}\\
+                     & \mid & \llet{x{:}_\Delta\sigma = e_1}{e_2}                              & \textrm{Let} \\
+                     & \mid & \lletrec{\overline{x{:}_\Delta\sigma = e_1}}{e_2}                & \textrm{Recursive Let} \\
+                     & \mid & \ccase{e_1}{z{:}_{\overline{\Delta}}~\{\overline{\rho\to e_2}\}} & \textrm{Case} \\
+                     &      &                                                                  & \\
+%    p               & ::=  & K~\overline{b{:}\kappa}~\overline{x{:}\sigma}                    & \textrm{Pattern} \\
+    \rho             & ::=  & K~\overline{x{:}_\pi\sigma} \mid \_                              & \textrm{Pattern and wildcard} \\
 % Currently we don't care about the existential multiplicity variables, but later on we might
 \end{array}\\\\
 %
 \textbf{Environments}\\
 \begin{array}{lcll}
-  \Gamma & ::= & \cdot & \textrm{Empty environment} \\
-         & \mid & \Gamma,x{:}_\pi\sigma & \textrm{Lambda bound variable} \\
-         & \mid & \Gamma,x{:}_\Delta\sigma & \textrm{Let(rec) bound variable}\\
+  \Gamma   & ::=  & \cdot                                 & \textrm{Empty environment} \\
+           & \mid & \Gamma,x{:}_\pi\sigma                 & \textrm{Lambda bound variable} \\
+           & \mid & \Gamma,x{:}_\Delta\sigma              & \textrm{Let(rec) bound variable}\\
          % & \mid & \Gamma,x{:}_{\overline{\Delta}}\sigma & \textrm{Case bound variables} -- NOPE
-         & \mid & \Gamma,K{:}\sigma & \textrm{Data constructor}\\
-         & \mid & \Gamma,p & \textrm{Multiplicity variable}\\
+           & \mid & \Gamma,K{:}\sigma                     & \textrm{Data constructor}\\
+           & \mid & \Gamma,p                              & \textrm{Multiplicity variable}\\
 \end{array}\\\\
 %
 \textbf{Multiplicities}\\
@@ -45,7 +45,7 @@
 %
 \textbf{Usage Environments}\\
 \begin{array}{lcl}
-  \Delta & ::= & \cdot \mid \Delta, x{:}_\pi\sigma \mid \Delta+\Delta' \mid \pi\Delta\\
+  \Delta & ::= & \cdot \mid \Delta, x{:}_1\sigma \mid \Delta+\Delta' \mid \pi\Delta\\
 \end{array}\\\\
 %
 \textbf{Declarations}\\
