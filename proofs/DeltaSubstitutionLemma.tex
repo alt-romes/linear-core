@@ -1,0 +1,22 @@
+
+\begin{lemma}[Substitution of variables with usage environments preserves typing]
+\emph{If $\Gamma, x{:}_\Delta\sigma \vdash e : \varphi$ and $\Delta \vdash e' : \sigma$ and $\Delta\!\upharpoonright_1 = \Gamma$ then $\Gamma \vdash e[e'/x] : \varphi$}
+\emph{Or if $\Delta\!\upharpoonright_1, x{:}_\Delta\sigma \vdash e : \varphi$ and $\Delta \vdash e' : \sigma$ then $\Gamma \vdash e[e'/x] : \varphi$}
+\end{lemma}
+\begin{proof}
+By structural induction on the first derivation.
+
+\begin{description}
+
+\item[Case:] $Var_\Delta$
+\begin{tabbing}
+  (1) $\cdot,x{:}_1\sigma \vdash x : \sigma$ \` by assumption\\
+  (2) $\cdot \vdash e' : \sigma$ \` by assumption\\
+  (3) $x[e'/x] = e'$ \` by def. of substitution\\
+  (4) $\cdot \vdash e' : \sigma$ \` by (1,2,3)\\
+\end{tabbing}
+
+\end{description}
+
+\end{proof}
+

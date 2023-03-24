@@ -1,0 +1,112 @@
+\begin{lemma}[Substitution of linear variables preserves typing]
+\emph{If $\Gamma, x{:}_1\sigma \vdash e : \varphi$ and $\cdot \vdash e' : \sigma$ then $\Gamma \vdash e[e'/x] : \varphi$}
+\end{lemma}
+
+\begin{proof}
+By structural induction on the first derivation.
+
+\begin{description}
+
+\item[Case:] $Var_1$
+\begin{tabbing}
+  (1) $\cdot,x{:}_1\sigma \vdash x : \sigma$ \` by assumption\\
+  (2) $\cdot \vdash e' : \sigma$ \` by assumption\\
+  (3) $x[e'/x] = e'$ \` by def. of substitution\\
+  (4) $\cdot \vdash e' : \sigma$ \` by (1,2,3)\\
+\end{tabbing}
+
+\item[Case:] $Weaken_\omega$
+\begin{tabbing}
+  (1) $\Gamma, x{:}_1\sigma, y{:}_\omega\sigma' \vdash e : \varphi$ \` by assumption\\
+  (2) $\cdot \vdash e' : \sigma$ \` by assumption\\
+  (3) $\Gamma, x{:}_1\sigma \vdash e : \varphi$ \` by inversion on $Weaken_\omega$\\
+  (4) $\Gamma \vdash e[e'/x] : \varphi$ \` by induction hypothesis by (2,3)\\
+  (5) $\Gamma, y{:}_\omega\sigma' \vdash e[e'/x] : \varphi$ \` by $Weaken_\omega$ (4)\\
+\end{tabbing}
+
+\item[Case:] $Weaken_\Delta$\\
+Just like $Weaken_\omega$ with \texttt{s/omega/Delta}
+
+\item[Case:] $Contract_\omega$
+\begin{tabbing}
+  (1) $\Gamma, x{:}_1\sigma, y{:}_\omega\sigma' \vdash e : \varphi$ \` by assumption\\
+  (2) $\cdot \vdash e' : \sigma$ \` by assumption\\
+  (3) $\Gamma, x{:}_1\sigma, y{:}_\omega\sigma', y{:}_\omega\sigma' \vdash e : \varphi$ \` by inversion on $Contract_\omega$\\
+  (4) $\Gamma, y{:}_\omega\sigma', y{:}_\omega\sigma' \vdash e[e'/x] : \varphi$ \` by induction hypothesis by (2,3)\\
+  (5) $\Gamma, y{:}_\omega\sigma' \vdash e[e'/x] : \varphi$ \` by $Contract_\omega$ (4)\\
+\end{tabbing}
+
+\item[Case:] $Contract_\Delta$\\
+Just like $Contract_\omega$ with \texttt{s/omega/Delta}
+
+\item[Case:] $Var_\omega$\\
+  Impossible, $x{:}_1\sigma$ can't be in this rule's context
+
+\item[Case:] $Var_\Delta$
+\begin{tabbing}
+  (1) $\Gamma, x{:}_1\sigma, y{:}_\Delta\sigma' \vdash e : \varphi$ \` by assumption\\
+  (2) $\cdot \vdash e' : \sigma$ \` by assumption\\
+  (3) $\Delta\!\upharpoonright_1 = \Gamma$ \` by inversion on $Var_\Delta$\\
+  (4) Stuck
+\end{tabbing}
+
+\item[Case:] $\Lambda I$
+\begin{tabbing}
+  (1) $\Gamma, x{:}_1\sigma \vdash \Lambda p.~e : \forall p.~\varphi$ \` by assumption\\
+  (2) $\cdot \vdash e' : \sigma$ \` by assumption\\
+  (3) $\Gamma, x{:}_1\sigma, p \vdash e : \varphi$ \` by inversion on $\Lambda I$\\
+  (4) $p \notin \Gamma$ \` by inversion on $\Lambda I$\\
+  (5) $\Gamma, p \vdash e[e'/x] : \varphi$ \` by induction hypothesis by (2,3)\\
+  (6) $\Gamma \vdash \Lambda p.~e[e'/x] : \forall p.~\varphi$ \` by $\Lambda I$ (4,5)\\
+  (7) $(\Lambda p.~e)[e'/x] = (\Lambda p.~e[e'/x])$ \` by def. of substitution\\
+\end{tabbing}
+
+\item[Case:] $\Lambda E$
+\begin{tabbing}
+  (1) $\Gamma, x{:}_1\sigma \vdash e~\pi: \varphi[\pi/p]$ \` by assumption\\
+  (2) $\cdot \vdash e' : \sigma$ \` by assumption\\
+  (3) $\Gamma, x{:}_1\sigma \vdash e : \forall p.~\varphi$ \` by inversion on $\Lambda E$\\
+  (4) $\Gamma, x{:}_1\sigma \vdash_{mult} \pi$ \` by inversion on $\Lambda E$\\
+  (5) $\Gamma \vdash e[e'/x] \forall p.~\varphi$ \` by induction hypothesis by (2,3)\\
+  (6) $\Gamma \vdash e[e'/x]~\pi : \varphi[\pi/p]$ \` by $\Lambda E$ (4,5)\\
+  (7) $(e~\pi)[e'/x] = e[e'/x] \pi$ \` by def. of substitution\\
+\end{tabbing}
+
+\item[Case:] $\lambda I$
+\begin{tabbing}
+  (1) $\Gamma, x{:}_1\sigma \vdash \lambda y{:}_\pi\sigma'.~e : \sigma' \to_\pi \varphi$ \` by assumption\\
+  (2) $\cdot \vdash e' : \sigma$ \` by assumption\\
+  (3) $\Gamma, x{:}_1\sigma, y{:}_\pi\sigma' \vdash e : \varphi$ \` by inversion on $\lambda I$\\
+  (4) $\Gamma, y{:}_\pi\sigma' \vdash e[e'/x] : \varphi$ \` by induction hypothesis by (2,3)\\
+  (5) $\Gamma \vdash \lambda y{:}_\pi\sigma'.~e[e'/x] : \sigma' \to_\pi \varphi$ \` by $lLambda I$ (4)\\
+  (6) $(\lambda y{:}_\pi\sigma'.~e)[e'/x] = (\lambda y{:}_\pi\sigma'.~e[e'/x])$ \` by def. of substitution\\
+\end{tabbing}
+
+\item[Case:] $\lambda E_1$ (linear variable occurs in function)
+\begin{tabbing}
+  (1) $\Gamma, x{:}_1\sigma, \Gamma' \vdash e~e'' : \varphi$ \` by assumption\\
+  (2) $\cdot \vdash e' : \sigma$ \` by assumption\\
+  (3) $\Gamma, x{:}_1\sigma \vdash e : \sigma' \to_\pi \varphi$ \` by inversion on $\lambda E$\\
+  (4) $\Gamma' \vdash e'' : \sigma'$ \` by inversion on $\lambda E$\\
+  (5) $\Gamma \vdash e[e'/x] : \sigma' \to_\pi \varphi$ \` by induction hypothesis by (2,3)\\
+  (6) $\Gamma, \Gamma' \vdash e[e'/x]~e'' : \varphi$ \` by $\lambda E$\\
+  (7) $(e''[e'/x] == e'')$ \` because the linear variable $x$ cannot occur in $e''$\\
+  (8) $(e~e'')[e'/x] = (e[e'/x]~e'')$ \` by in def. of substitution and (7)\\
+\end{tabbing}
+
+\item[Case:] $\lambda E_2$ (linear variable occurs in argument)
+\begin{tabbing}
+  (1) $\Gamma, \Gamma', x{:}_1\sigma \vdash e~e'' : \varphi$ \` by assumption\\
+  (2) $\cdot \vdash e' : \sigma$ \` by assumption\\
+  (3) $\Gamma \vdash e : \sigma' \to_\pi \varphi$ \` by inversion on $\lambda E$\\
+  (4) $\Gamma', x{:}_1\sigma \vdash e'' : \sigma'$ \` by inversion on $\lambda E$\\
+  (5) $\Gamma' \vdash e''[e'/x] : \sigma'$ \` by induction hypothesis by (2,4)\\
+  (6) $\Gamma, \Gamma' \vdash e~e''[e'/x] : \varphi$ \` by $\lambda E$\\
+  (7) $(e[e'/x] == e)$ \` because the linear variable $x$ cannot occur in $e$\\
+  (8) $(e~e'')[e'/x] = (e~e''[e'/x])$ \` by def. of substitution and (7)\\
+\end{tabbing}
+
+\end{description}
+
+\end{proof}
+
