@@ -1,7 +1,9 @@
 
+% ROMES: Note that the \Delta env only has linear variables by construction;
+% usage environments only record linear variables.
 \begin{lemma}[Substitution of variables with usage environments preserves typing]
-\emph{If $\Gamma, x{:}_\Delta\sigma \vdash e : \varphi$ and $\Delta \vdash e' : \sigma$ and $\Delta\!\upharpoonright_1 = \Gamma$ then $\Gamma \vdash e[e'/x] : \varphi$}
-\emph{Or if $\Delta\!\upharpoonright_1, x{:}_\Delta\sigma \vdash e : \varphi$ and $\Delta \vdash e' : \sigma$ then $\Gamma \vdash e[e'/x] : \varphi$}
+\emph{If $\G, \D, \xD \vdash e : \varphi$ and $\G', \D \vdash e' : \sigma$
+        then $\G, \G', \D \vdash e[e'/x] : \varphi$}
 \end{lemma}
 \begin{proof}
 By structural induction on the first derivation.
@@ -10,10 +12,52 @@ By structural induction on the first derivation.
 
 \item[Case:] $Var_\Delta$
 \begin{tabbing}
-  (1) $\cdot,x{:}_1\sigma \vdash x : \sigma$ \` by assumption\\
-  (2) $\cdot \vdash e' : \sigma$ \` by assumption\\
-  (3) $x[e'/x] = e'$ \` by def. of substitution\\
-  (4) $\cdot \vdash e' : \sigma$ \` by (1,2,3)\\
+\end{tabbing}
+
+\item[Case:] $\Lambda I$
+\begin{tabbing}
+    (1) $\G,\D, \xD \vdash \Lambda p.~e : \forall p.~\vp$\\
+    (2) $\G, \D' \vdash e' : \s$\\
+    (3) $\G, p, \D, \xD \vdash e : \vp$ \` by inversion on $\Lambda I$\\
+    (4) $\G, \G', \D, p \vdash e[e'/x]$ \` by induction hypothesis (2,3)\\
+    (5) $\G, \G', \D \vdash \Lambda p.~e[e'/x] : \forall p.~\vp$ \` by $\Lambda I$ \\
+    (6) $(\Lambda p.~e)[e'/x] = (\Lambda p.~e[e'/x])$ \` by def. of subst.\\
+    (7) $\G, \G', \D \vdash (\Lambda p.~e)[e'/x] : \forall p.~\vp$ \` by (5,6)\\
+\end{tabbing}
+
+\item[Case:] $\Lambda E$
+\begin{tabbing}
+    (1) $\G, \D, \xD \vdash e~\pi : \vp$\\
+    (2) $\G', \D \vdash e' : \s$\\
+    (3) $\G, \D, \xD \vdash e : \forall p.~\vp$ \` by inversion on $\Lambda E$\\
+    (4) $\G, \D \vdash_{mult} \pi$ \` by inversion on $\Lambda E$\\
+    (5) $\G, \G', \D, \xD$ \` by induction hypothesis (2,3)\\
+    (6) $\G, \G', \D \vdash e[e'/x]~\pi : \vp$ by $\Lambda E$\\
+    (7) $(e~\pi)[e'/x] = (e[e'/x]~\pi)$ \` by def. of subst.\\
+    (6) $\G, \G', \D \vdash (e~\pi)[e'/x] : \vp$ by (6,7)\\
+\end{tabbing}
+
+\item[Case:] $\lambda I$
+\begin{tabbing}
+    (1) $\G, \D, \xD \vdash \lambda \y[\pi][\s'].~e : \s' \to_\pi \vp$\\
+    (2) $\G', \D \vdash e' : \s$\\
+    (3) $\G, \D, \xD, \y[\pi][\s'] \vdash e : \vp$ \` by inversion on $\lambda I$\\
+    (4) $\G, \G', \D, \y[\pi][\s'] \vdash e[e'/x] : \vp$ \` by induction hypothesis (2,3)\\
+    (5) $\G, \G', \D \vdash \lambda \y[\pi][\s'].~e[e'/x] : \s' \to_\pi \vp$ \` by $\lambda I$\\
+    (6) $(\lambda \y[\pi][\s'].~e[e'/x]) = (\lambda \y[\pi][\s'].~e)[e'/x]$ \` by def. of subst.\\
+    (7) $\G, \G', \D \vdash \lambda (\y[\pi][\s'].~e)[e'/x] : \s' \to_\pi \vp$ \` by (5,6)\\
+\end{tabbing}
+
+\item[Case:] $\lambda E$
+\begin{tabbing}
+    (1) $\G, \G'', \D, \xD \vdash e~e'' : \vp$\\
+    (2) $\G', \D \vdash e' : \s$\\
+    (3) $\G, \D, \xD \vdash e : \s' \to_\pi \vp$ \` by inversion on $\lambda E$\\
+    (4) $\G'' \vdash e'' : \s'$ \` by inversion on $\lambda E$\\
+    (5) $\G, \G', \D \vdash e[e'/x] : \s' \to_\pi \vp$ \` by induction hypothesis (2,3)\\
+    (6) $\G, \G', \G'', \D \vdash (e[e'/x]~e'') : \vp$ \` by $\lambda E$\\
+    (7) $(e[e'/x]~e'') = (e~e'')[e'/x]$ \` when the resources to $\D$ are needed
+    to prove $\xD$ on the left??? Stuck again on division of resources...
 \end{tabbing}
 
 \end{description}
