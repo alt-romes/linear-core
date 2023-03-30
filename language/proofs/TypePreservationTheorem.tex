@@ -25,7 +25,7 @@ By structural induction on the small-step reduction.
   (2) $\Gamma \vdash (\lambda x{:}_\pi\sigma.~e) : \sigma\to_\pi\varphi$ \` by inversion on ($\lambda E$) \\
   (3) $\Gamma, x{:}_\pi\sigma \vdash e : \varphi$ \` by inversion on ($\lambda I$) \\
   (4) $\Gamma' \vdash e' : \sigma$ \` by inversion on ($\lambda E$) \\
-  (5) $\Gamma, \Gamma' \vdash e[e'/x] : \varphi$ \` by subst. lemma (3,4) \\
+  (5) $\Gamma, \Gamma' \vdash e[e'/x] : \varphi$ \` by linear subst. lemma (3,4) \\
 \end{tabbing}
 
 \item[Case:] $(\Lambda p.~e)~\pi \longrightarrow e[\pi/p]$
