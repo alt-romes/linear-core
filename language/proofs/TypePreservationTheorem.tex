@@ -21,27 +21,35 @@ By structural induction on the small-step reduction.
 
 \item[Case:] $(\lambda x{:}_\pi\sigma.~e)~e' \longrightarrow e[e'/x]$
 \begin{tabbing}
-  (1) $\Gamma, \Gamma' \vdash (\lambda x{:}_\pi\sigma.~e)~e' : \varphi$ \` by assumption \\
-  (2) $\Gamma \vdash (\lambda x{:}_\pi\sigma.~e) : \sigma\to_\pi\varphi$ \` by inversion on ($\lambda E$) \\
-  (3) $\Gamma, x{:}_\pi\sigma \vdash e : \varphi$ \` by inversion on ($\lambda I$) \\
-  (4) $\Gamma' \vdash e' : \sigma$ \` by inversion on ($\lambda E$) \\
-  (5) $\Gamma, \Gamma' \vdash e[e'/x] : \varphi$ \` by linear subst. lemma (3,4) \\
+    (1) $\Gamma, \Gamma' \vdash (\lambda x{:}_\pi\sigma.~e)~e' : \varphi$\\
+    (2) $\Gamma \vdash (\lambda x{:}_\pi\sigma.~e) : \sigma\to_\pi\varphi$ \` by inversion on ($\lambda E$) \\
+    (3) $\Gamma' \vdash e' : \sigma$ \` by inversion on ($\lambda E$) \\
+    Subcase $\pi = 1$:\\
+    (4) $\Gamma, x{:}_1\sigma \vdash e : \varphi$ \` by inversion on ($\lambda I$) \\
+    (5) $\Gamma, \Gamma' \vdash e[e'/x] : \varphi$ \` by linear subst. lemma (3,4) \\
+    Subcase $\pi = \omega$:\\
+    (4) $\G, \xo \vdash e : \vp$ \` by inversion on ($\lambda I$)\\
+    (5) $e'$ must be unrestricted, therefore $\G'$ has no linear variables.\\
+    (5.5) TODO: Where do we enforce it?\\
+    (6) $\G, \G' \vdash e[e'/x] : \vp]$ \` by unrestricted subst. lemma (3,4,5)\\
+    Subcase $\pi = p$:\\
+    (4) TODO.\\
 \end{tabbing}
 
 \item[Case:] $(\Lambda p.~e)~\pi \longrightarrow e[\pi/p]$
 \begin{tabbing}
-(1) $\Gamma \vdash (\Lambda p.~e)~\pi : \sigma[\pi/p]$ \` by assumption \\
+(1) $\Gamma \vdash (\Lambda p.~e)~\pi : \sigma[\pi/p]$\\
 (2) $\Gamma \vdash (\Lambda p.~e) : \forall p.~\sigma$ \` by inversion on ($\Lambda E$) \\
-(3) \` $\Gamma \vdash_{mult} \pi$ \` by inversion on ($\Lambda E$) \\
+(3) $\Gamma \vdash_{mult} \pi$ \` by inversion on ($\Lambda E$) \\
 (4) $\Gamma, p \vdash e : \sigma$ \` by inversion on ($\Lambda I$) \\
-% TODO: How to use these inversions
-(5) $p \notin \Gamma$ \` by inversion on ($\Lambda I$) \\
-(6) $\Gamma \vdash e[\pi/p]:\sigma[\pi/p]$ \` by subst. lemma (3,4) \\
+% (4) $p \notin \Gamma$ \` by inversion on ($\Lambda I$) \\
+(4.5) TODO: Mult. subst. lemma\\
+(5) $\Gamma \vdash e[\pi/p]:\sigma[\pi/p]$ \` by mult. subst. lemma (3,4) \\
 \end{tabbing}
 
 \item[Case:] $\llet{x{:}_\Delta\sigma = e}{e'}\longrightarrow e'[e/x]$
 \begin{tabbing}
-(1) $\Gamma \vdash \llet{x{:}_\Delta\sigma = e}{e'} : \varphi$ \` by assumption \\
+(1) $\G, \G', \D\vdash \llet{x{:}_\Delta\sigma = e}{e'} : \varphi$ \` by assumption \\
 (2) $\Gamma, x{:}_\Delta\sigma \vdash e' : \varphi$ \` by inversion on (let) \\
 (3) $\Delta \vdash e : \sigma$ \` by inversion on (let) \\
 (4) $\Delta \subseteq \Gamma$ \` by inversion on (let) \\

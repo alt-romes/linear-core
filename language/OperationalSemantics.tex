@@ -21,8 +21,8 @@
 (\lambda x.~e)~e' & \longrightarrow & e[e'/x]\\
 \llet{x{:}_\Delta\sigma = e}{e'} & \longrightarrow & e'[e/x]\\
 \lletrec{\overline{x{:}_\Delta\sigma = e}}{e'} & \longrightarrow & e'\overline{[\lletrec{\overline{x{:}_\Delta\sigma = e}}{e}/x]}\\
-\ccase{K~\overline{e}}{\dots K~\overline{x{:}_\pi\sigma} \to e'} &
-\longrightarrow & e'[\overline{e}/\overline{x{:}_\pi\sigma}][K~\overline{e}/z]\\
+    \ccase{K~\overline{e}}{z{:}_{\overline{\Delta}}\sigma' \{\dots K~\overline{x{:}_\pi\sigma} \to e'\}} &
+    \longrightarrow & e'\overline{[e/x]}[K~\overline{e}/z]\\
 \end{array}
 \end{array}
 \]

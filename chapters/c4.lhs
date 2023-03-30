@@ -18,21 +18,29 @@
 
 \input{language/Syntax}
 
+\clearpage
 \input{language/TypingRules}
 
+\clearpage
 \input{language/OperationalSemantics}
 
+\clearpage
 \input{language/InferUsageEnvs}
 
+\clearpage
 \section{Type Soundness}
 
 \input{language/proofs/TypePreservationTheorem}
 
+\clearpage
 \input{language/proofs/ProgressTheorem}
 
+\clearpage
 \input{language/proofs/LinearSubstitutionLemma}
 
+\clearpage
 \input{language/proofs/UnrestrictedSubstitutionLemma}
 
+\clearpage
 \input{language/proofs/DeltaSubstitutionLemma}
 
