@@ -73,18 +73,22 @@
     {\Gamma, \overline{\Gamma'}, \overline{\Delta} \vdash \lletrec{\overline{x{:}_\Delta\sigma = e'}}{e} : \varphi}
 \\[1em]
     \infer*[right=($Case$)]
-    { \Gamma \vdash e_1 : \sigma \and \overline{\Gamma', z{:}_{\Delta_i}\sigma \vdash_{alt} \rho_i \to e_i : \sigma \Rightarrow \varphi} }
+  { \Gamma \vdash e_1 : \sigma \and
+  \overline{\Gamma', z{:}_{\Delta_i}\sigma \vdash_{alt} \rho_i \to e_i :_{\Delta_i} \sigma \Rightarrow \varphi} }
     {\Gamma, \Gamma' \vdash \ccase{e_1}{z{:}_{\overline{\Delta}^n}\sigma~\{\overline{\rho_i\to e_i}^n\}} : \varphi}
-\\[1em]
-    \judgment{\Gamma \vdash_{alt} \rho \to e : \sigma \Rightarrow \varphi}
+  \\[1em]
+  
+    \judgment{\Gamma \vdash_{alt} \rho \to e :_\Delta \sigma \Rightarrow \varphi}
 \\[1em]
     \infer*[right=$(Alt)$]
-    { K:\overline{\sigma\to_\pi}~T~\overline{p}\in\Gamma \and \Gamma, \overline{x{:}_\pi\sigma} \vdash e : \varphi}
-    {\Gamma \vdash_{alt} K~\overline{x{:}_\pi\sigma} \to e : T~\overline{p} \Rightarrow \varphi}
+    { K:\overline{\sigma\to_\pi}~T~\overline{p}\in\Gamma \and \Gamma,
+  \overline{x{:}_\pi\sigma} \vdash e : \varphi
+   \and \Delta = \overline{x{:}_\pi\sigma}  \!\upharpoonright_1 }
+    {\Gamma \vdash_{alt} K~\overline{x{:}_\pi\sigma} \to e :_\D T~\overline{p} \Rightarrow \varphi}
 \qquad
     \infer*[right=$(Alt_\_)$]
-    { \Gamma \vdash e : \varphi }
-    {\Gamma \vdash_{alt} \_ \to e : T~\overline{p} \Rightarrow \varphi}
+    { \Gamma \vdash e : \varphi \and \D = \cdot }
+    {\Gamma \vdash_{alt} \_ \to e :_\D  T~\overline{p} \Rightarrow \varphi}
 \\[1em]
     \judgment{\Gamma \vdash_{mult} \pi}
 \\[1em]
