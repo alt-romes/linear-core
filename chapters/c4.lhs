@@ -28,7 +28,7 @@
 \input{language/InferUsageEnvs}
 
 \clearpage
-\section{Type Soundness}
+\section{Soundness}
 
 \input{language/proofs/TypePreservationTheorem}
 

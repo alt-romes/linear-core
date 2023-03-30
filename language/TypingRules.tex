@@ -1,4 +1,8 @@
 
+% ROMES:TODO: Where we have "no linear variables" we might really want to have
+% "no linear or usage-environment-annotated variables"? But I guess that even if
+% we have usage-annotated varibles we cannot use them without the accompanying
+% linear variables required to type them by the usage environment.
 \begin{figure}[h]
 \begin{framed}
 \small
@@ -17,22 +21,24 @@
     \infer*[right=($Contract_\omega$)]
     {\Gamma , x{:}_\omega \sigma, x{:}_\omega \sigma \vdash e : \varphi}
     {\Gamma , x{:}_\omega \sigma \vdash e : \varphi}
-\qquad
-    \infer*[right=($Contract_\Delta$)]
-    {\Gamma , x{:}_\Delta \sigma, x{:}_\Delta \sigma \vdash e : \varphi}
-    {\Gamma , x{:}_\Delta \sigma \vdash e : \varphi}
 \\[1em]
     \infer*[right=($Var_1$)]
     { }
     {\cdot, x{:}_1 \sigma \vdash x : \sigma}
 \qquad
-    \infer*[right=($Var_\omega$)]
-    { \forall y{:}_\pi\varphi \in \Gamma .~\pi \neq 1 }
-    {\Gamma, x{:}_\omega \sigma \vdash x : \sigma}
-\qquad
     \infer*[right=($Var_\Delta$)]
     { }
     {\Delta , x{:}_\Delta \sigma \vdash x : \sigma}
+\\[1em]
+    \infer*[right=($Var_\omega$)]
+    { \forall y{:}_\pi\varphi \in \Gamma .~\pi \neq 1
+    % ROMES:TODO: Precisamos desta condição? \and \forall y{:}_\Delta\varphi \in \Gamma.~\Delta=\cdot
+    % É que para usar Var with \Delta precisamos das variáveis de \Delta que são
+    % lineares, e se estiver vazio, não precisamos de variáveis lineares então
+    % isto funciona na mesma como devia. Acho que dizer que não tem variáveis
+    % lineares é suficiente. E ainda por cima podemos esquecer var \Delta.
+    }
+    {\Gamma, x{:}_\omega \sigma \vdash x : \sigma}
 \\[1em]
     \infer*[right=($\Lambda I$)]
     {\Gamma, p \vdash e : \sigma \and p \notin \Gamma}
@@ -40,25 +46,30 @@
 \qquad
     \infer*[right=($\Lambda E$)]
     {\Gamma \vdash e : \forall p.~\sigma \and \Gamma \vdash_{mult} \pi}
-    {\Gamma \vdash e~\pi : \sigma[\pi/p]} % ROMES:TODO: Subsittution the other way around?
+    {\Gamma \vdash e~\pi : \sigma[\pi/p]}
 \\[1em]
     \infer*[right=($\lambda I$)]
-    {\Gamma, x{:}_\pi\sigma \vdash e : \varphi}
+    {\Gamma, x{:}_\pi\sigma \vdash e : \varphi \and x{:}_\pi\sigma \notin \Gamma}
     {\Gamma \vdash \lambda x{:}_\pi\sigma.~e : \sigma \to_\pi \varphi}
 \qquad
-    \infer*[right=($\lambda E$)]
-    {\Gamma \vdash e : \varphi \to_\pi \sigma \and \Gamma' \vdash e' : \varphi}
-    {\Gamma,\Gamma' \vdash e~e' : \sigma}
+    \infer*[right=($\lambda E_{1,p}$)]
+    {\Gamma \vdash e : \sigma \to_{1,p} \varphi \and \Gamma' \vdash e' : \sigma}
+    {\Gamma,\Gamma' \vdash e~e' : \varphi}
+\\[1em]
+    \infer*[right=($\lambda E_\omega$)]
+    {\Gamma \vdash e : \sigma \to_\omega \varphi \and \Gamma' \vdash e' : \sigma
+    \and \Gamma'~\textrm{has no linear vars}}
+    {\Gamma,\Gamma' \vdash e~e' : \varphi}
 % ROMES: Note that for both Let and LetRec the \Delta env only has linear
     % variables by construction; usage environments only record linear
     % variables.
-% ROMES:TODO: Como dizer que o \Delta são todas as variáveis lineares que
-    % necessárias para tipificar "e"?
 \\[1em]
     \infer*[right=($Let$)]
     {\Gamma, \Delta, x{:}_\Delta\sigma \vdash e' : \varphi
     \and
-    \Gamma', \Delta \vdash e : \sigma}
+    \Gamma', \Delta \vdash e : \sigma
+    \and \Gamma'~\textrm{has no linear vars}
+    }
     {\Gamma, \Gamma', \Delta \vdash \llet{x{:}_{\Delta}\sigma = e}{e'} : \varphi}
     % em alternativa a isto que está errado (separar o \Gamma em \Gamma, \Delta)
     % \infer*[right=($Let_{Wrong}$)]
@@ -66,18 +77,19 @@
     % {\Gamma,\Delta \vdash \llet{x{:}_\Delta\sigma_1 = u}{e} : \sigma_2}
 \\[1em]
     \infer*[right=($LetRec$)]
-    {\Gamma, \overline{x{:}_{\Delta}\sigma} \vdash e : \varphi
+    {\Gamma, \overline{x{:}_{\Delta}\sigma} \vdash e' : \varphi
     \and
-    \overline{\Gamma', \Delta, \overline{x{:}_{\Delta}\sigma} \vdash e' : \sigma}
+    \overline{\Gamma', \Delta, \overline{x{:}_{\Delta}\sigma} \vdash e : \sigma}
+    \and \overline{\Gamma'~\textrm{has no linear vars}}
     }
-    {\Gamma, \overline{\Gamma'}, \overline{\Delta} \vdash \lletrec{\overline{x{:}_\Delta\sigma = e'}}{e} : \varphi}
+    {\Gamma, \overline{\Gamma'}, \overline{\Delta} \vdash
+    \lletrec{\overline{x{:}_\Delta\sigma = e}}{e'} : \varphi}
 \\[1em]
     \infer*[right=($Case$)]
-  { \Gamma \vdash e_1 : \sigma \and
-  \overline{\Gamma', z{:}_{\Delta_i}\sigma \vdash_{alt} \rho_i \to e_i :_{\Delta_i} \sigma \Rightarrow \varphi} }
-    {\Gamma, \Gamma' \vdash \ccase{e_1}{z{:}_{\overline{\Delta}^n}\sigma~\{\overline{\rho_i\to e_i}^n\}} : \varphi}
-  \\[1em]
-  
+    { \Gamma \vdash e : \sigma \and
+    \overline{\Gamma', z{:}_{\Delta_i}\sigma \vdash_{alt} \rho_i \to e'_i :_{\Delta_i} \sigma \Rightarrow \varphi} }
+    {\Gamma, \overline{\Gamma'} \vdash \ccase{e}{z{:}_{\overline{\Delta}^n}\sigma~\{\overline{\rho_i\to e'_i}^n\}} : \varphi}
+\\[1em]
     \judgment{\Gamma \vdash_{alt} \rho \to e :_\Delta \sigma \Rightarrow \varphi}
 \\[1em]
     \infer*[right=$(Alt)$]

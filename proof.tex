@@ -2,18 +2,34 @@
 \newcommand{\G}{\Gamma}
 \newcommand{\D}{\Delta}
 
+% \newcommand{\hasnolinearvars}[1]{\ensuremath{\forall y{:}_\pi\varphi \in #1 .~\pi \neq 1}}
+\newcommand{\hasnolinearvars}[1]{\ensuremath{#1 ~\textrm{has no linear vars}}}
+
+% Types
+\newcommand{\s}{\sigma}
+\newcommand{\vp}{\varphi}
+
 % Variables
 \newcommandx{\var}[3][1=x, 2=1, 3=\sigma]{\ensuremath{#1{:}_{#2}#3}}
 \newcommand{\x}{\var[x]}
 \newcommand{\y}{\var[y]}
 \newcommand{\z}{\var[z]}
+
 \newcommand{\xl}{\x[1]}
 \newcommand{\xo}{\x[\omega]}
 \newcommand{\xpi}{\x[\pi]}
 \newcommand{\xD}{\x[\Delta]}
+
+\newcommand{\yl}{\y[1][\sigma']}
+\newcommand{\yo}{\y[\omega][\sigma']}
+\newcommand{\ypi}{\y[\pi][\sigma']}
+\newcommand{\yD}{\y[\Delta][\sigma']}
+
 \newcommand{\zD}{\z[\overline{\Delta}]}
 \newcommand{\zDi}{\z[\Delta_i]}
 
-% Types
-\newcommand{\s}{\sigma}
-\newcommand{\vp}{\varphi}
+\newcommand{\zDp}{\z[\overline{\Delta}][\s']}
+\newcommand{\zDip}{\z[\Delta_i][\s']}
+
+\newcommand{\ov}[1]{\ensuremath{\overline{#1}}}
+

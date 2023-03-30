@@ -15,7 +15,8 @@
 \usetikzlibrary{trees}	% this is to allow the fork right path
 
 \newtheorem{theorem}{Theorem}
-\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{lemma}{Lemma}%[theorem]
+\newtheorem{sublemma}{Lemma}[lemma]
 
 % Glossary
 \usepackage[toc]{glossaries}
