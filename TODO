@@ -7,3 +7,13 @@ Se tivesse os usage environments, como faria isto?
 * Argumentar que isto faz sentido
 
 
+This is the tracking ticket for the work I'm doing for my Master's dissertation on typechecking linearity in Core.
+
+I'm currently finishing the soundness proof for the linear type system of a Core-like language, that annotates let and letrec bound variables as well as case binders with *usage environments*, as seen in the [Minicore document](https://gitlab.haskell.org/ghc/ghc/-/wikis/uploads/355cd9a03291a852a518b0cb42f960b4/minicore.pdf).
+
+I haven't (yet?) addressed GADTs and multiplicity coercions.
+
+The [work in progress dissertation document](https://github.com/alt-romes/linear-core-lint/blob/master/report.pdf) motivates this issue and discusses the background, what I intend to do, and a preliminary solution. Note that Chapter 3/4 are still much incomplete.
+
+/relate #19517 #18756 #20058 #19165 #18768 #18694 #20000
+/label ~LinearTypes ~"core lint" ~"T::design document"

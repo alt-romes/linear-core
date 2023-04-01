@@ -29,6 +29,7 @@
 
 \clearpage
 \section{Soundness}
+The most interesting case so far is substitution of linear variables on the $Let$ derivation
 
 \input{language/proofs/TypePreservationTheorem}
 

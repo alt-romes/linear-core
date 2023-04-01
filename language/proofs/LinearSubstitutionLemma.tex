@@ -1,109 +1,175 @@
 \begin{lemma}[Substitution of linear variables preserves typing]
-\emph{If $\Gamma, x{:}_1\sigma \vdash e : \varphi$ and $\cdot \vdash e' : \sigma$ then $\Gamma \vdash e[e'/x] : \varphi$}
+\emph{If $\Gamma, x{:}_1\sigma \vdash e : \varphi$ and $\Gamma' \vdash e' :
+  \sigma$ then $\Gamma[\lin{\Gamma'}/x], \Gamma' \vdash e[e'/x] : \varphi$}
 \end{lemma}
+% ROMES:TODO: Can \Gamma' also contain occurrences of $x$? We'd have to
+% substitute them too
 
 \begin{proof}
 By structural induction on the first derivation.
 
 \begin{description}
 
-\item[Case:] $Var_1$
+\item[Case:] $Contract_\omega$
 \begin{tabbing}
-  (1) $\cdot,x{:}_1\sigma \vdash x : \sigma$ \` by assumption\\
-  (2) $\cdot \vdash e' : \sigma$ \` by assumption\\
-  (3) $x[e'/x] = e'$ \` by def. of substitution\\
-  (4) $\cdot \vdash e' : \sigma$ \` by (1,2,3)\\
+  (1) $\Gamma, x{:}_1\sigma, y{:}_\omega\sigma' \vdash e : \varphi$\\
+  (2) $\G' \vdash e' : \sigma$\\
+  (3) $\G, \xl, \yo, \yo \vdash e : \varphi$ \` by inversion on $Contract_\omega$\\
+  (4) $\G[\lin{\G'}/x], \yo, \yo, \G' \vdash e[e'/x] : \varphi$ \` by induction hypothesis by (2,3)\\
+  (5) $\G[\lin{\G'}/x], \yo, \G' \vdash e[e'/x] : \varphi$ \` by $Contract_\omega$ (4)\\
 \end{tabbing}
 
 \item[Case:] $Weaken_\omega$
 \begin{tabbing}
-  (1) $\Gamma, x{:}_1\sigma, y{:}_\omega\sigma' \vdash e : \varphi$ \` by assumption\\
-  (2) $\cdot \vdash e' : \sigma$ \` by assumption\\
-  (3) $\Gamma, x{:}_1\sigma \vdash e : \varphi$ \` by inversion on $Weaken_\omega$\\
-  (4) $\Gamma \vdash e[e'/x] : \varphi$ \` by induction hypothesis by (2,3)\\
-  (5) $\Gamma, y{:}_\omega\sigma' \vdash e[e'/x] : \varphi$ \` by $Weaken_\omega$ (4)\\
+  (1) $\Gamma, x{:}_1\sigma, y{:}_\omega\sigma' \vdash e : \varphi$\\
+  (2) $\G' \vdash e' : \sigma$\\
+  (3) $\G, \xl \vdash e : \varphi$ \` by inversion on $Weaken_\omega$\\
+  (4) $\G[\lin{\G'}/x], \G' \vdash e[e'/x] : \varphi$ \` by induction hypothesis by (2,3)\\
+  (5) $\G[\lin{\G'}/x], \yo, \G' \vdash e[e'/x] : \varphi$ \` by $Weaken_\omega$ (4)\\
 \end{tabbing}
 
 \item[Case:] $Weaken_\Delta$\\
-Just like $Weaken_\omega$ with \texttt{s/omega/Delta}
-
-\item[Case:] $Contract_\omega$
 \begin{tabbing}
-  (1) $\Gamma, x{:}_1\sigma, y{:}_\omega\sigma' \vdash e : \varphi$ \` by assumption\\
-  (2) $\cdot \vdash e' : \sigma$ \` by assumption\\
-  (3) $\Gamma, x{:}_1\sigma, y{:}_\omega\sigma', y{:}_\omega\sigma' \vdash e : \varphi$ \` by inversion on $Contract_\omega$\\
-  (4) $\Gamma, y{:}_\omega\sigma', y{:}_\omega\sigma' \vdash e[e'/x] : \varphi$ \` by induction hypothesis by (2,3)\\
-  (5) $\Gamma, y{:}_\omega\sigma' \vdash e[e'/x] : \varphi$ \` by $Contract_\omega$ (4)\\
+  (1) $\Gamma, x{:}_1\sigma, y{:}_\Delta\sigma' \vdash e : \varphi$\\
+  (2) $\G' \vdash e' : \sigma$\\
+  (3) $\G, \xl \vdash e : \varphi$ \` by inversion on $Weaken_\Delta$\\
+  (4) $\G[\lin{\G'}/x], \G' \vdash e[e'/x] : \varphi$ \` by induction hypothesis by (2,3)\\
+  (5) $\G[\lin{\G'}/x], \y[{\Delta[\lin{\G'}/x]}][\s'], \G' \vdash e[e'/x] : \varphi$ \` by $Weaken_\Delta$ (4)\\
 \end{tabbing}
 
-\item[Case:] $Contract_\Delta$\\
-Just like $Contract_\omega$ with \texttt{s/omega/Delta}
+\item[Case:] $Var_1$
+\begin{tabbing}
+  (1) $\cdot,x{:}_1\sigma \vdash x : \sigma$\\
+  (2) $\G' \vdash e' : \sigma$\\
+  (3) $x[e'/x] = e'$ \` by def. of substitution\\
+  % (3) $\cdot[\lin{\G'}/x] = \cdot$ \` by def. of substitution\\
+  (4) $\G' \vdash e' : \sigma$ \` by (2)\\
+\end{tabbing}
 
 \item[Case:] $Var_\omega$\\
-  Impossible, $x{:}_1\sigma$ can't be in this rule's context
+  (1) Impossible. $x{:}_1\sigma$ can't be in the context.\\
 
 \item[Case:] $Var_\Delta$
 \begin{tabbing}
-  (1) $\Gamma, x{:}_1\sigma, y{:}_\Delta\sigma' \vdash e : \varphi$ \` by assumption\\
-  (2) $\cdot \vdash e' : \sigma$ \` by assumption\\
-  (3) $\Delta\!\upharpoonright_1 = \Gamma$ \` by inversion on $Var_\Delta$\\
-  (4) Stuck
+  (1) $\D, x{:}_1\sigma, y{:}_{\Delta,\xl}\varphi \vdash y : \varphi$\\
+  (2) $\G' \vdash e' : \sigma$\\
+  (3) $y[e'/x] = y$\\
+  (4) $\D, \xl, \y[\Delta,\xl][\vp] \vdash y : \vp$\\
+  (5) TODO: Impossible\\
 \end{tabbing}
 
 \item[Case:] $\Lambda I$
 \begin{tabbing}
-  (1) $\Gamma, x{:}_1\sigma \vdash \Lambda p.~e : \forall p.~\varphi$ \` by assumption\\
-  (2) $\cdot \vdash e' : \sigma$ \` by assumption\\
-  (3) $\Gamma, x{:}_1\sigma, p \vdash e : \varphi$ \` by inversion on $\Lambda I$\\
+  (1) $\Gamma, x{:}_1\sigma \vdash \Lambda p.~e : \forall p.~\varphi$\\
+  (2) $\G' \vdash e' : \sigma$\\
+  (3) $\G, x{:}_1\sigma, p \vdash e : \varphi$ \` by inversion on $\Lambda I$\\
   (4) $p \notin \Gamma$ \` by inversion on $\Lambda I$\\
-  (5) $\Gamma, p \vdash e[e'/x] : \varphi$ \` by induction hypothesis by (2,3)\\
-  (6) $\Gamma \vdash \Lambda p.~e[e'/x] : \forall p.~\varphi$ \` by $\Lambda I$ (4,5)\\
+  (5) $\G[\lin{\G'}/x], p, \G' \vdash e[e'/x] : \varphi$ \` by induction hypothesis by (2,3)\\
+  (6) $\G[\lin{\G'}/x], \G' \vdash \Lambda p.~e[e'/x] : \forall p.~\varphi$ \` by $\Lambda I$ (4,5)\\
   (7) $(\Lambda p.~e)[e'/x] = (\Lambda p.~e[e'/x])$ \` by def. of substitution\\
 \end{tabbing}
 
 \item[Case:] $\Lambda E$
 \begin{tabbing}
-  (1) $\Gamma, x{:}_1\sigma \vdash e~\pi: \varphi[\pi/p]$ \` by assumption\\
-  (2) $\cdot \vdash e' : \sigma$ \` by assumption\\
-  (3) $\Gamma, x{:}_1\sigma \vdash e : \forall p.~\varphi$ \` by inversion on $\Lambda E$\\
-  (4) $\Gamma, x{:}_1\sigma \vdash_{mult} \pi$ \` by inversion on $\Lambda E$\\
-  (5) $\Gamma \vdash e[e'/x] \forall p.~\varphi$ \` by induction hypothesis by (2,3)\\
-  (6) $\Gamma \vdash e[e'/x]~\pi : \varphi[\pi/p]$ \` by $\Lambda E$ (4,5)\\
+  (1) $\Gamma, x{:}_1\sigma \vdash e~\pi: \varphi[\pi/p]$\\
+  (2) $\G' \vdash e' : \sigma$\\
+  (3) $\G, \xl \vdash e : \forall p.~\varphi$ \` by inversion on $\Lambda E$\\
+  (4) $\G, \xl \vdash_{mult} \pi$ \` by inversion on $\Lambda E$\\
+  (5) $\G[\lin{\G'}/x], \G' \vdash e[e'/x] \forall p.~\varphi$ \` by induction hypothesis by (2,3)\\
+  (6) $\G[\lin{\G'}/x], \G' \vdash e[e'/x]~\pi : \varphi[\pi/p]$ \` by $\Lambda E$ (4,5)\\
   (7) $(e~\pi)[e'/x] = e[e'/x] \pi$ \` by def. of substitution\\
 \end{tabbing}
 
 \item[Case:] $\lambda I$
 \begin{tabbing}
-  (1) $\Gamma, x{:}_1\sigma \vdash \lambda y{:}_\pi\sigma'.~e : \sigma' \to_\pi \varphi$ \` by assumption\\
-  (2) $\cdot \vdash e' : \sigma$ \` by assumption\\
-  (3) $\Gamma, x{:}_1\sigma, y{:}_\pi\sigma' \vdash e : \varphi$ \` by inversion on $\lambda I$\\
-  (4) $\Gamma, y{:}_\pi\sigma' \vdash e[e'/x] : \varphi$ \` by induction hypothesis by (2,3)\\
-  (5) $\Gamma \vdash \lambda y{:}_\pi\sigma'.~e[e'/x] : \sigma' \to_\pi \varphi$ \` by $lLambda I$ (4)\\
+  (1) $\G, \xl \vdash \lambda y{:}_\pi\sigma'.~e : \sigma' \to_\pi \varphi$\\
+  (2) $\G' \vdash e' : \sigma$\\
+  (3) $\G, \xl, y{:}_\pi\sigma' \vdash e : \varphi$ \` by inversion on $\lambda I$\\
+  (4) $\G[\lin{\G'}/x], y{:}_\pi\sigma', \G' \vdash e[e'/x] : \varphi$ \` by induction hypothesis by (2,3)\\
+  (5) $\G[\lin{\G'}/x], \G' \vdash \lambda y{:}_\pi\sigma'.~e[e'/x] : \sigma' \to_\pi \varphi$ \` by $\lambda I$ (4)\\
   (6) $(\lambda y{:}_\pi\sigma'.~e)[e'/x] = (\lambda y{:}_\pi\sigma'.~e[e'/x])$ \` by def. of substitution\\
 \end{tabbing}
 
-\item[Case:] $\lambda E_1$ (linear variable occurs in function)
+\item[Case:] $\lambda E_1$
 \begin{tabbing}
-  (1) $\Gamma, x{:}_1\sigma, \Gamma' \vdash e~e'' : \varphi$ \` by assumption\\
-  (2) $\cdot \vdash e' : \sigma$ \` by assumption\\
-  (3) $\Gamma, x{:}_1\sigma \vdash e : \sigma' \to_\pi \varphi$ \` by inversion on $\lambda E$\\
-  (4) $\Gamma' \vdash e'' : \sigma'$ \` by inversion on $\lambda E$\\
-  (5) $\Gamma \vdash e[e'/x] : \sigma' \to_\pi \varphi$ \` by induction hypothesis by (2,3)\\
-  (6) $\Gamma, \Gamma' \vdash e[e'/x]~e'' : \varphi$ \` by $\lambda E$\\
-  (7) $(e''[e'/x] == e'')$ \` because the linear variable $x$ cannot occur in $e''$\\
-  (8) $(e~e'')[e'/x] = (e[e'/x]~e'')$ \` by in def. of substitution and (7)\\
+  (1) $\G, \xl, \G'' \vdash e~e'' : \vp$\\
+  (2) $\G' \vdash e' : \s$\\
+  Subcase $x$ occurs in $e$\\
+  (3) $\G, \xl \vdash e : \s' \to_1 \vp$\` by inversion on $\lambda E_1$\\
+  (4) $\G'' \vdash e'' : \s'$\` by inversion on $\lambda E_1$\\
+  (5) $\G[\lin{\G'}/x], \G' \vdash e[e'/x] : \s' \to_1 \vp$\` by induction hypothesis (2,3)\\
+  (6) $\G[\lin{\G'}/x], \G', \G'' \vdash e[e'/x]~e'' : \vp$\` by $\lambda E_1$\\
+  (7) $\G''[\lin{\G'}/x] = \G''$\` $x$ doesn't occur in $e''$, so $\Delta$-bound vars in $e''$ \\
+      \` couldn't contain $x$ and still be well-typed.\\
+  (8) $(e[e'/x]~e'') = (e~e'')[e'/x]$ \` because $x$ does not occur in $e''$\\
+  Subcase $x$ occurs in $e''$\\
+  (3) $\G \vdash e : \s' \to_1 \vp$\` by inversion on $\lambda E_1$\\
+  (4) $\G'', \xl \vdash e'' : \s'$\` by inversion on $\lambda E_1$\\
+  (5) $\G''[\lin{\G'}/x], \G' \vdash e''[e'/x] : \s'$\` by induction hypothesis (2,4)\\
+  (6) $\G, \G''[\lin{\G'}/x], \G' \vdash e~e''[e'/x] : \vp$\` by $\lambda E_1$\\
+  (7) $\G[\lin{\G'}/x] = \G$\` $x$ doesn't occur in $e$, so $\Delta$-bound vars in $e$ \\
+      \` couldn't contain $x$ and still be well-typed.\\
+  (8) $(e~e''[e'/x]) = (e~e'')[e'/x]$ \` because $x$ does not occur in $e$\\
 \end{tabbing}
 
-\item[Case:] $\lambda E_2$ (linear variable occurs in argument)
+\item[Case:] $\lambda E_\omega$
 \begin{tabbing}
-  (1) $\Gamma, \Gamma', x{:}_1\sigma \vdash e~e'' : \varphi$ \` by assumption\\
-  (2) $\cdot \vdash e' : \sigma$ \` by assumption\\
-  (3) $\Gamma \vdash e : \sigma' \to_\pi \varphi$ \` by inversion on $\lambda E$\\
-  (4) $\Gamma', x{:}_1\sigma \vdash e'' : \sigma'$ \` by inversion on $\lambda E$\\
-  (5) $\Gamma' \vdash e''[e'/x] : \sigma'$ \` by induction hypothesis by (2,4)\\
-  (6) $\Gamma, \Gamma' \vdash e~e''[e'/x] : \varphi$ \` by $\lambda E$\\
-  (7) $(e[e'/x] == e)$ \` because the linear variable $x$ cannot occur in $e$\\
-  (8) $(e~e'')[e'/x] = (e~e''[e'/x])$ \` by def. of substitution and (7)\\
+  (1) $\G, \xl, \G'' \vdash e~e'' : \vp$\\
+  (2) $\G' \vdash e' : \s$\\
+  (3) $\hasnolinearvars{\G'}$\\
+  (4) $x$ does not occur in $e''$ (3)\\
+  (5) $\G, \xl \vdash e : \s' \to_\omega \vp$\` by inversion on $\lambda E_\omega$\\
+  (6) $\G'' \vdash e'' : \s'$\` by inversion on $\lambda E_\omega$\\
+  (7) $\G[\lin{\G'}/x], \G' \vdash e[e'/x] : \s' \to_\omega \vp$\` by induction hypothesis (2,3,5)\\
+  (6) $\G[\lin{\G'}/x], \G', \G'' \vdash e[e'/x]~e'' : \vp$\` by $\lambda E_\omega$\\
+  (7) $\G''[\lin{\G'}/x] = \G''$\` $x$ doesn't occur in $e''$, so $\Delta$-bound vars in $e''$ \\
+      \` couldn't contain $x$ and still be well-typed.\\
+  (8) $(e[e'/x]~e'') = (e~e'')[e'/x]$ \` because $x$ does not occur in $e''$\\
+\end{tabbing}
+
+\item[Case:] $Let$
+\begin{tabbing}
+  (1) $\G' \vdash e' : \s$\\
+  (2) $\hasnolinearvars{\G''}$\\
+  Subcase $x$ occurs in $e$\\
+  (3) $\G, \G'', \D, \xl \vdash \llet{\y[\D,\xl][\s'] = e}{e''} : \vp$\\
+  (4) $\G, \D, \xl, \y[\D,\xl][\s'] \vdash e'' : vp$\` by inversion on $Let$\\
+  (5) $\G'', \D, \xl \vdash e : \s'$\` by inversion on $Let$\\
+  (6) $\G[\lin{\G'}/x], \D, \y[\D,\lin{\G'}][\s'], \lin{\G'}, \unr{\G'} \vdash
+  e''[e'/x]$\` by induction hypothesis $(1,4)$\\
+  (7) $\G''[\lin{\G'}/x], \D, \lin{\G'}, \unr{\G'} \vdash e[e'/x] : \s'$ \` by induction hypothesis $(1,5)$\\
+  (8) $\hasnolinearvars{\G''[\lin{\G'}/x]}$\` by (2) and def. of env. subst.\\
+  (9) $\G[\lin{\G'}/x], \G''[\lin{\G'}/x], \D, \lin{\G'}, \unr{\G'}, \unr{\G'}
+  \vdash \llet{\y[\D,\lin{\G'}][\s'] = e[e'/x]}{e''[e'/x]} : \vp$ \` (6,7,8)\\ % by $Let$ %
+  (10) $(\G, \G'')[\lin{\G'}/x], \D, \lin{\G'}, \unr{\G'} \vdash
+  \llet{\y[\D,\lin{\G'}][\s'] = e[e'/x]}{e''[e'/x]} : \vp$ \` by $Contract_\omega$\\
+  (11) $\Delta[\lin{\G'}/x] = \Delta$ \` $\Delta$ only has linear vars, by construction\\
+  (12) $(\llet{\y[\D,\lin{\G'}][\s'] = e[e'/x]}{e''[e'/x]}) =
+  (\llet{\y[\D,\lin{\G'}][\s'] = e}{e''})[e'/x]$ \` by subst.\\
+  Subcase $x$ does not occur in $e$\\
+  (3) $\G, \xl, \G'', \D \vdash \llet{\yD = e}{e''} : \vp$\\
+  (4) $\G, \xl, \D, \yD \vdash e'' : \vp$ \` by inversion on $Let$\\
+  (5) $\G'', \D \vdash e : \s'$ \` by inversion on $Let$\\
+  (6) $\G[\lin{\G'}/x], \D, \yD, \G' \vdash e''[e'/x] : \vp$\` by induction hypothesis (1,4)\\
+  (7) $\G[\lin{\G'}/x], \G'', \D, \G' \vdash \llet{\yD = e}{e''[e'/x]} : \vp$ \`
+  by $Let$ (2,5,6)\\
+  (8) $\D[\lin{\G'}/x] = \D$\` $\Delta$ only has linear vars, by
+  construction\\
+  (9) $\G''[\lin{\G'}/x] = \G''$\` by (2) and $x \notin \Delta$ in this
+  subcase,\\
+  \` $\G''$ can't have a $\Delta$-bound var mentioning $x$.\\
+  (10) $\llet{\yD = e}{e''[e'/x]} = (\llet{\yD = e}{e''})[e'/x]$\` by $x$ does
+  not occur in $e$\\
+\end{tabbing}
+
+\item[Case:] $LetRec$
+\begin{tabbing}
+  (1) TODO.\\
+\end{tabbing}
+
+\item[Case:] $Case$
+\begin{tabbing}
+  (1) TODO.\\
 \end{tabbing}
 
 \end{description}
