@@ -1,6 +1,7 @@
 
 \begin{theorem}[Progress]
-\emph{Evaluation of a well-typed term does not block. If $\cdot \vdash e : \sigma$ then $e$ is a value or there exists $e'$ such that $e \to e'$.}
+\emph{Evaluation of a well-typed term does not block. If $\cdot \vdash e :
+  \sigma$ then $e$ is a value or there exists $e'$ such that $e \longrightarrow e'$.}
 \end{theorem}
 
 \begin{proof}
@@ -19,7 +20,7 @@ By structural induction on the (only) typing derivation
 (1) $\cdot \vdash e_1~\pi : \sigma[\pi/p]$ \` by assumption \\
 (2) $\cdot \vdash e_1 : \forall p.~\sigma$ \` by inversion on ($\Lambda E$) \\
 (3) $\cdot \vdash_{mult} \pi$ \` by inversion on ($\Lambda E$) \\
-(4) $e_1~\textrm{is a value or}~\exists e_1'. e_1 \longrightarrow e_1'$ \` by the induction hypothesis (2) \\
+(4) $e_1~\textrm{is a value or}~\exists e_1'.~e_1 \longrightarrow e_1'$ \` by the induction hypothesis (2) \\
 \textrm{Subcase $e_1$ is a value:}\\
 (5) $e_1 = \Lambda p.~e_2$ \` by the canonical forms lemma (2) \\
 (6) $(\Lambda p.~e_2)~\pi \longrightarrow e_2[\pi/p]$ \` by $\beta$-reduction on multiplicity (5,3) \\
@@ -40,7 +41,7 @@ By structural induction on the (only) typing derivation
 (1) $\cdot \vdash e_1~e_2 : \varphi$ \` by assumption \\
 (2) $\cdot \vdash e_1 : \sigma \to_\pi \varphi$ \` by inversion on ($\lambda E$) \\
 (3) $\cdot \vdash e_2 : \sigma$ \` by inversion on ($\lambda E$) \\
-(4) $e_1~\textrm{is a value or}~\exists e_1'. e_1\longrightarrow e_1'$ \` by the induction hypothesis (2) \\
+(4) $e_1~\textrm{is a value or}~\exists e_1'.~e_1\longrightarrow e_1'$ \` by the induction hypothesis (2) \\
 \textrm{Subcase $e_1$ is a value:}\\
 (5) $e_1 = \lambda x{:}_\pi\sigma.~e$ \` by the canonical forms lemma \\
 (6) $e_1~e_2 \longrightarrow e[e_2/x]$ \` by term $\beta$-reduction (5,3) \\
@@ -51,27 +52,27 @@ By structural induction on the (only) typing derivation
 \item[Case:] $Let$
 \begin{tabbing}
 (1) $\cdot \vdash \llet{x{:}_\Delta\sigma = e}{e'} : \varphi$ \` by assumption \\
-(2) $\llet{x{:}_\Delta\sigma = e}{e'}\longrightarrow e'[e/x]$ \` by definition of reduction. Wait, what? \\
+(2) $\llet{x{:}_\Delta\sigma = e}{e'}\longrightarrow e'[e/x]$ \` by definition\\
 \end{tabbing}
 
 \item[Case:] $LetRec$
 \begin{tabbing}
 (1) $\cdot \vdash \lletrec{\overline{x{:}_\Delta\sigma = e}}{e'} : \varphi$ \` by assumption \\
-(2) $\lletrec{\overline{x{:}_\Delta\sigma = e}}{e'} \longrightarrow e'\overline{[\lletrec{\overline{x{:}_\Delta\sigma = e}}{e}/x]}$ \` by definition of reduction. \\
+(2) $\lletrec{\overline{x{:}_\Delta\sigma = e}}{e'} \longrightarrow e'\overline{[\lletrec{\overline{x{:}_\Delta\sigma = e}}{e}/x]}$ \` by definition\\
 \end{tabbing}
 
 \item[Case:] $Case$
 \begin{tabbing}
 (1) $\cdot \vdash \ccase{e}{z{:}_{\overline{\Delta}}\sigma~\{\overline{\rho_i \to e_i}\}} : \varphi$ \` by assumption \\
-(2) $\cdot \vdash e_1 : T~\overline{p}$ \` by inversion of (case) \\
-% ROMES:TODO What to do about z
-(3) $\overline{\cdot, z{:}_{\overline{\Delta}}\sigma \vdash_{alt} \rho_i\to e_i : \sigma \Longrightarrow \varphi}$ \` by inversion of (case) \\
-(4) $e_1~\textrm{is a value or}~\exists e_1'. e_1 \longrightarrow e_1'$ \` by induction hypothesis (2) \\
+% (2) $\cdot \vdash e_1 : T~\overline{p}$ \` by inversion of (case) \\
+% (3) $\overline{\cdot, z{:}_{\overline{\Delta}}\sigma \vdash_{alt} \rho_i\to e_i : \sigma \Longrightarrow \varphi}$ \` by inversion of (case) \\
+(2) $e_1~\textrm{is a value or}~\exists e_1'.~e_1 \longrightarrow e_1'$ \` by induction hypothesis (2) \\
 \textrm{Subcase $e_1$ is a value:}\\
-(5) $e_1 = K~\overline{e}$ \` by canonical forms lemma \\
-(6) $\ccase{e_1}{z{:}_{\overline{\Delta}}\sigma~\{\overline{\rho_i \to e_i}\}} \longrightarrow e'[\overline{e}/\overline{x{:}_\pi\sigma}][K~\overline{e}/z]$ \` by case reduction (5) \\
+(3) $e_1 = K~\overline{e}$ \` by canonical forms lemma \\
+(4) $\ccase{e_1}{z{:}_{\overline{\Delta}}\sigma~\{\overline{\rho_i \to e_i}\}} \longrightarrow e_i\overline{[e/x{:}_\pi\sigma]}[K~\overline{e}/z]$ \` by case reduction (5) \\
 \textrm{Subcase $e_1 \to e_1'$:}\\
-(5) $\ccase{e_1}{z{:}_{\overline{\Delta}}\sigma~\{\overline{\rho_i \to e_1}\}} \longrightarrow \ccase{e_1'}{z{:}_{\overline{\Delta}}\sigma~\{\rho_i \to e_i\}}$ \` by context reduction \\
+(3) $\ccase{e_1}{z{:}_{\overline{\Delta}}\sigma~\{\overline{\rho_i \to e_1}\}}
+  \longrightarrow \ccase{e_1'}{z{:}_{\overline{\Delta}}\sigma~\{\rho_i \to e_i\}}$ \` by ctx. reduction\\
 \end{tabbing}
 
 \end{description}

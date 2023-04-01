@@ -25,11 +25,9 @@
 \input{language/OperationalSemantics}
 
 \clearpage
-\input{language/InferUsageEnvs}
-
-\clearpage
 \section{Soundness}
-The most interesting case so far is substitution of linear variables on the $Let$ derivation
+The most interesting case so far is the $let$ case in the substitution of linear variables
+preserves types lemma's proof.
 
 \input{language/proofs/TypePreservationTheorem}
 
@@ -45,3 +43,11 @@ The most interesting case so far is substitution of linear variables on the $Let
 \clearpage
 \input{language/proofs/DeltaSubstitutionLemma}
 
+\clearpage
+
+TODO: Multiplicity substitution preserves typing lemma
+
+TODO: Canonical forms lemma
+
+\clearpage
+\input{language/InferUsageEnvs}

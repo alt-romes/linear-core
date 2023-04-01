@@ -20,7 +20,7 @@
                      & \mid & \lambda x{:}_\pi\sigma.~e~\mid~e_1~e_2                           & \textrm{Term abstraction/application}\\
                      & \mid & \llet{x{:}_\Delta\sigma = e_1}{e_2}                              & \textrm{Let} \\
                      & \mid & \lletrec{\overline{x{:}_\Delta\sigma = e_1}}{e_2}                & \textrm{Recursive Let} \\
-                     & \mid & \ccase{e_1}{z{:}_{\overline{\Delta}}~\{\overline{\rho\to e_2}\}} & \textrm{Case} \\
+                     & \mid & \ccase{e_1}{z{:}_{\overline{\Delta}}\sigma~\{\overline{\rho\to e_2}\}} & \textrm{Case} \\
                      &      &                                                                  & \\
 %    p               & ::=  & K~\overline{b{:}\kappa}~\overline{x{:}\sigma}                    & \textrm{Pattern} \\
     \rho             & ::=  & K~\overline{x{:}_\pi\sigma} \mid \_                              & \textrm{Pattern and wildcard} \\

@@ -2,11 +2,12 @@
 % ROMES: Note that the \Delta env only has linear variables by construction;
 % usage environments only record linear variables.
 \begin{lemma}[Substitution of variables with usage environments preserves typing]
+  TODO.
 \emph{If $\G, \D, \xD \vdash e : \varphi$ and $\G', \D \vdash e' : \sigma$
         then $\G, \G', \D \vdash e[e'/x] : \varphi$}
 \end{lemma}
 \begin{proof}
-By structural induction on the first derivation.
+TODO. By structural induction on the first derivation.
 
 \begin{description}
 
@@ -48,17 +49,16 @@ By structural induction on the first derivation.
     (7) $\G, \G', \D \vdash \lambda (\y[\pi][\s'].~e)[e'/x] : \s' \to_\pi \vp$ \` by (5,6)\\
 \end{tabbing}
 
-\item[Case:] $\lambda E$
-\begin{tabbing}
-    (1) $\G, \G'', \D, \xD \vdash e~e'' : \vp$\\
-    (2) $\G', \D \vdash e' : \s$\\
-    (3) $\G, \D, \xD \vdash e : \s' \to_\pi \vp$ \` by inversion on $\lambda E$\\
-    (4) $\G'' \vdash e'' : \s'$ \` by inversion on $\lambda E$\\
-    (5) $\G, \G', \D \vdash e[e'/x] : \s' \to_\pi \vp$ \` by induction hypothesis (2,3)\\
-    (6) $\G, \G', \G'', \D \vdash (e[e'/x]~e'') : \vp$ \` by $\lambda E$\\
-    (7) $(e[e'/x]~e'') = (e~e'')[e'/x]$ \` when the resources to $\D$ are needed
-    to prove $\xD$ on the left??? Stuck again on division of resources...
-\end{tabbing}
+% \item[Case:] $\lambda E$
+% \begin{tabbing}
+%     (1) $\G, \G'', \D, \xD \vdash e~e'' : \vp$\\
+%     (2) $\G', \D \vdash e' : \s$\\
+%     (3) $\G, \D, \xD \vdash e : \s' \to_\pi \vp$ \` by inversion on $\lambda E$\\
+%     (4) $\G'' \vdash e'' : \s'$ \` by inversion on $\lambda E$\\
+%     (5) $\G, \G', \D \vdash e[e'/x] : \s' \to_\pi \vp$ \` by induction hypothesis (2,3)\\
+%     (6) $\G, \G', \G'', \D \vdash (e[e'/x]~e'') : \vp$ \` by $\lambda E$\\
+%     (7) $(e[e'/x]~e'') = (e~e'')[e'/x]$ \` when the resources to $\D$ are needed
+% \end{tabbing}
 
 \end{description}
 

@@ -1,6 +1,6 @@
 
 \begin{theorem}[Type preservation]
-\emph{If $\Gamma \vdash e : \sigma$ and $e \to^* e'$ then $\Gamma \vdash e' : \sigma$}
+\emph{If $\Gamma \vdash e : \sigma$ and $e \longrightarrow e'$ then $\Gamma \vdash e' : \sigma$}
 \end{theorem}
 
 \begin{proof}
@@ -24,16 +24,14 @@ By structural induction on the small-step reduction.
     (1) $\Gamma, \Gamma' \vdash (\lambda x{:}_\pi\sigma.~e)~e' : \varphi$\\
     (2) $\Gamma \vdash (\lambda x{:}_\pi\sigma.~e) : \sigma\to_\pi\varphi$ \` by inversion on ($\lambda E$) \\
     (3) $\Gamma' \vdash e' : \sigma$ \` by inversion on ($\lambda E$) \\
-    Subcase $\pi = 1$:\\
-    (4) $\Gamma, x{:}_1\sigma \vdash e : \varphi$ \` by inversion on ($\lambda I$) \\
-    (5) $\Gamma, \Gamma' \vdash e[e'/x] : \varphi$ \` by linear subst. lemma (3,4) \\
+    Subcase $\pi = 1,p$:\\
+    (4) $\Gamma, x{:}_{1,p}\sigma \vdash e : \varphi$ \` by inversion on ($\lambda I$) \\
+    (5) $\Gamma[\lin{\G'}/x], \Gamma' \vdash e[e'/x] : \varphi$ \` by linear subst. lemma (3,4) \\
+    (6) $\Gamma[\lin{\G'}/x] = \G$ \` since $\G$ is well defined before $x$'s binding (1)\\
     Subcase $\pi = \omega$:\\
-    (4) $\G, \xo \vdash e : \vp$ \` by inversion on ($\lambda I$)\\
-    (5) $e'$ must be unrestricted, therefore $\G'$ has no linear variables.\\
-    (5.5) TODO: Where do we enforce it?\\
-    (6) $\G, \G' \vdash e[e'/x] : \vp]$ \` by unrestricted subst. lemma (3,4,5)\\
-    Subcase $\pi = p$:\\
-    (4) TODO.\\
+    (4) $\hasnolinearvars{\Gamma'}$ \` by inversion on ($\lambda E$) \\
+    (5) $\G, \xo \vdash e : \vp$ \` by inversion on ($\lambda I$)\\
+    (6) $\G, \G' \vdash e[e'/x] : \vp$ \` by unrestricted subst. lemma (3,4,5)\\
 \end{tabbing}
 
 \item[Case:] $(\Lambda p.~e)~\pi \longrightarrow e[\pi/p]$
@@ -43,7 +41,6 @@ By structural induction on the small-step reduction.
 (3) $\Gamma \vdash_{mult} \pi$ \` by inversion on ($\Lambda E$) \\
 (4) $\Gamma, p \vdash e : \sigma$ \` by inversion on ($\Lambda I$) \\
 % (4) $p \notin \Gamma$ \` by inversion on ($\Lambda I$) \\
-(4.5) TODO: Mult. subst. lemma\\
 (5) $\Gamma \vdash e[\pi/p]:\sigma[\pi/p]$ \` by mult. subst. lemma (3,4) \\
 \end{tabbing}
 
@@ -76,7 +73,7 @@ By structural induction on the small-step reduction.
 % TODO: Delta_i?
 (6) $\Gamma, z{:}_{\Delta_i}\sigma, \Gamma' \vdash e'[\overline{e}/\overline{x}] : \varphi$ \` by subst. lemma (2,5) \\
 % TODO: HOW? Missing something (inversion on case). Hard!
-(7) $\Gamma, \Gamma' \vdash e'[\overline{e}/\overline{x}][???/z]$ \` by subst. lemma (6,2) \\
+(7) $\Gamma, \Gamma' \vdash e'[\overline{e}/\overline{x}][K~\ov{e}/z]$ \` by subst. lemma (6,2) \\
 \end{tabbing}
 
 \item[Case:] $e_1~e_2 \longrightarrow e_1'~e_2$
