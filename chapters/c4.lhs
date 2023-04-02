@@ -49,5 +49,7 @@ TODO: Multiplicity substitution preserves typing lemma
 
 TODO: Canonical forms lemma
 
+TODO: Corollary of $\Delta$-var subst. for $\ov{\Delta}$
+
 \clearpage
 \input{language/InferUsageEnvs}

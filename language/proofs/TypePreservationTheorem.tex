@@ -46,24 +46,32 @@ By structural induction on the small-step reduction.
 
 \item[Case:] $\llet{x{:}_\Delta\sigma = e}{e'}\longrightarrow e'[e/x]$
 \begin{tabbing}
-(1) $\G, \G', \D\vdash \llet{x{:}_\Delta\sigma = e}{e'} : \varphi$ \` by assumption \\
-(2) $\Gamma, x{:}_\Delta\sigma \vdash e' : \varphi$ \` by inversion on (let) \\
-(3) $\Delta \vdash e : \sigma$ \` by inversion on (let) \\
-(4) $\Delta \subseteq \Gamma$ \` by inversion on (let) \\
-(5) $\Gamma \vdash e'[e/x] : \varphi$ \` by subst. lemma (2,3,4?) \\
+(1) $\G, \G', \D\vdash \llet{x{:}_\Delta\sigma = e}{e'} : \varphi$\\
+(2) $\G, \D, \xD \vdash e' : \varphi$ \` by inversion on $Let$ \\
+(3) $\G', \D \vdash e : \sigma$ \` by inversion on $Let$\\
+(4) $\hasnolinearvars{\G'}$ \` by inversion on $Let$\\
+(5) $\G, \G', \D \vdash e'[e/x] : \varphi$ \` by $\Delta$-var subst. lemma (2,3)\\
 \end{tabbing}
 
-\item[Case:] $\llet{\overline{x{:}_\Delta\sigma = e}}{e'} \longrightarrow e'\overline{[\lletrec{\overline{x{:}_\Delta\sigma = e}}{e}/x]}$
+\item[Case:] $\lletrec{\overline{x{:}_\Delta\sigma = e}}{e'} \longrightarrow e'\overline{[\lletrec{\overline{x{:}_\Delta\sigma = e}}{e}/x]}$
 \begin{tabbing}
-(1) $\Gamma \vdash \llet{\overline{x{:}_\Delta\sigma = e}}{e'} : \varphi$ \` by assumption \\
-(2) $\Gamma, \overline{x{:}_\Delta\sigma} \vdash e : \varphi$ \` by inversion on (letrec) \\
-(3) $\overline{\Delta, \overline{x{:}_\Delta\sigma \vdash e' : \sigma}}$ \` by inversion on (letrec) \\
-(4) $\overline{\Delta\subseteq\Gamma}$ \` by inversion on (letrec) \\
-(5) $\Gamma \vdash e'\overline{[\lletrec{\overline{x{:}_\Delta\sigma = e}}{e}/x]}$ \` by subst. lemma (2,3,4?) \\
+    (1) $\G, \ov{\G'}, \ov{\D} \vdash \lletrec{\overline{x{:}_\Delta\sigma =
+    e}}{e'} : \vp$\\
+    (2) $\G,\ov{\D}, \ov{\xD} \vdash e' : \vp$ \` by inversion on $Let$\\
+    (3) $\ov{\G',\D, \ov{\xD} \vdash e : \s}$ \` by inversion on $Let$\\
+    (4) $\ov{\hasnolinearvars{\G'}}$ \` by inversion on $Let$\\
+    (5) TODO Magic\\
+    (6) $\ov{\G', \D \vdash \lletrec{\ov{\xD = e}}{e}} : \s$\` TODO\\
+    (7) $\G, \ov{\G'}, \ov{\D} \vdash e'\ov{[\lletrec{\ov{\xD = e}}{e}/x]} :
+    \vp$ \` by $\D$-var subst. corollary\\
 \end{tabbing}
+% If \G, \ov{\D}, \ov{\xD} \vdash e' : \vp and \ov{\G', \D \vdash e : \s} then
+% \G, \ov{\D}, \ov{\G'} \vdash e'\ov{[e/x]}
 
-\item[Case:] $\ccase{K~\overline{e}}{z{:}_{\overline{\Delta}}\sigma}~\{\dots,K~\overline{x{:}_\pi\sigma}\}\ \longrightarrow e'[\overline{e}/\overline{x}][K~\overline{e}/z]$
+\item[Case:]
+    $\ccase{K~\overline{e}}{z{:}_{\overline{\Delta}}\sigma}~\{\dots,K~\overline{x{:}_\pi\sigma}\}\ \longrightarrow e'\overline{[e/x]}[K~\overline{e}/z]$
 \begin{tabbing}
+(0) TODO.\\
 (1) $\Gamma,\Gamma' \vdash \ccase{K~\overline{e}}{z{:}_{\overline{\Delta}}\sigma~\{\dots,K~\overline{x{:}_\pi\sigma}\to e'\}} : \varphi$ \` by assumption \\
 (2) $\Gamma \vdash K~\overline{e} : \sigma$ \` by inversion on (case) \\
 (3) $\Gamma', z{:}_\Delta\sigma \vdash_{alt} K~\overline{x{:}_\pi\sigma} \to e' : \sigma \Longrightarrow \varphi$ \` by inversion on (case) \\
@@ -71,9 +79,9 @@ By structural induction on the small-step reduction.
 (4) $K : \overline{\sigma \to_\pi} T~\overline{p} \in \Gamma'$ \` by inversion on (alt) \\
 (5) $\Gamma',z{:}_\Delta\sigma,\overline{x{:}_\pi\sigma} \vdash e' : \varphi$ \` by inversion on (alt) \\
 % TODO: Delta_i?
-(6) $\Gamma, z{:}_{\Delta_i}\sigma, \Gamma' \vdash e'[\overline{e}/\overline{x}] : \varphi$ \` by subst. lemma (2,5) \\
+(6) $\Gamma, z{:}_{\Delta_i}\sigma, \Gamma' \vdash e'\overline{[e/x]} : \varphi$ \` by subst. lemma (2,5) \\
 % TODO: HOW? Missing something (inversion on case). Hard!
-(7) $\Gamma, \Gamma' \vdash e'[\overline{e}/\overline{x}][K~\ov{e}/z]$ \` by subst. lemma (6,2) \\
+(7) $\Gamma, \Gamma' \vdash e'\ov{[e/x]}[K~\ov{e}/z]$ \` by subst. lemma (6,2) \\
 \end{tabbing}
 
 \item[Case:] $e_1~e_2 \longrightarrow e_1'~e_2$
