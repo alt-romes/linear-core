@@ -77,18 +77,18 @@
     % {\Gamma,\Delta \vdash \llet{x{:}_\Delta\sigma_1 = u}{e} : \sigma_2}
 \\[1em]
     \infer*[right=($LetRec$)]
-    {\Gamma, \overline{x{:}_{\Delta}\sigma} \vdash e' : \varphi
+    {\Gamma, \Delta, \overline{x_i{:}_{\Delta}\sigma_i} \vdash e' : \varphi
     \and
-    \overline{\Gamma', \Delta, \overline{x{:}_{\Delta}\sigma} \vdash e : \sigma}
-    \and \overline{\Gamma'~\textrm{has no linear vars}}
+    \overline{\Gamma'_i, \Delta, \overline{x_i{:}_{\Delta}\sigma_i} \vdash e_i : \sigma_i}
+    \and \overline{\Gamma'_i~\textrm{has no linear vars}}
     }
-    {\Gamma, \overline{\Gamma'}, \overline{\Delta} \vdash
-    \lletrec{\overline{x{:}_\Delta\sigma = e}}{e'} : \varphi}
+    {\Gamma, \overline{\Gamma'_i}, \Delta \vdash
+    \lletrec{\overline{x_i{:}_\Delta\sigma_i = e_i}}{e'} : \varphi}
 \\[1em]
     \infer*[right=($Case$)]
     { \Gamma \vdash e : \sigma \and
     \overline{\Gamma', z{:}_{\Delta_i}\sigma \vdash_{alt} \rho_i \to e'_i :_{\Delta_i} \sigma \Rightarrow \varphi} }
-    {\Gamma, \overline{\Gamma'} \vdash \ccase{e}{z{:}_{\overline{\Delta}^n}\sigma~\{\overline{\rho_i\to e'_i}^n\}} : \varphi}
+    {\Gamma, \Gamma' \vdash \ccase{e}{z{:}_{\overline{\Delta}^n}\sigma~\{\overline{\rho_i\to e'_i}^n\}} : \varphi}
 \\[1em]
     \judgment{\Gamma \vdash_{alt} \rho \to e :_\Delta \sigma \Rightarrow \varphi}
 \\[1em]

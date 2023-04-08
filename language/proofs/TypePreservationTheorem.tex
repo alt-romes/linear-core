@@ -53,16 +53,16 @@ By structural induction on the small-step reduction.
 (5) $\G, \G', \D \vdash e'[e/x] : \varphi$ \` by $\Delta$-var subst. lemma (2,3)\\
 \end{tabbing}
 
-\item[Case:] $\lletrec{\overline{x{:}_\Delta\sigma = e}}{e'} \longrightarrow e'\overline{[\lletrec{\overline{x{:}_\Delta\sigma = e}}{e}/x]}$
+\item[Case:] $\lletrec{\overline{x_i{:}_\Delta\sigma_i = e_i}}{e'}
+    \longrightarrow e'\overline{[\lletrec{\overline{x_i{:}_\Delta\sigma_i = e_i}}{e_i}/x]}$
 \begin{tabbing}
-    (1) $\G, \ov{\G'}, \ov{\D} \vdash \lletrec{\overline{x{:}_\Delta\sigma =
-    e}}{e'} : \vp$\\
-    (2) $\G,\ov{\D}, \ov{\xD} \vdash e' : \vp$ \` by inversion on $Let$\\
-    (3) $\ov{\G',\D, \ov{\xD} \vdash e : \s}$ \` by inversion on $Let$\\
-    (4) $\ov{\hasnolinearvars{\G'}}$ \` by inversion on $Let$\\
-    (5) TODO Magic\\
-    (6) $\ov{\G', \D \vdash \lletrec{\ov{\xD = e}}{e}} : \s$\` TODO\\
-    (7) $\G, \ov{\G'}, \ov{\D} \vdash e'\ov{[\lletrec{\ov{\xD = e}}{e}/x]} :
+    (1) $\G, \ov{\G'_i}, \D \vdash \lletrec{\overline{x_i{:}_\Delta\sigma_i = e_i}}{e'} : \vp$\\
+    (2) $\ov{\hasnolinearvars{\G'_i}}$ \` by inversion on $LetRec$\\
+    (3) $\ov{\G'_i,\D, \ov{x_i{:}_\Delta\sigma_i} \vdash e_i : \s_i}$ \` by inversion on $LetRec$\\
+    (4) $\G, \D, \ov{x_i{:}_\Delta\sigma_i} \vdash e' : \vp$ \` by inversion on $LetRec$\\
+    (5) $\ov{\G'_i, \ov{x_i{:}_\Delta\sigma_i}, \ov{\G'_i}, \D \vdash \lletrec{\ov{x_i{:}_\Delta\sigma_i = e_i}}{e_i} : \s_i}$ \` by $LetRec$ (3,3)\\
+    (6) $\ov{\G'_i, \D \vdash \lletrec{\ov{x_i{:}_\Delta\sigma_i = e_i}}{e_i} : \s_i}$ \` by $Contract_\omega$ and inv. on $Weaken_\Delta$\\
+    (7) $\G, \ov{\G'_i}, \D \vdash e'\ov{[\lletrec{\ov{x_i{:}_\Delta\sigma_i = e_i}}{e_i}/x]} :
     \vp$ \` by $\D$-var subst. corollary\\
 \end{tabbing}
 % If \G, \ov{\D}, \ov{\xD} \vdash e' : \vp and \ov{\G', \D \vdash e : \s} then
