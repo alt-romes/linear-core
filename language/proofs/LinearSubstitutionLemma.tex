@@ -164,7 +164,24 @@ By structural induction on the first derivation.
 
 \item[Case:] $LetRec$
 \begin{tabbing}
-  (1) TODO.\\
+  (1) $\G' \vdash e' : \s$\\
+  (2) $\ov{\hasnolinearvars{\G''_i}}$\` by inversion on $LetRec$\\
+  Subcase $\xl$ occurs in some $e_i$\\
+  (3) $\G, \ov{\G''_i}, \D, \xl \vdash \lletrec{\ov{\var[y_i][\D,\xl][\s_i] = e_i}}{e''} : \vp$\\
+  (4) $\G, \ov{\var[y_i][\D,\xl][\s_i]}, \D, \xl \vdash e'' : \vp$\` by inversion on $LetRec$\\
+  (5) $\ov{\G''_i, \D, \xl, \ov{\var[y_i][\D, \xl][\s_i]}, \vdash e_i : \s_i}$\` by inversion on $LetRec$\\
+  (6) $\G[\G'_1/x], \ov{\var[y_i][\D, \G'_1][\s_i]}, \G', \D \vdash e''[e'/x] : \vp$ \` by induction hypothesis (1,4)\\
+  (7) $\ov{\G''_i, \D, \ov{\var[y_i][\D, \G'_1][\s_i]} \vdash e_i[e'/x] : \s_i}$\` by induction hypothesis (1,5)\\
+  (8) $\G[\G'_1/x], \ov{\G''_i}, \G', \D \vdash \lletrec{\ov{\var[y_i][\D,\G'_1][\s_i] = e_i[e'/x]}}{e''[e'/x]} : \vp$\` by $LetRec$\\
+  (9) $(\lletrec{\ov{\var[y_i][\D,\G'_1][\s_i] = e_i}}{e''})[e'/x] = \lletrec{\ov{\var[y_i][\D,\G'_1][\s_i] = e_i[e'/x]}}{e''[e'/x]}$\\
+  Subcase $\xl$ does not occur in any $e_i$\\
+  (3) $\G, \xl, \ov{\G''_i}, \D \vdash \lletrec{\ov{\var[y_i][\D][\s_i] = e_i}}{e''} : \vp$\\
+  (4) $\G, \xl, \ov{\var[y_i][\D][\s_i]}, \D \vdash e'' : \vp$\` by inversion on $LetRec$\\
+  (5) $\ov{\G''_i, \D, \ov{\var[y_i][\D][\s_i]}, \vdash e_i : \s_i}$\` by inversion on $LetRec$\\
+  (6) $\G[\G'_1/x], \ov{\var[y_i][\D][\s_i]}, \D \vdash e''[e'/x] : \vp$\` by i.h. (1,4)\\
+  (7) $\G[\G'_1/x], \ov{\G''_i}, \D, \G' \vdash \lletrec{\ov{\var[y_i][\D][\s_i] = e_i}}{e''[e'/x]} : \vp$\` by $LetRec$\\
+  (8) $\lletrec{\ov{\var[y_i][\D][\s_i] = e_i}}{e''[e'/x]} =
+  (\lletrec{\ov{\var[y_i][\D][\s_i] = e_i}}{e''})[e'/x]$\` by subcase\\
 \end{tabbing}
 
 \item[Case:] $Case$
