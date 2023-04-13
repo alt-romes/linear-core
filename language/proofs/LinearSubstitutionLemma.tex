@@ -117,7 +117,7 @@ By structural induction on the first derivation.
   (1) $\G, \xl, \G'' \vdash e~e'' : \vp$\\
   (2) $\G' \vdash e' : \s$\\
   (3) $\hasnolinearvars{\G'}$\\
-  (4) $x$ does not occur in $e''$ (3)\\
+  (4) $x$ does not occur in $e''$\` by (3)\\
   (5) $\G, \xl \vdash e : \s' \to_\omega \vp$\` by inversion on $\lambda E_\omega$\\
   (6) $\G'' \vdash e'' : \s'$\` by inversion on $\lambda E_\omega$\\
   (7) $\G[\lin{\G'}/x], \G' \vdash e[e'/x] : \s' \to_\omega \vp$\` by induction hypothesis (2,3,5)\\
