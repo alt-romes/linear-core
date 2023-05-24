@@ -1,0 +1,63 @@
+[1 of 1] Compiling LetRecs          ( LetRecs.hs, LetRecs.o )
+
+==================== Tidy Core ====================
+Result size of Tidy Core
+  = {terms: 53, types: 23, coercions: 4, joins: 0/3}
+
+-- RHS size: {terms: 20, types: 3, coercions: 0, joins: 0/0}
+$dIP_rL4 :: GHC.Stack.Types.CallStack
+[GblId]
+$dIP_rL4
+  = GHC.Stack.Types.pushCallStack
+      (GHC.CString.unpackCString# "undefined"#,
+       GHC.Stack.Types.SrcLoc
+         (GHC.CString.unpackCString# "main"#)
+         (GHC.CString.unpackCString# "LetRecs"#)
+         (GHC.CString.unpackCString# "LetRecs.hs"#)
+         (GHC.Types.I# 19#)
+         (GHC.Types.I# 5#)
+         (GHC.Types.I# 19#)
+         (GHC.Types.I# 14#))
+      GHC.Stack.Types.emptyCallStack
+
+-- RHS size: {terms: 2, types: 3, coercions: 4, joins: 0/0}
+z [InlPrag=NOINLINE] :: Bool -> Bool
+[GblId]
+z = undefined
+      @GHC.Types.LiftedRep
+      @(Bool -> Bool)
+      ($dIP_rL4
+       `cast` (Sym (GHC.Classes.N:IP[0]
+                        <"callStack">_N <GHC.Stack.Types.CallStack>_N)
+               :: GHC.Stack.Types.CallStack
+                  ~R# (?callStack::GHC.Stack.Types.CallStack)))
+
+-- RHS size: {terms: 28, types: 12, coercions: 0, joins: 0/3}
+f :: Bool -> Bool
+[GblId, Arity=1, Unf=OtherCon []]
+f = \ (y_au9 :: Bool) ->
+      let {
+        l_auc [InlPrag=NOINLINE] :: Bool -> Bool
+        [LclId, Arity=1, Unf=OtherCon []]
+        l_auc = \ (x_auf :: Bool) -> z x_auf } in
+      letrec {
+        h_aI2 [InlPrag=NOINLINE] :: Bool -> Bool
+        [LclId, Arity=1, Unf=OtherCon []]
+        h_aI2
+          = \ (x_aue :: Bool) ->
+              case x_aue of {
+                False -> g_aHZ GHC.Types.False;
+                True -> GHC.Types.False
+              };
+        g_aHZ [InlPrag=NOINLINE, Occ=LoopBreaker] :: Bool -> Bool
+        [LclId, Arity=1, Unf=OtherCon []]
+        g_aHZ
+          = \ (x_aud :: Bool) ->
+              case x_aud of {
+                False -> GHC.Types.True;
+                True -> h_aI2 GHC.Types.True
+              }; } in
+      || (g_aHZ y_au9) (l_auc y_au9)
+
+
+

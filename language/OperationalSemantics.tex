@@ -18,12 +18,18 @@
 \textbf{Expression Reductions}\\
 \begin{array}{lcl}
 (\Lambda p.~e)~\pi & \longrightarrow & e[\pi/p]\\
+%
 (\lambda x.~e)~e' & \longrightarrow & e[e'/x]\\
+%
 \llet{x{:}_\Delta\sigma = e}{e'} & \longrightarrow & e'[e/x]\\
+%
 \lletrec{\overline{x_i{:}_\Delta\sigma_i = e_i}}{e'} & \longrightarrow &
     e'\overline{[\lletrec{\overline{x_i{:}_\Delta\sigma_i = e_i}}{e_i}/x]}\\
-    \ccase{K~\overline{e}}{z{:}_{\overline{\Delta}}\sigma' \{\dots K~\overline{x{:}_\pi\sigma} \to e'\}} &
-    \longrightarrow & e'\overline{[e/x]}[K~\overline{e}/z]\\
+%
+\ccase{K~\overline{e}}{z{:}_{\overline{\Delta}}\sigma' \{\dots, K~\overline{x{:}_\pi\sigma} \to e'\}} &
+\longrightarrow & e'\overline{[e/x]}[K~\overline{e}/z]\\
+%
+\ccase{K~\overline{e}}{z{:}_{\overline{\Delta}}\sigma' \{\dots, \_ \to e'\}} & \longrightarrow & e'[K~\overline{e}/z]\\
 \end{array}
 \end{array}
 \]

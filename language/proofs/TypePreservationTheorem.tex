@@ -60,8 +60,8 @@ By structural induction on the small-step reduction.
     (2) $\ov{\hasnolinearvars{\G'_i}}$ \` by inversion on $LetRec$\\
     (3) $\ov{\G'_i,\D, \ov{x_i{:}_\Delta\sigma_i} \vdash e_i : \s_i}$ \` by inversion on $LetRec$\\
     (4) $\G, \D, \ov{x_i{:}_\Delta\sigma_i} \vdash e' : \vp$ \` by inversion on $LetRec$\\
-    (5) $\ov{\G'_i, \ov{x_i{:}_\Delta\sigma_i}, \ov{\G'_i}, \D \vdash \lletrec{\ov{x_i{:}_\Delta\sigma_i = e_i}}{e_i} : \s_i}$ \` by $LetRec$ (3,3)\\
-    (6) $\ov{\G'_i, \D \vdash \lletrec{\ov{x_i{:}_\Delta\sigma_i = e_i}}{e_i} : \s_i}$ \` by $Contract_\omega$ and inv. on $Weaken_\Delta$\\
+    (5) $\ov{\G'_i, \ov{\G'_i}, \D \vdash \lletrec{\ov{x_i{:}_\Delta\sigma_i = e_i}}{e_i} : \s_i}$ \` by $LetRec$ (3,3)\\
+    (6) $\ov{\G'_i, \D \vdash \lletrec{\ov{x_i{:}_\Delta\sigma_i = e_i}}{e_i} : \s_i}$ \` by $Contract_\omega$\\
     (7) $\G, \ov{\G'_i}, \D \vdash e'\ov{[\lletrec{\ov{x_i{:}_\Delta\sigma_i = e_i}}{e_i}/x]} :
     \vp$ \` by $\D$-var subst. corollary\\
 \end{tabbing}
@@ -71,17 +71,21 @@ By structural induction on the small-step reduction.
 \item[Case:]
     $\ccase{K~\overline{e}}{z{:}_{\overline{\Delta}}\sigma}~\{\dots,K~\overline{x{:}_\pi\sigma}\}\ \longrightarrow e'\overline{[e/x]}[K~\overline{e}/z]$
 \begin{tabbing}
-(0) TODO.\\
-(1) $\Gamma,\Gamma' \vdash \ccase{K~\overline{e}}{z{:}_{\overline{\Delta}}\sigma~\{\dots,K~\overline{x{:}_\pi\sigma}\to e'\}} : \varphi$ \` by assumption \\
-(2) $\Gamma \vdash K~\overline{e} : \sigma$ \` by inversion on (case) \\
-(3) $\Gamma', z{:}_\Delta\sigma \vdash_{alt} K~\overline{x{:}_\pi\sigma} \to e' : \sigma \Longrightarrow \varphi$ \` by inversion on (case) \\
-% TODO: Como é que uso estes casos
-(4) $K : \overline{\sigma \to_\pi} T~\overline{p} \in \Gamma'$ \` by inversion on (alt) \\
-(5) $\Gamma',z{:}_\Delta\sigma,\overline{x{:}_\pi\sigma} \vdash e' : \varphi$ \` by inversion on (alt) \\
-% TODO: Delta_i?
-(6) $\Gamma, z{:}_{\Delta_i}\sigma, \Gamma' \vdash e'\overline{[e/x]} : \varphi$ \` by subst. lemma (2,5) \\
-% TODO: HOW? Missing something (inversion on case). Hard!
-(7) $\Gamma, \Gamma' \vdash e'\ov{[e/x]}[K~\ov{e}/z]$ \` by subst. lemma (6,2) \\
+(1) $\Gamma,\Gamma',\Delta \vdash \ccase{K~\overline{e}}{z{:}_{\overline{\Delta}}\sigma~\{\dots,K~\overline{x{:}_\pi\sigma}\to e'\}} : \varphi$ \` by assumption \\
+(2) $\hasnolinearvars{\Gamma}$\\
+(3) $\Gamma, \Delta \vdash K~\overline{e} : \sigma$ \` by inversion on (case) \\
+(4) $\Gamma', z{:}_{\Delta_i}\sigma \vdash_{alt} K~\overline{x{:}_\pi\sigma} \to e' : \sigma \Longrightarrow \varphi$ \` by inversion on (case) \\
+(5) $K : \overline{\sigma \to_\pi}~T~\overline{p} \in \Gamma'$ \` by inversion on (alt) \\
+(6) $\Delta_i = \overline{\x[\pi][\sigma]}\!\upharpoonright_1$\\
+(7) $\Gamma',z{:}_{\Delta_i}\sigma,\overline{x{:}_\pi\sigma} \vdash e' : \varphi$ \` by inversion on (alt) \\
+(8) $\ov{\G_i, \D'_i \vdash e : \sigma}, \G = \ov{\G_i}, \D = \ov{\D'_i}$ \` by the constructor application lemma (2,3,5) \\
+Subcase $z$ does not occur in $e'$\\
+(9) $(\Gamma', z{:}_{\Delta_i}\sigma)\ov{[\D'_i/x]}, \Gamma', \D \vdash e'\overline{[e/x]} : \varphi$ \` by lin. and unr. subst. lemma (7,8) \\
+(10) $\Gamma', z{:}_{\Delta}\sigma, \Gamma', \D \vdash e'\overline{[e/x]} : \varphi$ \` and $\ov{x}$ cannot exist in $\G'$ \\
+(11) $\Gamma', \Gamma, \D \vdash e'\overline{[e/x]} : \varphi$ \` by $Weaken_\D$\\
+(12) $\Gamma, \Gamma', \Delta \vdash e'\ov{[e/x]}[K~\ov{e}/z]$ \` by $z$ does not occur in $e'$ (6,2) \\
+Subcase $z$ occurs in $e'$\\
+(9) TODO.
 \end{tabbing}
 
 \item[Case:] $e_1~e_2 \longrightarrow e_1'~e_2$

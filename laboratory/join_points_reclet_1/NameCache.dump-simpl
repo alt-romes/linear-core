@@ -1,0 +1,31 @@
+
+NameCache.$WNameCache :: Int %1 -> Name %1 -> NameCache
+NameCache.$WNameCache
+  = \ (conrep_aGd [Occ=Once1!] :: Int)
+      (conrep_aGe [Occ=Once1!] :: Name) ->
+      case conrep_aGd of { GHC.Types.I# unbx_aGf [Occ=Once1] ->
+      case conrep_aGe of { Name -> NameCache.NameCache unbx_aGf }
+      }
+
+extendOrigNameCache :: Name -> Name -> Name
+extendOrigNameCache = \ _ [Occ=Dead] _ [Occ=Dead] -> NameCache.Name
+
+initNameCache :: Int -> [Name] -> NameCache
+initNameCache
+  = \ (us_auf :: Int) (names_aug :: [Name]) ->
+      case us_auf of { GHC.Types.I# unbx_aGf ->
+      join {
+        exit_X1 :: Name -> NameCache
+        exit_X1 (eta_B0 [OS=OneShot] :: Name)
+          = case eta_B0 of { Name -> NameCache.NameCache unbx_aGf } } in
+      joinrec {
+        go1_a11X :: [Name] -> Name -> NameCache
+        go1_a11X (ds_a11Y :: [Name]) (eta_B0 [OS=OneShot] :: Name)
+          = case ds_a11Y of {
+              [] -> jump exit_X1 eta_B0;
+              : y_a121 ys_a122 -> jump go1_a11X ys_a122 NameCache.Name
+            }; } in
+      jump go1_a11X names_aug NameCache.Name
+      }
+
+

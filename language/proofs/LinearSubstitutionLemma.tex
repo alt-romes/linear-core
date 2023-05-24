@@ -1,9 +1,12 @@
 \begin{lemma}[Substitution of linear variables preserves typing]
 \emph{If $\Gamma, x{:}_1\sigma \vdash e : \varphi$ and $\Gamma' \vdash e' :
-  \sigma$ then $\Gamma[\lin{\Gamma'}/x], \Gamma' \vdash e[e'/x] : \varphi$}
+  \sigma$ then $\Gamma[\lin{\Gamma'}/x], \Gamma' \vdash e[e'/x] : \varphi$},
+  where $\Gamma[\lin{\Gamma'}/x]$ substitutes all occurrences of $x$ by the
+  linear variables in $\Gamma'$ in the usage environment of uenv-bound-variables
+  in $\Gamma$ (really, $x$ couldn't appear anywhere else in $\Gamma$ since $x$ is linear).
 \end{lemma}
 % ROMES:TODO: Can \Gamma' also contain occurrences of $x$? We'd have to
-% substitute them too
+% substitute them too?
 
 \begin{proof}
 By structural induction on the first derivation.

@@ -51,5 +51,9 @@ TODO: Canonical forms lemma
 
 TODO: Corollary of $\Delta$-var subst. for $\ov{\Delta}$
 
+TODO: Constructor app typing:
+If $\Gamma, \Delta \vdash K~\ov{e}$ and $K{:}\ov{\sigma\to\pi}~T~\ov{p} \in \Gamma$ and $\hasnolinearvars{\Gamma}$
+then $\ov{\Gamma, \Delta_i \vdash e_i : \sigma_i}$
+
 \clearpage
 \input{language/InferUsageEnvs}
