@@ -70,7 +70,8 @@ By structural induction on the (only) typing derivation
 (2) $e_1~\textrm{is a value or}~\exists e_1'.~e_1 \longrightarrow e_1'$ \` by induction hypothesis (2) \\
 \textrm{Subcase $e_1$ is a value:}\\
 (3) $e_1 = K~\overline{e}$ \` by canonical forms lemma \\
-(4) $\ccase{e_1}{z{:}_{\overline{\Delta}}\sigma~\{\overline{\rho_i \to e_i}\}} \longrightarrow e_i\overline{[e/x{:}_\pi\sigma]}[K~\overline{e}/z]$ \` by case reduction (5) \\
+(4) $\overline{\rho_i \to e_i}$ is a complete pattern \` by coverage checker\\
+(5) $\ccase{e_1}{z{:}_{\overline{\Delta}}\sigma~\{\overline{\rho_i \to e_i}\}} \longrightarrow e_i\overline{[e/x{:}_\pi\sigma]}[K~\overline{e}/z]$ \` by case reduction (5) \\
 \textrm{Subcase $e_1 \to e_1'$:}\\
 (3) $\ccase{e_1}{z{:}_{\overline{\Delta}}\sigma~\{\overline{\rho_i \to e_1}\}}
   \longrightarrow \ccase{e_1'}{z{:}_{\overline{\Delta}}\sigma~\{\rho_i \to e_i\}}$ \` by ctx. reduction\\

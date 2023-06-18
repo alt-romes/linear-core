@@ -87,7 +87,8 @@
 \\[1em]
     \infer*[right=($Case$)]
     { \Gamma, \Delta_s \vdash e : \sigma \and
-    \overline{\Gamma', z{:}_{\Delta_i}\sigma \vdash_{alt} \rho_i \to e'_i :_{\Delta_i} \sigma \Rightarrow \varphi}
+    \overline{\Gamma', z{:}_{\Delta_{i|s}}\sigma \vdash_{alt} \rho_i \to e'_i
+    :_{\Delta_{i|s}} \sigma \Rightarrow \varphi}
     \and \hasnolinearvars{\Gamma} }
     {\Gamma, \Gamma', \Delta_s \vdash \ccase{e}{z{:}_{\overline{\Delta},\Delta_s}\sigma~\{\overline{\rho_i\to e'_i}\}} : \varphi}
 \\[1em]

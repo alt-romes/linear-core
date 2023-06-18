@@ -69,23 +69,38 @@ By structural induction on the small-step reduction.
 % \G, \ov{\D}, \ov{\G'} \vdash e'\ov{[e/x]}
 
 \item[Case:]
-    $\ccase{K~\overline{e}}{z{:}_{\overline{\Delta}}\sigma}~\{\dots,K~\overline{x{:}_\pi\sigma}\}\ \longrightarrow e'\overline{[e/x]}[K~\overline{e}/z]$
+    $\ccase{K~\overline{e}}{z{:}_{\overline{\Delta}}\sigma}~\{\dots,K~\overline{x{:}_\pi\sigma}\to e'\}\ \longrightarrow e'\overline{[e/x]}[K~\overline{e}/z]$
 \begin{tabbing}
 (1) $\Gamma,\Gamma',\Delta \vdash \ccase{K~\overline{e}}{z{:}_{\overline{\Delta}}\sigma~\{\dots,K~\overline{x{:}_\pi\sigma}\to e'\}} : \varphi$ \` by assumption \\
 (2) $\hasnolinearvars{\Gamma}$\\
 (3) $\Gamma, \Delta \vdash K~\overline{e} : \sigma$ \` by inversion on (case) \\
 (4) $\Gamma', z{:}_{\Delta_i}\sigma \vdash_{alt} K~\overline{x{:}_\pi\sigma} \to e' : \sigma \Longrightarrow \varphi$ \` by inversion on (case) \\
 (5) $K : \overline{\sigma \to_\pi}~T~\overline{p} \in \Gamma'$ \` by inversion on (alt) \\
-(6) $\Delta_i = \overline{\x[\pi][\sigma]}\!\upharpoonright_1$\\
+(6) $\Delta_i = \overline{\x[\pi][\sigma]}\!\upharpoonright_1$\` by inversion on (alt)\\
 (7) $\Gamma',z{:}_{\Delta_i}\sigma,\overline{x{:}_\pi\sigma} \vdash e' : \varphi$ \` by inversion on (alt) \\
 (8) $\ov{\G_i, \D'_i \vdash e : \sigma}, \G = \ov{\G_i}, \D = \ov{\D'_i}$ \` by the constructor application lemma (2,3,5) \\
 Subcase $z$ does not occur in $e'$\\
-(9) $(\Gamma', z{:}_{\Delta_i}\sigma)\ov{[\D'_i/x]}, \Gamma', \D \vdash e'\overline{[e/x]} : \varphi$ \` by lin. and unr. subst. lemma (7,8) \\
+(0) TODO: A bit weird i'm considering this case, since by induction weakening is already well defined?
+(9) $(\Gamma', z{:}_{\Delta_i}\sigma)\ov{[\D'_i/x]}, \Gamma, \D \vdash e'\overline{[e/x]} : \varphi$ \` by lin. and unr. subst. lemma (7,8) \\
 (10) $\Gamma', z{:}_{\Delta}\sigma, \Gamma', \D \vdash e'\overline{[e/x]} : \varphi$ \` and $\ov{x}$ cannot exist in $\G'$ \\
 (11) $\Gamma', \Gamma, \D \vdash e'\overline{[e/x]} : \varphi$ \` by $Weaken_\D$\\
 (12) $\Gamma, \Gamma', \Delta \vdash e'\ov{[e/x]}[K~\ov{e}/z]$ \` by $z$ does not occur in $e'$ (6,2) \\
 Subcase $z$ occurs in $e'$\\
-(9) TODO.
+    % (0) Quase consigo aplicar $\Delta$-subst. sobre
+    % $\G',\ov{\x[\pi][\s]!\upharpoonright_1},\z[\ov{\x[\pi][\s]!\upharpoonright_1}][\s]$,
+    % mas depois o $K~\ov{e}$ não é tipificado com o mesmo $\Delta$ env...
+(9) This is impossible to prove because it's wrong. See notes on notebook.
+\end{tabbing}
+
+\item[Case:]
+    $\ccase{K~\overline{e}}{z{:}_{\ov{\Delta}}\sigma}~\{\dots,\_\to e'\}\ \longrightarrow e'[K~\overline{e}/z]$
+\begin{tabbing}
+(1) $\Gamma,\Gamma',\Delta_s \vdash \ccase{K~\ov{e}}{z{:}_{\ov{\Delta}}\sigma~\{\dots,K~\overline{x{:}_\pi\sigma}\to e'\}} : \varphi$ \` by assumption \\
+(2) $\hasnolinearvars{\Gamma}$\\
+(3) $\Gamma, \Delta_s \vdash K~\ov{e} : \sigma$ \` by inversion on (case) \\
+(4) $\Gamma', z{:}_{\Delta_s}\sigma \vdash_{alt} \_ \to e' :_{\Delta_s} \sigma \Longrightarrow \varphi$ \` by inversion on (case) \\
+(5) $\Gamma', \z[\Delta_s][\sigma], \Delta_s \vdash e' : \varphi$ \` by inversion on (alt\_)\\
+(6) $\Gamma, \Gamma', \Delta_s \vdash e'[K~\ov{e}/z] : \varphi$ \` by $\Delta$-subst. lemma (2,3,5)
 \end{tabbing}
 
 \item[Case:] $e_1~e_2 \longrightarrow e_1'~e_2$

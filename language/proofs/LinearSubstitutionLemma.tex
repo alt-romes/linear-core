@@ -7,6 +7,7 @@
 \end{lemma}
 % ROMES:TODO: Can \Gamma' also contain occurrences of $x$? We'd have to
 % substitute them too?
+% It can't.
 
 \begin{proof}
 By structural induction on the first derivation.
@@ -58,7 +59,11 @@ By structural induction on the first derivation.
   (2) $\G' \vdash e' : \sigma$\\
   (3) $y[e'/x] = y$\\
   (4) $\D, \xl, \y[\Delta,\xl][\vp] \vdash y : \vp$\\
-  (5) TODO: Impossible\\
+  Subcase $\G'$ has linear variables\\
+  (5) Impossible. $\y[\Delta][\s]$ is only well typed if the context is exactly $\Delta,\y[\D][\s]$\\
+  Subcase $\G'$ has no linear variables\\
+  (5) $\G', \D, \xl, \y[\Delta,\xl][\vp] \vdash y : \vp$ \` by $Weaken_\omega$\\
+
 \end{tabbing}
 
 \item[Case:] $\Lambda I$
@@ -189,7 +194,28 @@ By structural induction on the first derivation.
 
 \item[Case:] $Case$
 \begin{tabbing}
-  (1) TODO.\\
+    (1) $\G, \G'', \D_s, \x \vdash \ccase{e}{\z[\ov{\D},\D_s][\s']}~\{\ov{\rho_i
+    \to e''_i}\} : \varphi$\\
+    (2) $\G' \vdash e : \s$\\
+    (3) $\hasnolinearvars{\G}$ \` by inversion on (case)\\
+    Subcase $x$ occurs in $e$\\
+    (4) $\G, \D_s, \x \vdash e : \s'$ \` by inversion on (case)\\
+    (5) $\G[\G'_1/x],\G',\D_s \vdash e[e'/x] : \s'$ \` by i.h.\\
+    (6) $\ov{\G'',\z[\D_{i|s}][\s'] \vdash_{alt} \rho_i \to e''_i
+    :_{\Delta_{i|s}} \s' \Rightarrow \varphi}$ \` by inversion on (case) (WRONG, $\D_s$ is not correct)\\
+    (7) $\G''[\G'_1/x]=\G''$\` the $\D$-vars used to type $\ov{e''_i}$ can't contain $x$\\
+                            \` because $x$ does not occur in $\ov{e''_i}$\\
+    (7.5) TODO: This can only be right if account for z=$\D_s,\x$, bc currently we ignore $\x$ (wrong).\\
+    (8) $\G[\G'_1/x],\G',\G'',\D_s \vdash \ccase{e[e'/x]}{\z[\ov{\D},(\D',\G'_1)]}~\{\rho_i \to e''_i\}$\\
+    (9) $\ov{e''_i[e'/x]} = \ov{e''_i}$ \` since $x$ does not occur in $\ov{e''_i}$\\
+    Subcase $x$ occurs in $\ov{e''_i}$\\
+    (4) $\G,\D_s \vdash e : \s'$\` by inversion on (case)\\
+    (5) $\hasnolinearvars{\G}$\` by inversion on (case)\\
+    (6) $\ov{\G'',\x,\z[\D_{i|s}][\s'] \vdash_{alt} \rho_i \to e''_i :_{\D_{i|s}} \s' \Rightarrow \varphi}$\\
+    (7) $\ov{\G''[\G'_1/x],\G',\z[\D_{i|s}][\s'][\G'_1/x] \vdash_{alt} \rho_i \to e''_i[e'/x] :_{\D_{i|s}} \s' \Rightarrow \varphi}$\\
+    (8) $(\G,\D_s)[\G'_1/x] = (\G,\D_s)$ \` since $\x$ does not occur in $e$\\
+    (9) $\G,\D_s,\G''[\G'_1/x],\G' \vdash \ccase{e}{\z[\D_{i|s}][\s']}~\{\ov{\rho_i \to e''_i[e'/x]}\} : \vp$\\
+
 \end{tabbing}
 
 \end{description}
