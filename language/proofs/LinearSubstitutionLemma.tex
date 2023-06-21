@@ -212,11 +212,12 @@ By structural induction on the first derivation.
     (4) $\G,\D_s \vdash e : \s'$\` by inversion on (case)\\
     (5) $\hasnolinearvars{\G}$\` by inversion on (case)\\
     (6) $\ov{\G'',\x,\z[\D_{i|s}][\s'] \vdash_{alt} \rho_i \to e''_i :_{\D_{i|s}} \s' \Rightarrow \varphi}$\\
-    (7) $\ov{\G''[\G'_1/x],\G',\z[\D_{i|s}][\s'][\G'_1/x] \vdash_{alt} \rho_i \to e''_i[e'/x] :_{\D_{i|s}} \s' \Rightarrow \varphi}$\\
+    (7) $\ov{\G''[\G'_1/x],\G',\z[\D_{i|s}][\s'][\G'_1/x] \vdash_{alt} \rho_i \to e''_i[e'/x] :_{\D_{i|s}} \s' \Rightarrow \varphi}$\` by lemma lin. subst. alt\\
     (8) $(\G,\D_s)[\G'_1/x] = (\G,\D_s)$ \` since $\x$ does not occur in $e$\\
     (9) $\G,\D_s,\G''[\G'_1/x],\G' \vdash \ccase{e}{\z[\D_{i|s}][\s']}~\{\ov{\rho_i \to e''_i[e'/x]}\} : \vp$\\
-
 \end{tabbing}
+
+TODO: Linear sub lemma subst. for Alts
 
 \end{description}
 
