@@ -80,7 +80,7 @@ By structural induction on the small-step reduction.
 (7) $\Gamma',z{:}_{\Delta_i}\sigma,\overline{x{:}_\pi\sigma} \vdash e' : \varphi$ \` by inversion on (alt) \\
 (8) $\ov{\G_i, \D'_i \vdash e : \sigma}, \G = \ov{\G_i}, \D = \ov{\D'_i}$ \` by the constructor application lemma (2,3,5) \\
 Subcase $z$ does not occur in $e'$\\
-(0) TODO: A bit weird i'm considering this case, since by induction weakening is already well defined?
+(0) TODO: A bit weird i'm considering this case, since by induction weakening is already well defined?\\
 (9) $(\Gamma', z{:}_{\Delta_i}\sigma)\ov{[\D'_i/x]}, \Gamma, \D \vdash e'\overline{[e/x]} : \varphi$ \` by lin. and unr. subst. lemma (7,8) \\
 (10) $\Gamma', z{:}_{\Delta}\sigma, \Gamma', \D \vdash e'\overline{[e/x]} : \varphi$ \` and $\ov{x}$ cannot exist in $\G'$ \\
 (11) $\Gamma', \Gamma, \D \vdash e'\overline{[e/x]} : \varphi$ \` by $Weaken_\D$\\

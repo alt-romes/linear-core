@@ -2,8 +2,8 @@
 % ROMES: Note that the \Delta env only has linear variables by construction;
 % usage environments only record linear variables.
 \begin{lemma}[Substitution of variables with usage environments preserves typing]
-\emph{If $\G, \D, \xD \vdash e : \varphi$ and $\G', \D \vdash e' : \sigma$ and $\hasnolinearvars{\G'}$
-        then $\G, \G', \D \vdash e[e'/x] : \varphi$}
+\emph{If $\G, \D, \xD \vdash e : \varphi$ and $\G', \D \vdash e' : \sigma$ and
+    $\hasnolinearvars{\G'}$ then $\G, \G', \D \vdash e[e'/x] : \varphi$}
 \end{lemma}
 \begin{proof}
 By structural induction on the first derivation.
@@ -136,16 +136,27 @@ By structural induction on the first derivation.
     (10) $e[e'/x]~e'' = (e~e'')[e'/x]$\` $x$ does not occur in $e''$ by (5)\\
 \end{tabbing}
 
-% \item[Case:] $\lambda E$
-% \begin{tabbing}
-%     (1) $\G, \G'', \D, \xD \vdash e~e'' : \vp$\\
-%     (2) $\G', \D \vdash e' : \s$\\
-%     (3) $\G, \D, \xD \vdash e : \s' \to_\pi \vp$ \` by inversion on $\lambda E$\\
-%     (4) $\G'' \vdash e'' : \s'$ \` by inversion on $\lambda E$\\
-%     (5) $\G, \G', \D \vdash e[e'/x] : \s' \to_\pi \vp$ \` by induction hypothesis (2,3)\\
-%     (6) $\G, \G', \G'', \D \vdash (e[e'/x]~e'') : \vp$ \` by $\lambda E$\\
-%     (7) $(e[e'/x]~e'') = (e~e'')[e'/x]$ \` when the resources to $\D$ are needed
-% \end{tabbing}
+\item[Case:] $Let$
+\begin{tabbing}
+    (1) $\G',\D \vdash e' : \s$\\
+    (2) $\hasnolinearvars{\G'}$\\
+    Subcase $\xD$ occurs in $e$\\
+    (3) $\G, \G'', \D', \D, \xD \vdash \llet{\y[\D,\D'][\s'] = e}{e''} : \vp$\\
+    (4) $\G'',\D', \D, \xD \vdash e : \s'$\` by inversion on (let)\\
+    (5) $\G,\D',\D,\y[\D,\D'][\s'] \vdash e'' : \vp$\` by inversion on (let)\\
+    (6) $\hasnolinearvars{\G''}$\` by inversion on (let)\\
+    (7) $\G',\D',\G'',\D \vdash e[e'/x] : \s'$\` by induction hypothesis (1,2,4)\\
+    (8) $\G,\G',\G'',\D,\D' \vdash \llet{\y[\D,\D'][\s'] = e[e'/x]}{e''} : \vp$\` by (let) (5,6,7,2)\\
+    (9) $\llet{\y[\D,\D'][\s'] = e[e'/x]}{e''} = (\llet{\y[\D,\D'][\s'] = e}{e''})[e'/x]$\` since $x$ does not occur in $e''$\\
+    Subcase $\xD$ occurs in $e''$\\
+    (3) $\G, \G'', \D', \D, \xD \vdash \llet{\y[\D'][\s'] = e}{e''} : \vp$\\
+    (4) $\G'',\D' \vdash e : \s'$\` by inversion on (let)\\
+    (5) $\G,\D',\y[\D'][\s'],\D,\xD \vdash e'' : \vp$\` by inversion on (let)\\
+    (6) $\hasnolinearvars{\G''}$\` by inversion on (let)\\
+    (7) $\G,\G',\D',\y[\D'][\s'],\D \vdash e''[e'/x] : \vp$\` by i.h. (1,2,5)\\
+    (8) $\G,\G',\G'',\D,\D' \vdash \llet{\y[\D'][\s'] = e}{e''[e'/x]} : \vp$\` by (let)\\
+    (9) $\llet{\y[\D'][\s'] = e}{e''[e'/x]} = (\llet{\y[\D'][\s'] = e}{e''})[e'/x]$\` since $x$ does not occur in $e$\\
+\end{tabbing}
 
 \end{description}
 

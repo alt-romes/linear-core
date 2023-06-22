@@ -5,9 +5,6 @@
   linear variables in $\Gamma'$ in the usage environment of uenv-bound-variables
   in $\Gamma$ (really, $x$ couldn't appear anywhere else in $\Gamma$ since $x$ is linear).
 \end{lemma}
-% ROMES:TODO: Can \Gamma' also contain occurrences of $x$? We'd have to
-% substitute them too?
-% It can't.
 
 \begin{proof}
 By structural induction on the first derivation.
@@ -216,8 +213,40 @@ By structural induction on the first derivation.
     (8) $(\G,\D_s)[\G'_1/x] = (\G,\D_s)$ \` since $\x$ does not occur in $e$\\
     (9) $\G,\D_s,\G''[\G'_1/x],\G' \vdash \ccase{e}{\z[\D_{i|s}][\s']}~\{\ov{\rho_i \to e''_i[e'/x]}\} : \vp$\\
 \end{tabbing}
+\end{description}
+\end{proof}
 
-TODO: Linear sub lemma subst. for Alts
+\begin{sublemma}[Substitution of linear variables on case alternatives
+    preserves typing]
+\emph{If $\G, \xl \vdash_{alt} \rho \to e :_\Delta \s \Rightarrow \vp$ and $\G'
+    \vdash e' : \s$ then $\G[lin{\G'}/x],\G' \vdash_{alt} \rho \to e[e'/x] :_\Delta \s
+    \Rightarrow \vp$}
+\end{sublemma}
+
+\begin{proof}
+By structural induction on the $alt$ judgment.
+
+\begin{description}
+\item[Case:] $Alt$
+\begin{tabbing}
+    (1) $\G, \xl \vdash_{alt} K~\ov{y{:}_\pi\s''} \to e :_\Delta \s' \Rightarrow \vp$\\
+    (2) $\G' \vdash e' : \s$\\
+    (3) $\G, \xo, \ov{\y[\pi][\s'']} \vdash e : \vp$ \` by inversion on $Alt$\\
+    (4) $K : \ov{\s'' \to_\pi} \s' \in \G$\` by inversion on $Alt$\\
+    (5) $\D = \ov{\y[\pi][\s'']}\!\upharpoonright_1$\` by inversion on $Alt$\\
+    (6) $\G[\lin{\G'}/x],\ov{\y[\pi][\s'']},\G' \vdash e[e'/x] : \vp$\` by lin. subst. lemma (2,3)\\
+    (7) $\G[\lin{\G'}/x], \G' \vdash_{alt} K~\ov{\y[\pi][\s'']} \to e[e'/x] :_\Delta \s' \Rightarrow \vp$\` by $Alt$ (5,6,7)\\
+\end{tabbing}
+
+\item[Case:] $Alt_\_$
+\begin{tabbing}
+    (1) $\G, \xl \vdash_{alt} \_ \to e :_{\Delta_s}\s' \Rightarrow \vp$\\
+    (2) $\G' \vdash e' : \s$\\
+    (3) $\G, \D_s, \xl \vdash e : \vp$\` by inversion on $Alt_\_$\\
+    (4) $\G[\lin{\G'}/x],\G',\D_s \vdash e[e'/x] : \vp$ \` by lin. subst. lemma (2,3,4)\\
+    (5) $\G[\lin{\G'}/x],\G' \vdash_{alt} \_ \to e[e'/x] :_{\Delta_s} \s' \Rightarrow \vp$\\
+    NB: In the case $x$ occurs in $\D_s$ we have the same derivation, but where $\D_s$ is annotated we'd have $\D_s,\xl$
+\end{tabbing}
 
 \end{description}
 

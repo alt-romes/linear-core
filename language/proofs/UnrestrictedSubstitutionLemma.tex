@@ -218,12 +218,12 @@ By structural induction on the $alt$ judgment.
 
 \item[Case:] $Alt_\_$
 \begin{tabbing}
-    (1) $\G, \xo \vdash_{alt} \_ \to e :_\Delta \s' \Rightarrow \vp$\\
+    (1) $\G, \xo \vdash_{alt} \_ \to e :_{\Delta_s} \s' \Rightarrow \vp$\\
     (2) $\G' \vdash e' : \s$\\
     (3) $\hasnolinearvars{\G'}$\\
-    (4) $\G, \xo \vdash e : \vp$\` by inversion on $Alt_\_$\\
-    (5) $\G, \G' \vdash e[e'/x] : \vp$ \` by unr. subst. lemma (2,3,4)\\
-    (6) $\G ,\G' \vdash_{alt} \_ \to e[e'/x] :_\Delta \s' \Rightarrow \vp$\\
+    (4) $\G, \D_s, \xo \vdash e : \vp$\` by inversion on $Alt_\_$\\
+    (5) $\G, \G', \D_s \vdash e[e'/x] : \vp$ \` by unr. subst. lemma (2,3,4)\\
+    (6) $\G ,\G' \vdash_{alt} \_ \to e[e'/x] :_{\Delta_s} \s' \Rightarrow \vp$\\
 \end{tabbing}
 
 \end{description}
