@@ -245,7 +245,8 @@ By structural induction on the $alt$ judgment.
     (3) $\G, \D_s, \xl \vdash e : \vp$\` by inversion on $Alt_\_$\\
     (4) $\G[\lin{\G'}/x],\G',\D_s \vdash e[e'/x] : \vp$ \` by lin. subst. lemma (2,3,4)\\
     (5) $\G[\lin{\G'}/x],\G' \vdash_{alt} \_ \to e[e'/x] :_{\Delta_s} \s' \Rightarrow \vp$\\
-    NB: In the case $x$ occurs in $\D_s$ we have the same derivation, but where $\D_s$ is annotated we'd have $\D_s,\xl$
+    TODO: In the case $x$ occurs in $\D_s$ we have the same derivation,\\
+    but where $\D_s$ is annotated we'd have $\D_s,\xl$, but that can't happen in the last one... It's wrong...
 \end{tabbing}
 
 \end{description}

@@ -173,21 +173,17 @@ By structural induction on the first derivation.
 
 \item[Case:] $Case$
 \begin{tabbing}
-    (1) $\G, \ov{\G''}, \xo \vdash \ccase{e}{\zDp \{\ov{\rho_i \to e''_i}\}} : \vp$\\
+    (1) $\G, \G'', \xo \vdash \ccase{e}{\zDp \{\ov{\rho_i \to e''_i}\}} : \vp$\\
     (2) $\G' \vdash e' : \s$\\
     (3) $\hasnolinearvars{\G'}$\\
-    (4) $\G, \ov{\G''}, \xo, \ov{\xo} \vdash \ccase{e}{\zDp \{\ov{\rho_i \to
+    (4) $\G, \G'', \xo, \ov{\xo} \vdash \ccase{e}{\zDp \{\ov{\rho_i \to
     e''_i}\}} : \vp$ \` by $Contract_\omega$ (2)\\
     (5) $\G, \xo \vdash e : \s'$ \` by inversion on $Case$\\
     (6) $\G, \G' \vdash e[e'/x] : \s'$ \` by induction hypothesis (2,3,5)\\
-    (7) $\ov{\G'', \xo, \zDip \vdash_{alt} \rho_i \to e''_i :_{\D_i} \s'
-    \Rightarrow \vp}$\` by inversion on $Case$\\
-    (8) $\ov{\G'', \zDip, \G' \vdash_{alt} \rho_i \to e''_i[e'/x] :_{\D_i} \s'
-    \Rightarrow \vp}$\` by unr. subst. sublemma (2,3,7)\\
-    (9) $\G, \ov{\G''}, \G', \ov{\G'} \vdash \ccase{e[e'/x]}{\zDp \{\ov{\rho_i \to
-    e''_i[e'/x]}\}} : \vp$\` by $Case$ (6,8)\\
-    (10) $(\ccase{e[e'/x]}{\zDp \{\ov{\rho_i \to
-    e''_i[e'/x]}\}}) = \ccase{e}{\zDp \{\ov{\rho_i \to e''_i}\}}[e'/x]$\\
+    (7) $\ov{\G'', \xo, \zDip \vdash_{alt} \rho_i \to e''_i :_{\D_i} \s' \Rightarrow \vp}$\` by inversion on $Case$\\
+    (8) $\ov{\G'', \zDip, \G' \vdash_{alt} \rho_i \to e''_i[e'/x] :_{\D_i} \s' \Rightarrow \vp}$\` by unr. subst. sublemma (2,3,7)\\
+    (9) $\G, \G'', \G', \G' \vdash \ccase{e[e'/x]}{\zDp \{\ov{\rho_i \to e''_i[e'/x]}\}} : \vp$\` by $Case$ (6,8)\\
+    (10) $(\ccase{e[e'/x]}{\zDp \{\ov{\rho_i \to e''_i[e'/x]}\}}) = \ccase{e}{\zDp \{\ov{\rho_i \to e''_i}\}}[e'/x]$\\
 \end{tabbing}
 \end{description}
 

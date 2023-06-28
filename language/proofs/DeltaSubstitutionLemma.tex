@@ -158,6 +158,86 @@ By structural induction on the first derivation.
     (9) $\llet{\y[\D'][\s'] = e}{e''[e'/x]} = (\llet{\y[\D'][\s'] = e}{e''})[e'/x]$\` since $x$ does not occur in $e$\\
 \end{tabbing}
 
+\item[Case:] LetRec
+\begin{tabbing}
+    (1) $\G',\D \vdash e' : \s$\\
+    (2) $\hasnolinearvars{\G'}$\\
+    Subcase $\xD$ occurs in $\ov{e_i}$\\
+    (3) $\G, \ov{\G''_i}, \D', \D, \xD \vdash \lletrec{\ov{\var[y_i][\D,\D'][\s_i'] = e_i}}{e''} : \vp$\\
+    (4) $\G,\D',\D,\ov{\var[y_i][\D,\D'][\s'_i]} \vdash e'' : \vp$\` by inversion on (let)\\
+    (5) $\ov{\G''_i,\D', \ov{\var[y_i][\D,\D'][\s'_i]}, \D, \xD \vdash e_i : \s'_i}$\` by inversion on (let)\\
+    (6) $\ov{\hasnolinearvars{\G''_i}}$\` by inversion on (let)\\
+    (7) $\ov{\G',\D',\G''_i,\D \vdash e_i[e'/x] : \s'_i}$\` by induction hypothesis (1,2,5)\\
+    (8) $e''[e'/x] = e''$\` since $x$ does not occur in $e''$\\
+    (9) $\G,\G',\ov{\G''_i},\D,\D' \lletrec{\ov{\var[y_i][\D,\D'][\s_i'] = e_i[e'/x]}}{e''} : \vp$\` by (let) (2,4,5,6,7)\\
+    Subcase $\xD$ occurs in $e''$\\
+    (3) $\G, \ov{\G''_i}, \D', \D, \xD \vdash \lletrec{\ov{\var[y_i][\D'][\s_i'] = e_i}}{e''} : \vp$\\
+    (4) $\ov{\G'',\D' \vdash e_i : \s'_i}$\` by inversion on (let)\\
+    (5) $\ov{\hasnolinearvars{\G''_i}}$\` by inversion on (let)\\
+    (6) $\G,\D',\ov{\var[y_i][\D'][\s'_i]},\D,\xD \vdash e'' : \vp$\` by inversion on (let)\\
+    (7) $\G,\G',\D',\ov{\var[y_i][\D'][\s'_i]},\D \vdash e''[e'/x] : \vp$\` by i.h. (1,2,6)\\
+    (8) $\ov{e_i[e'/x] = e_i}$\` since $x$ does not occur in $\ov{e_i}$\\
+    (9) $\G,\G',\ov{\G''_i},\D,\D' \vdash \lletrec{\ov{\var[y_i][\D'][\s'_i] = e_i}}{e''[e'/x]} : \vp$\` by (let)\\
+\end{tabbing}
+
+\item[Case:] Case
+\begin{tabbing}
+    (1) $\G', \D \vdash e' : \s$\\
+    (2) $\hasnolinearvars{\G'}$\\
+    Subcase $\xD$ occurs in $e$\\
+    (3) $\G, \G'', \D', \D, \xD \vdash \ccase{e}{\var[z][\ov{\D}|(\D',\D)][\s'] \{\ov{\rho_i \to e'_i}\}} : \vp$\\
+    (4) $\G, \D', \D, \xD \vdash e : \s'$ \` by inversion on $Case$\\
+    (5) $\hasnolinearvars{\G}$\\
+    (6) $\ov{\G'', \xo, \var[z][\D_i|(\D',\D)][\s'] \vdash_{alt} \rho_i \to e'_i :_{\D_i|(\D',\D)} \s' \Rightarrow \vp}$\` by inversion on $Case$\\
+    (7) $\G, \G', \D', \D \vdash e[e'/x] : \s'$ \` by induction hypothesis (1,2,4)\\
+    (8) $e'_i[e'/x]=e'_i$\\
+    (9) $\G, \G'', \G', \D', \D, \vdash \ccase{e[e'/x]}{\var[z][\ov{\D}|(\D',\D)][\s'] \{\ov{\rho_i \to e'_i[e'/x]}\}} : \vp$\` by (2,5,6,7)\\
+    Subcase $\xD$ occurs in $\ov{e'_i}$\\
+    (3) $\G, \G'', \D', \D, \xD \vdash \ccase{e}{\z[\ov{\D}|\D_s][\s'] \{\ov{\rho_i \to e'_i}\}} : \vp$\\
+    (4) $\G,\D' \vdash e : \s'$\\
+    (5) $e[e'/x] = e$\`since $x$ does not occur in $e$\\
+    (6) $\hasnolinearvars{\G}$\\
+    (7) $\ov{\G'',\D,\xD,\z[\D_i|\D'][\s'] \vdash_{alt} \rho_i \to e'_i :_{\D_i|\D'_s} \s' \Rightarrow \vp}$\\
+    (8) $\ov{\G'',\G',\D,\z[\D_i|\D'][\s'] \vdash_{alt} \rho_i \to e'_i[e'/x] :_{\D_i|\D'_s} \s' \Rightarrow \vp}$\`by sublemma $\Delta$-subst in case alts\\
+    (9) $\G,\G',\G'',\D,\D' \vdash \ccase{e}{\z[\ov{\D}|\D_s][\s'] \{\ov{\rho_i \to e'_i[e'/x]}\}} : \vp$\\
+\end{tabbing}
+
+\end{description}
+
+\end{proof}
+
+
+\begin{sublemma}[Substitution of $\Delta$-bound variables on case alternatives
+    preserves typing]
+\emph{If $\G, \D, \xD \vdash_{alt} \rho \to e :_\Delta \s' \Rightarrow \vp$ and $\G' \vdash e' : \s$ and
+    $\hasnolinearvars{\G'}$ then $\G, \G', \D \vdash_{alt} \rho \to e[e'/x] :_\Delta \s' \Rightarrow \vp$}
+\end{sublemma}
+
+\begin{proof}
+By structural induction on the $alt$ judgment.
+
+\begin{description}
+\item[Case:] $Alt$
+\begin{tabbing}
+    (1) $\G, \D, \xD \vdash_{alt} K~\ov{y{:}_\pi\s''} \to e :_\Delta \s' \Rightarrow \vp$\\
+    (2) $\G', \D \vdash e' : \s$\\
+    (3) $\hasnolinearvars{\G'}$\\
+    (4) $\G, \D, \xD, \ov{\y[\pi][\s'']} \vdash e : \vp$ \` by inversion on $Alt$\\
+    (5) $K : \ov{\s'' \to_\pi} \s' \in \G$\` by inversion on $Alt$\\
+    (6) $\D = \ov{\y[\pi][\s'']}\!\upharpoonright_1$\` by inversion on $Alt$\\
+    (7) $\G,\G',\D,\ov{\y[\pi][\s'']} \vdash e[e'/x] : \vp$\` by $\Delta$-subst. lemma (2,3,4)\\
+    (8) $\G, \G', \D \vdash_{alt} K~\ov{\y[\pi][\s'']} \to e[e'/x] :_\Delta \s' \Rightarrow \vp$\` by $Alt$ (5,6,7)\\
+\end{tabbing}
+
+\item[Case:] $Alt_\_$
+\begin{tabbing}
+    (1) $\G, \D, \xD \vdash_{alt} \_ \to e :_{\Delta_s} \s' \Rightarrow \vp$\\
+    (2) $\G', \D \vdash e' : \s$\\
+    (3) $\hasnolinearvars{\G'}$\\
+    (4) $\G, \D_s, \D, \xD \vdash e : \vp$\` by inversion on $Alt_\_$\\
+    (5) $\G, \G', \D_s, \D \vdash e[e'/x] : \vp$ \` by $\Delta$-subst. lemma (2,3,4)\\
+    (6) $\G ,\G', \D \vdash_{alt} \_ \to e[e'/x] :_{\Delta_s} \s' \Rightarrow \vp$\\
+\end{tabbing}
 \end{description}
 
 \end{proof}
