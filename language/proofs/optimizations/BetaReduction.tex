@@ -1,4 +1,4 @@
-\begin{lemma}[Case-of-known-constructor preserves types (and thus is sound)]
+\begin{lemma}[Beta-reduction preserves types (and thus is sound)]
     \emph{If $\G \vdash (\lambda \x[\pi][\s].~e)~e' : \vp$ then $\G \vdash e[e'/x] : \vp$}
 \end{lemma}
 
@@ -24,5 +24,26 @@
 \end{tabbing}
 \end{description}
 \end{proof}
+
+\begin{lemma}[Beta-reduction with sharing preserves types (and thus is sound)]
+    \emph{If $\G \vdash (\lambda \xo.~e)~e' : \vp$ then $\G \vdash \llet{x = e'}{e} : \vp$}
+    NB: We only apply this transformation when $x$ is unrestricted, otherwise beta-reduction without sharing is the optimization applied.
+\end{lemma}
+
+\begin{proof}
+\begin{description}
+
+\begin{tabbing}
+    (1) $\G,\G' \vdash (\lambda \xo.~e)~e' : \vp$\\
+    (2) $\G \vdash (\lambda \xo.~e) : \s \to_\omega \vp$\` by inv. on $\lambda E_\omega$\\
+    (3) $\G', \cdot \vdash e' : \s$ \` by inv. on $\lambda E_\omega$\\
+    (4) $\hasnolinearvars{\G'}$ \` by inv. on $\lambda E_\omega$\\
+    (5) $\G,\xo \vdash e : \vp$\` by inv. on $\lambda I$\\
+    (6) $\G, \cdot, \x[\cdot][\s] \vdash e : \vp$\` by $\xo = \x[\cdot][\s]$ lemma (TODO)\\
+    (7) $\G,\G' \vdash \llet{x = e'}{e} : \vp$\` by let (6,3,4)\\
+\end{tabbing}
+\end{description}
+\end{proof}
+
 
 
