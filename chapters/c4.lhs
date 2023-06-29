@@ -56,4 +56,11 @@ If $\Gamma, \Delta \vdash K~\ov{e}$ and $K{:}\ov{\sigma\to\pi}~T~\ov{p} \in \Gam
 then $\ov{\Gamma, \Delta_i \vdash e_i : \sigma_i}$
 
 \clearpage
+
 \input{language/InferUsageEnvs}
+
+\clearpage
+
+\input{language/proofs/optimizations/Inlining}
+\input{language/proofs/optimizations/BetaReduction}
+\input{language/proofs/optimizations/CaseOfKnownConstructor}
