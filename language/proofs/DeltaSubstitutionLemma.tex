@@ -2,8 +2,7 @@
 % ROMES: Note that the \Delta env only has linear variables by construction;
 % usage environments only record linear variables.
 \begin{lemma}[Substitution of variables with usage environments preserves typing]
-\emph{If $\G, \D, \xD \vdash e : \varphi$ and $\G', \D \vdash e' : \sigma$ and
-    $\hasnolinearvars{\G'}$ then $\G, \G', \D \vdash e[e'/x] : \varphi$}
+\emph{If $\G, \D, \xD \vdash e : \varphi$ and $\G' \vdash e' : \sigma$ then $\G, \G' \vdash e[e'/x] : \varphi$}
 \end{lemma}
 \begin{proof}
 By structural induction on the first derivation.
@@ -13,42 +12,44 @@ By structural induction on the first derivation.
 \item[Case:] $Contract_\omega$
 \begin{tabbing}
     (1) $\G, \D, \xD, \yo \vdash e : \vp$\\
-    (2) $\G', \D \vdash e' : \s$\\
-    (3) $\hasnolinearvars{\G'}$\\
-    (4) $\G, \D, \xD, \yo, \yo \vdash e : \vp$\` by inv. on $Contract_\omega$\\
-    (5) $\G, \G', \D, \yo, \yo \vdash e[e'/x] : \vp$\` by induction hypothesis (2,3,4)\\
-    (6) $\G, \G', \D, \yo \vdash e[e'/x] : \vp$\` by $Contract_\omega$\\
+    (2) $\G' \vdash e' : \s$\\
+    (3) $\G, \D, \xD, \yo, \yo \vdash e : \vp$\` by inv. on $Contract_\omega$\\
+    (4) $\G, \G', \yo, \yo \vdash e[e'/x] : \vp$\` by induction hypothesis (2,3)\\
+    (5) $\G, \G', \yo \vdash e[e'/x] : \vp$\` by $Contract_\omega$\\
 \end{tabbing}
 
 \item[Case:] $Weaken_\omega$
 \begin{tabbing}
     (1) $\G, \D, \xD, \yo \vdash e : \vp$\\
-    (2) $\G', \D \vdash e' : \s$\\
-    (3) $\hasnolinearvars{\G'}$\\
-    (4) $\G, \D, \xD, \vdash e : \vp$\` by inv. on $Weaken_\omega$\\
-    (5) $\G, \G', \D, \vdash e[e'/x] : \vp$\` by induction hypothesis (2,3,4)\\
-    (6) $\G, \G', \D, \yo \vdash e[e'/x] : \vp$\` by $Weaken_\omega$\\
+    (2) $\G' \vdash e' : \s$\\
+    (3) $\G, \D, \xD, \vdash e : \vp$\` by inv. on $Weaken_\omega$\\
+    (4) $\G, \G', \vdash e[e'/x] : \vp$\` by induction hypothesis (2,3)\\
+    (5) $\G, \G', \yo \vdash e[e'/x] : \vp$\` by $Weaken_\omega$\\
 \end{tabbing}
 
 \item[Case:] $Weaken_\Delta$
 \begin{tabbing}
     (1) $\G, \D, \xD, \yD \vdash e : \vp$\\
-    (2) $\G', \D \vdash e' : \s$\\
-    (3) $\hasnolinearvars{\G'}$\\
-    (4) $\G, \D, \xD, \vdash e : \vp$\` by inv. on $Weaken_\Delta$\\
-    (5) $\G, \G', \D, \vdash e[e'/x] : \vp$\` by induction hypothesis (2,3,4)\\
-    (6) $\G, \G', \D, \yD \vdash e[e'/x] : \vp$\` by $Weaken_\Delta$\\
-    (-) TODO. Do we need the subcase where x being weakened is the x being
-    substituted?\\
+    (2) $\G' \vdash e' : \s$\\
+    (3) $\G, \D, \xD, \vdash e : \vp$\` by inv. on $Weaken_\Delta$\\
+    (4) $\G, \G' \vdash e[e'/x] : \vp$\` by induction hypothesis (2,3)\\
+    (5) $\G, \G', \yD \vdash e[e'/x] : \vp$\` by $Weaken_\Delta$\\
 \end{tabbing}
 
+% This case would happen for example if K :: a %ω -> b %ω -> K a b in
+% case K e1 e2 of z:{}
+%   K x y -> e3
+% The substitution of z could happen in a context with no linear variables, and eventually get to Var_\omega
+% To handle this, we change the lemma to only account for non empty Delta
+% environments, which will forbid this case
+% Instead, we handle that subcase when we need it
 \item[Case:] $Var_\omega$
 \begin{tabbing}
-    (1) $\G, \cdot, \yo, \xD \vdash y : \s'$\\
-    (2) $\G', \cdot \vdash e' : \s'$\\
-    (3) $\hasnolinearvars{\G'}$\\
-    (4) $y[e'/x] = y$\\
-    (5) $\G, \cdot, \yo \vdash y : \s'$\\
+    (1) Impossible, $\Delta$ cannot be empty by assumption\\
+    % (1) $\G, \cdot, \yo, \x[\cdot][\s] \vdash y : \s'$\\
+    % (2) $\G' \vdash e' : \s$\\
+    % (3) $y[e'/x] = y$\\
+    % (4) TODO: Require specialization of subst. lemma in which ???\\
 \end{tabbing}
 
 \item[Case:] $Var_1$
@@ -59,83 +60,81 @@ By structural induction on the first derivation.
 \item[Case:] $Var_\Delta$
 \begin{tabbing}
     (1) $\cdot, \D, \xD \vdash x : \s$\\
-    (2) $\G', \D \vdash e' : \s$\\
-    (3) $\hasnolinearvars{\G'}$\\
-    (4) $x[e'/x] = e'$\\
-    (5) $\cdot, \G', \D \vdash e' : \s$\` by (2)\\
+    (2) $\G' \vdash e' : \s$\\
+    (3) $x[e'/x] = e'$\\
+    (4) $\cdot, \G' \vdash e' : \s$\` by (2)\\
 \end{tabbing}
 
 \item[Case:] $\Lambda I$
 \begin{tabbing}
     (1) $\G,\D, \xD \vdash \Lambda p.~e : \forall p.~\vp$\\
-    (2) $\G', \D' \vdash e' : \s$\\
-    (3) $\hasnolinearvars{\G'}$\\
-    (4) $\G, p, \D, \xD \vdash e : \vp$ \` by inversion on $\Lambda I$\\
-    (5) $\G, \G', \D, p \vdash e[e'/x]$ \` by induction hypothesis (2,3,4)\\
-    (6) $\G, \G', \D \vdash \Lambda p.~e[e'/x] : \forall p.~\vp$ \` by $\Lambda I$ \\
-    (7) $(\Lambda p.~e)[e'/x] = (\Lambda p.~e[e'/x])$ \` by def. of subst.\\
-    (8) $\G, \G', \D \vdash (\Lambda p.~e)[e'/x] : \forall p.~\vp$ \` by (5,6)\\
+    (2) $\G' \vdash e' : \s$\\
+    (3) $\G, p, \D, \xD \vdash e : \vp$ \` by inversion on $\Lambda I$\\
+    (4) $\G, \G', p \vdash e[e'/x]$ \` by induction hypothesis (2,3)\\
+    (5) $\G, \G' \vdash \Lambda p.~e[e'/x] : \forall p.~\vp$ \` by $\Lambda I$ \\
+    (6) $(\Lambda p.~e)[e'/x] = (\Lambda p.~e[e'/x])$ \` by def. of subst.\\
+    (7) $\G, \G' \vdash (\Lambda p.~e)[e'/x] : \forall p.~\vp$ \` by (5,6)\\
 \end{tabbing}
 
 \item[Case:] $\Lambda E$
 \begin{tabbing}
     (1) $\G, \D, \xD \vdash e~\pi : \vp$\\
-    (2) $\G', \D \vdash e' : \s$\\
-    (3) $\hasnolinearvars{\G'}$\\
-    (4) $\G, \D, \xD \vdash e : \forall p.~\vp$ \` by inversion on $\Lambda E$\\
-    (5) $\G, \D \vdash_{mult} \pi$ \` by inversion on $\Lambda E$\\
-    (6) $\G, \G', \D, \xD$ \` by induction hypothesis (2,3,4)\\
-    (7) $\G, \G', \D \vdash e[e'/x]~\pi : \vp$ by $\Lambda E$\\
-    (8) $(e~\pi)[e'/x] = (e[e'/x]~\pi)$ \` by def. of subst.\\
-    (7) $\G, \G', \D \vdash (e~\pi)[e'/x] : \vp$ by (6,7)\\
+    (2) $\G' \vdash e' : \s$\\
+    (3) $\G, \D, \xD \vdash e : \forall p.~\vp$ \` by inversion on $\Lambda E$\\
+    (4) $\G, \D \vdash_{mult} \pi$ \` by inversion on $\Lambda E$\\
+    (5) $\G, \G', \xD$ \` by induction hypothesis (2,3)\\
+    (6) $\G, \G' \vdash e[e'/x]~\pi : \vp$ by $\Lambda E$\\
+    (7) $(e~\pi)[e'/x] = (e[e'/x]~\pi)$ \` by def. of subst.\\
+    (6) $\G, \G' \vdash (e~\pi)[e'/x] : \vp$ by (5,6)\\
 \end{tabbing}
 
 \item[Case:] $\lambda I$
 \begin{tabbing}
     (1) $\G, \D, \xD \vdash \lambda \y[\pi][\s'].~e : \s' \to_\pi \vp$\\
-    (2) $\G', \D \vdash e' : \s$\\
-    (3) $\hasnolinearvars{\G'}$\\
-    (4) $\G, \D, \xD, \y[\pi][\s'] \vdash e : \vp$ \` by inversion on $\lambda I$\\
-    (5) $\G, \G', \D, \y[\pi][\s'] \vdash e[e'/x] : \vp$ \` by induction hypothesis (2,3,4)\\
-    (6) $\G, \G', \D \vdash \lambda \y[\pi][\s'].~e[e'/x] : \s' \to_\pi \vp$ \` by $\lambda I$\\
-    (7) $(\lambda \y[\pi][\s'].~e[e'/x]) = (\lambda \y[\pi][\s'].~e)[e'/x]$ \` by def. of subst.\\
-    (8) $\G, \G', \D \vdash \lambda (\y[\pi][\s'].~e)[e'/x] : \s' \to_\pi \vp$ \` by (5,6)\\
+    (2) $\G' \vdash e' : \s$\\
+    (3) $\G, \D, \xD, \y[\pi][\s'] \vdash e : \vp$ \` by inversion on $\lambda I$\\
+    (4) $\G, \G', \y[\pi][\s'] \vdash e[e'/x] : \vp$ \` by induction hypothesis (2,3)\\
+    (5) $\G, \G' \vdash \lambda \y[\pi][\s'].~e[e'/x] : \s' \to_\pi \vp$ \` by $\lambda I$\\
+    (6) $(\lambda \y[\pi][\s'].~e[e'/x]) = (\lambda \y[\pi][\s'].~e)[e'/x]$ \` by def. of subst.\\
+    (7) $\G, \G' \vdash \lambda (\y[\pi][\s'].~e)[e'/x] : \s' \to_\pi \vp$ \` by (4,5)\\
 \end{tabbing}
 
 \item[Case:] $\lambda E_{1,p}$
 \begin{tabbing}
     (1) $\G,\G'',\D,\xD \vdash e~e'' : \varphi$\\
-    (2) $\G',\D \vdash e' : \sigma$\\
-    (3) $\hasnolinearvars{\G'}$\\
+    (2) $\G' \vdash e' : \sigma$\\
     Subcase $\xD$ occurs in $e$\\
-    (4) $\G,\D,\xD \vdash e : \s' \to_{1,p} \vp$\\
-    (5) $\G'' \vdash e'' : \s'$\\
-    (6) $\G,\G',\D\vdash e[e'/x] : \s' \to_{1,p} \vp$ \` by i.h.\\
-    (7) $\G,\G',\D,\G'' \vdash e[e'/x]~e'' : \vp$\` by ($\lambda E_{1,p}$)\\
-    (8) $(e[e'/x]~e'')=(e~e'')[e'/x]$\` since $x$ does not occur in $e''$\\
+    (3) $\G,\D,\xD \vdash e : \s' \to_{1,p} \vp$\\
+    (4) $\G'' \vdash e'' : \s'$\\
+    (5) $\G,\G'\vdash e[e'/x] : \s' \to_{1,p} \vp$ \` by i.h.\\
+    (6) $\G,\G',\G'' \vdash e[e'/x]~e'' : \vp$\` by ($\lambda E_{1,p}$)\\
+    (7) $(e[e'/x]~e'')=(e~e'')[e'/x]$\` since $x$ does not occur in $e''$\\
     Subcase $\xD$ occurs in $e''$\\
-    (4) $\G \vdash e : \s' \to_{1,p} \vp$\\
-    (5) $\G'',\D,\xD \vdash e'' : \s'$\\
-    (6) $\G'',\D,\G' \vdash e''[e'/x] : \s'$\` by i.h.\\
-    (7) $\G'',\G,\G',\D \vdash (e~e''[e'/x]) : \vp$\` by ($\lambda E_{1,p}$)\\
-    (8) $e~e''[e'/x] = (e~e'')[e'/x]$\`since $x$ does not occur in $e$\\
+    (3) $\G \vdash e : \s' \to_{1,p} \vp$\\
+    (4) $\G'',\D,\xD \vdash e'' : \s'$\\
+    (5) $\G'',\G' \vdash e''[e'/x] : \s'$\` by i.h.\\
+    (6) $\G'',\G,\G' \vdash (e~e''[e'/x]) : \vp$\` by ($\lambda E_{1,p}$)\\
+    (7) $e~e''[e'/x] = (e~e'')[e'/x]$\`since $x$ does not occur in $e$\\
 
 \end{tabbing}
 
 \item[Case:] $\lambda E_\omega$
 \begin{tabbing}
     (1) $\G, \G'', \D, \xD \vdash e~e'' : \vp$\\
-    (2) $\G', \D \vdash e' : \s$\\
-    (3) $\hasnolinearvars{\G'}$\\
-    (4) $\hasnolinearvars{\G''}$\` by inv. on $\lambda E_\omega$\\
-    (5) $\D$ cannot occur in $e''$\\
-    (6) $\G, \D, \xD \vdash e : \s' \to_\omega \vp$\` by inv. on $\lambda E_\omega$\\
-    (7) $\G'' \vdash e'' : \s'$ \` by inv. on $\lambda E_\omega$\\
-    (8) $\G, \G', \D \vdash e[e'/x] : \s' \to_\omega \vp$ \` by induction hypothesis (2,3,6)\\
-    (9) $\G, \G', \G'', \D \vdash e[e'/x]~e'' : \vp$\` by $\lambda E_\omega$ (4,7,8)\\
-    (10) $e[e'/x]~e'' = (e~e'')[e'/x]$\` $x$ does not occur in $e''$ by (5)\\
+    (2) $\G' \vdash e' : \s$\\
+    (3) $\hasnolinearvars{\G''}$\` by inv. on $\lambda E_\omega$\\
+    (4) $\D$ cannot occur in $e''$\\
+    (5) $\G, \D, \xD \vdash e : \s' \to_\omega \vp$\` by inv. on $\lambda E_\omega$\\
+    (6) $\G'' \vdash e'' : \s'$ \` by inv. on $\lambda E_\omega$\\
+    (7) $\G, \G' \vdash e[e'/x] : \s' \to_\omega \vp$ \` by induction hypothesis (2,5)\\
+    (8) $\G, \G', \G'' \vdash e[e'/x]~e'' : \vp$\` by $\lambda E_\omega$ (3,6,7)\\
+    (9) $e[e'/x]~e'' = (e~e'')[e'/x]$\` $x$ does not occur in $e''$ by (4)\\
 \end{tabbing}
 
+% In Let, LetRec and Case, we still use the old lemma where the $e'$ is typed
+% with $\Delta$. I think to make this correct wrt to the new lemma, we'd need
+% $\Delta''$ instead (we can't get rid of it, bc the linear vars in the subst. are important).
+% But the proof's general idea is here. It might even be good enough.
 \item[Case:] $Let$
 \begin{tabbing}
     (1) $\G',\D \vdash e' : \s$\\
@@ -147,7 +146,7 @@ By structural induction on the first derivation.
     (6) $\hasnolinearvars{\G''}$\` by inversion on (let)\\
     (7) $\G',\D',\G'',\D \vdash e[e'/x] : \s'$\` by induction hypothesis (1,2,4)\\
     (8) $\G,\G',\G'',\D,\D' \vdash \llet{\y[\D,\D'][\s'] = e[e'/x]}{e''} : \vp$\` by (let) (5,6,7,2)\\
-    (9) $\llet{\y[\D,\D'][\s'] = e[e'/x]}{e''} = (\llet{\y[\D,\D'][\s'] = e}{e''})[e'/x]$\` since $x$ does not occur in $e''$\\
+    (9) $\llet{\y[\D,\D'][\s'] = e[e'/x]}{e''} = (\llet{\y[\D,\D'][\s'] = e}{e''})[e'/x]$\\\` since $x$ does not occur in $e''$\\
     Subcase $\xD$ occurs in $e''$\\
     (3) $\G, \G'', \D', \D, \xD \vdash \llet{\y[\D'][\s'] = e}{e''} : \vp$\\
     (4) $\G'',\D' \vdash e : \s'$\` by inversion on (let)\\
@@ -155,7 +154,7 @@ By structural induction on the first derivation.
     (6) $\hasnolinearvars{\G''}$\` by inversion on (let)\\
     (7) $\G,\G',\D',\y[\D'][\s'],\D \vdash e''[e'/x] : \vp$\` by i.h. (1,2,5)\\
     (8) $\G,\G',\G'',\D,\D' \vdash \llet{\y[\D'][\s'] = e}{e''[e'/x]} : \vp$\` by (let)\\
-    (9) $\llet{\y[\D'][\s'] = e}{e''[e'/x]} = (\llet{\y[\D'][\s'] = e}{e''})[e'/x]$\` since $x$ does not occur in $e$\\
+    (9) $\llet{\y[\D'][\s'] = e}{e''[e'/x]} = (\llet{\y[\D'][\s'] = e}{e''})[e'/x]$\\\` since $x$ does not occur in $e$\\
 \end{tabbing}
 
 \item[Case:] LetRec
@@ -198,7 +197,7 @@ By structural induction on the first derivation.
     (5) $e[e'/x] = e$\`since $x$ does not occur in $e$\\
     (6) $\hasnolinearvars{\G}$\\
     (7) $\ov{\G'',\D,\xD,\z[\D_i|\D'][\s'] \vdash_{alt} \rho_i \to e'_i :_{\D_i|\D'_s} \s' \Rightarrow \vp}$\\
-    (8) $\ov{\G'',\G',\D,\z[\D_i|\D'][\s'] \vdash_{alt} \rho_i \to e'_i[e'/x] :_{\D_i|\D'_s} \s' \Rightarrow \vp}$\`by sublemma $\Delta$-subst in case alts\\
+    (8) $\ov{\G'',\G',\D,\z[\D_i|\D'][\s'] \vdash_{alt} \rho_i \to e'_i[e'/x] :_{\D_i|\D'_s} \s' \Rightarrow \vp}$\\\`by sublemma $\Delta$-subst in case alts\\
     (9) $\G,\G',\G'',\D,\D' \vdash \ccase{e}{\z[\ov{\D}|\D_s][\s'] \{\ov{\rho_i \to e'_i[e'/x]}\}} : \vp$\\
 \end{tabbing}
 
@@ -209,8 +208,8 @@ By structural induction on the first derivation.
 
 \begin{sublemma}[Substitution of $\Delta$-bound variables on case alternatives
     preserves typing]
-\emph{If $\G, \D, \xD \vdash_{alt} \rho \to e :_\Delta \s' \Rightarrow \vp$ and $\G' \vdash e' : \s$ and
-    $\hasnolinearvars{\G'}$ then $\G, \G', \D \vdash_{alt} \rho \to e[e'/x] :_\Delta \s' \Rightarrow \vp$}
+\emph{If $\G, \D, \xD \vdash_{alt} \rho \to e :_\Delta \s' \Rightarrow \vp$ and
+    $\G' \vdash e' : \s$ and $\Delta \neq \emptyset$ then $\G, \G' \vdash_{alt} \rho \to e[e'/x] :_\Delta \s' \Rightarrow \vp$}
 \end{sublemma}
 
 \begin{proof}
@@ -220,23 +219,21 @@ By structural induction on the $alt$ judgment.
 \item[Case:] $Alt$
 \begin{tabbing}
     (1) $\G, \D, \xD \vdash_{alt} K~\ov{y{:}_\pi\s''} \to e :_\Delta \s' \Rightarrow \vp$\\
-    (2) $\G', \D \vdash e' : \s$\\
-    (3) $\hasnolinearvars{\G'}$\\
-    (4) $\G, \D, \xD, \ov{\y[\pi][\s'']} \vdash e : \vp$ \` by inversion on $Alt$\\
-    (5) $K : \ov{\s'' \to_\pi} \s' \in \G$\` by inversion on $Alt$\\
-    (6) $\D = \ov{\y[\pi][\s'']}\!\upharpoonright_1$\` by inversion on $Alt$\\
-    (7) $\G,\G',\D,\ov{\y[\pi][\s'']} \vdash e[e'/x] : \vp$\` by $\Delta$-subst. lemma (2,3,4)\\
-    (8) $\G, \G', \D \vdash_{alt} K~\ov{\y[\pi][\s'']} \to e[e'/x] :_\Delta \s' \Rightarrow \vp$\` by $Alt$ (5,6,7)\\
+    (2) $\G' \vdash e' : \s$\\
+    (3) $\G, \D, \xD, \ov{\y[\pi][\s'']} \vdash e : \vp$ \` by inversion on $Alt$\\
+    (4) $K : \ov{\s'' \to_\pi} \s' \in \G$\` by inversion on $Alt$\\
+    (5) $\D = \ov{\y[\pi][\s'']}\!\upharpoonright_1$\` by inversion on $Alt$\\
+    (6) $\G,\G',\ov{\y[\pi][\s'']} \vdash e[e'/x] : \vp$\` by $\Delta$-subst. lemma (2,3)\\
+    (7) $\G, \G' \vdash_{alt} K~\ov{\y[\pi][\s'']} \to e[e'/x] :_\Delta \s' \Rightarrow \vp$\` by $Alt$ (4,5,6)\\
 \end{tabbing}
 
 \item[Case:] $Alt_\_$
 \begin{tabbing}
     (1) $\G, \D, \xD \vdash_{alt} \_ \to e :_{\Delta_s} \s' \Rightarrow \vp$\\
-    (2) $\G', \D \vdash e' : \s$\\
-    (3) $\hasnolinearvars{\G'}$\\
-    (4) $\G, \D_s, \D, \xD \vdash e : \vp$\` by inversion on $Alt_\_$\\
-    (5) $\G, \G', \D_s, \D \vdash e[e'/x] : \vp$ \` by $\Delta$-subst. lemma (2,3,4)\\
-    (6) $\G ,\G', \D \vdash_{alt} \_ \to e[e'/x] :_{\Delta_s} \s' \Rightarrow \vp$\\
+    (2) $\G' \vdash e' : \s$\\
+    (3) $\G, \D_s, \D, \xD \vdash e : \vp$\` by inversion on $Alt_\_$\\
+    (4) $\G, \G', \D_s \vdash e[e'/x] : \vp$ \` by $\Delta$-subst. lemma (2,3)\\
+    (5) $\G ,\G' \vdash_{alt} \_ \to e[e'/x] :_{\Delta_s} \s' \Rightarrow \vp$\\
 \end{tabbing}
 \end{description}
 

@@ -68,6 +68,7 @@ By structural induction on the small-step reduction.
 % If \G, \ov{\D}, \ov{\xD} \vdash e' : \vp and \ov{\G', \D \vdash e : \s} then
 % \G, \ov{\D}, \ov{\G'} \vdash e'\ov{[e/x]}
 
+% TODO: Subcases when \Delta == {}
 \item[Case:]
     $\ccase{K~\overline{e}}{z{:}_{\overline{\Delta}}\sigma}~\{\dots,K~\overline{x{:}_\pi\sigma}\to e'\}\ \longrightarrow e'\overline{[e/x]}[K~\overline{e}/z]$
 \begin{tabbing}
@@ -80,16 +81,19 @@ By structural induction on the small-step reduction.
 (7) $\Gamma',z{:}_{\Delta_i}\sigma,\overline{x{:}_\pi\sigma} \vdash e' : \varphi$ \` by inversion on (alt) \\
 (8) $\ov{\G_i, \D'_i \vdash e : \sigma}, \G = \ov{\G_i}, \D = \ov{\D'_i}$ \` by the constructor application lemma (2,3,5) \\
 Subcase $z$ does not occur in $e'$\\
-(0) TODO: A bit weird i'm considering this case, since by induction weakening is already well defined?\\
 (9) $(\Gamma', z{:}_{\Delta_i}\sigma)\ov{[\D'_i/x]}, \Gamma, \D \vdash e'\overline{[e/x]} : \varphi$ \` by lin. and unr. subst. lemma (7,8) \\
 (10) $\Gamma', z{:}_{\Delta}\sigma, \Gamma', \D \vdash e'\overline{[e/x]} : \varphi$ \` and $\ov{x}$ cannot exist in $\G'$ \\
 (11) $\Gamma', \Gamma, \D \vdash e'\overline{[e/x]} : \varphi$ \` by $Weaken_\D$\\
 (12) $\Gamma, \Gamma', \Delta \vdash e'\ov{[e/x]}[K~\ov{e}/z]$ \` by $z$ does not occur in $e'$ (6,2) \\
 Subcase $z$ occurs in $e'$\\
-    % (0) Quase consigo aplicar $\Delta$-subst. sobre
-    % $\G',\ov{\x[\pi][\s]!\upharpoonright_1},\z[\ov{\x[\pi][\s]!\upharpoonright_1}][\s]$,
-    % mas depois o $K~\ov{e}$ não é tipificado com o mesmo $\Delta$ env...
-(9) This is impossible to prove because it's wrong. See notes on notebook.
+Subcase $\Delta_i = \cdot$\\
+    (8) All $\ov{x}$ are unrestricted\\
+    (9) Subst. of $\x[\cdot][\s]$ is equivalent to subst. of $\xo$\\
+    (10) $\Gamma, \Gamma', \Delta \vdash e'\ov{[e/x]}$ \` by unr. subst. lemma (8)\\
+    (11) $\G,\G',\D \vdash e'\ov{[e/x]}[K~\ov{e}/z] : \vp$\` by unr. subst. lemma (9)\\
+Subcase $\Delta_i \neq \cdot$\\
+    (9) $\Gamma, \Gamma', \ov{\x!\upharpoonright_1}, \Delta \vdash e'\ov{[e/x]}$ \` by unr. subst. lemma\\
+    (10) $\G,\G',\D \vdash e'\ov{[e/x]}[K~\ov{e}/z] : \vp$\` by $\Delta$-subst. lemma\\
 \end{tabbing}
 
 \item[Case:]
