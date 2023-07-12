@@ -7,8 +7,8 @@ module Syntax where
 import Data.Functor.Foldable.TH (makeBaseFunctor)
 import Data.Map (Map)
 import qualified Data.Map as M
--- import Data.IntMap (IntMap)
--- import qualified Data.IntMap as IM
+import Data.Set (Set)
+import qualified Data.Set as S
 
 {-
 Notes
@@ -69,7 +69,8 @@ data Mult = Many       -- ω
 pattern MV :: Name -> Mult
 pattern MV name = MV' (MkMultVar name)
 
-type UsageEnv = Map Name Mult
+-- | A UsageEnv (Δ) is a set of variables that need to be used linearly
+type UsageEnv = Set Name
 
 data IdBinding = LambdaBound Mult
                | DeltaBound UsageEnv -- ^ Let and case bound variables. Case variables do have many usage environments, but in practice (when they occur in a context), they have just one usage environment
@@ -166,3 +167,11 @@ idBad :: CoreExpr
 idBad =
  Lam (Id (Datatype "A" [MV "p"]) (LambdaBound (MV "p")) "x") $
    Var (Id (Datatype "A" [MV "p"]) (LambdaBound (MV "p")) "y")
+
+varUE :: Var -> Maybe UsageEnv
+varUE (Id _ (DeltaBound ue) _) = Just ue
+varUE _ = Nothing
+
+varId :: Var -> Id
+varId (Id' i) = i
+varId _ = error "varId: Not an Id"

@@ -21,7 +21,9 @@ executable linear-core-prototype
     main-is:          Main.hs
     other-modules:    Syntax, Typechecker
     other-extensions: UnicodeSyntax
-    build-depends:    base >=4.17.1.0, containers, recursion-schemes, bytestring, mtl, text, vector
+    build-depends:    base >=4.17.1.0, containers, recursion-schemes,
+                      bytestring, mtl, text, vector,
+                      base-unicode-symbols, containers-unicode-symbols
     hs-source-dirs:   app
     default-language: GHC2021
 
