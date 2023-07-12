@@ -190,6 +190,7 @@ By structural induction on the first derivation.
 \end{tabbing}
 
 \item[Case:] $Case$
+% TODO: Fix typesetting bugs
 \begin{tabbing}
     (1) $\G, \G'', \D_s, \x \vdash \ccase{e}{\z[\ov{\D},\D_s][\s']}~\{\ov{\rho_i
     \to e''_i}\} : \varphi$\\
@@ -199,7 +200,6 @@ By structural induction on the first derivation.
     (4) $\G, \D_s, \x \vdash e : \s'$ \` by inversion on (case)\\
     (5) $\G[\G'_1/x],\G',\D_s \vdash e[e'/x] : \s'$ \` by i.h.\\
     (6) $\ov{\G'',\z[\D_i|\D_s,\x][\s'] \vdash_{alt} \rho_i \to e''_i :_{\D_i|\D_s,\x} \s' \Rightarrow \varphi}$ \` by inversion on (case)\\
-    TODO: Using the subst. lemma will duplicate resources $\G'$\\
     (7) $\G''[\G'_1/x]=\G''$\` the $\D$-vars used to type $\ov{e''_i}$ can't contain $x$\\
                             \` because $x$ does not occur in $\ov{e''_i}$\\
     (8) $\ov{\G'',\z[\D_i|\D_s,\G'_1][\s'] \vdash_{alt} \rho_i \to e''_i :_{\D_i|\D_s,\G'_1} \s' \Rightarrow \varphi}$ \` by \\
