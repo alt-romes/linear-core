@@ -66,4 +66,5 @@ then $\ov{\Gamma, \Delta_i \vdash e_i : \sigma_i}$
 \input{language/proofs/optimizations/CaseOfKnownConstructor}
 \input{language/proofs/optimizations/LetFloating}
 \input{language/proofs/optimizations/CaseOfCase}
+\input{language/proofs/optimizations/BinderSwap}
 
