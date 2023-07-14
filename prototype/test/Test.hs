@@ -40,7 +40,7 @@ main = defaultMain $
 
     assertBool "Typechecking id2" $ typechecks id2
 
-    assertBool "Shouldn't typecheck idBad" $ (typechecks idBad)
+    assertBool "Shouldn't typecheck idBad" $ not (typechecks idBad)
 
   where
     typechecks = isJust . runClosedCheck . typecheck

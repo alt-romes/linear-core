@@ -4,6 +4,7 @@
    DeriveTraversable, TemplateHaskell, TypeFamilies #-}
 module Linear.Core.Syntax where
 
+import Debug.Trace
 import Data.Functor.Foldable.TH (makeBaseFunctor)
 import Data.Map (Map)
 import qualified Data.Map as M
@@ -148,6 +149,10 @@ erase (Term _ e _) = e
 varUE :: Var -> Maybe UsageEnv
 varUE (Id _ (DeltaBound ue) _) = Just ue
 varUE _ = Nothing
+
+setUE :: Var -> UsageEnv -> Var
+setUE (Id t (DeltaBound _ue_old) n) ue = Id t (DeltaBound ue) n
+setUE x _ = trace "Setting the UE of a non DeltaBound var" x
 
 varId :: Var -> Id
 varId (Id' i) = i

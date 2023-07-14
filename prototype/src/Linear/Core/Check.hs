@@ -42,6 +42,9 @@ runClosedCheck check = do
 projectCtxLinear :: Ctx -> [Name]
 projectCtxLinear = M.keys . M.filter (\case Id _ (LambdaBound One) _ -> True; _ -> False)
 
+projectLinear :: [Var] -> [Var]
+projectLinear = filter (\case Id _ (LambdaBound One) _ -> True; _ -> False)
+
 -- | Use a variable from the environment.
 -- If it is a linearly-bound variable it will be consumed (and no longer available in the context)
 use :: Name -> Check Var
@@ -201,7 +204,7 @@ typecheck = cata \case
       _ -> empty
 
   -- we don't consider type-lets in our system (yet?)
-  LetF (NonRec (MultVar n) _) e' -> fail "We don't yet support type-level lets"
+  LetF (NonRec (MultVar _) _) _ -> fail "We don't yet support type-level lets"
 
   --- * (Let)
   LetF (NonRec id@(Id var_ty var_bndr _) e) e' -> do
@@ -280,7 +283,60 @@ typecheck = cata \case
 
     return (Let (Rec (zip bndr_vars es)) e', t')
 
-  CaseF _ var alts -> undefined
+  -- TODO: Should the var have just one DeltaEnv, like (1) Δ_s, and then when
+  -- passed to the alternatives is changed, (2) or all of them (costly?), or
+  -- (3) None, so that it is more principled in the sense "the u.e. for
+  -- case-vars are computed during the case? For now, we do opt 1, seems good since the env. of $e$ is the hardest to compute, the others are trivial?
+  CaseF scrut var alts -> do
+    {-
+
+
+          Γ;Δ/Δ'⊦e:σ   {Γ;Δ',z/Δ''⊦ρ -> e':σ => φ} 
+          ----------------------------------------
+            Γ;Δ/Δ''⊦case e of z { {ρ -> e'} } :φ
+
+
+    -}
+
+    _Δ  <- gets projectCtxLinear
+    (scrut, t) <- scrut
+    _Γ_Δ' <- get
+
+    let _Δ'  = projectCtxLinear _Γ_Δ'
+        _Δ_s = S.fromList (_Δ \\ _Δ')
+
+    unless (t == varType (varId var)) $
+      fail "The type of the case var doesn't match the type of the scrutinee"
+
+    unless (Just _Δ_s == varUE var) $
+      fail "The usage env. of the case var doesn't match the one required to typecheck the scrutinee"
+
+    -- IMPORTANT:TODO: Must handle EmptyCase!!!
+
+    alts_res <- forM alts $ \alt -> do
+      -- The same environment is used to typecheck all alternatives
+      put _Γ_Δ'
+      case alt of
+        (Alt DEFAULT [] ei) -> do
+          (ei, t') <- extend var (typecheck ei) -- the var has the usage env. of the scrutinee
+          _Δ'' <- gets projectCtxLinear
+          return (Alt DEFAULT [] ei, t', _Δ' \\ _Δ'')
+        (Alt DEFAULT _bs _ei) -> fail "How can the default alternative bind any variables? We could likely enforce this in the types"
+        (Alt con bs ei) -> do
+          (ei, t') <- extend (var `setUE` S.fromList (map varName (projectLinear bs))) $ extends bs (typecheck ei)
+          _Δ'' <- gets projectCtxLinear
+          return (Alt con bs ei, t', _Δ' \\ _Δ'')
+
+    let (alts', tys, usedVars) = unzip3 alts_res
+
+    unless (allEq tys) $
+      fail "The type of every alternative must be the same"
+
+    unless (allEq usedVars) $
+      fail "The linear variables used by every alternative must be the same"
+
+    return (Case scrut var alts', head tys)
+
   MultF One  -> return (Mult One, Datatype "Mult" [])
   MultF Many -> return (Mult Many, Datatype "Mult" [])
   MultF (MV m) -> do
