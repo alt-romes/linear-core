@@ -4,7 +4,7 @@
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE LambdaCase #-}
 {-# OPTIONS_GHC -Wno-name-shadowing #-}
-module Typechecker where
+module Linear.Core.Check where
 
 import Data.Maybe
 import qualified Data.Map as M
@@ -13,10 +13,11 @@ import Data.Functor.Foldable
 import Control.Monad.State
 import Control.Monad.Except
 import Control.Monad
-import Syntax
 import Control.Applicative (empty)
 import Data.Set (Set)
 import qualified Data.Set as S
+
+import Linear.Core.Syntax
 
 {-
 Notes:

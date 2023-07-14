@@ -13,17 +13,30 @@ build-type:         Simple
 extra-doc-files:    CHANGELOG.md
 -- extra-source-files:
 
-common warnings
+common common
     ghc-options: -Wall
-
-executable linear-core-prototype
-    import:           warnings
-    main-is:          Main.hs
-    other-modules:    Syntax, Typechecker
     other-extensions: UnicodeSyntax
+    default-language: GHC2021
+
+library
+    import:           common
+    exposed-modules:  Linear.Core.Syntax, Linear.Core.Check
     build-depends:    base >=4.17.1.0, containers, recursion-schemes,
                       bytestring, mtl, text, vector,
                       base-unicode-symbols, containers-unicode-symbols
+    hs-source-dirs:   src
+
+executable linear-core-prototype
+    import:           common
+    main-is:          Main.hs
+    build-depends:    base, linear-core-prototype, containers, recursion-schemes, bytestring, mtl, text, vector
     hs-source-dirs:   app
-    default-language: GHC2021
+
+test-suite linear-core-test
+  import: common
+  type: exitcode-stdio-1.0
+  hs-source-dirs: test
+  main-is: Test.hs
+  build-depends: base, linear-core-prototype, tasty, tasty-hunit, containers, recursion-schemes, bytestring, mtl, text, vector
+
 

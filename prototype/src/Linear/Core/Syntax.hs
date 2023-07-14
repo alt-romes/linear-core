@@ -2,7 +2,7 @@
 {-# LANGUAGE PatternSynonyms #-}
 {-# LANGUAGE DeriveFunctor, DeriveFoldable,
    DeriveTraversable, TemplateHaskell, TypeFamilies #-}
-module Syntax where
+module Linear.Core.Syntax where
 
 import Data.Functor.Foldable.TH (makeBaseFunctor)
 import Data.Map (Map)
@@ -144,29 +144,6 @@ type CoreExpr = Expr Var
 
 erase :: CoreTerm -> CoreExpr
 erase (Term _ e _) = e
-
--- Let's try writing a simple program like id @A
--- id :: ∀ p. (A p) ->p (A p)
--- id = /\p. \x:_pA -> x:A
-idProg :: CoreTerm
-idProg
-  = Term
-    (M.singleton "MkA" (Id (Scheme "kp" (Datatype "A" [MV "p"])) (DeltaBound mempty) "MkA"))
-    (Lam (MultVar "p") $
-       Lam (Id (Datatype "A" [MV "p"]) (LambdaBound (MV "p")) "x") $
-         Var (Id (Datatype "A" [MV "p"]) (LambdaBound (MV "p")) "x")
-    )
-    (Scheme "p" (FunTy (Datatype "A" [MV "p"]) (MV "p") (Datatype "A" [MV "p"])))
-
-id2 :: CoreExpr
-id2 =
- Lam (Id (Datatype "A" [MV "p"]) (LambdaBound (MV "p")) "x") $
-   Var (Id (Datatype "A" [MV "p"]) (LambdaBound (MV "p")) "x")
-
-idBad :: CoreExpr
-idBad =
- Lam (Id (Datatype "A" [MV "p"]) (LambdaBound (MV "p")) "x") $
-   Var (Id (Datatype "A" [MV "p"]) (LambdaBound (MV "p")) "y")
 
 varUE :: Var -> Maybe UsageEnv
 varUE (Id _ (DeltaBound ue) _) = Just ue
