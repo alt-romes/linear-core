@@ -12,6 +12,7 @@ category:           Language
 build-type:         Simple
 extra-doc-files:    CHANGELOG.md
 -- extra-source-files:
+tested-with:        GHC == 9.4.4
 
 common common
     ghc-options: -Wall
@@ -21,9 +22,8 @@ common common
 library
     import:           common
     exposed-modules:  Linear.Core.Syntax, Linear.Core.Check
-    build-depends:    base >=4.17.1.0, containers, recursion-schemes,
-                      bytestring, mtl, text, vector,
-                      base-unicode-symbols, containers-unicode-symbols
+    build-depends:    base >=4.17, containers, recursion-schemes,
+                      bytestring, mtl, text, vector
     hs-source-dirs:   src
 
 executable linear-core-prototype

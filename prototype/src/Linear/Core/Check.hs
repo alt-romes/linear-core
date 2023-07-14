@@ -6,9 +6,9 @@
 {-# OPTIONS_GHC -Wno-name-shadowing #-}
 module Linear.Core.Check where
 
+import Data.List ((\\))
 import Data.Maybe
 import qualified Data.Map as M
-import Data.List.Unicode ((∖))
 import Data.Functor.Foldable
 import Control.Monad.State
 import Control.Monad.Except
@@ -135,7 +135,7 @@ dryRunUsed check = do
     _Δ' <- gets projectCtxLinear
 
     -- The linear variables used to run the 'Check' action
-    let usedΔ = S.fromList (_Δ ∖ _Δ')
+    let usedΔ = S.fromList (_Δ \\ _Δ')
 
     -- Restore the context
     put _Γ_Δ
