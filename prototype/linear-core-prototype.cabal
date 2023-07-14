@@ -24,11 +24,12 @@ common common
                    mtl >= 2.2 && < 2.3,
                    recursion-schemes >= 5.2 && < 5.3,
                    text >= 2.0 && < 2.1,
-                   vector >= 0.13 && < 0.14
+                   vector >= 0.13 && < 0.14,
+                   megaparsec >= 9.4 && < 9.5
 
 library
     import:           common
-    exposed-modules:  Linear.Core.Syntax, Linear.Core.Check
+    exposed-modules:  Linear.Core.Syntax, Linear.Core.Parser, Linear.Core.Check
     hs-source-dirs:   src
 
 executable linear-core-prototype
