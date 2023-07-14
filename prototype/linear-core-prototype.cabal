@@ -1,8 +1,8 @@
 cabal-version:      3.4
 name:               linear-core-prototype
 version:            0.1.0.0
--- synopsis:
--- description:
+synopsis:           Linear core validates optimizations wrt linearity
+description:        An implementation of linear core with optimizations that preserve types
 license:            BSD-3-Clause
 license-file:       LICENSE
 author:             Rodrigo Mesquita
@@ -18,18 +18,23 @@ common common
     ghc-options: -Wall
     other-extensions: UnicodeSyntax
     default-language: GHC2021
+    build-depends: base >= 4.17 && < 5,
+                   bytestring >= 0.11 && < 0.12,
+                   containers >= 0.6 && < 0.7,
+                   mtl >= 2.2 && < 2.3,
+                   recursion-schemes >= 5.2 && < 5.3,
+                   text >= 2.0 && < 2.1,
+                   vector >= 0.13 && < 0.14
 
 library
     import:           common
     exposed-modules:  Linear.Core.Syntax, Linear.Core.Check
-    build-depends:    base >=4.17, containers, recursion-schemes,
-                      bytestring, mtl, text, vector
     hs-source-dirs:   src
 
 executable linear-core-prototype
     import:           common
     main-is:          Main.hs
-    build-depends:    base, linear-core-prototype, containers, recursion-schemes, bytestring, mtl, text, vector
+    build-depends:    linear-core-prototype
     hs-source-dirs:   app
 
 test-suite linear-core-test
@@ -37,6 +42,6 @@ test-suite linear-core-test
   type: exitcode-stdio-1.0
   hs-source-dirs: test
   main-is: Test.hs
-  build-depends: base, linear-core-prototype, tasty, tasty-hunit, containers, recursion-schemes, bytestring, mtl, text, vector
+  build-depends: linear-core-prototype, tasty < 1.5, tasty-hunit < 0.11
 
 
