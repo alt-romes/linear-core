@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE BlockArguments #-}
 {-# OPTIONS -Wno-orphans #-} -- HasHints Void
 module Linear.Core.Parser where
 
@@ -19,6 +20,7 @@ import Control.Monad.Except
 
 import Text.Megaparsec
 import Text.Megaparsec.Char
+import Control.Monad.Combinators.Expr
 import qualified Text.Megaparsec.Char.Lexer as L
 
 import Linear.Core.Syntax
@@ -51,39 +53,51 @@ parens = between (symbol "(") (symbol ")")
 keyword :: Text -> Parser Text
 keyword kwd = lexeme (string kwd <* notFollowedBy alphaNumChar)
 
--- doesn't check if identifier is in reserved words
+reservedWords :: [Text]
+reservedWords = ["case", "let", "rec", "of", "in"]
+
 identifier :: Parser Text
-identifier = T.pack <$> ((:) <$> letterChar <*> many alphaNumChar <?> "identifier")
+identifier = (lexeme . try) (p >>= check) <?> "identifier"
+  where
+    p       = T.pack <$> ((:) <$> letterChar <*> many alphaNumChar)
+    check x = if x `elem` reservedWords
+                then fail $ T.unpack $ "keyword \"" <> x <> "\" cannot be an identifier"
+                else return x
+
 
 --------------------------------------------------------------------------------
 ----- Parsing ------------------------------------------------------------------
 --------------------------------------------------------------------------------
 
 exprP :: Parser (Expr Name)
-exprP = choice
-  [ parens exprP
-  , caseP
-  , letrecP
-  , letP
-  , lamP
-  , multExprP
-  , appP
-  , atomP
-  ]
+exprP = makeExprParser termP table <?> "expression" where
+      table = [ [InfixL (App <$ symbol "")]
+              ]
+
+termP :: Parser (Expr Name)
+termP = choice
+    [ parens exprP
+    , caseP
+    , letrecP
+    , letP
+    , lamP
+    , multExprP
+    , atomP
+    ] <?> "term"
 
 caseP :: Parser (Expr Name)
-caseP = do
+caseP = (do
   scrut <- keyword "case" *> exprP <* keyword "of"
   casebinder <- identifier
   alternatives <- symbol "{" *> many altP <* symbol "}"
-  return (Case scrut casebinder alternatives)
+  return (Case scrut casebinder alternatives)) <?> "case"
 
 altP :: Parser (Alt Name)
-altP = do
+altP = (do
   con <- altconP
   vars <- many identifier
-  body <- symbol "->" *> exprP <* (symbol ";" <|> try (symbol "}"))
-  return (Alt con vars body)
+  body <- symbol "->" *> exprP <* (symbol ";" <|> lookAhead (symbol "}"))
+  return (Alt con vars body)) <?> "alternative"
 
 altconP :: Parser (AltCon Name)
 altconP = choice
@@ -92,43 +106,40 @@ altconP = choice
   ]
 
 letrecP :: Parser (Expr Name)
-letrecP = do
+letrecP = (do
   -- no type annotations for now!
   -- i think we'll need bidirectional typing during inference to ensure we get
   -- the linearity annotations right (or at least some unification with the annotations).
   _      <- keyword "let" *> keyword "rec"
   binders <- many ((,) <$> identifier <*> (symbol "=" *> exprP <* eol))
   let_body    <-  keyword "in" *> exprP
-  return (Let (Rec binders) let_body)
+  return (Let (Rec binders) let_body)) <?> "let rec"
 
 letP :: Parser (Expr Name)
-letP = do
+letP = (do
   binder      <- keyword "let" *> identifier 
   binder_body <-       symbol "=" *> exprP
   let_body    <-  keyword "in" *> exprP
-  return (Let (NonRec binder binder_body) let_body)
+  return (Let (NonRec binder binder_body) let_body)) <?> "let"
 
 lamP :: Parser (Expr Name)
-lamP = Lam <$> (symbol "\\" *> identifier <* symbol "->") <*> exprP
+lamP = Lam <$> ((symbol "\\" <|> symbol "λ") *> identifier <* symbol "->") <*> exprP <?> "lambda"
 
 multExprP :: Parser (Expr Name)
-multExprP = Mult <$> (symbol "@" *> multP)
+multExprP = Mult <$> (symbol "@" *> multP) <?> "mult expr"
 
 multP :: Parser Mult
 multP = choice
   [ One  <$ symbol "1"
   , Many <$ symbol "ω"
   , MV   <$> identifier
-  ]
-
-appP :: Parser (Expr Name)
-appP = App <$> exprP <*> exprP
+  ] <?> "mult"
 
 atomP :: Parser (Expr Name)
-atomP = Var <$> identifier
+atomP = Var <$> identifier <?> "atom"
 
 moduleP :: Parser (Module Name)
-moduleP = Module <$> many exprP
+moduleP = Module <$> many exprP <?> "module"
 
 --------------------------------------------------------------------------------
 ----- Entry points to the parser -----------------------------------------------
