@@ -25,7 +25,9 @@ common common
                    recursion-schemes >= 5.2 && < 5.3,
                    text >= 2.0 && < 2.1,
                    vector >= 0.13 && < 0.14,
-                   megaparsec >= 9.4 && < 9.5
+                   megaparsec >= 9.4 && < 9.5,
+                   diagnose >= 2.0.0 && < 2.1,
+                   prettyprinter >= 1.7 && < 2,
 
 library
     import:           common

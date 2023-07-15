@@ -1,10 +1,17 @@
 {-# LANGUAGE DuplicateRecordFields #-}
+{-# LANGUAGE UndecidableInstances #-}
+{-# LANGUAGE TypeFamilyDependencies #-}
 {-# LANGUAGE PatternSynonyms #-}
+{-# LANGUAGE TypeFamilies, DataKinds #-}
 {-# LANGUAGE DeriveFunctor, DeriveFoldable,
    DeriveTraversable, TemplateHaskell, TypeFamilies #-}
 module Linear.Core.Syntax where
 
+import Data.Kind
+import GHC.TypeLits
 import Debug.Trace
+import Data.Text (Text)
+import qualified Data.Text as T
 import Data.Functor.Foldable.TH (makeBaseFunctor)
 import Data.Map (Map)
 import qualified Data.Map as M
@@ -36,7 +43,9 @@ types, instead of by type synonyms
 we still need to figure out when exactly it should be run
 -}
 
-type Name = String
+type Name = Text
+
+newtype Module b = Module [Expr b]
 
 data Id = MkId { varType   :: Ty
                , idBinding :: IdBinding
@@ -77,6 +86,7 @@ data IdBinding = LambdaBound Mult
                | DeltaBound UsageEnv -- ^ Let and case bound variables. Case variables do have many usage environments, but in practice (when they occur in a context), they have just one usage environment
                deriving (Eq, Show)
 
+
 data Ty
   -- = TyMultVar Name
   = Datatype Name [Mult]    -- K π_1 ... π_n
@@ -85,7 +95,7 @@ data Ty
   deriving (Eq,Show)
 
 data Expr b
-  = Var b -- Only term variables, type variables at the term level would be (Ty (TyMultVar "p"))
+  = Var b -- Only term variables and constructors. Type variables at the term level would be (Ty (TyMultVar "p"))
   | Lam b (Expr b)
   | App (Expr b) (Expr b)
   | Let (Bind b) (Expr b)
@@ -98,26 +108,33 @@ data Bind b = NonRec b (Expr b)
             deriving (Eq,Show)
 
 data Alt b
-    = Alt AltCon [b] (Expr b)
+    = Alt (AltCon b) [b] (Expr b)
     deriving (Eq,Show)
 
-data AltCon
-  = DataAlt DataCon   --  ^ A plain data constructor: @case e of { Foo x -> ... }@.
-                      -- Invariant: the 'DataCon' is always from a @data@ type, and never from a @newtype@
+data AltCon b
+  = DataAlt (DataCon b)
+  --  ^ A plain data constructor: @case e of { Foo x -> ... }@.
 
-  | DEFAULT           -- ^ Trivial alternative: @case e of { _ -> ... }@
-  deriving (Eq,Show)
+  | DEFAULT
+  -- ^ Trivial alternative: @case e of { _ -> ... }@
+
+deriving instance Eq b => Eq (AltCon b)
+deriving instance Show b => Show (AltCon b)
+
 
 -- | All constructors are of the form K~\overline{x{:}_\pi\sigma}
 -- We record the information about the multiplicity and type of each argument
 -- to the constructor. No existentials, but a datatype may be parametrized by
 -- mult. variables.
-data DataCon
-  = DataCon { dcName :: Name
-            , dcUnivMultVars :: [Mult]
-            , dcArgTys :: [Scaled Ty]
-            }
-            deriving (Eq,Show)
+data DataCon b where
+  DataCon :: Name        -- ^ dcName
+          -> [Mult]      -- ^ dcUnivMultVars
+          -> [Scaled Ty] -- ^ dcArgTys, with corresponding multiplicity
+          -> DataCon Id  -- ^ Elaborated DataCon
+  DataConName :: Name -> DataCon Name -- ^ Parsed DataCon
+  
+deriving instance Eq b => Eq (DataCon b)
+deriving instance Show b => Show (DataCon b)
 
 data Scaled a = Scaled !Mult a
   deriving (Eq,Show)
@@ -157,3 +174,4 @@ setUE x _ = trace "Setting the UE of a non DeltaBound var" x
 varId :: Var -> Id
 varId (Id' i) = i
 varId _ = error "varId: Not an Id"
+

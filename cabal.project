@@ -1,0 +1,4 @@
+packages: prototype/
+
+package diagnose
+    flags: +megaparsec-compat
