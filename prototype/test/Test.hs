@@ -4,6 +4,7 @@ import Data.Maybe
 import Data.Either
 import qualified Data.Map as M
 import Error.Diagnose
+import qualified Data.Text as T
 
 import Data.Text (Text)
 import Test.Tasty
@@ -52,6 +53,23 @@ parsingTests = testCase "Parsing some things" $ do
   assertBool "Parse T10" $ parses "λx -> case testytest (not (not x)) of z { K a b c d -> tuple a b c d }"
   where
     parses = isRight . parseExpr
+
+prettyTests :: TestTree
+prettyTests = testCase "Pretty printing and round tripping" $ do
+
+  assertBool "Roundtrips K @1" $ roundtrips "K @1"
+  assertBool "Roundtrips K @ω" $ roundtrips "K @ω"
+  assertBool "Roundtrips λp -> K @p" $ roundtrips "λp -> K @p"
+  assertBool "Roundtrips T4" $ roundtrips "λx -> case x of z {Nothing -> True; Just y -> y}"
+  assertBool "Roundtrips T5" $ roundtrips "λp -> λx -> x"
+  assertBool "Roundtrips T6" $ roundtrips "λx -> case x of z { Nothing -> True; Just y -> not (and y z) }"
+  assertBool "Roundtrips T7" $ roundtrips "(λz -> (λx -> z x) (λy -> y))"
+  assertBool "Roundtrips T9" $ roundtrips "λx -> case not x of z { True -> False; False -> True }"
+  assertBool "Roundtrips T10" $ roundtrips "λx -> case testytest (not (not x)) of z { K a b c d -> tuple a b c d }"
+  where
+    roundtrips x = case parseExpr x of
+                     Right exp -> T.pack (show (pretty exp)) == x
+                     Left _ -> error "don't test this here"
 
 typecheckingTests :: TestTree
 typecheckingTests = testCase "Typecheck some things" $ do

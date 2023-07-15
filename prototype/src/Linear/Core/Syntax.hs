@@ -1,22 +1,32 @@
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE UndecidableInstances #-}
 {-# LANGUAGE TypeFamilyDependencies #-}
 {-# LANGUAGE PatternSynonyms #-}
-{-# LANGUAGE TypeFamilies, DataKinds #-}
-{-# LANGUAGE DeriveFunctor, DeriveFoldable,
-   DeriveTraversable, TemplateHaskell, TypeFamilies #-}
-module Linear.Core.Syntax where
+{-# LANGUAGE MonoLocalBinds, DataKinds #-}
+{-# LANGUAGE DeriveTraversable, TemplateHaskell #-}
+module Linear.Core.Syntax
+  ( module Linear.Core.Syntax
 
-import Data.Kind
-import GHC.TypeLits
+  -- * Re-exports
+  , pretty
+  )
+  where
+
+-- import Data.Kind
+-- import GHC.TypeLits
 import Debug.Trace
 import Data.Text (Text)
-import qualified Data.Text as T
+-- import qualified Data.Text as T
 import Data.Functor.Foldable.TH (makeBaseFunctor)
 import Data.Map (Map)
-import qualified Data.Map as M
+-- import qualified Data.Map as M
 import Data.Set (Set)
-import qualified Data.Set as S
+-- import qualified Data.Set as S
+
+import Data.Functor.Foldable
+import Prettyprinter
 
 {-
 Notes
@@ -144,7 +154,7 @@ type Ctx = Map Name Var
 -- * Lambda bound vars (x :_π σ)
 -- * Let bound vars    (x :_Δ σ)
 -- * Case bound vars   (x :_\ov{Δ} σ)
--- * Mult vars         (π)
+-- * Mult vars         (@π)
 -- * DataCons          (K:σ), which are really just a special sort of top-level closed-Δ let-bound vars (K :_\ov{\cdot} σ)
 
 -- | Γ |- e : τ
@@ -174,4 +184,49 @@ setUE x _ = trace "Setting the UE of a non DeltaBound var" x
 varId :: Var -> Id
 varId (Id' i) = i
 varId _ = error "varId: Not an Id"
+
+
+--------------------------------------------------------------------------------
+----- Pretty-printing ----------------------------------------------------------
+--------------------------------------------------------------------------------
+
+instance Pretty Var where
+  pretty var = pretty (varName var)
+
+instance Pretty Mult where
+  pretty One = "1"
+  pretty Many = "ω"
+  pretty (MV m) = pretty m
+
+instance Pretty b => Pretty (Bind b) where
+  pretty (NonRec b e) = pretty b <+> "=" <+> pretty e
+  pretty (Rec ls) = vsep $ map (\(b,e) -> pretty b <+> "=" <+> pretty e) ls
+
+instance Pretty (DataCon b) where
+  pretty (DataCon name _ _) = pretty name
+  pretty (DataConName name) = pretty name
+
+instance Pretty b => Pretty (AltCon b) where
+  pretty DEFAULT = "_"
+  pretty (DataAlt dc) = pretty dc
+
+instance Pretty b => Pretty (Alt b) where
+  pretty (Alt k bnds e) = pretty k <+> hsep (map pretty bnds) <+> "->" <+> pretty e <+> ";" -- the last Alt will also have a ; but fine
+
+instance Pretty b => Pretty (Expr b) where
+  pretty = cata go where
+    go = \case
+      VarF var -> pretty var
+      LamF b e -> "λ" <> pretty b <+> "->" <+> e
+      AppF e1 e2 -> e1 <+> e2
+      LetF bnd e -> "let" <+> align (pretty bnd) <+> "in" <+> e
+      CaseF scrt bnd alts -> "case" <+> scrt <+> "of" <+> pretty bnd <+> braces (vsep (map pretty alts))
+      MultF m -> "@" <> pretty m -- can it only occur in argument position?
+
+instance Pretty Ty where
+  pretty = cata go where
+    go (DatatypeF name mult) = pretty name <+> hsep (map pretty mult)
+    go (FunTyF t1 One t2)      = t1 <+> "-o" <+> t2
+    go (FunTyF t1 m t2)      = t1 <+> "->" <> pretty m <+> t2
+    go (SchemeF n ty)        = "∀" <> pretty n <> "." <+> ty
 
