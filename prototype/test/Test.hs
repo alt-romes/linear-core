@@ -14,6 +14,7 @@ import Prettyprinter
 import Linear.Core.Syntax
 import Linear.Core.Parser
 import Linear.Core.Check
+import Linear.Core.Infer
 
 -- Let's try writing a simple program like id @A
 -- id :: ∀ p. (A p) ->p (A p)
@@ -86,6 +87,32 @@ prettyTests = testCase "Pretty printing and round tripping" $ do
                      Right expr -> T.pack (show (Prettyprinter.group $ pretty expr)) == x
                      Left _ -> error "don't test this here"
 
+inferTests :: TestTree
+inferTests = testCase "Bidirectional type checking/inference tests" $ do
+
+  assertBool "Infer 0" $ infers "(λk -> λign -> k) :: A -o B -o A"
+
+  assertBool "Infer 1" $ not $ infers "λx -> let y = K x x :: KT 1 ω in y" -- its a lambda, shouldn't work.
+
+  assertBool "Infer 2" $ infers "(λf -> λx -> let y = f x x :: KT 1 ω in y) :: (A -o A -o KT 1 ω) -> A -> KT 1 ω"
+  
+  assertBool "Infer 3" $ infers "(λf -> λx -> let y = f x x :: KT 1 ω in y) :: (A -o A -o KT 1 ω) -> A -o KT 1 ω" -- wrong linearity, this shouldn't typecheck.
+
+  -- assertBool "Infer 3" $ not (typechecks idBad)
+
+  where
+    infers = isRight . runClosedInfer . synth . fromRight (error "in infers") . parseExpr
+    infer = fromRight (error "in infer 1") . runClosedInfer . synth . fromRight (error "in infer 2") . parseExpr
+
+-- For interactive use
+_infer :: Text -> IO ()
+_infer t = do
+  case parseExpr t of
+    Left b -> print b
+    Right p -> case runClosedInfer $ synth p of
+                 Left b -> print b
+                 Right x -> print (pretty x)
+
 typecheckingTests :: TestTree
 typecheckingTests = testCase "Typecheck some things" $ do
 
@@ -102,6 +129,7 @@ main :: IO ()
 main = defaultMain $ testGroup "Tests"
   [ parsingTests
   , prettyTests
+  , inferTests
   , typecheckingTests
   ]
 

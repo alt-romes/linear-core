@@ -150,6 +150,20 @@ dryRunUsed check = do
 
     return (a, usedΔ)
 
+-- | We type-check elaborated Core expressions after every optimising
+-- transformation.
+--
+-- We can also run this function on the output of the type-inference that
+-- transforms Expr Name -> CoreExpr to validate it.
+--
+-- The function performs some additional checks regarding validity of binders
+-- and linearity and such, in contrast to 'infer' -- and can also work on the
+-- expressions constructed by infer (i.e. fully annotated expressions)
+--
+-- More importantly, infer doesn't check linearity directly! For the purpose of
+-- the prototype it isn't necessary (no good error reporting). It infers a type
+-- with the linearity given by the annotations, then calls this function on its
+-- result :D.
 typecheck :: CoreExpr -> Check (CoreExpr, Ty)
 typecheck = cata \case
 

@@ -83,6 +83,7 @@ typeP = makeExprParser typeTermP table <?> "type" where
   typeTermP = choice
     [ datatypeP
     , schemeP
+    , parens typeP
     ]
   datatypeP = Datatype <$> dataIdentifier <*> many multP
   schemeP   = Scheme <$> ((symbol "∀" <|> symbol "forall") *> identifier) <*> (symbol "." *> typeP)
@@ -173,8 +174,8 @@ moduleP = Module <$> many exprP <?> "module"
 parseExpr :: MonadError (Diagnostic Text) m
           => Text -> m (Expr Name)
 parseExpr str
-  = case parse exprP "<parseExpr>" str of
-      Left e -> throwError (errorDiagnosticFromBundle Nothing "Parse error on input" Nothing e)
+  = case parse exprP "<interactive>" str of
+      Left e -> throwError (addFile (errorDiagnosticFromBundle Nothing "Parse error on input" Nothing e) "<interactive>" (T.unpack str))
       Right e -> return e
 
 parseModule :: MonadIO m
@@ -184,8 +185,7 @@ parseModule path = do
   cts <- liftIO $ T.readFile path
   case parse moduleP path cts of
     Left e -> do
-      let diag  = errorDiagnosticFromBundle Nothing ("Parse error on input" :: String) Nothing e
-          -- diag' = addFile
+      let diag  = addFile (errorDiagnosticFromBundle Nothing ("Parse error on input" :: String) Nothing e) path (T.unpack cts)
       printDiagnostic stderr True False 4 defaultStyle diag
       liftIO $ exitWith (ExitFailure 1)
     Right m -> return m
