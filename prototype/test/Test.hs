@@ -59,6 +59,9 @@ parsingTests = testCase "Parsing some things" $ do
   assertBool "Parse ann2" $ parses "(λp -> λx -> x) :: forall p. A %p -> A"
   parse "(λp -> λx -> x) :: ∀ p. A %p -> A" @?= Ann (Lam "p" (Lam "x" (Var "x"))) (Scheme "p" (FunTy (Datatype "A" []) (MV "p") (Datatype "A" [])))
 
+  assertBool "Parse ann3" $ parses "(λx -> let y = K x x :: KT 1 ω in y)"
+  parse "(λx -> let y = K x x :: KT 1 ω in y)" @?= Lam "x" (Let (NonRec "y" (Ann (App (App (Var "K") (Var "x")) (Var "x")) (Datatype "KT" [One,Many]))) (Var "y"))
+
   where
     parses = isRight . parseExpr
     parse :: Text -> Expr Name
@@ -77,6 +80,7 @@ prettyTests = testCase "Pretty printing and round tripping" $ do
   assertBool "Roundtrips T7" $ roundtrips "λz -> (λx -> z x) (λy -> y)"
   assertBool "Roundtrips T9" $ roundtrips "λx -> case not x of z { True -> False; False -> True; }"
   assertBool "Roundtrips T10" $ roundtrips "λx -> case testytest not (not x) of z { K a b c d -> tuple a b c d; }"
+  assertBool "Roundtrips T11" $ roundtrips "λx -> let y = K x x :: KT 1 ω in y"
   where
     roundtrips x = case parseExpr x of
                      Right expr -> T.pack (show (Prettyprinter.group $ pretty expr)) == x

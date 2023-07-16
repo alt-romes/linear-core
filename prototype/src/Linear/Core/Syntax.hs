@@ -241,7 +241,9 @@ instance Pretty b => Pretty (Expr b) where
       LetF bnd (_,e) -> "let" <+> align (pretty bnd) <+> "in" <+> e
       CaseF (_,scrt) bnd alts -> "case" <+> scrt <+> "of" <+> pretty bnd <+> braces ("" <+> align (vsep (map pretty alts)) <+> "")
       MultF m -> "@" <> pretty m -- can it only occur in argument position?
-      AnnF (_,e) t -> parens (e <+> "::" <+> pretty t)
+
+      AnnF (Lam _ _,e) t -> parens e <+> "::" <+> pretty t
+      AnnF (_,e) t -> e <+> "::" <+> pretty t
 
 instance Pretty Ty where
   pretty = cata go where

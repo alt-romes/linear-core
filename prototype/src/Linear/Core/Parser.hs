@@ -135,7 +135,7 @@ letrecP = (do
   -- no type annotations for now!
   -- i think we'll need bidirectional typing during inference to ensure we get
   -- the linearity annotations right (or at least some unification with the annotations).
-  _      <- keyword "let" *> keyword "rec"
+  _      <- try (keyword "let" *> keyword "rec")
   binders <- many ((,) <$> identifier <*> (symbol "=" *> exprP <* eol))
   let_body    <-  keyword "in" *> exprP
   return (Let (Rec binders) let_body)) <?> "let rec"
