@@ -98,20 +98,27 @@ data IdBinding = LambdaBound Mult
 
 
 data Ty
-  -- = TyMultVar Name
+  -- = TyMultVar Name          -- p -- no, multiplicities can't exist on their own, only attached to functions (or datatype univ. vars)
   = Datatype Name [Mult]    -- K π_1 ... π_n
   | FunTy   Ty   Mult Ty    -- φ ->π σ
   | Scheme  Name Ty         -- ∀p. φ
   deriving (Eq,Show)
 
-data Expr b
-  = Var b -- Only term variables and constructors. Type variables at the term level would be (Ty (TyMultVar "p"))
-  | Lam b (Expr b)
-  | App (Expr b) (Expr b)
-  | Let (Bind b) (Expr b)
-  | Case (Expr b) b [Alt b]
-  | Mult Mult
-  deriving (Eq,Show)
+data Expr b where
+  Var  :: b -> Expr b -- Only term variables and constructors. Type variables at the term level would be (Ty (TyMultVar "p"))
+  Lam  :: b -> Expr b -> Expr b
+  App  :: Expr b -> Expr b -> Expr b
+  Let  :: Bind b -> Expr b -> Expr b
+  Case :: Expr b -> b -> [Alt b] -> Expr b
+  Mult :: Mult -> Expr b
+
+  -- For bidirectional type-checking the Core language.
+  -- After type-checking we have Expr Id, and this
+  -- construct doesn't occur in the elaborated program.
+  Ann  :: Expr b -> Ty -> Expr b
+
+deriving instance Eq b => Eq (Expr b)
+deriving instance Show b => Show (Expr b)
 
 data Bind b = NonRec b (Expr b)
             | Rec [(b, Expr b)]
@@ -211,22 +218,37 @@ instance Pretty b => Pretty (AltCon b) where
   pretty (DataAlt dc) = pretty dc
 
 instance Pretty b => Pretty (Alt b) where
-  pretty (Alt k bnds e) = pretty k <+> hsep (map pretty bnds) <+> "->" <+> pretty e <+> ";" -- the last Alt will also have a ; but fine
+  pretty (Alt k [] e) = pretty k <+> "->" <+> pretty e <> ";" -- the last Alt will also have a ; but fine
+  pretty (Alt k bnds e) = pretty k <+> hsep (map pretty bnds) <+> "->" <+> pretty e <> ";" -- the last Alt will also have a ; but fine
 
 instance Pretty b => Pretty (Expr b) where
-  pretty = cata go where
+  pretty = para go where
     go = \case
       VarF var -> pretty var
-      LamF b e -> "λ" <> pretty b <+> "->" <+> e
-      AppF e1 e2 -> e1 <+> e2
-      LetF bnd e -> "let" <+> align (pretty bnd) <+> "in" <+> e
-      CaseF scrt bnd alts -> "case" <+> scrt <+> "of" <+> pretty bnd <+> braces (vsep (map pretty alts))
+      LamF b (_,e) -> "λ" <> pretty b <+> "->" <+> e
+
+      -- Applications
+      AppF (Var _, e1) (Var _, e2)  -> e1 <+> e2
+      AppF (Var _,e1)  (Mult _, e2) -> e1 <+> e2
+      AppF (Var _,e1)  (_, e2)      -> e1 <+> parens e2
+      AppF (App _ _, e1) (Var _, e2)  -> e1 <+> e2
+      AppF (App _ _,e1)  (Mult _, e2) -> e1 <+> e2
+      AppF (App _ _,e1)  (_, e2)      -> e1 <+> parens e2
+      AppF (_,e1) (Var _, e2)       -> parens e1 <+> e2
+      AppF (_,e1) (Mult _, e2)      -> parens e1 <+> e2
+      AppF (_,e1) (_, e2)           -> parens e1 <+> parens e2
+
+      LetF bnd (_,e) -> "let" <+> align (pretty bnd) <+> "in" <+> e
+      CaseF (_,scrt) bnd alts -> "case" <+> scrt <+> "of" <+> pretty bnd <+> braces ("" <+> align (vsep (map pretty alts)) <+> "")
       MultF m -> "@" <> pretty m -- can it only occur in argument position?
+      AnnF (_,e) t -> parens (e <+> "::" <+> pretty t)
 
 instance Pretty Ty where
   pretty = cata go where
+    go (DatatypeF name [])   = pretty name
     go (DatatypeF name mult) = pretty name <+> hsep (map pretty mult)
-    go (FunTyF t1 One t2)      = t1 <+> "-o" <+> t2
-    go (FunTyF t1 m t2)      = t1 <+> "->" <> pretty m <+> t2
+    go (FunTyF t1 One t2)    = t1 <+> "-o" <+> t2
+    go (FunTyF t1 Many t2)   = t1 <+> "->" <+> t2
+    go (FunTyF t1 m t2)      = t1 <+> "%" <> pretty m <+> "->" <+> t2
     go (SchemeF n ty)        = "∀" <> pretty n <> "." <+> ty
 

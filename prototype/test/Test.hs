@@ -1,6 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# OPTIONS_GHC -Wno-orphans #-}
-import Data.Maybe
 import Data.Either
 import qualified Data.Map as M
 import Error.Diagnose
@@ -9,6 +8,8 @@ import qualified Data.Text as T
 import Data.Text (Text)
 import Test.Tasty
 import Test.Tasty.HUnit
+
+import Prettyprinter
 
 import Linear.Core.Syntax
 import Linear.Core.Parser
@@ -51,24 +52,34 @@ parsingTests = testCase "Parsing some things" $ do
   assertBool "No Parse T8" $ not $ parses "(z -> (λx -> z x) (λy -> y))"
   assertBool "Parse T9" $ parses "λx -> case not x of z { True -> False; False -> True }"
   assertBool "Parse T10" $ parses "λx -> case testytest (not (not x)) of z { K a b c d -> tuple a b c d }"
+
+  assertBool "Parse ann1" $ parses "λp -> λx -> x :: forall p. A %p -> A"
+  parse "λp -> λx -> x :: forall p. A %p -> A" @?= Lam "p" (Lam "x" (Ann (Var "x") (Scheme "p" (FunTy (Datatype "A" []) (MV "p") (Datatype "A" [])))))
+
+  assertBool "Parse ann2" $ parses "(λp -> λx -> x) :: forall p. A %p -> A"
+  parse "(λp -> λx -> x) :: ∀ p. A %p -> A" @?= Ann (Lam "p" (Lam "x" (Var "x"))) (Scheme "p" (FunTy (Datatype "A" []) (MV "p") (Datatype "A" [])))
+
   where
     parses = isRight . parseExpr
+    parse :: Text -> Expr Name
+    parse = fromRight (error "no parse") . parseExpr
 
 prettyTests :: TestTree
 prettyTests = testCase "Pretty printing and round tripping" $ do
 
+  -- These aren't "true" roundtrips, but are good enough.
   assertBool "Roundtrips K @1" $ roundtrips "K @1"
   assertBool "Roundtrips K @ω" $ roundtrips "K @ω"
   assertBool "Roundtrips λp -> K @p" $ roundtrips "λp -> K @p"
-  assertBool "Roundtrips T4" $ roundtrips "λx -> case x of z {Nothing -> True; Just y -> y}"
+  assertBool "Roundtrips T4" $ roundtrips "λx -> case x of z { Nothing -> True; Just y -> y; }"
   assertBool "Roundtrips T5" $ roundtrips "λp -> λx -> x"
-  assertBool "Roundtrips T6" $ roundtrips "λx -> case x of z { Nothing -> True; Just y -> not (and y z) }"
-  assertBool "Roundtrips T7" $ roundtrips "(λz -> (λx -> z x) (λy -> y))"
-  assertBool "Roundtrips T9" $ roundtrips "λx -> case not x of z { True -> False; False -> True }"
-  assertBool "Roundtrips T10" $ roundtrips "λx -> case testytest (not (not x)) of z { K a b c d -> tuple a b c d }"
+  assertBool "Roundtrips T6" $ roundtrips "λx -> case x of z { Nothing -> True; Just y -> not (and y z); }"
+  assertBool "Roundtrips T7" $ roundtrips "λz -> (λx -> z x) (λy -> y)"
+  assertBool "Roundtrips T9" $ roundtrips "λx -> case not x of z { True -> False; False -> True; }"
+  assertBool "Roundtrips T10" $ roundtrips "λx -> case testytest not (not x) of z { K a b c d -> tuple a b c d; }"
   where
     roundtrips x = case parseExpr x of
-                     Right exp -> T.pack (show (pretty exp)) == x
+                     Right expr -> T.pack (show (Prettyprinter.group $ pretty expr)) == x
                      Left _ -> error "don't test this here"
 
 typecheckingTests :: TestTree
@@ -81,11 +92,12 @@ typecheckingTests = testCase "Typecheck some things" $ do
   assertBool "Shouldn't typecheck idBad" $ not (typechecks idBad)
 
   where
-    typechecks = isJust . runClosedCheck . typecheck
+    typechecks = isRight . runClosedCheck . typecheck
 
 main :: IO ()
 main = defaultMain $ testGroup "Tests"
   [ parsingTests
+  , prettyTests
   , typecheckingTests
   ]
 

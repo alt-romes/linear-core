@@ -56,6 +56,10 @@ keyword kwd = lexeme (string kwd <* notFollowedBy alphaNumChar)
 reservedWords :: [Text]
 reservedWords = ["case", "let", "rec", "of", "in"]
 
+-- | Starts with upper case
+dataIdentifier :: Parser Text
+dataIdentifier = (lexeme . try) (T.pack <$> ((:) <$> upperChar <*> many alphaNumChar)) <?> "data identifier"
+
 identifier :: Parser Text
 identifier = (lexeme . try) (p >>= check) <?> "identifier"
   where
@@ -69,10 +73,31 @@ identifier = (lexeme . try) (p >>= check) <?> "identifier"
 ----- Parsing ------------------------------------------------------------------
 --------------------------------------------------------------------------------
 
+typeP :: Parser Ty
+typeP = makeExprParser typeTermP table <?> "type" where
+  table = [ [ InfixR (flip FunTy <$> (symbol "%" *> multP <* symbol "->"))
+            , InfixR ((`FunTy` One) <$ symbol "-o")
+            , InfixR ((`FunTy` Many) <$ symbol "->")
+            ]
+          ]
+  typeTermP = choice
+    [ datatypeP
+    , schemeP
+    ]
+  datatypeP = Datatype <$> dataIdentifier <*> many multP
+  schemeP   = Scheme <$> ((symbol "∀" <|> symbol "forall") *> identifier) <*> (symbol "." *> typeP)
+
 exprP :: Parser (Expr Name)
-exprP = makeExprParser termP table <?> "expression" where
+exprP = withAnnP (makeExprParser termP table <?> "expression") where
       table = [ [InfixL (App <$ symbol "")]
               ]
+
+-- | Tries to parse a type annotation after on this expression
+withAnnP :: Parser (Expr Name) -> Parser (Expr Name)
+withAnnP expr = do
+  e <- expr
+  (Ann e <$> (symbol "::" *> typeP)) <|> return e
+
 
 termP :: Parser (Expr Name)
 termP = choice
@@ -102,7 +127,7 @@ altP = (do
 altconP :: Parser (AltCon Name)
 altconP = choice
   [ DEFAULT               <$ symbol "_"
-  , DataAlt . DataConName <$> identifier
+  , DataAlt . DataConName <$> dataIdentifier
   ]
 
 letrecP :: Parser (Expr Name)

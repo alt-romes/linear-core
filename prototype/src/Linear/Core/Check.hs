@@ -1,6 +1,4 @@
-{-# LANGUAGE ViewPatterns #-}
 {-# LANGUAGE BlockArguments #-}
-{-# LANGUAGE OverloadedRecordDot #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE LambdaCase #-}
@@ -13,10 +11,13 @@ import qualified Data.Map as M
 import Data.Functor.Foldable
 import Control.Monad.State
 import Control.Monad.Except
-import Control.Monad
-import Control.Applicative (empty)
-import Data.Set (Set)
+-- import Control.Monad
+import Control.Applicative
+-- import Data.Set (Set)
 import qualified Data.Set as S
+import Data.Text (Text)
+import qualified Data.Text as T
+-- import Error.Diagnose
 
 import Linear.Core.Syntax
 
@@ -31,12 +32,16 @@ Notes:
 types, so we don't need a type-level multiplicity variable
 -}
 
-type Check = StateT Ctx Maybe
+newtype Check a = Check {unCheck :: StateT Ctx (Except Text) a} -- romes:Todo: Except (Diagnostic Text)
+  deriving (Functor, Applicative, Monad, MonadState Ctx, MonadError Text, Alternative)
 
-runClosedCheck :: Check a -> Maybe a
-runClosedCheck check = do
-  (a,ctx) <- runStateT check mempty
-  unless (null $ projectCtxLinear ctx) (fail "Linear variables escaped")
+instance MonadFail Check where
+  fail txt = throwError (T.pack txt)
+
+runClosedCheck :: Check a -> Either Text a
+runClosedCheck check = runExcept do
+  (a,ctx) <- runStateT (unCheck check) mempty
+  unless (null $ projectCtxLinear ctx) (throwError "Linear variables escaped")
   return a
 
 -- TODO: Should project linear also return x{:}_p ?
@@ -84,7 +89,7 @@ extend var check = do
         -- Unr. vars don't escape their scope
         modify (M.delete name)
         return a
-      DeltaBound ue -> do
+      DeltaBound _ue -> do
         -- Is this true?: and <$> mapM wasConsumed (projectLinear ue) >>= assert
 
         -- Δ-vars don't escape their scope
@@ -100,7 +105,6 @@ extends (var:vars) check = extends vars $ extend var check
 -- | @substTy π n σ@ performs the substitution σ[π/n]
 substTy :: Mult -> Name -> Ty -> Ty
 substTy m name = \case
-  -- TyMultVar n' -> if n' == name then Mult m else TyMultVar n'
   Datatype n' mults -> Datatype n' (map (substMult m name) mults)
   FunTy   t1  m' t2 -> FunTy (substTy m name t1) (substMult m name m') (substTy m name t2)
   Scheme  n' t1 -> if n' == name then Scheme n' t1 else Scheme n' (substTy m name t1)
@@ -119,7 +123,7 @@ usesNoLinearVariables check = do
   a <- check
   after <- get
   when (prev /= after) $
-    fail "Linear variables were consumed more than once (likely an unrestricted function was applied to an argument that uses linear variables, thereby consuming them unrestrictedly)"
+    throwError "Linear variables were consumed more than once (likely an unrestricted function was applied to an argument that uses linear variables, thereby consuming them unrestrictedly)"
   return a
 
 -- | Runs a 'Check' action under some context, and restore the context after
@@ -205,7 +209,7 @@ typecheck = cata \case
       _ -> empty
 
   -- we don't consider type-lets in our system (yet?)
-  LetF (NonRec (MultVar _) _) _ -> fail "We don't yet support type-level lets"
+  LetF (NonRec (MultVar _) _) _ -> throwError "We don't yet support type-level lets"
 
   --- * (Let)
   LetF (NonRec id@(Id var_ty var_bndr _) e) e' -> do
@@ -229,10 +233,10 @@ typecheck = cata \case
     ((e, t), varΔ) <- dryRunUsed (typecheck e)
 
     unless (t == var_ty) $
-      fail "Type of binder doesn't match the type of the body of the binder"
+      throwError "Type of binder doesn't match the type of the body of the binder"
 
     unless (DeltaBound varΔ == var_bndr) $
-      fail "Usage env. of variable doesn't match linear variables used to type the body of its binder, binder is incorrectly annotated!"
+      throwError "Usage env. of variable doesn't match linear variables used to type the body of its binder, binder is incorrectly annotated!"
 
     (e', t') <- extend id e'
 
@@ -272,13 +276,13 @@ typecheck = cata \case
       return (e,t,d)
 
     unless (tys == map varType bndr_ids) $
-      fail "Expecting the types of the binders and their bodies to be the same"
+      throwError "Expecting the types of the binders and their bodies to be the same"
 
     unless (map DeltaBound ds == map idBinding bndr_ids) $
-      fail "Expecting the usage environments of all let-rec binders to be the same as their bodies"
+      throwError "Expecting the usage environments of all let-rec binders to be the same as their bodies"
 
     unless (allEq ds) $
-      fail "Expecting all let-rec binder bodies to use the same linear variables"
+      throwError "Expecting all let-rec binder bodies to use the same linear variables"
 
     (e', t') <- extends bndr_vars e'
 
@@ -307,10 +311,10 @@ typecheck = cata \case
         _Δ_s = S.fromList (_Δ \\ _Δ')
 
     unless (t == varType (varId var)) $
-      fail "The type of the case var doesn't match the type of the scrutinee"
+      throwError "The type of the case var doesn't match the type of the scrutinee"
 
     unless (Just _Δ_s == varUE var) $
-      fail "The usage env. of the case var doesn't match the one required to typecheck the scrutinee"
+      throwError "The usage env. of the case var doesn't match the one required to typecheck the scrutinee"
 
     -- IMPORTANT:TODO: Must handle EmptyCase!!!
 
@@ -322,7 +326,7 @@ typecheck = cata \case
           (ei, t') <- extend var (typecheck ei) -- the var has the usage env. of the scrutinee
           _Δ'' <- gets projectCtxLinear
           return (Alt DEFAULT [] ei, t', _Δ' \\ _Δ'')
-        (Alt DEFAULT _bs _ei) -> fail "How can the default alternative bind any variables? We could likely enforce this in the types"
+        (Alt DEFAULT _bs _ei) -> throwError "How can the default alternative bind any variables? We could likely enforce this in the types"
         (Alt con bs ei) -> do
           (ei, t') <- extend (var `setUE` S.fromList (map varName (projectLinear bs))) $ extends bs (typecheck ei)
           _Δ'' <- gets projectCtxLinear
@@ -331,10 +335,10 @@ typecheck = cata \case
     let (alts', tys, usedVars) = unzip3 alts_res
 
     unless (allEq tys) $
-      fail "The type of every alternative must be the same"
+      throwError "The type of every alternative must be the same"
 
     unless (allEq usedVars) $
-      fail "The linear variables used by every alternative must be the same"
+      throwError "The linear variables used by every alternative must be the same"
 
     return (Case scrut var alts', head tys)
 
@@ -344,11 +348,14 @@ typecheck = cata \case
     Just _ <- gets (M.lookup m)
     return (Mult (MV m), Datatype "Mult" [])
 
+  AnnF _ _ -> throwError "Annotated terms shouldn't occur in the elaborated Linear Core program"
+
 exprTy :: CoreExpr -> Ty
 exprTy = cata undefined
 
 checkEqTy :: Ty -> Ty -> Check ()
-checkEqTy t1 t2 = if t1 == t2 then pure () else fail $ "Expecting " ++ show t1 ++ " and " ++ show t2 ++ " to match."
+checkEqTy t1 t2 = if t1 == t2 then pure ()
+                              else throwError $ T.pack $ "Expecting " ++ show t1 ++ " and " ++ show t2 ++ " to match."
 
 allEq :: Eq a => [a] -> Bool
 allEq = allEq' Nothing where

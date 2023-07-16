@@ -32,7 +32,7 @@ common common
 
 library
     import:           common
-    exposed-modules:  Linear.Core.Syntax, Linear.Core.Parser, Linear.Core.Check
+    exposed-modules:  Linear.Core.Syntax, Linear.Core.Parser, Linear.Core.Check, Linear.Core.Infer
     hs-source-dirs:   src
 
 executable linear-core-prototype
