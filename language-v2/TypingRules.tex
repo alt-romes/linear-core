@@ -1,0 +1,185 @@
+% We don't need explicit weaking and contract: contexts without context are always split, contexts without weaking must be empty in the var rule.
+\newcommand{\TypeVarOmega}{
+    \infer*[right=($Var_\omega$)]
+    {\,}
+    {\judg[\G,\xo][\cdot][\delta][\cdot]{x}{\s}}
+}
+
+\newcommand{\TypeLinearVar}{
+    \infer*[right=($Var_1$)]
+    {\,}
+    {\judg[\G][\xl][\delta][\cdot]{x}{\s}}
+}
+
+\newcommand{\TypeVarDelta}{
+    \infer*[right=($Var_{\D,\irr{\D'}}$)]
+    {\,}
+    {\judg[\G][\D][\d,\xD][\D']{x}{\s}}
+}
+
+% TODO: Split and join! Figure it out precisely
+
+\newcommand{\TypeMultLamIntro}{
+    \infer*[right=($\Lambda I$)]
+    {\judg[\G,p]{e}{\s} \and p\notin\Gamma}
+    {\judg{\Lambda p.~e}{\forall p.~\s}}
+}
+
+\newcommand{\TypeMultLamElim}{
+    \infer*[right=($\Lambda E$)]
+    {\judg{e}{\forall p.~\s} \and \Gamma\vdash_{mult}\pi}
+    {\judg{e~\pi}{\s[\pi/p]}}
+}
+
+\newcommand{\TypeLamIntroL}{
+    \infer*[right=($\lambda I_1$)]
+    {\judg[\G][\D,\xl]{e}{\vp} \and x\notin\Delta}
+    {\judg{\lambda \xl.~e}{\s\to_{1}\vp}}
+}
+
+\newcommand{\TypeLamIntroW}{
+    \infer*[right=($\lambda I_\omega$)]
+    {\judg[\G,\xo]{e}{\vp} \and x\notin\Delta}
+    {\judg{\lambda \xl.~e}{\s\to_{\omega}\vp}}
+}
+
+\newcommand{\TypeLamElimL}{
+    \infer*[right=($\lambda E_1$)]
+    {\judg[\G][\D_1][\d][\D_3]{e}{\s\to_{1}\vp} \and \judg[\G][\D_2][\d'][\D_4]{e'}{\s}}
+    {\splitjudg{e~e'}{\vp}}
+}
+
+\newcommand{\TypeLamElimW}{
+% TODO: It's not entirely obvious whether we should split \delta and give some to the RHS
+% Any \delta occurring in e' must have an empty usage environment and can be
+% used unrestrictedly, so it could perhaps make more sense to move the variable from \delta to \Gamma
+    \infer*[right=($\lambda E_\omega$)]
+    {\judg{e}{\s\to_{\omega}\vp} \and \judg[\G][\cdot][\cdot][\cdot]{e'}{\s}}
+    {\judg{e~e'}{\vp}}
+}
+
+\newcommand{\TypeLet}{
+    \infer*[right=($Let$)]
+    {\judg[\G][\D_1][\d][\D_3]{e}{\s} \and \judg[\G][\D_1,\D_2][\d,\d',\xDD{\D_1}{\D_3}{\s}][\D_3,\D_4]{e'}{\vp}}
+    {\splitjudg{\llet{\x[\D_1,\irr{\D_3}] = e}{e'}}{\vp}}
+}
+
+
+\newcommand{\TypeLetRec}{
+    \infer*[right=($Let$)]
+    {\ov{\judg[\G][\D_1][\d,\ov{\xDD{\D_1}{\D_3}{\s}}][\D_3]{e}{\s}} \and \judg[\G][\D_1,\D_2][\d,\d',\ov{\xDD{\D_1}{\D_3}{\s}}][\D_3,\D_4]{e'}{\vp}}
+    {\splitjudg{\lletrec{\ov{\x[\D_1,\irr{\D_3}]} = e}{e'}}{\vp}}
+}
+
+\newcommand{\TypeCaseWHNF}{
+    \mprset{flushleft}
+    \infer[(CaseWHNF)]
+    {\textrm{e is in \emph{WHNF}} \\ \judg[\G][\D_1][\d][\D_3]{e}{\s}
+    \and \ov{\judg[\G][\D_1,\D_2][\d,\d',\zDD{\D_1}{\D_3}{\s}][\D_3,\D_4]{\rho\to e'}{\s \Longrightarrow \vp}[alt][\D_1,\irr{\D_3}]}}
+    {\splitjudg{\ccase{e}{\zD~\{\ov{\rho \to e'}\}}}{\vp}}
+}
+
+\newcommand{\TypeCaseNotWHNF}{
+    \mprset{flushleft}
+    \infer[(CaseNotWHNF)]
+    {\textrm{e is definitely not in \emph{WHNF}} \\
+    \judg[\G][\D_1][\d][\D_3]{e}{\s}
+    \and \ov{\judg[\G][\D_2][\irr{\d},\d', z{:}_{\irr{\D_1,\D_3}}\s][\D_1,\D_3,\D_4]{\rho\to e'}{\s \Longrightarrow \vp}[alt][\irr{\D_1,\D_3}]}}
+    {\splitjudg{\ccase{e}{\zD~\{\ov{\rho \to e'}\}}}{\vp}}
+    % TODO: Add that [d1] entails moving all delta usages to [delta] usages in all vars i d1
+}
+
+\newcommand{\TypeCaseVar}{
+    \mprset{flushleft}
+    \infer[(CaseVar)]
+    {\textrm{x is a \emph{var}} \\ \judg[\G][\D_1][\d][\D_3]{x}{\s}
+    \and \ov{\judg[\G][\D_2,\xl][\d',\zDD{x}{\cdot}{\s}][\D_4]{\rho\to e'}{\s \Longrightarrow \vp}[alt][x]}}
+    {\splitjudg{\ccase{e}{\zD~\{\ov{\rho \to e'}\}}}{\vp}}
+    % TODO: Explain that \delta becomes irrelevant since all its variables were
+    % consumed. Perhaps there's a case to be made about pseudo-unrestricted
+    % delta vars being moved here.
+}
+
+\newcommand{\TypeAltN}{
+    \mprset{flushleft}
+    \infer[(Alt)]
+    {\judg[\G]{...}}
+    {\judg[\G][\D_1][\d][\D_2]{K~\ov{\xl,\xo}\to e}{\s \Longrightarrow \vp}[alt][\D_3,\irr{\D_4}]}
+}
+
+\begin{figure}[h]
+\begin{framed}
+\small
+% TODO: Consider moving the Variable cases to the middle or last place?
+\[
+\begin{array}{c}
+    \judgment{\judg{e}{\s}}
+\\[1em]
+    \TypeVarOmega
+\qquad
+    \TypeLinearVar
+\\[1em]
+    \TypeVarDelta
+% TODO: Somewhere here we need at least the split
+\\[1em]
+    \TypeMultLamIntro
+\qquad
+    \TypeMultLamElim
+\\[1em]
+    \TypeLamIntroL
+\qquad
+    \TypeLamIntroW
+\\[1em]
+    \TypeLamElimL
+\\[1em]
+    \TypeLamElimW
+\\[1em]
+    \TypeLet
+\\[1em]
+    \TypeLetRec
+\\[1em]
+    \TypeCaseWHNF
+\\[1em]
+    \TypeCaseNotWHNF
+\\[1em]
+    \TypeCaseVar
+\\[2em]
+    \judgment{\Gamma \vdash_{alt} \rho \to e :_\Delta \sigma \Rightarrow \varphi}
+\\[1em]
+    \infer*[right=$(Alt)$]
+    { K:\overline{\sigma\to_\pi}~T~\overline{p}\in\Gamma \and \Gamma,
+  \overline{x{:}_\pi\sigma} \vdash e : \varphi
+   \and \Delta = \overline{x{:}_\pi\sigma}  \!\upharpoonright_1 }
+    {\Gamma \vdash_{alt} K~\overline{x{:}_\pi\sigma} \to e :_\D T~\overline{p} \Rightarrow \varphi}
+\\[1em]
+    \infer*[right=$(Alt_\_)$]
+    { \Gamma, \Delta_s \vdash e : \varphi }
+    {\Gamma \vdash_{alt} \_ \to e :_{\D_s}  T~\overline{p} \Rightarrow \varphi}
+\\[1em]
+    \judgment{\Gamma \vdash_{mult} \pi}
+\\[1em]
+    \infer*[right=$(1)$]
+    { }
+    {\Gamma \vdash 1}
+\qquad
+    \infer*[right=$(\omega)$]
+    { }
+    {\Gamma \vdash \omega}
+\qquad
+    \infer*[right=$(\rho)$]
+    { }
+    {\Gamma, \rho \vdash \rho}
+\\[1em]
+\begin{array}{cc}
+\judgment{\Gamma \vdash decl : \Gamma'} & \judgment{\Gamma \vdash pgm : \sigma}\\
+\\[0.05em]
+\infer*[right=$(Data)$]{ }{\Gamma \vdash (\datatype{T~\overline{p}}{\overline{K:\sigma}}) : (\overline{K:\sigma}) } &
+\infer*[right=$(Pgm)$]{\overline{\Gamma \vdash decl:\Gamma_d} \and \Gamma = \Gamma_0,\overline{\Gamma_d}\\\\ \Gamma~\mathsf{is~consistent?} \and \Gamma \vdash e : \sigma}{\Gamma_0 \vdash \overline{decl}; e : \sigma}
+\end{array}
+\end{array}
+\]
+\end{framed}
+\caption{Linear Core* Typing Rules}
+\label{linear-core-typing-rules}
+\end{figure}
+

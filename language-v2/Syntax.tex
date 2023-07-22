@@ -1,0 +1,66 @@
+
+\begin{figure}[h]
+\begin{framed}
+\[
+\begin{array}{l}
+%
+\textbf{Types} \\
+\begin{array}{lcll}
+    \varphi,\sigma  & ::=  & T~\overline{p}         & \textrm{Datatype} \\
+                    & \mid & \varphi \to_\pi \sigma & \textrm{Function with multiplicity}\\
+                    & \mid & \forall p.~\varphi     & \textrm{Multiplicity universal scheme}\\
+                   % TODO: Eventually Coercions
+\end{array}\\\\
+%
+\textbf{Terms}\\
+\begin{array}{lcll}
+    u                & ::=  & x,y,z \mid K                                                     & \textrm{Variables and data constructors}\\
+    e                & ::=  & u                                                                & \textrm{Term atoms}\\
+                     & \mid & \Lambda p.~e~\mid~e~\pi                                          & \textrm{Multiplicity abstraction/application}\\
+                     & \mid & \lambda x{:}_\pi\sigma.~e~\mid~e~e'                           & \textrm{Term abstraction/application}\\
+                     & \mid & \llet{x{:}_{\Delta,[\Delta']}\sigma = e}{e'}                              & \textrm{Let} \\
+                     & \mid & \lletrec{\overline{x{:}_{\Delta,[\Delta']}\sigma = e}}{e'}             & \textrm{Recursive Let} \\
+                     & \mid &
+                     \ccase{e}{z{:}_{\Delta,[\Delta']}\sigma~\{\overline{\rho\to e'}\}}   & \textrm{Case} \\
+                     &      &                                                                  & \\
+%    p               & ::=  & K~\overline{b{:}\kappa}~\overline{x{:}\sigma}                    & \textrm{Pattern} \\
+    \rho             & ::=  & K~\overline{x{:}_\pi\sigma} \mid \_                              & \textrm{Pattern and wildcard} \\
+% Currently we don't care about the existential multiplicity variables, but later on we might
+\end{array}\\\\
+%
+\textbf{Environments}\\
+\begin{array}{lcll}
+  \Gamma   & ::=  & \cdot \mid \Gamma,x{:}_\omega\sigma \mid \Gamma,K{:}\sigma \mid \Gamma,p & \textrm{Unrestricted variables} \\
+  \Delta   & ::=  & \cdot \mid \Delta,x{:}_\pi\sigma                & \textrm{Linear (and split) resources} \\
+  \delta   & ::=  & \cdot \mid \delta,z{:}_{\Delta,[\Delta']}\sigma & \textrm{$\Delta$-bound variables}\\
+  \left[\Delta\right] & ::=  & \left[\cdot\right] \mid \left[\Delta,x{:}_\pi\sigma\right] & \textrm{Proof-irrelevant linear (and split) resources} \\
+         % & \mid & \Gamma,x{:}_{\overline{\Delta}}\sigma & \textrm{Case bound variables} -- NOPE
+         % &  \mid & \Gamma,K{:}\sigma      &         & \textrm{Data constructor}\\
+         % &  \mid & \Gamma,p               &         & \textrm{Multiplicity variable}\\
+\end{array}\\\\
+%
+\textbf{Multiplicities}\\
+\begin{array}{lcll}
+  \pi, \mu & ::= & 1 \mid \omega \mid p \mid \pi + \mu \mid \pi \cdot \mu\\
+% We don't use + and cdot yet, but we will
+\end{array}\\\\
+%
+\textbf{Usage Environments}\\
+% something like dual njumbers, in that we now have the two components of each usage environment.
+\begin{array}{lcl}
+  \Delta,\left[\Delta'\right] & ::= \cdot,\left[\cdot\right]\mid\Delta_1,\left[\Delta_2\right]+\Delta_3,\left[\Delta_4\right] \mid \pi(\Delta,\left[\Delta'\right])\\
+\end{array}\\\\
+%
+\textbf{Declarations}\\
+\begin{array}{lcl}
+  pgm & ::= & \overline{decl}; e \\
+  decl & ::= & \datatype{T~\overline{p}}{\overline{K:\overline{\sigma \to_\pi}~T~\overline{p}}}
+\end{array}
+%
+\end{array}
+\]
+\end{framed}
+\caption{Linear Core* Syntax}
+\label{linear-core-syntax}
+\end{figure}
+

@@ -5,6 +5,7 @@
 {-# OPTIONS_GHC -Wno-name-shadowing #-}
 module Linear.Core.Check where
 
+-- import Debug.Trace
 import Data.List ((\\))
 import Data.Maybe
 import qualified Data.Map as M
@@ -15,11 +16,15 @@ import Control.Monad.Except
 import Control.Applicative
 -- import Data.Set (Set)
 import qualified Data.Set as S
-import Data.Text (Text)
+-- import Data.Text (Text)
 import qualified Data.Text as T
+import Prettyprinter
+import Data.Void
 -- import Error.Diagnose
 
 import Linear.Core.Syntax
+import GHC.Driver.Ppr (showPprUnsafe)
+import GHC.Plugins (literalType)
 
 {-
 Notes:
@@ -30,18 +35,25 @@ Notes:
 
 * We don't allow multiplicity variables to appear anywhere besides function
 types, so we don't need a type-level multiplicity variable
+
 -}
 
-newtype Check a = Check {unCheck :: StateT Ctx (Except Text) a} -- romes:Todo: Except (Diagnostic Text)
-  deriving (Functor, Applicative, Monad, MonadState Ctx, MonadError Text, Alternative)
+newtype Check a = Check {unCheck :: StateT Ctx (Except (Doc Void)) a} -- romes:Todo: Except (Diagnostic Text)
+  deriving (Functor, Applicative, Monad, MonadState Ctx, MonadError (Doc Void), Alternative)
 
 instance MonadFail Check where
-  fail txt = throwError (T.pack txt)
+  fail txt = throwError (pretty txt)
 
-runClosedCheck :: Check a -> Either Text a
+runClosedCheck :: Check a -> Either (Doc Void) a
 runClosedCheck check = runExcept do
   (a,ctx) <- runStateT (unCheck check) mempty
   unless (null $ projectCtxLinear ctx) (throwError "Linear variables escaped")
+  return a
+
+runCheck :: Ctx -> Check a -> Either (Doc Void) a
+runCheck ctx check = runExcept do
+  (a,ctx') <- runStateT (unCheck check) ctx
+  unless (projectCtxLinear ctx' == projectCtxLinear ctx) (throwError "Linear variables escaped")
   return a
 
 -- TODO: Should project linear also return x{:}_p ?
@@ -53,24 +65,41 @@ projectLinear = filter (\case Id _ (LambdaBound One) _ -> True; _ -> False)
 
 -- | Use a variable from the environment.
 -- If it is a linearly-bound variable it will be consumed (and no longer available in the context)
-use :: Name -> Check Var
-use name = do
-  Just var <- gets (M.lookup name)
-  case var of
-    Id' var ->
-      case idBinding var of
-        LambdaBound Many -> pure ()
-        LambdaBound One -> do
-          modify (M.delete name)
-        LambdaBound (MV' _) -> do
-          -- ROMES:TODO: I suppose we must treat polymorphic variables as if
-          -- they were linear, bc they might be instantiated to 'One' later on.
-          modify (M.delete name)
-        DeltaBound ue -> do
-          mapM_ use (S.toList ue) -- all elements should already have mult == One.
-    MultVar' _ ->
-      pure ()
-  return var
+-- It returns the used variable
+--
+-- We pass Right name if the variable is definitely in scope (we might not have
+-- the full variable but know it is in scope, e.g. if the variable occurs in the
+-- delta environment), and Left var if
+-- we're unsure (the reason for using Var instead of just Name is that this
+-- might be a free variable defined in another module - therefore we need it
+-- whole to be able to return it (otherwise we won't be able to discover the
+-- type of that free variable))
+use :: Either Var Name -> Check Var
+use evar = do
+  let name = case evar of
+               Right n  -> n
+               Left var -> varName var
+  mvar <- gets (M.lookup name)
+  case mvar of
+    Nothing -> case evar of
+                 Left var -> return var -- aren't sure whether this is bound, so returning var here (unless something is terribly wrong) means this is a top-level free variable
+                 Right _  -> throwError ("Wasn't able to find variable that was definitely bound in scope:" <+> pretty name)
+    Just var -> do
+      case var of
+        Id' var ->
+          case idBinding var of
+            LambdaBound Many -> pure ()
+            LambdaBound One -> do
+              modify (M.delete name)
+            LambdaBound (MV' _) -> do
+              -- ROMES:TODO: I suppose we must treat polymorphic variables as if
+              -- they were linear, bc they might be instantiated to 'One' later on.
+              modify (M.delete name)
+            DeltaBound ue -> do
+              mapM_ (use . Right) (S.toList ue) -- all elements should already have mult == One.
+        MultVar' _ ->
+          pure ()
+      return var
 
 extend :: Var -> Check a -> Check a
 extend var check = do
@@ -99,8 +128,7 @@ extend var check = do
     wasConsumed x = isNothing <$> gets (M.lookup x)
 
 extends :: [Var] -> Check a -> Check a
-extends [] check = check
-extends (var:vars) check = extends vars $ extend var check
+extends vars check = foldl (flip extend) check vars
 
 -- | @substTy π n σ@ performs the substitution σ[π/n]
 substTy :: Mult -> Name -> Ty -> Ty
@@ -166,13 +194,14 @@ dryRunUsed check = do
 -- result :D.
 typecheck :: CoreExpr -> Check (CoreExpr, Ty)
 typecheck = cata \case
+  LitF (L lit) -> return (Lit (L lit), Datatype (T.pack $ showPprUnsafe $ literalType lit) [])
 
   --- * (Var_π)
   VarF (MultVar _) -> error "impossible"
 
   --- * (Var_ω) and (Var_1)
-  VarF (Id _ _ name) -> do
-    Id' id <- use name
+  VarF v@Id{} -> do
+    Id' id <- use (Left v)
     -- TODO assert var matches one found in environment?
     return (Var (Id' id), varType id)
 
@@ -364,12 +393,12 @@ typecheck = cata \case
 
   AnnF _ _ -> throwError "Annotated terms shouldn't occur in the elaborated Linear Core program"
 
-exprTy :: CoreExpr -> Ty
-exprTy = cata undefined
+-- exprTy :: CoreExpr -> Ty
+-- exprTy = cata undefined
 
 checkEqTy :: Ty -> Ty -> Check ()
 checkEqTy t1 t2 = if t1 == t2 then pure ()
-                              else throwError $ T.pack $ "Expecting " ++ show t1 ++ " and " ++ show t2 ++ " to match."
+                              else throwError $ "Expecting" <+> pretty t1 <+> "and" <+> pretty t2 <+> "to match."
 
 allEq :: Eq a => [a] -> Bool
 allEq = allEq' Nothing where

@@ -14,6 +14,8 @@ module Linear.Core.Syntax
   )
   where
 
+import GHC.Utils.Outputable (showPprUnsafe, ppr)
+import GHC.Types.Literal
 -- import Data.Kind
 -- import GHC.TypeLits
 import Debug.Trace
@@ -73,9 +75,7 @@ varName :: Var -> Name
 varName (Id _ _ n)  = n
 varName (MultVar n) = n
 
-data Var = Id' Id
-         | MultVar' MultVar
-         deriving (Eq, Show)
+data Var = Id' Id | MultVar' MultVar deriving (Eq, Show)
 {-# COMPLETE Id, MultVar #-}
 
 pattern Id :: Ty -> IdBinding -> Name -> Var
@@ -104,7 +104,10 @@ data IdBinding = LambdaBound Mult
                | DeltaBound UsageEnv -- ^ Let and case bound variables. Case variables do have many usage environments, but in practice (when they occur in a context), they have just one usage environment
                deriving (Eq, Show)
 
+data BindingSite = LambdaBindSite | LetBindSite deriving (Eq, Show)
 
+-- I suppose we need TyMultVar to type mult applications, despite no term with
+-- that type existing.
 data Ty
   -- = TyMultVar Name          -- p -- no, multiplicities can't exist on their own, only attached to functions (or datatype univ. vars)
   = Datatype Name [Mult]    -- K π_1 ... π_n
@@ -114,6 +117,7 @@ data Ty
 
 data Expr b where
   Var  :: b -> Expr b -- Only term variables and constructors. Type variables at the term level would be (Ty (TyMultVar "p"))
+  Lit  :: Literal_ -> Expr b
   Lam  :: b -> Expr b -> Expr b
   App  :: Expr b -> Expr b -> Expr b
   Let  :: Bind b -> Expr b -> Expr b
@@ -146,6 +150,9 @@ data AltCon b
 deriving instance Eq b => Eq (AltCon b)
 deriving instance Show b => Show (AltCon b)
 
+newtype Literal_ = L Literal deriving Eq
+instance Show Literal_ where
+  show (L l) = showPprUnsafe l
 
 -- | All constructors are of the form K~\overline{x{:}_\pi\sigma}
 -- We record the information about the multiplicity and type of each argument
@@ -182,7 +189,7 @@ makeBaseFunctor ''Ty
 
 type CoreTerm = Term Var
 type CoreAlt  = Alt Var
-type CoreBndr = Bind Var
+type CoreBind = Bind Var
 type CoreExpr = Expr Var
 
 erase :: CoreTerm -> CoreExpr
@@ -192,9 +199,17 @@ varUE :: Var -> Maybe UsageEnv
 varUE (Id _ (DeltaBound ue) _) = Just ue
 varUE _ = Nothing
 
+-- | Sets the UE of a delta-bound var to the given usage environment.
+-- Ignores the given UE otherwise
 setUE :: Var -> UsageEnv -> Var
 setUE (Id t (DeltaBound _ue_old) n) ue = Id t (DeltaBound ue) n
 setUE x _ = trace "Setting the UE of a non DeltaBound var" x
+
+-- | Sets the IdBinding of an Id to the given variable, and does nothing to
+-- multiplicity variables
+setIdBinding :: Var -> IdBinding -> Var
+setIdBinding (Id t _ n) b = Id t b n
+setIdBinding x _ = x
 
 varId :: Var -> Id
 varId (Id' i) = i
@@ -206,7 +221,8 @@ varId _ = error "varId: Not an Id"
 --------------------------------------------------------------------------------
 
 instance Pretty Var where
-  pretty var = pretty (varName var)
+  pretty (Id ty _ n) = parens $ pretty n <+> "::" <+> pretty ty
+  pretty (MultVar n) = pretty n
 
 instance Pretty Mult where
   pretty One = "1"
@@ -249,6 +265,8 @@ instance Pretty b => Pretty (Expr b) where
       LetF bnd (_,e) -> "let" <+> align (pretty bnd) <+> "in" <+> e
       CaseF (_,scrt) bnd alts -> "case" <+> scrt <+> "of" <+> pretty bnd <+> braces ("" <+> align (vsep (map pretty alts)) <+> "")
       MultF m -> "@" <> pretty m -- can it only occur in argument position?
+
+      LitF (L l) -> pretty $ showPprUnsafe (ppr l)
 
       AnnF (Lam _ _,e) t -> parens e <+> "::" <+> pretty t
       AnnF (_,e) t -> e <+> "::" <+> pretty t

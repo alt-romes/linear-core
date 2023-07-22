@@ -31,16 +31,12 @@ preserves types lemma's proof.
 
 \input{language/proofs/TypePreservationTheorem}
 
-\clearpage
 \input{language/proofs/ProgressTheorem}
 
-\clearpage
 \input{language/proofs/LinearSubstitutionLemma}
 
-\clearpage
 \input{language/proofs/UnrestrictedSubstitutionLemma}
 
-\clearpage
 \input{language/proofs/DeltaSubstitutionLemma}
 
 \clearpage
@@ -58,8 +54,6 @@ then $\ov{\Gamma, \Delta_i \vdash e_i : \sigma_i}$
 \clearpage
 
 \input{language/InferUsageEnvs}
-
-\clearpage
 
 \input{language/proofs/optimizations/Inlining}
 \input{language/proofs/optimizations/BetaReduction}

@@ -134,3 +134,152 @@ PS: Reminds me of separation logic fragments.
 % TODO What happens if the data constructor is nullary? we need to check , and
 % substitute Γ'[\cdot/\Delta_s] in the case |x:po| == 0
 
+\section{Second attempt}
+
+A usage environment is intrisically connected to the notion of suspended
+computation. ... a variable annotated with a usage environment will consume that
+usage environment when it itself is consumed -- because to consume that
+variable we need to evaluate it, which forces evaluation of the suspended
+computation, consuming the suspended resources...
+
+In let, we don't need to annotate the $\delta$ vars in the usage environment of
+the binder since they can occur \emph{instead} of the new $\delta$ var, since
+they both refer to the resources their suspended computation consumes, and
+either computation can happen. It doesn't make sense to add the $\delta$ vars
+to the usage environments -- they're not exactly resources (but can only be
+used once since they are associated to linear resources) -- only aliases to
+computations that consume resources...
+
+In a let binder, the resources from the proof-irrelevant linear context used in
+the body of the binder are added to the usage environment of the binder
+alongside the resources used from the linear context.
+
+The above paragraph is just wrong. We need to differentiate between the
+proof-irrelevant context and the relevant one in the usage envr....
+%
+Consider this example:
+\begin{code}
+f x y = let w = use x y (D={x,y})
+         in case h x y of
+              K a b -> [D]={x,y}
+                return w
+\end{code}
+If we don't differentiate between the proof-relevant and irrelevant contexts,
+then we can use `w` freely in the body of the case, and effectively consume `x`
+and `y` from the linear context again.
+
+Therefore, in each let, we need to store the irrelevant and the relevant usage
+environment, and in the var rules we can only instantiate from the right one.
+That is, let binders know if the resources used in their body came from the
+irrelevant or relevant context.
+
+Note that in usage environments we don't (and couldn't easily) differentiate
+between the resources that will be consumed from the linear context and those
+consumed from the proof irrelevant linear context. Linear resources can only be
+in one of these contexts at the same time (we move from the linear to the proof
+irrelevant when we evaluate an expression that's not in WHNF -- and can never
+move these propositions back to the linear environment), and $\delta$ vars are
+instantiated using the resources available in both contexts. Put simply, the
+linear resource and proof irrelevant contexts are mutually exclusive, in that a
+linear resource can only appear in one of them at the time, so $\delta$
+variables can simply record the variables they used, and when instantiated will
+use them from whichever context they're available from.
+
+In let recs we need the mutually recursive lets to be strongly connected. If
+the letrec binds are strongly connected, then the usage environment of all
+binders will be the same.
+
+\section{Case Expressions}
+
+Case expressions evaluate their scrutinees to weak head normal form (WHNF). The
+process of evaluation is what actually consumes linear resources, according to
+the definition of consuming a resource (in our case, that's the definition given in Linear Haskell):
+
+Definition 2.1 (Consume exactly once).
+\begin{itemize}
+\item To consume a value of atomic base type (like Int or Ptr) exactly once, just evaluate it.
+\item To consume a function value exactly once, apply it to one argument, and consume its result
+exactly once.
+\item To consume a pair exactly once, pattern-match on it, and consume each component exactly
+once.
+\item In general, to consume a value of an algebraic datatype exactly once, pattern-match on it,
+and consume all its linear components exactly once (Sec. 2.5)1.
+\end{itemize}
+
+This definition drives the entire story of linear resource consumption and the
+rules that treat linear resources in a way different from intuitinistic linear logic.
+In particular, we're concerned with the interaction between call-by-need
+evaluation, suspended computations, evaluation of expressions to WHNF, and
+their relationship with the effective consumption of resources...
+
+In fact, one can imagine defining a linear core parametrized over X, where X is
+the operational semantics of evaluation/definition of consuming resources
+according to the evaluation semantics. Say, LinearCore(X), as HM(X) and
+OutsideIn(X).
+
+It seems that the consumption of resources is deeply connected to evaluation.
+\emph{When we evaluate expressions we consume the linear resources used in that
+expression}.
+
+In a call-by-need language, a let-binding defines a suspended computation that
+\emph{won't consume the resources it requires until it is actually run}. When
+the binder is \emph{fully} evaluated, the resources used in the computation will have
+be consumed, and then the result of the computation, which is bound to the same
+binder that was evaluated, must be consumed linearly too.
+
+Evaluation, however, in languages like Haskell (what kind are these?), doesn't
+entail \emph{fully} evaluating the expression. Rather, evaluation entails
+reducing an expression to Weak Head Normal Form (WHNF).
+%
+When reasoning about resource consumption, evaluation of an expression to WHNF
+makes it unclear which resources were actually consumed.
+%
+Since we can't know exactly which resources will be consumed when an expression
+is evaluated to WHNF (intuitively it seems obvious, but why can't we
+precisely?), we must consider all resources to no longer available, but
+simultaneously that none of them might have been consumed, and we must
+guarantee that the result is evaluated to NF (somewhere along the way here I
+should mention NF up to linear fields) to finalize the consumption of resources
+-- resources are only effectively consumed when the expression is fully
+evaluated (i.e. evaluated to Normal Form (NF)).
+
+For our Linear Core based on GHC Core, where X is the definition given above,
+which defines consumption of resources in face of the non-strict evaluation
+semantics of Haskell, we have specifically that:
+\begin{itemize}
+\item Evaluating an expression that's in Weak Head Normal Form (WHNF) doesn't consume any resources, since no computation takes place.
+\item Evaluating an expression that's not in WHNF will consume resources, but
+  we don't know exactly which.
+  \begin{itemize}
+  \item We must treat all of these resources uniformly as though they
+    haven't yet been consumed (i.e. consume linearly-bound variables in the
+    patterns to force the scrutinee to NF to guarantee all resources are
+    consumed)
+  \item We must simultaneously treat them as though they have already been consumed.
+  \item We can do this by putting these resources in a proof-irrelevant linear context
+    \begin{itemize}
+    \item Resources from the proof-irrelevant linear context cannot be used directly
+    \item Instead, $\delta$-bound variables can refer to resources in the proof-irrelevant linear context, and will consume it when they themselves are consumed.
+    \end{itemize}
+  \end{itemize}
+\item Evaluating a variable is a special case, because the computation it represents might or might not be already evaluated to WHNF:
+  \begin{itemize}
+  \item Consume all the resources it is bound to (be it itself or other resources)
+  \item Add itself as a linear resource that must be consumed (semantically, it means the result of the computation must be consumed linearly in the body of the case)
+  \item The usage environment of the case is then the variable itself, and the split usage environment of pattern variables is the variable exactly
+  \end{itemize}
+\end{itemize}
+Where "evaluation" happens when an expression is scrutinized by a case expression.
+
+TODO Need to itemize this whole section in a succint summary at the end, or
+even make a diagram... It is simply confusing and hard to identify distinct
+concepts in this text.
+
+\section{Mapping from Core to (mini) Linear Core}
+
+How we get rid of type variables maybe, and of type schemes
+
+\section{todos}
+
+(TODO: That counter example that messes up fraction numbers will change the rules again...)
+

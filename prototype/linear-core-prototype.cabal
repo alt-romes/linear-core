@@ -29,10 +29,14 @@ common common
                    diagnose >= 2.0.0 && < 2.1,
                    prettyprinter >= 1.7 && < 2,
                    parser-combinators >= 1.3 && < 2,
+                   ghc >= 9.4,
 
 library
     import:           common
-    exposed-modules:  Linear.Core.Syntax, Linear.Core.Parser, Linear.Core.Check, Linear.Core.Infer
+    exposed-modules:  Linear.Core.Syntax, Linear.Core.Parser,
+                      Linear.Core.Check, Linear.Core.Infer,
+                      Linear.Core, Linear.Core.Monad,
+                      Linear.Core.Plugin
     hs-source-dirs:   src
 
 executable linear-core-prototype
@@ -40,6 +44,7 @@ executable linear-core-prototype
     main-is:          Main.hs
     build-depends:    linear-core-prototype
     hs-source-dirs:   app
+    ghc-options: -fplugin=Linear.Core.Plugin
 
 test-suite linear-core-test
   import: common

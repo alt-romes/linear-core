@@ -454,6 +454,8 @@ non-linear programs are deemed linear);
 
 \include{chapters/c5.tex}
 
+\include{chapters/c6.tex}
+
 \begin{SingleSpace}
 \bibliographystyle{abbrv}
 \bibliography{references}
