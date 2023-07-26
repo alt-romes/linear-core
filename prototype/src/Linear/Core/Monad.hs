@@ -11,6 +11,7 @@ module Linear.Core.Monad
   )
   where
 
+import Control.Monad
 import Data.String
 import Control.Monad.State
 import Control.Monad.Except
@@ -20,6 +21,7 @@ import Data.Maybe
 
 -- | Computations that thread through a linear context from which resources
 -- must be used exactly once.
+-- (i.e. models computations that are well-defined under a linear context)
 newtype LinearCtxT k v m a = LinearCtxT { unLC :: StateT (M.Map k v) m a }
   deriving (Functor, Applicative, Monad, MonadTrans)
 

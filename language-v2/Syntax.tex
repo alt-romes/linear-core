@@ -31,12 +31,13 @@
 \textbf{Environments}\\
 \begin{array}{lcll}
   \Gamma   & ::=  & \cdot \mid \Gamma,x{:}_\omega\sigma \mid \Gamma,K{:}\sigma \mid \Gamma,p & \textrm{Unrestricted variables} \\
-  \Delta   & ::=  & \cdot \mid \Delta,x{:}_\pi\sigma                & \textrm{Linear (and split) resources} \\
+    \Delta   & ::=  & \cdot \mid \Delta,x{:}_\pi\sigma \mid \Delta,[x{:}_\pi\sigma] & \textrm{Linear (and irrelevant) resources} \\
   \delta   & ::=  & \cdot \mid \delta,z{:}_{\Delta,[\Delta']}\sigma & \textrm{$\Delta$-bound variables}\\
   \left[\Delta\right] & ::=  & \left[\cdot\right] \mid \left[\Delta,x{:}_\pi\sigma\right] & \textrm{Proof-irrelevant linear (and split) resources} \\
          % & \mid & \Gamma,x{:}_{\overline{\Delta}}\sigma & \textrm{Case bound variables} -- NOPE
          % &  \mid & \Gamma,K{:}\sigma      &         & \textrm{Data constructor}\\
          % &  \mid & \Gamma,p               &         & \textrm{Multiplicity variable}\\
+% TODO: Introduzir tagged resources
 \end{array}\\\\
 %
 \textbf{Multiplicities}\\

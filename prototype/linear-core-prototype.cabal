@@ -21,8 +21,10 @@ common common
     build-depends: base >= 4.17 && < 5,
                    bytestring >= 0.11 && < 0.12,
                    containers >= 0.6 && < 0.7,
-                   mtl >= 2.2 && < 2.3,
-                   recursion-schemes >= 5.2 && < 5.3,
+                   mtl >= 2.2 && < 3,
+                   -- We used recursion-schemes with the standalone language (modules also commented below)
+                   -- However, for the plugin we need a patched version of GHC
+                   -- recursion-schemes >= 5.2 && < 5.3,
                    text >= 2.0 && < 2.1,
                    vector >= 0.13 && < 0.14,
                    megaparsec >= 9.4 && < 9.5,
@@ -33,10 +35,10 @@ common common
 
 library
     import:           common
-    exposed-modules:  Linear.Core.Syntax, Linear.Core.Parser,
-                      Linear.Core.Check, Linear.Core.Infer,
-                      Linear.Core, Linear.Core.Monad,
+    exposed-modules:  Linear.Core, Linear.Core.Monad,
                       Linear.Core.Plugin
+                      -- Linear.Core.Syntax, Linear.Core.Parser,
+                      -- Linear.Core.Check, Linear.Core.Infer,
     hs-source-dirs:   src
 
 executable linear-core-prototype

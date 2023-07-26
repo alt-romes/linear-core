@@ -18,6 +18,7 @@
 }
 
 % TODO: Split and join! Figure it out precisely
+% Just split!
 
 \newcommand{\TypeMultLamIntro}{
     \infer*[right=($\Lambda I$)]
@@ -66,7 +67,7 @@
 
 
 \newcommand{\TypeLetRec}{
-    \infer*[right=($Let$)]
+    \infer*[right=($LetRec$)]
     {\ov{\judg[\G][\D_1][\d,\ov{\xDD{\D_1}{\D_3}{\s}}][\D_3]{e}{\s}} \and \judg[\G][\D_1,\D_2][\d,\d',\ov{\xDD{\D_1}{\D_3}{\s}}][\D_3,\D_4]{e'}{\vp}}
     {\splitjudg{\lletrec{\ov{\x[\D_1,\irr{\D_3}]} = e}{e'}}{\vp}}
 }
