@@ -109,9 +109,26 @@
 
 \renewcommand{\TypeAltN}{
     \mprset{flushleft}
-    \infer[(Alt)]
-    {\judg[\G]{...}}
-    {\judg[\G][\D_1][\d][\D_2]{K~\ov{\xl,\xo}\to e}{\s \Longrightarrow \vp}[alt][\D_3,\irr{\D_4}]}
+    \infer[(AltN)]
+    { \judg[\G,\ov{\xo}][\D][\d,\ov{y_i{:}_{\lctag{\D_s}{K_i}}\s_i}^n]{e}{\vp}
+    \\ n > 0
+    }
+    {\judg{K~\ov{\xo},\ov{y_i{:}_1\s_i}^n\to e}{\s \Longrightarrow \vp}[alt][\D_s]}
+}
+
+\newcommand{\TypeAltZero}{
+    \mprset{flushleft}
+    \infer[(Alt0)]
+    { \judg[\G,\ov{\xo}][\subst{\D}{\cdot}{\D_s}][\subst{\d}{\cdot}{\D_s}]{e}{\vp}
+    }
+    {\judg{K~\ov{\xo}\to e}{\s \Longrightarrow \vp}[alt][\D_s]}
+}
+
+\newcommand{\TypeAltWild}{
+    \mprset{flushleft}
+    \infer[(Alt\_)]
+    { \judg{e}{\vp} }
+    {\judg{\_ \to e}{\s \Longrightarrow \vp}[alt][\D_s]}
 }
 
 \begin{figure}[h]
@@ -155,15 +172,11 @@
 \\[2em]
     \judgment{\Gamma \vdash_{alt} \rho \to e :_\Delta \sigma \Rightarrow \varphi}
 \\[1em]
-    \infer*[right=$(Alt)$]
-    { K:\overline{\sigma\to_\pi}~T~\overline{p}\in\Gamma \and \Gamma,
-  \overline{x{:}_\pi\sigma} \vdash e : \varphi
-   \and \Delta = \overline{x{:}_\pi\sigma}  \!\upharpoonright_1 }
-    {\Gamma \vdash_{alt} K~\overline{x{:}_\pi\sigma} \to e :_\D T~\overline{p} \Rightarrow \varphi}
+    \TypeAltN
 \\[1em]
-    \infer*[right=$(Alt_\_)$]
-    { \Gamma, \Delta_s \vdash e : \varphi }
-    {\Gamma \vdash_{alt} \_ \to e :_{\D_s}  T~\overline{p} \Rightarrow \varphi}
+    \TypeAltZero
+\qquad
+    \TypeAltWild
 \\[1em]
     \judgment{\Gamma \vdash_{mult} \pi}
 \\[1em]
