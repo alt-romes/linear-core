@@ -66,15 +66,17 @@
 }
 
 \renewcommand{\TypeLet}{
-    \infer*[right=($Let$)]
-    {\judg[\G][\D][\d]{e}{\s} \and \judg[\G][\D,\D'][\d,\d',\xr{\D}{\s}]{e'}{\vp}}
+    % \infer*[right=($Let$)]
+    \infer[(Let)]
+    {\judg[\G][\D][\d]{e}{\s} \\ \judg[\G][\D,\D'][\d,\d',\xr{\D}{\s}]{e'}{\vp}}
     {\splitjudg{\llet{\x[\D] = e}{e'}}{\vp}}
 }
 
 
 \renewcommand{\TypeLetRec}{
-    \infer*[right=($LetRec$)]
-    {\ov{\judg[\G][\D][\d,\ov{\xr{\D}{\s}}]{e}{\s}} \and \judg[\G][\D,\D'][\d,\d',\ov{\xr{\D}{\s}}]{e'}{\vp}}
+    % \infer*[right=($LetRec$)]
+  \infer[(LetRec)]
+    {\ov{\judg[\G][\D][\d,\ov{\xr{\D}{\s}}]{e}{\s}} \\ \judg[\G][\D,\D'][\d,\d',\ov{\xr{\D}{\s}}]{e'}{\vp}}
     {\splitjudg{\lletrec{\ov{\x[\D] = e}}{e'}}{\vp}}
 }
 
@@ -139,15 +141,6 @@
 \begin{array}{c}
     \judgment{\judg{e}{\s}}
 \\[1em]
-    \TypeVarOmega
-\qquad
-    \TypeLinearVar
-\\[1em]
-    \TypeVarDelta
-\qquad
-    \TypeVarSplit
-% TODO: Somewhere here we need at least the split
-\\[1em]
     \TypeMultLamIntro
 \qquad
     \TypeMultLamElim
@@ -156,8 +149,17 @@
 \qquad
     \TypeLamIntroW
 \\[1em]
+    \TypeVarDelta
+\qquad
+    \TypeVarSplit
+% TODO: Somewhere here we need at least the split
+\\[1em]
+    \TypeVarOmega
+\qquad
     \TypeLamElimL
 \\[1em]
+    \TypeLinearVar
+\qquad
     \TypeLamElimW
 \\[1em]
     \TypeLet

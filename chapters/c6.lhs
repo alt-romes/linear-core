@@ -15,6 +15,7 @@
 
 \input{language-v3/Syntax}
 
-\clearpage
 \input{language-v3/TypingRules}
+
+\input{language-v3/OperationalSemantics}
 
