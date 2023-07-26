@@ -4,7 +4,7 @@ all: $(DOCNAME).pdf
 
 .PHONY: clean final
 
-DEPS=lwnovathesis.cls chapters/c2.tex chapters/c3.tex chapters/c4.tex chapters/c5.tex chapters/c6.tex proof.tex language/* language/proofs/* language-v2/*
+DEPS=lwnovathesis.cls chapters/c2.tex chapters/c3.tex chapters/c4.tex chapters/c5.tex chapters/c6.tex proof.tex language/* language/proofs/* language-v2/* language-v3/*
 
 $(DOCNAME).pdf: $(DOCNAME).tex $(DEPS)
 	pdflatex $(DOCNAME).tex

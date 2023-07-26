@@ -8,6 +8,13 @@
 \clearpage
 \input{language-v2/TypingRules}
 
+\chapter{Linear Core, again, again}
+
+% Proof macros
+\input{language-v3/proof}
+
+\input{language-v3/Syntax}
+
 \clearpage
-\input{language-v2/OperationalSemantics}
+\input{language-v3/TypingRules}
 

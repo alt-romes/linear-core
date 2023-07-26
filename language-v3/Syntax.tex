@@ -18,10 +18,10 @@
     e                & ::=  & u                                                                & \textrm{Term atoms}\\
                      & \mid & \Lambda p.~e~\mid~e~\pi                                          & \textrm{Multiplicity abstraction/application}\\
                      & \mid & \lambda x{:}_\pi\sigma.~e~\mid~e~e'                           & \textrm{Term abstraction/application}\\
-                     & \mid & \llet{x{:}_{\Delta,[\Delta']}\sigma = e}{e'}                              & \textrm{Let} \\
-                     & \mid & \lletrec{\overline{x{:}_{\Delta,[\Delta']}\sigma = e}}{e'}             & \textrm{Recursive Let} \\
+                     & \mid & \llet{x{:}_{\Delta}\sigma = e}{e'}                              & \textrm{Let} \\
+                     & \mid & \lletrec{\overline{x{:}_{\Delta}\sigma = e}}{e'}             & \textrm{Recursive Let} \\
                      & \mid &
-                     \ccase{e}{z{:}_{\Delta,[\Delta']}\sigma~\{\overline{\rho\to e'}\}}   & \textrm{Case} \\
+                     \ccase{e}{z{:}_{\Delta}\sigma~\{\overline{\rho\to e'}\}}   & \textrm{Case} \\
                      &      &                                                                  & \\
 %    p               & ::=  & K~\overline{b{:}\kappa}~\overline{x{:}\sigma}                    & \textrm{Pattern} \\
     \rho             & ::=  & K~\overline{x{:}_\pi\sigma} \mid \_                              & \textrm{Pattern and wildcard} \\
@@ -30,14 +30,13 @@
 %
 \textbf{Environments}\\
 \begin{array}{lcll}
+% TODO: Introduzir tagged resources
   \Gamma   & ::=  & \cdot \mid \Gamma,x{:}_\omega\sigma \mid \Gamma,K{:}\sigma \mid \Gamma,p & \textrm{Unrestricted variables} \\
-  \Delta   & ::=  & \cdot \mid \Delta,x{:}_\pi\sigma \mid \Delta, & \textrm{Linear resources} \\
-  \delta   & ::=  & \cdot \mid \delta,z{:}_{\Delta,[\Delta']}\sigma & \textrm{$\Delta$-bound variables}\\
-  \left[\Delta\right] & ::=  & \left[\cdot\right] \mid \left[\Delta,x{:}_\pi\sigma\right] & \textrm{Proof-irrelevant linear (and split) resources} \\
+  \Delta   & ::=  & \cdot \mid \Delta,x{:}_\pi\sigma \mid \Delta,[x{:}_\pi\sigma] & \textrm{Linear (and irrelevant) resources} \\
+  \delta   & ::=  & \cdot \mid \delta,z{:}_{\Delta}\sigma & \textrm{$\Delta$-bound variables}\\
          % & \mid & \Gamma,x{:}_{\overline{\Delta}}\sigma & \textrm{Case bound variables} -- NOPE
          % &  \mid & \Gamma,K{:}\sigma      &         & \textrm{Data constructor}\\
          % &  \mid & \Gamma,p               &         & \textrm{Multiplicity variable}\\
-% TODO: Introduzir tagged variables
 \end{array}\\\\
 %
 \textbf{Multiplicities}\\
@@ -49,7 +48,7 @@
 \textbf{Usage Environments}\\
 % something like dual njumbers, in that we now have the two components of each usage environment.
 \begin{array}{lcl}
-  \Delta,\left[\Delta'\right] & ::= \cdot,\left[\cdot\right]\mid\Delta_1,\left[\Delta_2\right]+\Delta_3,\left[\Delta_4\right] \mid \pi(\Delta,\left[\Delta'\right])\\
+  \Delta & ::= \cdot\mid\Delta_1+\Delta_2\mid\pi\Delta\\
 \end{array}\\\\
 %
 \textbf{Declarations}\\
