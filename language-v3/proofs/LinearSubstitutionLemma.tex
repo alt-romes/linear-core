@@ -1,6 +1,6 @@
 \begin{lemma}[Substitution of linear variables preserves typing]
-  If $\judg[\G][\D,\xl][\d]{e}{\vp}$ and $\judg[\G'][\D'][\d']{e}{\s}$
-  then $\judg[\G,\G'][\D,\D'][\subst{\d}{\D'}{x}, \d']{e[e'/x]}{\vp}$,
+  If $\judg[\G][\D,\xl][\d]{e}{\vp}$ and $\judg[\G][\D'][\d']{e}{\s}$
+  then $\judg[\G][\D,\D'][\subst{\d}{\D'}{x}, \d']{e[e'/x]}{\vp}$,
   where $\d[\D'/x]$ substitutes all occurrences of $x$ in the usage
   environments of variables in $\d$ by the linear variables in $\D'$.
   (really, $x$ couldn't appear anywhere else since $x$ is linear).
@@ -20,23 +20,23 @@ By structural induction on the first derivation.
 
 \item[Case:] $CaseWHNF$
 \begin{tabbing}
-  (1) $\judg[\G'][\D'][\d']{e'}{\s}$\\
+  (1) $\judg[\G][\D'][\d']{e'}{\s}$\\
   Subcase $x$ occurs in $e$\\
   (2) $\judg[\G][\D,\xl,\D''][\d,\d'']{\ccase{e}{\z[\D,\xl][\s']~\{\ov{\rho\to e''}\}}}{\vp}$\\
   (3) $e$ is in WHNF\\
   (4) $\judg[\G][\D,\xl][\d]{e}{\s'}$\\
-  (5) $\ov{\judg[\G][\D,\xl,\D''][\d,\d'',\z[\D,\xl][\s']]{\rho\to e''}{\s' \Longrightarrow \vp}[alt][\D,\xl]}$\\
-  (6) $\judg[\G,\G'][\D,\D'][\subst{\d}{\D'}{x}, \d']{e[e'/x]}{\vp}$\\
-  (7) $\ov{\judg[\G][\D,\D',\D''][\subst{(\d,\d'')}{\D'}{x},\z[\D,\D'][\s']]{\rho\to e''[e'/x]}{\s' \Longrightarrow \vp}[alt][\D,\D']}$\\
-  (8) $\judg[\G,\G'][\D,\D',\D''][\subst{(\d,\d'')}{\D'}{x},\d']{\ccase{e[e'/x]}{\z[\D,\D'][\s']~\{\ov{\rho\to e''[e'/x]}\}}}{\vp}$\\
+  (5) $\ov{\judg[\G][\D,\xl,\D''][\d,\d'',\zr{\D,\xl}{\s'}]{\rho\to e''}{\s' \Longrightarrow \vp}[alt][\D,\xl]}$\\
+  (6) $\judg[\G][\D,\D'][\subst{\d}{\D'}{x}, \d']{e[e'/x]}{\vp}$\`by i.h.\\
+  (7) $\ov{\judg[\G][\D,\D',\D''][\subst{(\d,\d'')}{\D'}{x},\zr{\D,\D'}{\s'}]{\rho\to e''[e'/x]}{\s' \Longrightarrow \vp}[alt][\D,\D']}$\` by i.h.\\
+  (8) $\judg[\G][\D,\D',\D''][\subst{(\d,\d'')}{\D'}{x},\d']{\ccase{e[e'/x]}{\z[\D,\D'][\s']~\{\ov{\rho\to e''[e'/x]}\}}}{\vp}$\\
   Subcase $x$ occurs in $\ov{e''}$\\
   (2) $\judg[\G][\D,\D'',\xl][\d,\d'']{\ccase{e}{\z[\D][\s']~\{\ov{\rho\to e''}\}}}{\vp}$\\
   (3) $e$ is in WHNF\\
   (4) $\judg[\G][\D][\d]{e}{\s'}$\\
-  (5) $\ov{\judg[\G][\D,\xl,\D''][\d,\d'',\z[\D][\s']]{\rho\to e''}{\s' \Longrightarrow \vp}[alt][\D]}$\\
-  (6) $\judg[\G,\G'][\D,\D'][\subst{\d}{\D'}{x}, \d']{e[e'/x]}{\vp}$\\
-  (7) $\judg[][][]{}{}$\\
-  (8) $\judg[][][]{}{}$\\
+  (5) $\ov{\judg[\G][\D,\D'',\xl][\d,\d'',\zr{\D}{\s'}]{\rho\to e''}{\s' \Longrightarrow \vp}[alt][\D]}$\\
+  (6) $e[e'/x] = e, \d[\D'/x]=\d$\` by $x$ does not occur in $e$\\
+  (7) $\ov{\judg[\G][\D,\D'',\D'][\d,\subst{\d''}{\D'}{x},\zr{\D}{\s'}]{\rho\to e''[e'/x]}{\s' \Longrightarrow \vp}[alt][\D]}$\`by i.h.\\
+  (8) $\judg[\G][\D,\D'',\D'][\d,\subst{\d''}{\D'}{x},\d']{\ccase{e}{\z[\D][\s']~\{\ov{\rho\to e''[e'/x]}\}}}{\vp}$\\
 \end{tabbing}
 
 % OLD:TODO:UPDATE
@@ -222,8 +222,8 @@ By structural induction on the first derivation.
 \begin{sublemma}[Substitution of linear variables on case alternatives
     preserves typing]
   If $\judg[\G][\D,\xl][\d]{\rho\to e}{\s \Longrightarrow \vp}[alt][\D_s]$ and
-    $\judg[\G'][\D'][\d']{e'}{\s}$ then
-    $\judg[\G,\G'][\D,\D'][\subst{\d}{\D'}{x},\d']{\rho \to e[e'/x]}{\s \Longrightarrow \vp}[alt][\subst{\D_s}{\D'}{x}]$
+    $\judg[\G][\D'][\d']{e'}{\s}$ then
+    $\judg[\G][\D,\D'][\subst{\d}{\D'}{x},\d']{\rho \to e[e'/x]}{\s \Longrightarrow \vp}[alt][\subst{\D_s}{\D'}{x}]$
 \end{sublemma}
 
 \begin{proof}
@@ -240,13 +240,26 @@ By structural induction on the $alt$ judgment.
   (6) $\judg[\G,\G'][\D,\D'][\subst{\d}{\D'}{x},\d']{\rho \to e[e'/x]}{\s' \Longrightarrow \vp}[alt][\subst{\D_s}{\D'}{x}]$\\
 \end{tabbing}
 
-\item[Case:] $Alt_\_$
+\item[Case:] $Alt0$
 \begin{tabbing}
-    (1) $\G, \xl \vdash_{alt} \_ \to e :_{\Delta_s,\xl}\s' \Rightarrow \vp$\\
-    (2) $\G' \vdash e' : \s$\\
-    (3) $\G, \D_s, \xl \vdash e : \vp$\` by inversion on $Alt_\_$\\
-    (4) $\G[\lin{\G'}/x],\G',\D_s \vdash e[e'/x] : \vp$ \` by lin. subst. lemma (2,3)\\
-    (5) $\G[\lin{\G'}/x],\G' \vdash_{alt} \_ \to e[e'/x] :_{\Delta_s,\lin{\G'}} \s' \Rightarrow \vp$\\
+  (1) $\judg[\G'][\D'][\d']{e'}{\s}$\\
+  Subcase $x$ occurs in scrutinee\\
+  (2) $\judg[\G][\D,\xl][\d]{K~\ov{\xo}~\to e}{\s' \Longrightarrow \vp}[alt][\D_s,\xl]$\\
+  TODO\\
+  Subcase $x$ does not occur in scrutinee\\
+    (2) $\judg[\G][\D,\xl][\d]{K~\ov{\xo}~\to e}{\s' \Longrightarrow \vp}[alt][\D_s]$\\
+    (3) $\judg[\G,\ov{\xo}][\subst{\D}{\cdot}{\D_s},\xl][\subst{\d}{\cdot}{\D_s}]{e}{\vp}$\`by $x$ does not occur in $\D_s$\\
+    (4) $\judg[\G,\ov{\xo}][\subst{\D}{\cdot}{\D_s},\D'][\subst{\d}{\cdot}{\D_s},\d']{e[e'/x]}{\vp}$\`by i.h.\\
+    (5) $\judg[\G,\ov{\xo}][\subst{(\D,\D')}{\cdot}{\D_s}][\subst{(\d,\d')}{\cdot}{\D_s}]{e[e'/x]}{\vp}$\\
+    \`by $\D$ and $\D'$ and $\d$ and $\d'$ being disjunct by hypothesis,\\
+    \`and $\D_s$ being a subset of $\D$ (TODO CHECK)\\
+    \`so $\D_s$ can't occur in $\d'$ either\\
+    (6) $\D_s[\D'/x] = \D_s$\`by $x$ does not occur in $\D_s$\\
+    (7) $\judg[\G][\D,\D'][\d,\d']{K~\ov{\xo}~\to e[e'/x]}{\s' \Longrightarrow \vp}[alt][\subst{\D_s}{\D'}{x}]$\\
+\end{tabbing}
+
+\item[Case:] $Alt\_$
+\begin{tabbing}
 \end{tabbing}
 
 \end{description}

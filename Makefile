@@ -6,6 +6,11 @@ all: $(DOCNAME).pdf
 
 DEPS=lwnovathesis.cls chapters/c2.tex chapters/c3.tex chapters/c4.tex chapters/c5.tex chapters/c6.tex proof.tex language/* language/proofs/* language-v2/* language-v3/*
 
+# and all_proofs.tex
+
+all_proofs.tex: language-v3/Proofs.hs
+	./$<
+
 $(DOCNAME).pdf: $(DOCNAME).tex $(DEPS)
 	pdflatex $(DOCNAME).tex
 

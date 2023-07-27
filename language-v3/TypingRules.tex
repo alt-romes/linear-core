@@ -17,14 +17,12 @@
     {\judg[\G][\D][\d,\xD]{x}{\s}}
 }
 
+% TODO: split tagged stuff and proof irrelevant stuff
 \newcommand{\TypeVarSplit}{
     \infer*[right=($Split$)]
     {\judg[\G][\D,\x][\d]{e}{\vp} \and \hasargs{K}{n}}
-    {\judg[\G][\D,\xt{K_1},\dots,\xt{K_n}][\d]{x}{\s}}
+    {\judg[\G][\D,\ov{\xt{K_i}}^n][\d]{x}{\s}}
 }
-
-% TODO: Split and join! Figure it out precisely
-% Just split!
 
 \renewcommand{\TypeMultLamIntro}{
     \infer*[right=($\Lambda I$)]
@@ -68,16 +66,16 @@
 \renewcommand{\TypeLet}{
     % \infer*[right=($Let$)]
     \infer[(Let)]
-    {\judg[\G][\D][\d]{e}{\s} \\ \judg[\G][\D,\D'][\d,\d',\xr{\D}{\s}]{e'}{\vp}}
-    {\splitjudg{\llet{\x[\D] = e}{e'}}{\vp}}
+    {\judg[\G][\D][\d]{e}{\s} \\ \judg[\G][\D,\D'][\d,\xr{\D}{\s}]{e'}{\vp}}
+    {\judg[\G][\D,\D'][\d]{\llet{\x[\D] = e}{e'}}{\vp}}
 }
 
 
 \renewcommand{\TypeLetRec}{
     % \infer*[right=($LetRec$)]
   \infer[(LetRec)]
-    {\ov{\judg[\G][\D][\d,\ov{\xr{\D}{\s}}]{e}{\s}} \\ \judg[\G][\D,\D'][\d,\d',\ov{\xr{\D}{\s}}]{e'}{\vp}}
-    {\splitjudg{\lletrec{\ov{\x[\D] = e}}{e'}}{\vp}}
+    {\ov{\judg[\G][\D][\d,\ov{\xr{\D}{\s}}]{e}{\s}} \\ \judg[\G][\D,\D'][\d,\ov{\xr{\D}{\s}}]{e'}{\vp}}
+    {\judg[\G][\D,\D'][\d]{\lletrec{\ov{\x[\D] = e}}{e'}}{\vp}}
 }
 
 \renewcommand{\TypeCaseWHNF}{
