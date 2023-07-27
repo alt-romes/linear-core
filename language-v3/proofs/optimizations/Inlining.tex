@@ -1,0 +1,18 @@
+\begin{lemma}[Inlining preserves types (and thus is sound)]
+    \emph{If $\G \vdash \llet{\xD = e}{e'} : \vp$ then $\G \vdash \llet{\xD = e}{e'[e'/x]} : \vp$}
+\end{lemma}
+
+\begin{proof}~
+
+\begin{tabbing}
+    (1) $\G,\G',\D \vdash \llet{\xD = e}{e'} : \vp$\\
+    (2) $\G,\D,\xD \vdash e' : \vp$\` by inv. on (let)\\
+    (3) $\G',\D \vdash e : \s$\` by inv. on (let)\\
+    (4) $\hasnolinearvars{\G'}$\\
+    (5) $\G,\G',\D\vdash e'[e/x] : \vp$\` by $\D$-subst. lemma (2,3)\\
+    (6) $\G,\G',\D,\xD \vdash e'[e/x] : \vp$ \` by $Weaken_\Delta$\\
+    (7) $\G,\G',\G',\D \vdash \llet{\xD = e}{e'[e/x]} : \vp$\` by (let) (7,3,4)\\
+    (8) $\G,\G',\D \vdash \llet{\xD = e}{e'[e/x]} : \vp$\` by (4)\\
+\end{tabbing}
+\end{proof}
+

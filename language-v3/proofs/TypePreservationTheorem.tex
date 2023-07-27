@@ -1,0 +1,144 @@
+
+\begin{theorem}[Type preservation]
+\emph{If $\Gamma \vdash e : \sigma$ and $e \longrightarrow e'$ then $\Gamma \vdash e' : \sigma$}
+\end{theorem}
+
+\begin{proof}
+By structural induction on the small-step reduction.
+
+%   \begin{description}
+%   \item[Case:] $\imp$-{\sc param}
+%     \begin{tabbing}
+%       $\Delta \vdash \alpha \imp \alpha$ \` this case\\
+%       $\TERASE{\Delta}{\alpha} = t_I$, with $\bounds_\Delta(\alpha) =
+%       t_I(\ov{\tau})$ \` by definition\\
+%       $t_I \imp t_I$ \` by rule $\imp_I$
+%     \end{tabbing}
+%
+%   \item[Case:] ...
+
+\begin{description}
+
+\item[Case:] $(\lambda x{:}_\pi\sigma.~e)~e' \longrightarrow e[e'/x]$
+\begin{tabbing}
+    (1) $\Gamma, \Gamma' \vdash (\lambda x{:}_\pi\sigma.~e)~e' : \varphi$\\
+    (2) $\Gamma \vdash (\lambda x{:}_\pi\sigma.~e) : \sigma\to_\pi\varphi$ \` by inversion on ($\lambda E$) \\
+    (3) $\Gamma' \vdash e' : \sigma$ \` by inversion on ($\lambda E$) \\
+    Subcase $\pi = 1,p$:\\
+    (4) $\Gamma, x{:}_{1,p}\sigma \vdash e : \varphi$ \` by inversion on ($\lambda I$) \\
+    (5) $\Gamma[\lin{\G'}/x], \Gamma' \vdash e[e'/x] : \varphi$ \` by linear subst. lemma (3,4) \\
+    (6) $\Gamma[\lin{\G'}/x] = \G$ \` since $\G$ is well defined before $x$'s binding (1)\\
+    Subcase $\pi = \omega$:\\
+    (4) $\hasnolinearvars{\Gamma'}$ \` by inversion on ($\lambda E$) \\
+    (5) $\G, \xo \vdash e : \vp$ \` by inversion on ($\lambda I$)\\
+    (6) $\G, \G' \vdash e[e'/x] : \vp$ \` by unrestricted subst. lemma (3,4,5)\\
+\end{tabbing}
+
+\item[Case:] $(\Lambda p.~e)~\pi \longrightarrow e[\pi/p]$
+\begin{tabbing}
+(1) $\Gamma \vdash (\Lambda p.~e)~\pi : \sigma[\pi/p]$\\
+(2) $\Gamma \vdash (\Lambda p.~e) : \forall p.~\sigma$ \` by inversion on ($\Lambda E$) \\
+(3) $\Gamma \vdash_{mult} \pi$ \` by inversion on ($\Lambda E$) \\
+(4) $\Gamma, p \vdash e : \sigma$ \` by inversion on ($\Lambda I$) \\
+% (4) $p \notin \Gamma$ \` by inversion on ($\Lambda I$) \\
+(5) $\Gamma \vdash e[\pi/p]:\sigma[\pi/p]$ \` by mult. subst. lemma (3,4) \\
+\end{tabbing}
+
+\item[Case:] $\llet{x{:}_\Delta\sigma = e}{e'}\longrightarrow e'[e/x]$
+\begin{tabbing}
+(1) $\G, \G', \D\vdash \llet{x{:}_\Delta\sigma = e}{e'} : \varphi$\\
+(2) $\G, \D, \xD \vdash e' : \varphi$ \` by inversion on $Let$ \\
+(3) $\G', \D \vdash e : \sigma$ \` by inversion on $Let$\\
+(4) $\hasnolinearvars{\G'}$ \` by inversion on $Let$\\
+(5) $\G, \G', \D \vdash e'[e/x] : \varphi$ \` by $\Delta$-var subst. lemma (2,3)\\
+\end{tabbing}
+
+\item[Case:] $\lletrec{\overline{x_i{:}_\Delta\sigma_i = e_i}}{e'}
+    \longrightarrow e'\overline{[\lletrec{\overline{x_i{:}_\Delta\sigma_i = e_i}}{e_i}/x]}$
+\begin{tabbing}
+    (1) $\G, \ov{\G'_i}, \D \vdash \lletrec{\overline{x_i{:}_\Delta\sigma_i = e_i}}{e'} : \vp$\\
+    (2) $\ov{\hasnolinearvars{\G'_i}}$ \` by inversion on $LetRec$\\
+    (3) $\ov{\G'_i,\D, \ov{x_i{:}_\Delta\sigma_i} \vdash e_i : \s_i}$ \` by inversion on $LetRec$\\
+    (4) $\G, \D, \ov{x_i{:}_\Delta\sigma_i} \vdash e' : \vp$ \` by inversion on $LetRec$\\
+    (5) $\ov{\G'_i, \ov{\G'_i}, \D \vdash \lletrec{\ov{x_i{:}_\Delta\sigma_i = e_i}}{e_i} : \s_i}$ \` by $LetRec$ (3,3)\\
+    (6) $\ov{\G'_i, \D \vdash \lletrec{\ov{x_i{:}_\Delta\sigma_i = e_i}}{e_i} : \s_i}$ \` by $Contract_\omega$\\
+    (7) $\G, \ov{\G'_i}, \D \vdash e'\ov{[\lletrec{\ov{x_i{:}_\Delta\sigma_i = e_i}}{e_i}/x]} :
+    \vp$ \` by $\D$-var subst. corollary\\
+\end{tabbing}
+% If \G, \ov{\D}, \ov{\xD} \vdash e' : \vp and \ov{\G', \D \vdash e : \s} then
+% \G, \ov{\D}, \ov{\G'} \vdash e'\ov{[e/x]}
+
+% TODO: Subcases when \Delta == {}
+\item[Case:]
+    $\ccase{K~\overline{e}}{z{:}_{\overline{\Delta}}\sigma}~\{\dots,K~\overline{x{:}_\pi\sigma}\to e'\}\ \longrightarrow e'\overline{[e/x]}[K~\overline{e}/z]$
+\begin{tabbing}
+(1) $\Gamma,\Gamma',\Delta \vdash \ccase{K~\overline{e}}{z{:}_{\overline{\Delta}}\sigma~\{\dots,K~\overline{x{:}_\pi\sigma}\to e'\}} : \varphi$ \` by assumption \\
+(2) $\hasnolinearvars{\Gamma}$\\
+(3) $\Gamma, \Delta \vdash K~\overline{e} : \sigma$ \` by inversion on (case) \\
+(4) $\Gamma', z{:}_{\Delta_i}\sigma \vdash_{alt} K~\overline{x{:}_\pi\sigma} \to e' : \sigma \Longrightarrow \varphi$ \` by inversion on (case) \\
+(5) $K : \overline{\sigma \to_\pi}~T~\overline{p} \in \Gamma'$ \` by inversion on (alt) \\
+(6) $\Delta_i = \overline{\x[\pi][\sigma]}\!\upharpoonright_1$\` by inversion on (alt)\\
+(7) $\Gamma',z{:}_{\Delta_i}\sigma,\overline{x{:}_\pi\sigma} \vdash e' : \varphi$ \` by inversion on (alt) \\
+(8) $\ov{\G_i, \D'_i \vdash e : \sigma}, \G = \ov{\G_i}, \D = \ov{\D'_i}$ \` by the constructor application lemma (2,3,5) \\
+Subcase $z$ does not occur in $e'$\\
+(9) $(\Gamma', z{:}_{\Delta_i}\sigma)\ov{[\D'_i/x]}, \Gamma, \D \vdash e'\overline{[e/x]} : \varphi$ \` by lin. and unr. subst. lemma (7,8) \\
+(10) $\Gamma', z{:}_{\Delta}\sigma, \Gamma', \D \vdash e'\overline{[e/x]} : \varphi$ \` and $\ov{x}$ cannot exist in $\G'$ \\
+(11) $\Gamma', \Gamma, \D \vdash e'\overline{[e/x]} : \varphi$ \` by $Weaken_\D$\\
+(12) $\Gamma, \Gamma', \Delta \vdash e'\ov{[e/x]}[K~\ov{e}/z]$ \` by $z$ does not occur in $e'$ (6,2) \\
+Subcase $z$ occurs in $e'$\\
+Subcase $\Delta_i = \cdot$\\
+    (8) All $\ov{x}$ are unrestricted\\
+    (9) Subst. of $\x[\cdot][\s]$ is equivalent to subst. of $\xo$\\
+    (10) $\Gamma, \Gamma', \Delta \vdash e'\ov{[e/x]}$ \` by unr. subst. lemma (8)\\
+    (11) $\G,\G',\D \vdash e'\ov{[e/x]}[K~\ov{e}/z] : \vp$\` by unr. subst. lemma (9)\\
+Subcase $\Delta_i \neq \cdot$\\
+    (9) $\Gamma, \Gamma', \ov{\x!\upharpoonright_1}, \Delta \vdash e'\ov{[e/x]}$ \` by unr. subst. lemma\\
+    (10) $\G,\G',\D \vdash e'\ov{[e/x]}[K~\ov{e}/z] : \vp$\` by $\Delta$-subst. lemma\\
+\end{tabbing}
+
+\item[Case:]
+    $\ccase{K~\overline{e}}{z{:}_{\ov{\Delta}}\sigma}~\{\dots,\_\to e'\}\ \longrightarrow e'[K~\overline{e}/z]$
+\begin{tabbing}
+(1) $\Gamma,\Gamma',\Delta_s \vdash \ccase{K~\ov{e}}{z{:}_{\ov{\Delta}}\sigma~\{\dots,K~\overline{x{:}_\pi\sigma}\to e'\}} : \varphi$ \` by assumption \\
+(2) $\hasnolinearvars{\Gamma}$\\
+(3) $\Gamma, \Delta_s \vdash K~\ov{e} : \sigma$ \` by inversion on (case) \\
+(4) $\Gamma', z{:}_{\Delta_s}\sigma \vdash_{alt} \_ \to e' :_{\Delta_s} \sigma \Longrightarrow \varphi$ \` by inversion on (case) \\
+(5) $\Gamma', \z[\Delta_s][\sigma], \Delta_s \vdash e' : \varphi$ \` by inversion on (alt\_)\\
+(6) $\Gamma, \Gamma', \Delta_s \vdash e'[K~\ov{e}/z] : \varphi$ \` by $\Delta$-subst. lemma (2,3,5)
+\end{tabbing}
+
+\item[Case:] $e_1~e_2 \longrightarrow e_1'~e_2$
+\begin{tabbing}
+(1) $e_1 \longrightarrow e_1'$ \` by inversion on $\beta$-reduction \\
+(2) $\Gamma,\Gamma' \vdash e_1~e_2 : \varphi$ \` by assumption \\
+(3) $\Gamma \vdash e_1 : \sigma \to_\pi \varphi$ \` by inversion on ($\lambda E$) \\
+(4) $\Gamma' \vdash e_2 : \sigma$ \` by inversion on ($\lambda E$) \\
+(5) $\Gamma \vdash e_1' : \sigma \to_\pi \varphi$ \` by induction hypothesis in (3,1) \\
+(6) $\Gamma, \Gamma' \vdash e_1'~e_2 : \varphi$ \` by ($\lambda E$) (4,3) \\
+\end{tabbing}
+
+\item[Case:] $e~\pi \longrightarrow e'~\pi$
+\begin{tabbing}
+(1) $e \longrightarrow e'$ \` by inversion on mult. $\beta$-reduction \\
+(2) $\Gamma \vdash e~\pi : \sigma[\pi/p]$ \` by assumption \\
+(3) $\Gamma \vdash e : \forall p.~\sigma$ \` by inversion on ($\Lambda E$) \\
+(4) $\Gamma \vdash_{mult} \pi$ \` by inversion on ($\Lambda E$) \\
+(5) $\Gamma \vdash e' : \forall p.~\sigma$ \` by induction hypothesis (3,1) \\
+(6) $\Gamma \vdash e'~\pi : \sigma[\pi/p]$ \` by ($\Lambda E$) (5,4) \\
+\end{tabbing}
+
+\item[Case:] $\ccase{e}{z{:}_{\overline{\Delta}}\sigma~\{\rho_i\to e'_i\}} \longrightarrow \ccase{e'}{z{:}_{\overline{\Delta}}\sigma~\{\rho_i\to e'_i\}}$
+\begin{tabbing}
+(1) $e \longrightarrow e'$ \` by inversion on case reduction \\
+(2) $\Gamma, \Gamma' \vdash \ccase{e}{z{:}_{\overline{\Delta}}\sigma~\{\rho_i\to e'_i\}} : \varphi$ \` by assumption \\
+(3) $\Gamma \vdash e : \sigma$ \` by inversion on case \\
+% TODO: HOW i?
+(4) $\overline{\Gamma', z{:}_{\Delta_i}\sigma \vdash_{alt} \rho_i \to e'_i : \varphi}$ \` by inversion on case \\
+(5) $\Gamma \vdash e' : \sigma$ \` by induction hypothesis (3,1) \\
+(6) $\Gamma, \Gamma' \vdash \ccase{e'}{z{:}_{\overline{\Delta}}\sigma~\{\rho_i\to e'_i\}} : \varphi$ \` by case (4,3) \\
+\end{tabbing}
+
+\end{description}
+
+\end{proof}
+
