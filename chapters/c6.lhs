@@ -34,6 +34,15 @@
 
 \clearpage
 
+TODO! Substitution of proof-irrelevant linear variables preserves typing. The
+term always remains the same because $x$ cannot occur in any term, however, all
+variables that refer to $x$ in their usage environment must now refer the usage env. of the substitee (e.g. $[x] => [\D]$).
+This seems trivial to see correct, since all occurrences are in environments, so we get some equivalence similar to the one we need for the proof of Alt0.
+
+\begin{lemma}[Substitution of proof-irrelevant linear variables preserves typing]
+If $\judg[\G][\D,\irr{\x}][\d]{e}{\vp}$ and $\judg[\G][\D'][\d']{e'}{\s}$ then $\judg[\G][\D,\irr{\D'}][\subst{\d}{\D'}{x},\d']{e}{\vp}$
+\end{lemma}
+
 TODO: Multiplicity substitution preserves typing lemma
 
 TODO: Canonical forms lemma

@@ -82,8 +82,8 @@
     \mprset{flushleft}
     \infer[(CaseWHNF)]
     {\textrm{e is in \emph{WHNF}} \\ \judg{e}{\s}
-    \and \ov{\judg[\G][\D,\D'][\d,\d',\zD]{\rho\to e'}{\s \Longrightarrow \vp}[alt][\D]}}
-    {\splitjudg{\ccase{e}{\zD~\{\ov{\rho \to e'}\}}}{\vp}}
+    \and \ov{\judg[\G][\D,\D'][\d,\zD]{\rho\to e'}{\s \Longrightarrow \vp}[alt][\D]}}
+    {\judg[\G][\D,\D'][\d]{\ccase{e}{\zD~\{\ov{\rho \to e'}\}}}{\vp}}
 }
 
 \renewcommand{\TypeCaseNotWHNF}{
