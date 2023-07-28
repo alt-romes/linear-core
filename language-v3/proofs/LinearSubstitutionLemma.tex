@@ -74,57 +74,57 @@ By structural induction on the first derivation.
 
 \item[Case:] $Var_\Delta$
 \begin{tabbing}
-  (1) $\D, x{:}_1\sigma, y{:}_{\Delta,\xl}\varphi \vdash y : \varphi$\\
-  (2) $\G' \vdash e' : \sigma$\\
+  (1) $\G; \D, x{:}_1\sigma; \d,y{:}_{\Delta,\xl}\varphi \vdash y : \varphi$\\
+  (2) $\G; \D'; \d' \vdash e' : \sigma$\\
   (3) $y[e'/x] = y$\\
-  (4) $\D, \xl, \y[\Delta,\xl][\vp] \vdash y : \vp$\\
-  Subcase $\G'$ has linear variables\\
-  (5) Impossible. $\y[\Delta][\s]$ is only well typed if the context is exactly $\Delta,\y[\D][\s]$\\
-  Subcase $\G'$ has no linear variables\\
-  (5) $\G', \D, \xl, \y[\Delta,\xl][\vp] \vdash y : \vp$ \` by $Weaken_\omega$\\
+  (4) $\G; \D,\D'; \d,y{:}_{\Delta,\D'}\varphi \vdash y : \varphi$ \` by congruence, or something...TODO\\
+  This needs to be true bc if we substitute `x` elsewhere, y must still be well-typed? I don't know.
+\end{tabbing}
 
+\item[Case:] $Split$
+\begin{tabbing}
+    TODO
 \end{tabbing}
 
 \item[Case:] $\lambda E_1$
 \begin{tabbing}
-  (1) $\G, \xl, \G'' \vdash e~e'' : \vp$\\
-  (2) $\G' \vdash e' : \s$\\
+  (1) $\G; \D,\D'' \xl; \d,\d'' \vdash e~e'' : \vp$\\
+  (2) $\G; \D'; \d' \vdash e' : \s$\\
   Subcase $x$ occurs in $e$\\
-  (3) $\G, \xl \vdash e : \s' \to_1 \vp$\` by inversion on $\lambda E_1$\\
-  (4) $\G'' \vdash e'' : \s'$\` by inversion on $\lambda E_1$\\
-  (5) $\G[\lin{\G'}/x], \G' \vdash e[e'/x] : \s' \to_1 \vp$\` by induction hypothesis (2,3)\\
-  (6) $\G[\lin{\G'}/x], \G', \G'' \vdash e[e'/x]~e'' : \vp$\` by $\lambda E_1$\\
-  (7) $\G''[\lin{\G'}/x] = \G''$\` $x$ doesn't occur in $e''$, so $\Delta$-bound vars in $e''$ \\
+  (3) $\G; \D,\xl;\d \vdash e : \s' \to_1 \vp$\` by inversion on $\lambda E_1$\\
+  (4) $\G; \D'';\d'' \vdash e'' : \s'$\` by inversion on $\lambda E_1$\\
+  (5) $\G; \D, \D'; \d[\D'/x],\d' \vdash e[e'/x] : \s' \to_1 \vp$\` by induction hypothesis (2,3)\\
+  (6) $\G; \D, \D', \D''; \d[\D'/x], \d', \d'' \vdash e[e'/x]~e'' : \vp$\` by $\lambda E_1$\\
+  (7) $\d''[\D'/x] = \d''$\` $x$ doesn't occur in $e''$, so $\Delta$-bound vars in $e''$ \\
       \` couldn't contain $x$ and still be well-typed.\\
   (8) $(e[e'/x]~e'') = (e~e'')[e'/x]$ \` because $x$ does not occur in $e''$\\
   Subcase $x$ occurs in $e''$\\
-  (3) $\G \vdash e : \s' \to_1 \vp$\` by inversion on $\lambda E_1$\\
-  (4) $\G'', \xl \vdash e'' : \s'$\` by inversion on $\lambda E_1$\\
-  (5) $\G''[\lin{\G'}/x], \G' \vdash e''[e'/x] : \s'$\` by induction hypothesis (2,4)\\
-  (6) $\G, \G''[\lin{\G'}/x], \G' \vdash e~e''[e'/x] : \vp$\` by $\lambda E_1$\\
-  (7) $\G[\lin{\G'}/x] = \G$\` $x$ doesn't occur in $e$, so $\Delta$-bound vars in $e$ \\
+  (3) $\G; \D;\d \vdash e : \s' \to_1 \vp$\` by inversion on $\lambda E_1$\\
+  (4) $\G; \D'', \xl;\d'' \vdash e'' : \s'$\` by inversion on $\lambda E_1$\\
+  (5) $\G; \D'',\D';\d''[\D'/x], \d' \vdash e''[e'/x] : \s'$\` by induction hypothesis (2,4)\\
+  (6) $\G; \D,\D',\D''; \d,\d',\d''[\D'/x] \vdash e~e''[e'/x] : \vp$\` by $\lambda E_1$\\
+  (7) $\d[\D'/x] = \d$\` $x$ doesn't occur in $e$, so $\Delta$-bound vars in $e$ \\
       \` couldn't contain $x$ and still be well-typed.\\
   (8) $(e~e''[e'/x]) = (e~e'')[e'/x]$ \` because $x$ does not occur in $e$\\
 \end{tabbing}
 
 \item[Case:] $\lambda E_\omega$
 \begin{tabbing}
-  (1) $\G, \xl, \G'' \vdash e~e'' : \vp$\\
-  (2) $\G' \vdash e' : \s$\\
-  (3) $\hasnolinearvars{\G'}$\\
-  (4) $x$ does not occur in $e''$\` by (3)\\
-  (5) $\G, \xl \vdash e : \s' \to_\omega \vp$\` by inversion on $\lambda E_\omega$\\
-  (6) $\G'' \vdash e'' : \s'$\` by inversion on $\lambda E_\omega$\\
-  (7) $\G[\lin{\G'}/x], \G' \vdash e[e'/x] : \s' \to_\omega \vp$\` by induction hypothesis (2,3,5)\\
-  (6) $\G[\lin{\G'}/x], \G', \G'' \vdash e[e'/x]~e'' : \vp$\` by $\lambda E_\omega$\\
-  (7) $\G''[\lin{\G'}/x] = \G''$\` $x$ doesn't occur in $e''$, so $\Delta$-bound vars in $e''$ \\
+  (1) $\G; \D, \xl; \d,\d'' \vdash e~e'' : \vp$\\
+  (2) $\G; \D'; \d' \vdash e' : \s$\\
+  (3) $x$ does not occur in $e''$\` by $e''$ linear context is empty\\
+  (4) $\G; \D, \xl; \d \vdash e : \s' \to_\omega \vp$\` by inversion on $\lambda E_\omega$\\
+  (5) $\G; \cdot; \d'' \vdash e'' : \s'$\` by inversion on $\lambda E_\omega$\\
+  (6) $\G; \D, \D'; \d[\D'/x], \d' \vdash e[e'/x] : \s' \to_\omega \vp$\` by induction hypothesis (2,4)\\
+  (5) $\G; \D, \D'; \d[\D'/x], \d', \d'' \vdash e[e'/x]~e'' : \vp$\` by $\lambda E_\omega$\\
+  (6) $\G''[\lin{\G'}/x] = \G''$\` $x$ doesn't occur in $e''$, so $\Delta$-bound vars in $e''$ \\
       \` couldn't contain $x$ and still be well-typed.\\
   (8) $(e[e'/x]~e'') = (e~e'')[e'/x]$ \` because $x$ does not occur in $e''$\\
 \end{tabbing}
 
 \item[Case:] $Let$
 \begin{tabbing}
-  (1) $\G' \vdash e' : \s$\\
+  (1) $\G; \D'; \d' \vdash e' : \s$\\
   (2) $\hasnolinearvars{\G''}$\\
   Subcase $x$ occurs in $e$\\
   (3) $\G, \G'', \D, \xl \vdash \llet{\y[\D,\xl][\s'] = e}{e''} : \vp$\\
@@ -201,6 +201,7 @@ By structural induction on the first derivation.
 \end{tabbing}
 
 \item[Case:] $CaseNotWHNF$
+% TODO: I can also use congruence for the proof irrelevant stuff?
 \begin{tabbing}
   (1) $\judg[\G][\D'][\d']{e'}{\s}$\\
   Subcase $x$ occurs in $e$\\
@@ -209,7 +210,9 @@ By structural induction on the first derivation.
     (4) $\judg[\G][\D,\xl][\d]{e}{\s'}$\`by inv.\\
     (5) $\ov{\judg[\G][\irr{\D,\xl},\D''][\irr{\d},\d'',\zr{\irr{\D,\xl}}{\s'}]{\rho\to e''}{\s' \Longrightarrow \vp}[alt][\irr{\D,\xl}]}$\`by inv.\\
     (6) $\judg[\G][\D,\D'][\subst{\d}{\D'}{x}, \d']{e[e'/x]}{\vp}$\`by i.h.\\
-    (7) $\ov{\judg[\G][\irr{\D,\D'},\D''][\d'',\subst{\irr{\d}}{\irr{\D'}}{\irr{x}},\zr{\D,\D'}{\s'}]{\rho\to e''[e'/x]}{\s' \Longrightarrow \vp}[alt][\D,\D']}$\` by subst. of p. irr. vars in alt.\\
+    (7) $\ov{\judg[\G][\irr{\D,\D'},\D''][\d'',\subst{\irr{\d}}{\irr{\D'}}{\irr{x}},\zr{\D,\D'}{\s'}]{\rho\to e''[e'/x]}{\s' \Longrightarrow \vp}[alt][\D,\D']}$\\
+    \` by subst. of p. irr. vars in alt.\\
+    \` or, simply, congruence?\\
     (8) $\judg[\G][\D,\D',\D''][\subst{(\d,\d'')}{\D'}{x},\d']{\ccase{e[e'/x]}{\z[\D,\D'][\s']~\{\ov{\rho\to e''[e'/x]}\}}}{\vp}$\\
   Subcase $x$ occurs in $\ov{e''}$\\
     (2) $\judg[\G][\D,\D'',\xl][\d,\d'']{\ccase{e}{\z[\irr{\D}][\s']~\{\ov{\rho\to e''}\}}}{\vp}$\\

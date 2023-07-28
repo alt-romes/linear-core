@@ -1,0 +1,89 @@
+\begin{lemma}[Binder-swap preserves types (and thus is sound)]
+    If $\G \vdash \ccase{x}{\z[\ov{\D},x][\s]~\{\ov{\rho_i\to e_i}\}} : \vp$ then $\G \vdash \ccase{x}{\z[\ov{\D},x][\s]~\{\ov{\rho_i\to e_i[z/x]}\}} : \vp$
+\end{lemma}
+
+%
+% Here's an example:
+%
+% case x of z
+%   _ -> x
+% ===Binder-swap====>
+% case x of z
+%   _ -> z
+%
+% This should works! But currently the proof doesn't.
+%
+
+\begin{proof}~
+
+\begin{tabbing}
+    (1) $\G', \xl \vdash \ccase{x}{\z[\ov{\D},x][\s]~\{\ov{\rho_i\to e_i}\}} : \vp$\\
+    (2) $\xl \vdash x : \sigma$\\
+    (3) $\ov{\G',\z[\D_i,x][\s] \vdash_{alt} \rho_i \rightarrow e_i :_{\D_i | x} \s \Longrightarrow \vp}$\\
+    For every alternative\\
+    If $\rho_i$ is a constructor~($K$)\\
+    (3.1) $\G',\z[\D_i][\s] \vdash_{alt} K~\ov{\x[\pi][\tau]} \rightarrow e_i :_{\D_i} \s \Longrightarrow \vp$\\
+    (3.2) $\G',\z[\D_i][\s] \vdash_{alt} K~\ov{\x[\pi][\tau]} \rightarrow e_i[z/x] :_{\D_i} \s \Longrightarrow \vp$\\
+    \` since $x$ cannot occur in the alternatives\\
+    If $\rho_i$ is the DEFAULT alternative~($\_$)\\
+    (3.1) $\G',\z[x][\s] \vdash_{alt} \_ \to e_i :_{x} \s \Longrightarrow \vp$\\
+    (3.2) $\G',\z[x][\s],\xl \vdash e_i : \vp$ \` by inv. on $Alt_{\_}$\\
+    (3.3) $\xl,\z[x][\s] \vdash z : \s$\` by $Var_\Delta$\\
+    (3.4) $(\G',\z[x][\s])[x / x], (\x,\z[x][\s]) \vdash e_i[z/x] : \vp$\`by linear var subst. lemma.\\
+    (3.5) $\G',\z[x][\s], \x, \z[x][\s] \vdash e_i[z/x] : \vp$\\
+    (3.6) $\G', \x, \z[x][\s] \vdash e_i[z/x] : \vp$\` by admissible rule $Contract_\Delta$\footnote{We don't include this rule since, naturally, we'll never needed. But it still holds, and is useful to prove optimizations.} \\
+    (3.7) $\G',\z[x][\s] \vdash_{alt} \_ \to e_i[z/x] :_{x} \s \Longrightarrow \vp$ \` by ($Alt_\_$)\\
+    Therefore
+    (4) $\ov{\G',\z[\D_i,x][\s] \vdash_{alt} \rho_i \rightarrow e_i[z/x] :_{\D_i | x} \s \Longrightarrow \vp}$\\
+    (5) $\G', \xl \vdash \ccase{x}{\z[\ov{\D},x][\s]~\{\ov{\rho_i\to e_i[z/x]}\}} : \vp$\` by (Case)\\
+
+\end{tabbing}
+\end{proof}
+
+
+\begin{lemma}[Reverse binder-swap preserves types (and thus is sound)]
+    If $\G \vdash \ccase{x}{\z[\ov{\D},x][\s]~\{\ov{\rho_i\to e_i}\}} : \vp$ then $\G \vdash \ccase{x}{\z[\ov{\D},x][\s]~\{\ov{\rho_i\to e_i[x/z]}\}} : \vp$
+\end{lemma}
+
+%
+% case x of z { r -> e } =====> case x of z { r -> e[x/z] }
+%
+%
+% Here's an example:
+%
+% case x of z
+%   K a b c -> z
+% ===Reverse binder-swap====>
+% case x of z
+%   K a b c -> x
+%
+%
+% case x of z { r -> e } =====> case x of z { K a b c -> let x = K a b c in e[x/z] }
+%
+% case x of z
+%   K a b c -> z
+% ===Reverse binder-swap====>
+% case x of z
+%   K a b c -> x
+%
+% We can't reconstruct the alternative nor the case! :(
+%
+
+\begin{proof}~
+\begin{tabbing}
+    (1) $\G', \xl \vdash \ccase{x}{\z[\ov{\D},x][\s]~\{\ov{\rho_i\to e_i}\}} : \vp$\\
+    (2) $\xl \vdash x : \sigma$\\
+    (3) $\ov{\G',\z[\D_i|x][\s] \vdash_{alt} \rho_i \rightarrow e_i :_{\D_i | x} \s \Longrightarrow \vp}$\\
+    For every alternative\\
+    If $\rho_i$ is a constructor~($K$)\\
+    (3.1) $\G',\z[\D_i][\s] \vdash_{alt} K~\ov{\x[\pi][\tau]} \rightarrow e_i :_{\D_i} \s \Longrightarrow \vp$\\
+    (3.2) $K:\ov{\tau\to_\pi}~\s \in \G'$\`by inv.\\
+    (3.3) $\G', \z[\D_i][\s],\D_i \vdash e_i : \vp$\\
+    (3.4) $\D_i = \lin{\ov{\x[\pi][\tau]}}$
+    (3.5) $\G',\xl \vdash e_i[x/z] : \vp$\` by $\Delta$-subst\\
+    (3.6) Currently impossible. See the counter example in the source.
+\end{tabbing}
+\end{proof}
+
+
+

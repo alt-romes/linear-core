@@ -1,0 +1,53 @@
+\begin{lemma}[Beta-reduction preserves types (and thus is sound)]
+    \emph{If $\G \vdash (\lambda \x[\pi][\s].~e)~e' : \vp$ then $\G \vdash e[e'/x] : \vp$}
+\end{lemma}
+
+\begin{proof}~
+
+\begin{tabbing}
+    Subcase $\pi = 1,p$\\
+    (1) $\G,\G' \vdash (\lambda \x[1,p][\s].~e)~e' : \vp$\\
+    (2) $\G \vdash (\lambda \x[1,p][\s].~e) : \s \to_{1,p} \vp$\` by inv. on $\lambda E_{1,p}$\\
+    (3) $\G' \vdash e' : \s$ \` by inv. on $\lambda E_{1,p}$\\
+    (4) $\G,\x[1,p][\s] \vdash e : \vp $\`by inv. on $\lambda I$\\
+    (5) $\x[1,p][\s] \notin \G$\`by inv. on $\lambda I$\\
+    (6) $\G,\G' \vdash e[e'/x] : \vp$\` by lin. subst. lemma (4,3) and (5)\\
+    Subcase $\pi = \omega$\\
+    (1) $\G,\G' \vdash (\lambda \xo.~e)~e' : \vp$\\
+    (2) $\G \vdash (\lambda \xo.~e) : \s \to_\omega \vp$\` by inv. on $\lambda E_\omega$\\
+    (3) $\G' \vdash e' : \s$ \` by inv. on $\lambda E_\omega$\\
+    (4) $\hasnolinearvars{\G'}$ \` by inv. on $\lambda E_\omega$\\
+    (5) $\G,\xo \vdash e : \vp$\` by inv. on $\lambda I$\\
+    (6) $\xo \notin \G$\` by inv. on $\lambda I$\\
+    (7) $\G,\G' \vdash e[e'/x] : \vp$\` by unr. subst. lemma (5,3,4)\\
+\end{tabbing}
+\end{proof}
+
+\begin{lemma}[Beta-reduction with sharing preserves types (and thus is sound)]
+    \emph{If $\G \vdash (\lambda \xo.~e)~e' : \vp$ then $\G \vdash \llet{x = e'}{e} : \vp$}
+    NB: We only apply this transformation when $x$ is unrestricted, otherwise beta-reduction without sharing is the optimization applied.
+\end{lemma}
+
+\begin{proof}~
+
+\begin{tabbing}
+    (1) $\G,\G' \vdash (\lambda \xo.~e)~e' : \vp$\\
+    (2) $\G \vdash (\lambda \xo.~e) : \s \to_\omega \vp$\` by inv. on $\lambda E_\omega$\\
+    (3) $\G', \cdot \vdash e' : \s$ \` by inv. on $\lambda E_\omega$\\
+    (4) $\hasnolinearvars{\G'}$ \` by inv. on $\lambda E_\omega$\\
+    (5) $\G,\xo \vdash e : \vp$\` by inv. on $\lambda I$\\
+    (6) $\G, \cdot, \x[\cdot][\s] \vdash e : \vp$\` by $\xo = \x[\cdot][\s]$ lemma (TODO)\\
+    (7) $\G,\G' \vdash \llet{x = e'}{e} : \vp$\` by let (6,3,4)\\
+\end{tabbing}
+\end{proof}
+
+
+\begin{lemma}[Beta-reduction on multiplicity abstractions preserves types]
+    \emph{If $\G \vdash (\Lambda p.~e)~\pi : \vp$ then $\G \vdash e[\pi/p] : \vp$}
+\end{lemma}
+
+\begin{proof}
+    Trivial through the progress theorem
+\end{proof}
+
+

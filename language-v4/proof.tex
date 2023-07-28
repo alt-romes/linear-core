@@ -1,0 +1,56 @@
+% Environments
+\renewcommand{\G}{\Gamma}
+\renewcommand{\D}{\Delta}
+\renewcommand{\d}{\delta}
+\renewcommand{\irr}[1]{\left[#1\right]}
+
+% Types
+\renewcommand{\s}{\sigma}
+\renewcommand{\vp}{\varphi}
+
+% Judgments
+\renewcommandx{\judg}[6][1=\Gamma, 2=\Delta, 5, 6]{#1;#2 \vdash_{#5} #3 :_{#6} #4}
+\renewcommand{\splitjudg}[2]{\judg[\Gamma][\Delta,\Delta']{#1}{#2}}
+
+% Variables
+\renewcommandx{\var}[3][1=x, 2=1, 3=\sigma]{\ensuremath{#1{:}_{#2}#3}}
+\renewcommand{\x}{\var[x]}
+\renewcommand{\y}{\var[y]}
+\renewcommand{\z}{\var[z]}
+
+\renewcommand{\xl}{\x[1]}
+\renewcommand{\xo}{\x[\omega]}
+\renewcommand{\xpi}{\x[\pi]}
+\renewcommand{\xD}{\var[x][\Delta][\sigma]}
+% Tagged x
+\renewcommand{\xt}[1]{\x[1][\s]\##1}
+% x with required arguments, for places where nested [] don't work well
+\renewcommand{\xr}[2]{\x[#1][#2]}
+
+\renewcommand{\yl}{\y[1][\sigma']}
+\renewcommand{\yo}{\y[\omega][\sigma']}
+\renewcommand{\ypi}{\y[\pi][\sigma']}
+\renewcommand{\yD}{\y[\Delta][\sigma']}
+
+\renewcommand{\zD}{\z[\Delta][\sigma]}
+\renewcommand{\zDi}{\z[\Delta_i]}
+% x with required arguments, for places where nested [] don't work well
+\renewcommand{\zr}[2]{\z[#1][#2]}
+
+\renewcommand{\zDp}{\z[\overline{\Delta}][\s']}
+\renewcommand{\zDip}{\z[\Delta_i][\s']}
+
+\renewcommand{\ov}[1]{\ensuremath{\overline{#1}}}
+
+\renewcommand{\setcardinality}[1]{\lvert#1\rvert}
+
+% Utils
+% \newcommand{\lin}[1]{\ensuremath{#1\!\!\upharpoonright_1\!\!}}
+\renewcommand{\lin}[1]{\ensuremath{#1_1}}
+\renewcommand{\unr}[1]{\ensuremath{#1_\omega}}
+\renewcommand{\hasargs}[2]{#1~\textrm{has}~#2~\textrm{arguments}}
+\renewcommand{\lctag}[2]{#1\##2}
+\renewcommand{\subst}[3]{#1\left[#2/#3\right]}
+
+\renewcommand{\konstructor}{K~\ov{\xo},\ov{y_i{:}_1\s_i}^n}
+
