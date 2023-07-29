@@ -193,8 +193,8 @@ By structural induction on the first derivation.
 
 \begin{sublemma}[Substitution of $\Delta$-bound variables on case alternatives
     preserves typing]
-\emph{If $\G, \D, \xD \vdash_{alt} \rho \to e :_\Delta \s' \Rightarrow \vp$ and
-    $\G' \vdash e' : \s$ and $\Delta \neq \emptyset$ then $\G, \G' \vdash_{alt} \rho \to e[e'/x] :_\Delta \s' \Rightarrow \vp$}
+If $\G,\xD; \D,\D' \vdash_{alt} \rho \to e :_{\Delta''} \s' \Rightarrow \vp$ and
+   $\G; \D \vdash e' : \s$ and $\Delta \neq \emptyset$ then $\G; \D, \D' \vdash_{alt} \rho \to e[e'/x] :_{\Delta''} \s' \Rightarrow \vp$
 \end{sublemma}
 
 \begin{proof}

@@ -89,7 +89,7 @@ By structural induction on the first derivation.
 
 \item[Case:] $\lambda E_1$
 \begin{tabbing}
-  (1) $\G; \D,\D'' \xl \vdash e~e'' : \vp$\\
+  (1) $\G; \D,\D'',\xl \vdash e~e'' : \vp$\\
   (2) $\G; \D' \vdash e' : \s$\\
   Subcase $x$ occurs in $e$\\
   (3) $\G; \D,\xl \vdash e : \s' \to_1 \vp$\` by inversion on $\lambda E_1$\\
@@ -105,8 +105,6 @@ By structural induction on the first derivation.
   %(7) $\d[\D'/x] = \d$\` $x$ doesn't occur in $e$, so $\Delta$-bound vars in $e$ \\
   %    \` couldn't contain $x$ and still be well-typed.\\
   (7) $(e~e''[e'/x]) = (e~e'')[e'/x]$ \` because $x$ does not occur in $e$\\
-  Subcase $x$ doesn't occur in $e$ nor in $e''$\\
-  TODO:
 \end{tabbing}
 
 \item[Case:] $\lambda E_\omega$

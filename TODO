@@ -17,3 +17,33 @@ The [work in progress dissertation document](https://github.com/alt-romes/linear
 
 /relate #19517 #18756 #20058 #19165 #18768 #18694 #20000
 /label ~LinearTypes ~"core lint" ~"T::design document"
+
+----
+
+Complete soundness proof
+- [ ] Type preservation: case K e of K e -> e’
+- [ ] Type preservation: case K e of _ -> e’
+- [ ] Type preservation: case e of … -> case e’ of …
+- [ ] Progress: case WHNF
+- [ ] Progress: case Not WHNF
+- [ ] Linear subst: Var1
+- [ ] Linear subst: Var delta
+- [ ] Linear subst: Split
+- [ ] Linear subst: Case Not WHNF on congruence
+- [ ] Linear subst: Alt0 source ToDos
+- [ ] Unr. subst: Split
+- [ ] Unr. subst: Case WHNF
+- [ ] Unr. subst: Case Not WHNF
+- [ ] Unr. subst: AltN
+- [ ] Unr. subst: Alt0
+- [ ] Unr. subst: Alt_
+- [ ] Delta subst: Split
+- [ ] Delta subst: Case WHNF
+- [ ] Delta subst: Case Not WHNF
+- [ ] Delta subst: AltN
+- [ ] Delta subst: Alt0
+- [ ] Delta subst: Alt_
+- [ ] Check whether we need the delta/=emptyset hypothesis — check type preservation that invokes delta subst. We do need it on the delta-subst for the alt-judgment, but perhaps don’t need it on the delta-subst for the main judg.
+- [ ] Check whether cases need to account for the non-existence of delta vars (probably only elimination of lambda on delta subst), given we discuss whether the linear context goes to the left or to the right, not the variable
+
+---
