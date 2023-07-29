@@ -1,6 +1,6 @@
 
 \begin{theorem}[Progress]
-\emph{Evaluation of a well-typed term does not block. If $\cdot \vdash e :
+\emph{Evaluation of a well-typed term does not block. If $\cdot; \cdot \vdash e :
   \sigma$ then $e$ is a value or there exists $e'$ such that $e \longrightarrow e'$.}
 \end{theorem}
 
@@ -11,15 +11,15 @@ By structural induction on the (only) typing derivation
 
 \item[Case:] $\Lambda I$
 \begin{tabbing}
-(1) $\cdot \vdash (\Lambda p.~e) : \forall p.~\sigma$ \` by assumption \\
+(1) $\cdot; \cdot \vdash (\Lambda p.~e) : \forall p.~\sigma$ \` by assumption \\
 (2) $(\Lambda p.~e)~\textrm{is a value}$ \` by definition \\
 \end{tabbing}
 
 \item[Case:] $\Lambda E$
 \begin{tabbing}
-(1) $\cdot \vdash e_1~\pi : \sigma[\pi/p]$ \` by assumption \\
-(2) $\cdot \vdash e_1 : \forall p.~\sigma$ \` by inversion on ($\Lambda E$) \\
-(3) $\cdot \vdash_{mult} \pi$ \` by inversion on ($\Lambda E$) \\
+(1) $\cdot; \cdot \vdash e_1~\pi : \sigma[\pi/p]$ \` by assumption \\
+(2) $\cdot; \cdot \vdash e_1 : \forall p.~\sigma$ \` by inversion on ($\Lambda E$) \\
+(3) $\cdot; \cdot \vdash_{mult} \pi$ \` by inversion on ($\Lambda E$) \\
 (4) $e_1~\textrm{is a value or}~\exists e_1'.~e_1 \longrightarrow e_1'$ \` by the induction hypothesis (2) \\
 \textrm{Subcase $e_1$ is a value:}\\
 (5) $e_1 = \Lambda p.~e_2$ \` by the canonical forms lemma (2) \\
@@ -32,15 +32,15 @@ By structural induction on the (only) typing derivation
 
 \item[Case:] $\lambda I$
 \begin{tabbing}
-(1) $\cdot \vdash (\lambda x{:}_\pi\sigma.~e) : \sigma\to_\pi\varphi$ \` by assumption \\
+(1) $\cdot; \cdot \vdash (\lambda x{:}_\pi\sigma.~e) : \sigma\to_\pi\varphi$ \` by assumption \\
 (2) $(\lambda x{:}_\pi\sigma.~e)~\textrm{is a value}$ \` by definition \\
 \end{tabbing}
 
 \item[Case:] $\lambda E$
 \begin{tabbing}
-(1) $\cdot \vdash e_1~e_2 : \varphi$ \` by assumption \\
-(2) $\cdot \vdash e_1 : \sigma \to_\pi \varphi$ \` by inversion on ($\lambda E$) \\
-(3) $\cdot \vdash e_2 : \sigma$ \` by inversion on ($\lambda E$) \\
+(1) $\cdot; \cdot \vdash e_1~e_2 : \varphi$ \` by assumption \\
+(2) $\cdot; \cdot \vdash e_1 : \sigma \to_\pi \varphi$ \` by inversion on ($\lambda E$) \\
+(3) $\cdot; \cdot \vdash e_2 : \sigma$ \` by inversion on ($\lambda E$) \\
 (4) $e_1~\textrm{is a value or}~\exists e_1'.~e_1\longrightarrow e_1'$ \` by the induction hypothesis (2) \\
 \textrm{Subcase $e_1$ is a value:}\\
 (5) $e_1 = \lambda x{:}_\pi\sigma.~e$ \` by the canonical forms lemma \\
@@ -57,14 +57,14 @@ By structural induction on the (only) typing derivation
 
 \item[Case:] $LetRec$
 \begin{tabbing}
-(1) $\cdot \vdash \lletrec{\overline{x_i{:}_\Delta\sigma_i = e_i}}{e'} : \varphi$ \` by assumption \\
+(1) $\cdot; \cdot \vdash \lletrec{\overline{x_i{:}_\Delta\sigma_i = e_i}}{e'} : \varphi$ \` by assumption \\
 (2) $\lletrec{\overline{x_i{:}_\Delta\sigma_i = e_i}}{e'} \longrightarrow
     e'\overline{[\lletrec{\overline{x_i{:}_\Delta\sigma_i = e_i}}{e_i}/x]}$ \` by definition\\
 \end{tabbing}
 
 \item[Case:] $Case$
 \begin{tabbing}
-(1) $\cdot \vdash \ccase{e}{z{:}_{\overline{\Delta}}\sigma~\{\overline{\rho_i \to e_i}\}} : \varphi$ \` by assumption \\
+(1) $\cdot; \cdot \vdash \ccase{e}{z{:}_{\overline{\Delta}}\sigma~\{\overline{\rho_i \to e_i}\}} : \varphi$ \` by assumption \\
 % (2) $\cdot \vdash e_1 : T~\overline{p}$ \` by inversion of (case) \\
 % (3) $\overline{\cdot, z{:}_{\overline{\Delta}}\sigma \vdash_{alt} \rho_i\to e_i : \sigma \Longrightarrow \varphi}$ \` by inversion of (case) \\
 (2) $e_1~\textrm{is a value or}~\exists e_1'.~e_1 \longrightarrow e_1'$ \` by induction hypothesis (2) \\

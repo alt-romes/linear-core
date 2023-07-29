@@ -161,5 +161,6 @@ then $\ov{\Gamma, \Delta_i \vdash e_i : \sigma_i}$
 \item This looks like a real bug, not a type system limitation. (The soundness proof for the language that had $CaseVar$ uncovered it)
 \item c.f. examples in call-notes (28-07 mainly)
 \item Great, we become uniform in that variables are considered not in WHNF
+\item This might, however, be actually OK in Core - the occurrence analysis that determines whether beta-reduction can or cannot be call-by-name is different from the linear type-checker (which is an unfortunate non-uniformity -- our system can likely see much more things as being linear, but can't support reverse-binder-swap AND call-by-name-beta-reduction)
 \end{itemize}
 

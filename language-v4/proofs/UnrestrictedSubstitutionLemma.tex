@@ -3,7 +3,7 @@
 % spot a mistake let me know.
 
 \begin{lemma}[Substitution of unrestricted variables preserves typing]
-\emph{If $\Gamma, x{:}_\omega\sigma \vdash e : \varphi$ and $\Gamma' \vdash e' : \sigma$ and $\hasnolinearvars{\Gamma'}$ then $\Gamma,\Gamma' \vdash e[e'/x] : \varphi$.}
+\emph{If $\Gamma, x{:}_\omega; \Delta \sigma \vdash e : \varphi$ and $\Gamma; \cdot \vdash e' : \sigma$ then $\G,\D \vdash e[e'/x] : \varphi$.}
 \end{lemma}
 
 \begin{proof}
@@ -11,24 +11,63 @@ By structural induction on the first derivation.
 
 \begin{description}
 
-\item[Case:] $Var_\omega$
+\item[Case:] $\Lambda I$
 \begin{tabbing}
-  (1) $\Gamma, x{:}_\omega\sigma \vdash x : \sigma$\\
-  (2) $\G' \vdash e' : \s$\\
-  (3) $\hasnolinearvars{\Gamma}$ \` by inversion on ($Var_\omega$)\\
-  (4) $x[e'/x] = e'$ \` by def. of substitution\\
-  (5) $\G' \vdash e' : \sigma$ \` by (2)\\
-  (6) $\G, \G' \vdash e' : \sigma$ \` by $Weaken_\omega$ (3)\\
+  (1) $\G, \xo; \D \vdash \Lambda p.~e : \forall p.~\varphi$\\
+  (2) $\G; \cdot \vdash e' : \sigma$ \\
+  (3) $\G, \xo, p; \D \vdash e : \varphi$ \` by inversion on $\Lambda I$\\
+  (4) $p \notin \G$ \` by inversion on $\Lambda I$\\
+  (5) $\G, p; \D \vdash e[e'/x] : \varphi$ \` by induction hypothesis by (2,3)\\
+  (6) $\G; \D \vdash \Lambda p.~e[e'/x] : \forall p.~\varphi$ \` by $\Lambda I$ (4,5)\\
+  (7) $(\Lambda p.~e)[e'/x] = (\Lambda p.~e[e'/x])$ \` by def. of substitution\\
+\end{tabbing}
+
+\item[Case:] $\Lambda E$
+\begin{tabbing}
+  (1) $\G, \xo; \D \vdash e~\pi: \varphi[\pi/p]$\\
+  (2) $\G; \cdot \vdash e' : \sigma$\\
+  (3) $\G, \xo; \D \vdash e : \forall p.~\varphi$ \` by inversion on $\Lambda E$\\
+  (4) $\G \vdash_{mult} \pi$ \` by inversion on $\Lambda E$\\
+  (5) $\G; \D \vdash e[e'/x] \forall p.~\varphi$ \` by induction hypothesis by (2,3)\\
+  (6) $\G; \D \vdash e[e'/x]~\pi : \varphi[\pi/p]$ \` by $\Lambda E$ (4,5)\\
+  (7) $(e~\pi)[e'/x] = e[e'/x]~\pi$ \` by def. of substitution\\
+\end{tabbing}
+
+\item[Case:] $\lambda I_1$
+\begin{tabbing}
+  (1) $\G, \xo; \D \vdash \lambda\y[1][\s'].~e : \s'\to_1\vp$\\
+  (2) $\G; \cdot \vdash e' : \sigma$\\
+  (3) $\G, \xo; \D, \y[1][\s'] \vdash e : \vp$ \` by inversion on $\lambda I_1$\\
+  (4) $\G; \D, \y[1][\s'] \vdash e[e'/x] : \vp$ \` by induction hypothesis (2,3)\\
+  (5) $\G; \D \vdash \lambda\y[1][\s'].~e[e'/x] : \s' \to_1\vp$ \` by $\lambda I_1$\\
+  (6) $(\lambda \y[\pi][\s'].~e)[e'/x] = (\lambda \y[\pi][\s'].~e[e'/x])$ \` by def. of subst.\\
+\end{tabbing}
+
+\item[Case:] $\lambda I_\omega$
+\begin{tabbing}
+  (1) $\G, \xo; \D \vdash \lambda\y[\omega][\s'].~e : \s'\to_\omega\vp$\\
+  (2) $\G; \cdot \vdash e' : \sigma$\\
+  (3) $\G, \xo, \y[\omega][\s']; \D \vdash e : \vp$ \` by inversion on $\lambda I_\omega$\\
+  (4) $\G, \y[\omega][\s']; \D, \vdash e[e'/x] : \vp$ \` by induction hypothesis (2,3)\\
+  (5) $\G; \D \vdash \lambda\y[\omega][\s'].~e[e'/x] : \s' \to_\omega\vp$ \` by $\lambda I_\omega$\\
+  (6) $(\lambda \y[\pi][\s'].~e)[e'/x] = (\lambda \y[\pi][\s'].~e[e'/x])$ \` by def. of subst.\\
 \end{tabbing}
 
 \item[Case:] $Var_\omega$
 \begin{tabbing}
-  (1) $\G, \xo \vdash y : \vp$\\
-  (2) $\G' \vdash e' : \s$\\
-  (3) $\hasnolinearvars{\G'}$\\
+  (1) $\G, x{:}_\omega; \cdot \sigma \vdash x : \sigma$\\
+  (2) $\G; \cdot \vdash e' : \s$\\
+  (4) $x[e'/x] = e'$ \` by def. of substitution\\
+  (5) $\G; \cdot \vdash e' : \sigma$ \` by (2)\\
+  % (6) $\G, \G' \vdash e' : \sigma$ \` by $Weaken_\omega$ (3)\\
+\end{tabbing}
+
+\item[Case:] $Var_\omega$
+\begin{tabbing}
+  (1) $\G, \xo; \cdot \vdash y : \vp$\\
+  (2) $\G; \cdot \vdash e' : \s$\\
   (3) $y[e'/x] = y$ \` by def. of substitution\\
-  (4) $\G \vdash y : \vp$ \` by inversion on $Weaken_\omega$ (1)\\
-  (5) $\G, \G' \vdash y : \vp$ \` by $Weaken_\omega$ (3)\\
+  (4) $\G; \cdot \vdash y : \vp$ \` by inversion on $Weaken_\omega$ (1)\\
 \end{tabbing}
 
 \item[Case:] $Var_1$
@@ -41,150 +80,71 @@ By structural induction on the first derivation.
   (1) Impossible. The context in $Var_\Delta$ only contains linear variables.
 \end{tabbing}
 
-\item[Case:] $Weaken_\omega$
+\item[Case:] $Split$
 \begin{tabbing}
-  (1) $\G, \xo, \y[\omega][\s'] \vdash e : \vp$\\
-  (2) $\G' \vdash e' : \s$ \`\\
-  (3) $\hasnolinearvars{\G'}$ \`\\
-  (4) $\G, \xo \vdash e : \vp$ \` by inversion on $Weaken_\omega$\\
-  (5) $\G, \G' \vdash e[e'/x] : \vp$ \` by induction hypothesis (2,3,4)\\
-  (6) $\G, \y[\omega][\s'], \G' \vdash e[e'/x] : \vp$ by $Weaken_\omega$\\
-\end{tabbing}
-
-\item[Case:] $Weaken_\Delta$
-\begin{tabbing}
-  (1) $\G, \xo, \y[\Delta][\s'] \vdash e : \vp$ \` by assumption\\
-  (2) $\G' \vdash e' : \s$ \` by assumption\\
-  (3) $\hasnolinearvars{\G'}$ \` by assumption\\
-  (4) $\G, \xo \vdash e : \vp$ \` by inversion on $Weaken_\Delta$\\
-  (5) $\G, \G' \vdash e[e'/x] : \vp$ \` by induction hypothesis (2,3,4)\\
-  (6) $\G, \y[\Delta][\s'], \G' \vdash e[e'/x] : \vp$ by $Weaken_\Delta$\\
-\end{tabbing}
-
-\item[Case:] $Contract_\omega$
-\begin{tabbing}
-  (1) $\G, \xo, \y[\omega][\s'] \vdash e : \vp$\\
-  (2) $\G' \vdash e' : \s$ \`\\
-  (3) $\hasnolinearvars{\G'}$\\
-  (4) $\G, \xo, \y[\omega][\s'], \y[\omega][\s'] \vdash e : \vp$ \` by inversion on $Contract_\omega$\\
-  (5) $\G, \y[\omega][\s'], \y[\omega][\s'], \G' \vdash e[e'/x] : \vp$ \` by induction hypothesis (2,3,4)\\
-  (6) $\G, \y[\omega][\s'], \G' \vdash e[e'/x] : \vp$ by $Contract_\omega$\\
-\end{tabbing}
-
-\item[Case:] $\Lambda I$
-\begin{tabbing}
-  (1) $\Gamma, \xo \vdash \Lambda p.~e : \forall p.~\varphi$\\
-  (2) $\Gamma' \vdash e' : \sigma$ \\
-  (3) $\hasnolinearvars{\G'}$\\
-  (4) $\Gamma, \xo, p \vdash e : \varphi$ \` by inversion on $\Lambda I$\\
-  (5) $p \notin \Gamma$ \` by inversion on $\Lambda I$\\
-  (6) $\Gamma, p, \Gamma' \vdash e[e'/x] : \varphi$ \` by induction hypothesis by (2,3,4)\\
-  (7) $\Gamma, \Gamma' \vdash \Lambda p.~e[e'/x] : \forall p.~\varphi$ \` by $\Lambda I$ (5,6)\\
-  (8) $(\Lambda p.~e)[e'/x] = (\Lambda p.~e[e'/x])$ \` by def. of substitution\\
-\end{tabbing}
-
-\item[Case:] $\Lambda E$
-\begin{tabbing}
-  (1) $\G, \xo \vdash e~\pi: \varphi[\pi/p]$\\
-  (2) $\G' \vdash e' : \sigma$\\
-  (3) $\hasnolinearvars{\G'}$\\
-  (4) $\Gamma, \xo \vdash e : \forall p.~\varphi$ \` by inversion on $\Lambda E$\\
-  (5) $\Gamma, \xo \vdash_{mult} \pi$ \` by inversion on $\Lambda E$\\
-  (6) $\Gamma, \Gamma' \vdash e[e'/x] \forall p.~\varphi$ \` by induction hypothesis by (2,3,4)\\
-  (7) $\Gamma, \Gamma' \vdash e[e'/x]~\pi : \varphi[\pi/p]$ \` by $\Lambda E$ (5,6)\\
-  (8) $(e~\pi)[e'/x] = e[e'/x]~\pi$ \` by def. of substitution\\
-\end{tabbing}
-
-\item[Case:] $\lambda I$
-\begin{tabbing}
-  (1) $\G, \xo \vdash \lambda\y[\pi][\s'].~e : \s'\to_\pi\vp$\\
-  (2) $\G' \vdash e' : \sigma$\\
-  (3) $\hasnolinearvars{\G'}$\\
-  (4) $\G, \xo, \y[\pi][\s'] \vdash e : \vp$ \` by inversion on $\lambda I$\\
-  (5) $\G, \G', \y[\pi][\s'] \vdash e[e'/x] : \vp$ \` by induction hypothesis (2,3,4)\\
-  (6) $\G, \G' \vdash \lambda\y[\pi][\s'].~e[e'/x] : \s' \to_\pi\vp$ \` by $\lambda I$\\
-  (7) $(\lambda \y[\pi][\s'].~e)[e'/x] = (\lambda \y[\pi][\s'].~e[e'/x])$ \` by def. of subst.\\
+    TODO
 \end{tabbing}
 
 \item[Case:] $\lambda E_{1,p}$
 \begin{tabbing}
-  (1) $\G, \xo, \G'' \vdash e~e'' : \vp$\\
-  (2) $\G' \vdash e' : \s$\\
-  (3) $\hasnolinearvars{\G'}$\\
-  (4) $\G, \xo, \xo, \G'' \vdash e~e'' : \vp$ \` by $Contract_\omega$\\
-  (5) $\G, \xo \vdash e : \s'\to_{1,p}\vp$ \` by inversion on $\lambda E_{1,p}$\\
-  (6) $\G'', \xo \vdash e'' : \s'$ \` by inversion on $\lambda E_{1,p}$\\
-  (7) $\G, \G' \vdash e[e'/x] : \s'\to_{1,p}\vp$ \` by induction hypothesis (2,3,5)\\
-  (8) $\G'', \G' \vdash e''[e'/x] : \s'$ \` by induction hypothesis (2,3,6)\\
-  (9) $\G, \G'', \G', \G' \vdash e[e'/x]~e''[e'/x] : \vp$ \` by $\lambda E_{1,p}$ (7,8)\\
-  (10) $\G, \G'', \G' \vdash e[e'/x]~e''[e'/x] : \vp$ \` by $Contract_\omega$ (3)\\
-  (11) $(e~e'')[e'/x] = (e[e'/x]~e''[e'/x])$ \` by def. of subst.\\
+  (1) $\G, \xo; \D,\D' \vdash e~e'' : \vp$\\
+  (2) $\G; \cdot \vdash e' : \s$\\
+  % (3) $\G, \xo, \xo, \G'' \vdash e~e'' : \vp$ \` by $Contract_\omega$\\
+  (3) $\G, \xo; \D \vdash e : \s'\to_{1,p}\vp$ \` by inversion on $\lambda E_{1,p}$\\
+  (4) $\G, \xo; \D' \vdash e'' : \s'$ \` by inversion on $\lambda E_{1,p}$\\
+  (5) $\G; \D \vdash e[e'/x] : \s'\to_{1,p}\vp$ \` by induction hypothesis (2,3)\\
+  (6) $\G; \D' \vdash e''[e'/x] : \s'$ \` by induction hypothesis (2,4)\\
+  (7) $\G; \D, \D' \vdash e[e'/x]~e''[e'/x] : \vp$ \` by $\lambda E_{1,p}$ (5,6)\\
+  % (9) $\G, \G'', \G' \vdash e[e'/x]~e''[e'/x] : \vp$ \` by $Contract_\omega$ (3)\\
+  (8) $(e~e'')[e'/x] = (e[e'/x]~e''[e'/x])$ \` by def. of subst.\\
 \end{tabbing}
 
 \item[Case:] $\lambda E_\omega$
 \begin{tabbing}
-    (1) $\G, \xo, \G'' \vdash e~e'' : \vp$\\
-    (2) $\G' \vdash e' : \s$\\
-    (3) $\hasnolinearvars{\G'}$\\
-    (4) $\G, \xo, \xo, \G'' \vdash e~e'' : \vp$ \` by $Contract_\omega$\\
-    (5) $\G, \xo \vdash e : \s'\to_\omega\vp$ \` by inversion on $\lambda E_\omega$\\
-    (6) $\G'', \xo \vdash e'' : \s'$ \` by inversion on $\lambda E_\omega$\\
-    (7) $\G'', \G'$~\textrm{has no linear vars} \` by inversion on $\lambda E_\omega$ and (3)\\
-    (8) $\G, \G' \vdash e[e'/x] : \s'\to_1\vp$ \` by induction hypothesis (2,3,5)\\
-    (9) $\G'', \G' \vdash e''[e'/x] : \s'$ \` by induction hypothesis (2,3,6)\\
-    (10) $\G, \G'', \G', \G' \vdash e[e'/x]~e''[e'/x] : \vp$ \` by $\lambda E_\omega$ (7,8,9)\\
-    (11) $\G, \G'', \G' \vdash e[e'/x]~e''[e'/x] : \vp$ \` by $Contract_\omega$ (3)\\
-    (12) $(e~e'')[e'/x] = (e[e'/x]~e''[e'/x])$ \` by def. of subst.\\
+    (1) $\G, \xo; \D \vdash e~e'' : \vp$\\
+    (2) $\G; \cdot \vdash e' : \s$\\
+    (3) $\G, \xo; \D \vdash e : \s'\to_\omega\vp$ \` by inversion on $\lambda E_\omega$\\
+    (4) $\G, \xo; \cdot \vdash e'' : \s'$ \` by inversion on $\lambda E_\omega$\\
+    (5) $\G; \D \vdash e[e'/x] : \s'\to_1\vp$ \` by induction hypothesis (2,3)\\
+    (6) $\G; \cdot \vdash e''[e'/x] : \s'$ \` by induction hypothesis (2,4)\\
+    (7) $\G; \D \vdash e[e'/x]~e''[e'/x] : \vp$ \` by $\lambda E_\omega$ (5,6)\\
+    (8) $(e~e'')[e'/x] = (e[e'/x]~e''[e'/x])$ \` by def. of subst.\\
 \end{tabbing}
 
 \item[Case:] $Let$
 \begin{tabbing}
-    (1) $\G, \G'', \D, \xo \vdash \llet{\yD = e}{e''} : \vp$\\
-    (2) $\G' \vdash e' : \sigma$\\
-    (3) $\hasnolinearvars{\G'}$\\
-    (4) $\G, \G'', \D, \xo, \xo \vdash \llet{\yD = e}{e''} : \vp$ \` by $Contract_\omega$\\
-    (5) $\G, \D, \xo ,\yD \vdash e'' \vp$ \` by inversion on $Let$\\
-    (6) $\G'', \D, \xo \vdash e : \s'$ \` by inversion on $Let$\\
-    (7) $\hasnolinearvars{\G''}$ \` by inversion on $Let$\\
-    (8) $\G, \D, \yD, \G' \vdash e''[e'/x] : \vp$ \` by induction hypothesis (2,3,5)\\
-    (9) $\G'', \D, \G' \vdash e[e'/x] : \s'$ \` by induction hypothesis (2,3,6)\\
-    (10) $\hasnolinearvars{\G'', \G'}$ \` by (3,7)\\
-    (11) $\G,\G'',\D,\G',\G' \vdash \llet{\yD = e[e'/x]}{e''[e'/x]}$ \` by $Let$ (8,9,10)\\
-    (12) $\G,\G'',\D,\G' \vdash \llet{\yD = e[e'/x]}{e''[e'/x]}$ \` by $Contract_\omega$\\
-    (13) $(\llet{\yD = e}{e''})[e'/x] = (\llet{\yD = e[e'/x]}{e''[e'/x]})$
+    (1) $\G, \xo; \D, \D' \vdash \llet{\yD = e}{e''} : \vp$\\
+    (2) $\G; \cdot \vdash e' : \sigma$\\
+    (3) $\G,\xo,\yD; \D, \D' \vdash e'' \vp$ \` by inversion on $Let$\\
+    (4) $\G,\xo; \D \vdash e : \s'$ \` by inversion on $Let$\\
+    (5) $\G,\yD; \D \vdash e''[e'/x] : \vp$ \` by induction hypothesis (2,3)\\
+    (6) $\G; \D \vdash e[e'/x] : \s'$ \` by induction hypothesis (2,4)\\
+    (7) $\G;\D,\D' \vdash \llet{\yD = e[e'/x]}{e''[e'/x]}$ \` by $Let$ (5,6)\\
+    (8) $(\llet{\yD = e}{e''})[e'/x] = (\llet{\yD = e[e'/x]}{e''[e'/x]})$
 \end{tabbing}
 
 \item[Case:] $LetRec$
 \begin{tabbing}
-    (1) $\G, \ov{\G''}, \ov{\D}, \xo \vdash \lletrec{\ov{\yD = e}}{e''} : \vp$\\
-    (2) $\G' \vdash e' : \sigma$\\
-    (3) $\hasnolinearvars{\G'}$\\
-    (4) $\G, \ov{\G''}, \ov{\D}, \xo, \ov{\xo} \vdash \lletrec{\ov{\yD = e}}{e''} : \vp$ \` by $Contract_\omega$\\
-    (5) $\G, \ov{\D}, \ov{\yD}, \xo \vdash e'' : \vp$ \` by inversion on $LetRec$\\
-    (6) $\ov{\hasnolinearvars{\G''}}$ \` by inversion on $LetRec$\\
-    (7) $\ov{\G'', \D, \ov{\yD}, \xo \vdash e : \s'}$ \` by inversion on $LetRec$\\
-    (8) $\G, \ov{\D}, \ov{\yD}, \G' \vdash e''[e'/x] : \vp$ \` by induction hypothesis (2,3,5)\\
-    (9) $\ov{\G'', \D, \ov{\yD}, \G' \vdash e[e'/x] : \s'}$ \` by induction hypothesis (2,3,6)\\
-    (10) $\ov{\hasnolinearvars{\G'',\G'}}$ \` by (2,6)\\
-    (11) $\G, \ov{\G''}, \ov{\D}, \G', \ov{\G'} \vdash \lletrec{\ov{\yD = e[e'/x]}}{e''[e'/x]} : \vp$ \` by $LetRec$ (8,9,10)\\
-    (12) $\G, \ov{\G''}, \ov{\D}, \G' \vdash \lletrec{\ov{\yD = e[e'/x]}}{e''[e'/x]} : \vp$ \` by $Contract_\omega$ (2)\\
-    (13) $(\lletrec{\ov{\yD = e}}{e''})[e'/x] = (\lletrec{\ov{\yD = e[e'/x]}}{e''[e'/x]})$
+    (1) $\G, \xo; \D, \D' \vdash \lletrec{\ov{\yD = e}}{e''} : \vp$\\
+    (2) $\G'; \cdot \vdash e' : \sigma$\\
+    (3) $\G,\xo,\ov{\yD}; \D, \D' \vdash e'' : \vp$ \` by inversion on $LetRec$\\
+    (4) $\ov{\G,\xo, \ov{\yD}; \D \vdash e : \s'}$ \` by inversion on $LetRec$\\
+    (5) $\G, \ov{\yD}; \D, \D' \vdash e''[e'/x] : \vp$ \` by induction hypothesis (2,3)\\
+    (6) $\ov{\G,\ov{\yD}; \D \vdash e[e'/x] : \s'}$ \` by induction hypothesis (2,4)\\
+    (7) $\G; \D, \D' \vdash \lletrec{\ov{\yD = e[e'/x]}}{e''[e'/x]} : \vp$ \` by $LetRec$ (5,6)\\
+    (8) $(\lletrec{\ov{\yD = e}}{e''})[e'/x] = (\lletrec{\ov{\yD = e[e'/x]}}{e''[e'/x]})$
 \end{tabbing}
 
-\item[Case:] $Case$
+\item[Case:] $CaseWHNF$
 \begin{tabbing}
-    (1) $\G, \G'', \xo \vdash \ccase{e}{\zDp \{\ov{\rho_i \to e''_i}\}} : \vp$\\
-    (2) $\G' \vdash e' : \s$\\
-    (3) $\hasnolinearvars{\G'}$\\
-    (4) $\G, \G'', \xo, \ov{\xo} \vdash \ccase{e}{\zDp \{\ov{\rho_i \to
-    e''_i}\}} : \vp$ \` by $Contract_\omega$ (2)\\
-    (5) $\G, \xo \vdash e : \s'$ \` by inversion on $Case$\\
-    (6) $\G, \G' \vdash e[e'/x] : \s'$ \` by induction hypothesis (2,3,5)\\
-    (7) $\ov{\G'', \xo, \zDip \vdash_{alt} \rho_i \to e''_i :_{\D_i} \s' \Rightarrow \vp}$\` by inversion on $Case$\\
-    (8) $\ov{\G'', \zDip, \G' \vdash_{alt} \rho_i \to e''_i[e'/x] :_{\D_i} \s' \Rightarrow \vp}$\` by unr. subst. sublemma (2,3,7)\\
-    (9) $\G, \G'', \G', \G' \vdash \ccase{e[e'/x]}{\zDp \{\ov{\rho_i \to e''_i[e'/x]}\}} : \vp$\` by $Case$ (6,8)\\
-    (10) $(\ccase{e[e'/x]}{\zDp \{\ov{\rho_i \to e''_i[e'/x]}\}}) = \ccase{e}{\zDp \{\ov{\rho_i \to e''_i}\}}[e'/x]$\\
+    (1) TODO
 \end{tabbing}
+
+\item[Case:] $CaseNotWHNF$
+\begin{tabbing}
+    (1) TODO
+\end{tabbing}
+
 \end{description}
 
 \end{proof}
@@ -199,26 +159,19 @@ By structural induction on the first derivation.
 By structural induction on the $alt$ judgment.
 
 \begin{description}
-\item[Case:] $Alt$
+\item[Case:] $AltN$
 \begin{tabbing}
-    (1) $\G, \xo \vdash_{alt} K~\ov{y{:}_\pi\s''} \to e :_\Delta \s' \Rightarrow \vp$\\
-    (2) $\G' \vdash e' : \s$\\
-    (3) $\hasnolinearvars{\G'}$\\
-    (4) $\G, \xo, \ov{\y[\pi][\s'']} \vdash e : \vp$ \` by inversion on $Alt$\\
-    (5) $K : \ov{\s'' \to_\pi} \s' \in \G$\` by inversion on $Alt$\\
-    (6) $\D = \ov{\y[\pi][\s'']}\!\upharpoonright_1$\` by inversion on $Alt$\\
-    (7) $\G,\ov{\y[\pi][\s'']},\G' \vdash e[e'/x] : \vp$\` by unr. subst. lemma (2,3,4)\\
-    (8) $\G, \G' \vdash_{alt} K~\ov{\y[\pi][\s'']} \to e[e'/x] :_\Delta \s' \Rightarrow \vp$\` by $Alt$ (5,6,7)\\
+    TODO
+\end{tabbing}
+
+\item[Case:] $Alt0$
+\begin{tabbing}
+    TODO
 \end{tabbing}
 
 \item[Case:] $Alt_\_$
 \begin{tabbing}
-    (1) $\G, \xo \vdash_{alt} \_ \to e :_{\Delta_s} \s' \Rightarrow \vp$\\
-    (2) $\G' \vdash e' : \s$\\
-    (3) $\hasnolinearvars{\G'}$\\
-    (4) $\G, \D_s, \xo \vdash e : \vp$\` by inversion on $Alt_\_$\\
-    (5) $\G, \G', \D_s \vdash e[e'/x] : \vp$ \` by unr. subst. lemma (2,3,4)\\
-    (6) $\G ,\G' \vdash_{alt} \_ \to e[e'/x] :_{\Delta_s} \s' \Rightarrow \vp$\\
+    TODO
 \end{tabbing}
 
 \end{description}
