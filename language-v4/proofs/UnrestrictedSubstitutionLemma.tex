@@ -151,17 +151,21 @@ By structural induction on the first derivation.
 
 \begin{sublemma}[Substitution of unrestricted variables on case alternatives
     preserves typing]
-\emph{If $\G, \xo \vdash_{alt} \rho \to e :_\Delta \s \Rightarrow \vp$ and $\G' \vdash e' : \s$ and
-    $\hasnolinearvars{\G'}$ then $\G, \G' \vdash_{alt} \rho \to e[e'/x] :_\Delta \s \Rightarrow \vp$}
+If $\G, \xo; \D \vdash_{alt} \rho \to e :_\Delta \s' \Rightarrow \vp$ and $\G; \D \vdash e' : \s$ and
+    then $\G; \D \vdash_{alt} \rho \to e[e'/x] :_{\Delta_s} \s' \Rightarrow \vp$
 \end{sublemma}
 
 \begin{proof}
 By structural induction on the $alt$ judgment.
 
 \begin{description}
-\item[Case:] $AltN$
+\item[Case:] $AltN$ (trivial induction)
 \begin{tabbing}
-    TODO
+    (1) $\G; \cdot \vdash e : \s$\\
+    (2) $\G,\xo;\D \vdash_{alt} \konstructor~\to e :_{\D_s} \s' \Rightarrow \vp$\\
+    (3) $\G,\xo,\ov{\xo},\ov{y_i{:}_{\lctag{\subst{\D_s}{\D'}{x}}{K_i}}\s_i}; \D \vdash e : \vp $\\
+    (4) $\G,\ov{\xo},\ov{y_i{:}_{\lctag{\subst{\D_s}{\D'}{x}}{K_i}}\s_i}; \D \vdash e[e'/x] : \vp $\` by i.h.\\
+    (5) $\G;\D \vdash_{alt} \konstructor~\to e[e'/x] :_{\D_s} \s' \Rightarrow \vp$\` by $AltN$\\
 \end{tabbing}
 
 \item[Case:] $Alt0$
@@ -169,9 +173,13 @@ By structural induction on the $alt$ judgment.
     TODO
 \end{tabbing}
 
-\item[Case:] $Alt_\_$
+\item[Case:] $Alt_\_$ (trivial induction)
 \begin{tabbing}
-    TODO
+    (1) $\G;\cdot \vdash e : \s$\\
+    (2) $\G,\xo;\D \vdash_{alt} \_ \to e :_{\D_s} \s' \Rightarrow \vp$\\
+    (3) $\G,\xo;\D \vdash e : \vp$\\
+    (4) $\G;\D \vdash e[e'/x] : \vp$\` by i.h.\\
+    (5) $\G;\D \vdash_{alt} \_ \to e[e'/x] :_{\D_s} \s' \Rightarrow \vp$\` by $Alt_\_$\\
 \end{tabbing}
 
 \end{description}
