@@ -86,12 +86,22 @@
     {\judg[\G][\D,\D']{\ccase{e}{\zD~\{\ov{\rho \to e'}\}}}{\vp}}
 }
 
-\renewcommand{\TypeCaseNotWHNF}{
+\newcommand{\TypeCaseNotWHNFIncorrect}{
     \mprset{flushleft}
     \infer[(CaseNotWHNF)]
     {\textrm{e is definitely not in \emph{WHNF}} \\
     \judg{e}{\s}
     \\ \ov{\judg[\subst{\G}{\irr{\D}}{\D},z{:}_{\irr{\D}}\s][\irr{\D},\D']{\rho\to e'}{\s \Longrightarrow \vp}[alt][\irr{\D}]}}
+    {\splitjudg{\ccase{e}{\z[\irr{\D}]~\{\ov{\rho \to e'}\}}}{\vp}}
+    % TODO: Add that [d1] entails moving all delta usages to [delta] usages in all vars i d1
+}
+
+\renewcommand{\TypeCaseNotWHNF}{
+    \mprset{flushleft}
+    \infer[(CaseNotWHNF)]
+    {\textrm{e is definitely not in \emph{WHNF}} \\
+    \judg{e}{\s}
+    \\ \ov{\judg[\G,z{:}_{\irr{\D}}\s][\irr{\D},\D']{\rho\to e'}{\s \Longrightarrow \vp}[alt][\irr{\D}]}}
     {\splitjudg{\ccase{e}{\z[\irr{\D}]~\{\ov{\rho \to e'}\}}}{\vp}}
     % TODO: Add that [d1] entails moving all delta usages to [delta] usages in all vars i d1
 }
@@ -173,7 +183,7 @@
 % \\[1em]
 %     \TypeCaseVar
 \\[2em]
-    \judgment{\judg{\rho \to e}{\sigma \Rightarrow \varphi}[alt][\Delta]}
+    \judgment{\judg{\rho \to e}{\sigma \Rightarrow \varphi}[alt][\Delta_s]}
 \\[1em]
     \TypeAltN
 \\[1em]
