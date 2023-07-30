@@ -36,3 +36,35 @@ By removing the Γ subst. we
 As far as I can tell, we only need the \delta /= 0 restriction for the
 var_delta case, and likely to then invoke the delta-subst for alternatives.
 Q: Why did we need the delta-subst to be empty for alternatives?... Should have documented it.
+
+---
+
+Fault. Delta var subst. is unsound on this case.
+On one hand we (used to) need the $\G[\cdot/\D]$ subst to ensure the case
+binder became unrestricted inside of alternatives with no linear patterns, and
+on the other hand we CANNOT have this $\G[\cdot/\D]$ because it means some
+other variables also become unrestricted, and allow duplicate usage of
+resources. We need an alternative way to make the case-binder unrestricted
+while keeping the existing variables unusable inside of the case expression.
+Example:
+
+    let x = use y in
+    case h x of
+        K2 -> x
+
+(no linear pats, so x becomes unrestricted bc it's usage environment matches the case usage environment.
+but now, do substitution)
+
+====>
+
+    case h (use y) of
+        K2 -> use y
+
+Ouch! We duplicated y ...
+Another example, that doesn't even mean $x$ in the scrutinee:
+
+    let x = use y in
+    let z = use2 y in
+    case h z of
+        K2 -> x <-- occurrences of $y$ were deleted so $x$ is unrestricted... ouch...
+

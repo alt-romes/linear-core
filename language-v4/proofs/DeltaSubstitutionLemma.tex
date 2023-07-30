@@ -228,6 +228,7 @@ By structural induction on the first derivation.
     preserves typing]
 If $\G,\xD; \D,\D' \vdash_{alt} \rho \to e :_{\Delta_s} \s' \Rightarrow \vp$ and
     $\G; \D \vdash e' : \s$ and $\Delta_s \subseteq (\Delta,\Delta')$ and $\Delta \neq \emptyset$ then $\G; \D, \D' \vdash_{alt} \rho \to e[e'/x] :_{\Delta_s} \s' \Rightarrow \vp$
+    TODO: Do we still need delta /= 0?
 \end{sublemma}
 
 \begin{proof}
@@ -246,7 +247,14 @@ By structural induction on the $alt$ judgment.
 
 \item[Case:] $Alt0$
 \begin{tabbing}
-    TODO
+TODO. Fault. Delta var subst. is unsound on this case.
+On one hand we (used to) need the $\G[\cdot/\D]$ subst to ensure the case
+binder became unrestricted inside of alternatives with no linear patterns, and
+on the other hand we CANNOT have this $\G[\cdot/\D]$ because it means some
+other variables also become unrestricted, and allow duplicate usage of
+resources. We need an alternative way to make the case-binder unrestricted
+while keeping the existing variables unusable inside of the case expression.
+Examples in the call-notes.
 \end{tabbing}
 
 \item[Case:] $Alt_\_$ (trivial induction)
