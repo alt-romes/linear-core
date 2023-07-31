@@ -73,7 +73,7 @@ By structural induction on the small-step reduction.
 % CaseNotWHNF come into play somewhere here?
 % TODO: Subcases when \Delta == {}?
 \item[Case:]
-    $\ccase{K~\overline{e}}{z{:}_{\overline{\Delta}}\sigma}~\{\dots,K~\overline{x{:}_\pi\sigma}\to e'\}\ \longrightarrow e'\overline{[e/x]}[K~\overline{e}/z]$
+    $\ccase{K~\overline{e}}{z{:}_{\Delta}\sigma}~\{\dots,K~\overline{x{:}_\pi\sigma}\to e'\}\ \longrightarrow e'\overline{[e/x]}[K~\overline{e}/z]$
 \begin{tabbing}
     TODO
 %(1) $\Gamma,\Gamma',\Delta \vdash \ccase{K~\overline{e}}{z{:}_{\overline{\Delta}}\sigma~\{\dots,K~\overline{x{:}_\pi\sigma}\to e'\}} : \varphi$ \` by assumption \\
@@ -101,15 +101,14 @@ By structural induction on the small-step reduction.
 \end{tabbing}
 
 \item[Case:]
-    $\ccase{K~\overline{e}}{z{:}_{\ov{\Delta}}\sigma}~\{\dots,\_\to e'\}\ \longrightarrow e'[K~\overline{e}/z]$
+    $\ccase{K~\overline{e}}{z{:}_{\Delta}\sigma}~\{\dots,\_\to e'\}\ \longrightarrow e'[K~\overline{e}/z]$
 \begin{tabbing}
-    TODO
-% (1) $\Gamma,\Gamma',\Delta_s \vdash \ccase{K~\ov{e}}{z{:}_{\ov{\Delta}}\sigma~\{\dots,K~\overline{x{:}_\pi\sigma}\to e'\}} : \varphi$ \` by assumption \\
-% (2) $\hasnolinearvars{\Gamma}$\\
-% (3) $\Gamma, \Delta_s \vdash K~\ov{e} : \sigma$ \` by inversion on (case) \\
-% (4) $\Gamma', z{:}_{\Delta_s}\sigma \vdash_{alt} \_ \to e' :_{\Delta_s} \sigma \Longrightarrow \varphi$ \` by inversion on (case) \\
-% (5) $\Gamma', \z[\Delta_s][\sigma], \Delta_s \vdash e' : \varphi$ \` by inversion on (alt\_)\\
-% (6) $\Gamma, \Gamma', \Delta_s \vdash e'[K~\ov{e}/z] : \varphi$ \` by $\Delta$-subst. lemma (2,3,5)
+    (1) $\G;\D,\D' \vdash \ccase{K~\ov{e}}{\zD~\{\dots,\_ \to e'\}} : \vp$\\
+    (2) $\G;\D \vdash K~\ov{e} : \s$\\
+    (3) $K~\ov{e}$ is in WHNF\\
+    (4) $\G,\zD;\D,\D' \vdash_{alt} \_ \to e' :_{\D} \s \Rightarrow \vp$\`by inv on $CaseWHNF$\\
+    (5) $\G,\zD;\D,\D' \vdash e' : \vp$\`by inv on $Alt_\_$\\
+    (6) $\G;\D,\D' \vdash e'[K~\ov{e}/z] : \vp$\` by $\D$-subst.\\
 \end{tabbing}
 
 \item[Case:] $e_1~e_2 \longrightarrow e_1'~e_2$
@@ -132,11 +131,10 @@ By structural induction on the small-step reduction.
 (6) $\G; \D \vdash e'~\pi : \sigma[\pi/p]$ \` by ($\Lambda E$) (5,4) \\
 \end{tabbing}
 
-\item[Case:] $\ccase{e}{z{:}_{\overline{\Delta}}\sigma~\{\rho_i\to e'_i\}} \longrightarrow \ccase{e'}{z{:}_{\overline{\Delta}}\sigma~\{\rho_i\to e'_i\}}$
+\item[Case:] $\ccase{e}{z{:}_{\Delta}\sigma~\{\rho_i\to e'_i\}} \longrightarrow \ccase{e'}{z{:}_{\Delta}\sigma~\{\rho_i\to e'_i\}}$
 \begin{tabbing}
-    TODO
-% (1) $e \longrightarrow e'$ \` by inversion on case reduction \\
-% (2) $\Gamma, \Gamma' \vdash \ccase{e}{z{:}_{\overline{\Delta}}\sigma~\{\rho_i\to e'_i\}} : \varphi$ \` by assumption \\
+    (1) $e \longrightarrow e'$ \` by inversion on case reduction \\
+    (2) $\Gamma; \D, \D' \vdash \ccase{e}{z{:}_{\Delta}\sigma~\{\rho_i\to e'_i\}} : \varphi$\\
 % (3) $\Gamma \vdash e : \sigma$ \` by inversion on case \\
 % % TODO: HOW i?
 % (4) $\overline{\Gamma', z{:}_{\Delta_i}\sigma \vdash_{alt} \rho_i \to e'_i : \varphi}$ \` by inversion on case \\

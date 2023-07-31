@@ -3,7 +3,7 @@
 % spot a mistake let me know.
 
 \begin{lemma}[Substitution of unrestricted variables preserves typing]
-\emph{If $\Gamma, x{:}_\omega; \Delta \sigma \vdash e : \varphi$ and $\Gamma; \cdot \vdash e' : \sigma$ then $\G,\D \vdash e[e'/x] : \varphi$.}
+\emph{If $\Gamma, x{:}_\omega\sigma; \Delta \vdash e : \varphi$ and $\Gamma; \cdot \vdash e' : \sigma$ then $\G,\D \vdash e[e'/x] : \varphi$.}
 \end{lemma}
 
 \begin{proof}
@@ -137,12 +137,26 @@ By structural induction on the first derivation.
 
 \item[Case:] $CaseWHNF$
 \begin{tabbing}
-    (1) TODO
+    (1) $\G;\cdot \vdash e' : \s$\\
+    (2) $\G,\xo;\D,\D' \vdash \ccase{e}{\z[\D][\s']~\{\ov{\rho \to e''}\}} : \vp$\\
+    (3) $\G,\xo;\D \vdash e :\s$\\
+    (4) $\G;\D \vdash e [e'/x] : \s'$\`by i.h.\\
+    (5) $e$ is in WHNF\\
+    (6) $\ov{\G,\xo,\z[\D][\s'];\D,\D' \vdash \rho \to e'' :_{\D} \s' \Rightarrow \vp}$\\
+    (7) $\ov{\G,\z[\D][\s'];\D,\D' \vdash \rho \to e''[e'/x] :_{\D} \s' \Rightarrow \vp}$\` by unr. subst.  on alts lemma\\
+    (8) $\G;\D,\D' \vdash \ccase{e[e'/x]}{\z[\D][\s']~\{\ov{\rho \to e''[e'/x]}\}} : \vp$\\
 \end{tabbing}
 
 \item[Case:] $CaseNotWHNF$
 \begin{tabbing}
-    (1) TODO
+    (1) $\G;\cdot \vdash e' : \s$\\
+    (2) $\G,\xo;\D,\D' \vdash \ccase{e}{\z[\irr{\D}][\s']~\{\ov{\rho \to e''}\}} : \vp$\\
+    (3) $\G,\xo;\D \vdash e :\s$\\
+    (4) $\G;\D \vdash e [e'/x] : \s'$\`by i.h.\\
+    (5) $e$ is definitely not in WHNF\\
+    (6) $\ov{\G,\xo,\z[\irr{\D}][\s'];\irr{\D},\D' \vdash \rho \to e'' :_{\irr{\D}} \s' \Rightarrow \vp}$\\
+    (6) $\ov{\G,\z[\irr{\D}][\s'];\irr{\D},\D' \vdash \rho \to e''[e'/x] :_{\irr{\D}} \s' \Rightarrow \vp}$\`by unr. subst.  on alts lemma\\
+    (8) $\G;\D,\D' \vdash \ccase{e[e'/x]}{\z[\irr{\D}][\s']~\{\ov{\rho \to e''[e'/x]}\}} : \vp$\\
 \end{tabbing}
 
 \end{description}
