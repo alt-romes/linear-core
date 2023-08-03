@@ -119,11 +119,26 @@
     % delta vars being moved here.
 }
 
-\renewcommand{\TypeAltN}{
+% TODO: For the next three rules, do I really need the K \in \Gamma bit? At least
+% in the preservation to invoke constructor application lemma I do.
+
+\newcommand{\TypeAltNIncorrect}{
     \mprset{flushleft}
     \infer[(AltN)]
     { \judg[\G,\ov{\xo},\ov{y_i{:}_{\lctag{\D_s}{K_i}}\s_i}^n][\D]{e}{\vp}
     \\ n > 0
+    \\ K:\ov{\s_i \to_\pi} \s \in \G
+    }
+    {\judg{K~\ov{\xo},\ov{y_i{:}_1\s_i}^n\to e}{\s \Longrightarrow \vp}[alt][\D_s][z]}
+}
+
+\renewcommand{\TypeAltN}{
+    \mprset{flushleft}
+    \infer[(AltN)]
+    { \judg[\G,\ov{\xo},\ov{y_i{:}_{\D_i}\s_i}][\D]{e}{\vp}
+    \\ \ov{\D_i} = \ov{\lctag{\D_s}{K_j}}^n\\ \ov{\D_i \neq \cdot}
+    \\ n > 0
+    \\ K:\ov{\s_i \to_\pi} \s \in \G
     }
     {\judg{K~\ov{\xo},\ov{y_i{:}_1\s_i}^n\to e}{\s \Longrightarrow \vp}[alt][\D_s][z]}
 }
@@ -132,6 +147,7 @@
     \mprset{flushleft}
     \infer[(Alt0)]
     { \judg[\subst{\G}{\cdot}{\D_s}_z,\ov{\xo}][\subst{\D}{\cdot}{\D_s}]{e}{\vp}
+    \\ K:\ov{\s_i \to_\omega} \s \in \G
     }
     {\judg{K~\ov{\xo}\to e}{\s \Longrightarrow \vp}[alt][\D_s][z]}
 }

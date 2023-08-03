@@ -184,7 +184,11 @@ By structural induction on the $alt$ judgment.
 
 \item[Case:] $Alt0$
 \begin{tabbing}
-    TODO
+    (1) $\G;\cdot \vdash e' : \s$\\
+    (2) $\G,\xo; \D \vdash_{alt} K~\ov{\xo}~\to e :^z_{\D_s} \s' \Rightarrow \vp$\\
+    (3) $\G[\cdot/\D_s]_z,\xo,\ov{\xo}; \D[\cdot/\D_s] \vdash e : \vp$\` by inv.\\
+    (4) $\G[\cdot/\D_s]_z,\ov{\xo}; \D[\cdot/\D_s] \vdash e[e'/x] : \vp$\` by i.h.\\
+    (5) $\G; \D \vdash_{alt} K~\ov{\xo}~\to e :^z_{\D_s} \s' \Rightarrow \vp$\` by $Alt0$\\
 \end{tabbing}
 
 \item[Case:] $Alt_\_$ (trivial induction)

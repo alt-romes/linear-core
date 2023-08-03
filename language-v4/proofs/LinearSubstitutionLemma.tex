@@ -190,7 +190,7 @@ By structural induction on the first derivation.
 \end{tabbing}
 
 \item[Case:] $CaseNotWHNF$
-% TODO: I can also use congruence for the proof irrelevant stuff?
+    % TODO: I can also use congruence for the proof irrelevant stuff? (that is, instead of invoking the other lemma?)
 \begin{tabbing}
   (1) $\judg[\G][\D']{e'}{\s}$\\
   Subcase $x$ occurs in $e$\\
@@ -260,8 +260,6 @@ By structural induction on the $alt$ judgment.
                 in the scrutinee, for both the linear and affine contexts (see (5,6)).
                 We must also see that we can swap $x$ for $\D'$ if neither can occur (see (7)).
         \end{itemize}
-        TODO: Validate the two TODOs in the source
-        NEW:TODO: This needs to be redone in light of the update to Alt0
 \begin{tabbing}
   (1) $\judg[\G][\D']{e'}{\s}$\\
   Subcase $x$ occurs in scrutinee\\
@@ -283,7 +281,7 @@ By structural induction on the $alt$ judgment.
     (4) $\judg[\subst{\subst{\G}{\D'}{x}}{\cdot}{\D_s}_z,\ov{\xo}][\subst{\D}{\cdot}{\D_s},\D']{e[e'/x]}{\vp}$\\\`by i.h. and $x$ does not occur in $\D_s$\\
     (5) $\judg[\subst{\subst{\G}{\D'}{x}}{\cdot}{\D_s}_z,\ov{\xo}][\subst{(\D,\D')}{\cdot}{\D_s}]{e[e'/x]}{\vp}$\\
     \`by $\D$ and $\D'$ being disjoint by hypothesis,\\
-    \`and $\D_s$ being a subset of $\D$\\ % (TODO CHECK: Done, we require this as requirement to invoke the lemma)\\
+    \`and $\D_s$ being a subset of $\D$\\ % (CHECK: Done, we require this as requirement to invoke the lemma)\\
     (6) $\D_s[\D'/x] = \D_s$\`by $x$ does not occur in $\D_s$\\
     (7) $\judg[\subst{\G}{\D'}{x}][\D,\D']{K~\ov{\xo}~\to e[e'/x]}{\s' \Rightarrow \vp}[alt][\subst{\D_s}{\D'}{x}][z]$\\
 \end{tabbing}

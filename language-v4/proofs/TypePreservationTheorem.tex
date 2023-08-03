@@ -74,6 +74,9 @@ By structural induction on the small-step reduction.
 % TODO: Subcases when \Delta == {}?
 \item[Case:]
     $\ccase{K~\overline{e}}{z{:}_{\Delta}\sigma}~\{\dots,K~\overline{x{:}_\pi\sigma}\to e'\}\ \longrightarrow e'\overline{[e/x]}[K~\overline{e}/z]$
+This is another of the most interesting cases. We must invoke split, use Alt0
+or AltN, use delta and unr. substitution, subcases where the case
+binder is used and isn't, etc...
 \begin{tabbing}
     TODO
 %(1) $\Gamma,\Gamma',\Delta \vdash \ccase{K~\overline{e}}{z{:}_{\overline{\Delta}}\sigma~\{\dots,K~\overline{x{:}_\pi\sigma}\to e'\}} : \varphi$ \` by assumption \\

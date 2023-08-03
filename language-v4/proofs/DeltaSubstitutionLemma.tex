@@ -1,11 +1,13 @@
 
-% ROMES: Note that the \Delta env only has linear variables by construction;
 % usage environments only record linear variables.
 \begin{lemma}[Substitution of variables with usage environments preserves typing]
-If $\G,\xD; \D, \D' \vdash e : \varphi$ and $\G; \D \vdash e' : \sigma$ and $\D \neq \emptyset$ then $\G; \D, \D' \vdash e[e'/x] : \varphi$
+If $\G,\xD; \D, \D' \vdash e : \varphi$ and $\G; \D \vdash e' : \sigma$ then $\G; \D, \D' \vdash e[e'/x] : \varphi$
 % TODO: Write a paragraph about why this lemma has to have the same delta in the subst.
-% TODO: Do we still need the $Delta = empty$ restriction?
-% TODO: I think yes, and if we have $Delta = empty$ we never call delta substitution, but rather move the variable to be unrestricted and then call unr. subst. lemma
+% Do we still need the $Delta = empty$ restriction?
+% I think yes, and if we have $Delta = empty$ we never call delta substitution, but rather move the variable to be unrestricted and then call unr. subst. lemma
+% Nevermind, I don't think there needs to be a distinction between unrestricted and empty-envs. Empty-envs can be simply trivially instantiated by Delta-var rule.
+% And we needed it because the case-binder was handled differently, and its substitution when it was empty was ill-defined.
+% That is no longer the case.
 \end{lemma}
 \begin{proof}
 By structural induction on the first derivation.
@@ -57,21 +59,29 @@ By structural induction on the first derivation.
     (7) $\G; \D, \D' \vdash \lambda (\y[\omega][\s'].~e)[e'/x] : \s' \to_\omega \vp$ \` by (4,5)\\
 \end{tabbing}
 
-% I don't tihnk this is still relevant:
-% This case would happen for example if K :: a %ω -> b %ω -> K a b in
+% I don't think this is still relevant, because the context of the Δ subst. is now exactly the
+% same and the thing being substituted, and in the Var omega case, the Δ context must be empty (meaning the substitute must also have Δ=empty).
+% Previously, the subst. wouldn't work in the following case because the
+% case-binder was handled differently. Now, the case-binder will only be empty
+% if the pattern is empty, in which case all resources are deleted:
+%
+% The previous case would happen for example if K :: a %ω -> b %ω -> K a b in
 % case K e1 e2 of z:{}
 %   K x y -> e3
 % The substitution of z could happen in a context with no linear variables, and eventually get to Var_\omega
 % To handle this, we change the lemma to only account for non empty Delta
 % environments, which will forbid this case
-% Instead, we handle that subcase when we need it
+% Instead, we used to handle that subcase when we need it
+%
+% Cool. The separation we used to do between empty Delta vs non empty Delta
+% in the type preservation is now explicit in the two alternative rules for
+% constructor patterns (AltN vs Alt0).
 \item[Case:] $Var_\omega$
 \begin{tabbing}
-    (1) Impossible, $\Delta$ cannot be empty by assumption\\
-    % (1) $\G, \cdot, \yo, \x[\cdot][\s] \vdash y : \s'$\\
-    % (2) $\G' \vdash e' : \s$\\
-    % (3) $y[e'/x] = y$\\
-    % (4) TODO: Require specialization of subst. lemma in which ???\\
+    (1) $\G, \yo, \x[\cdot][\s]; \cdot \vdash y : \s'$\\
+    (2) $\G; \cdot \vdash e' : \s$\\
+    (3) $y[e'/x] = y$\\
+    (4) $\G,\yo;\cdot \vdash y : \s'$\` by (1) and $Weaken_\D$\\
 \end{tabbing}
 
 \item[Case:] $Var_1$
@@ -115,6 +125,8 @@ By structural induction on the first derivation.
     (6) $\G; \D, \D'' \vdash e''[e'/x] : \s'$\` by i.h.\\
     (7) $\G; \D,\D',\D'' \vdash (e~e''[e'/x]) : \vp$\` by ($\lambda E_{1,p}$)\\
     (8) $e~e''[e'/x] = (e~e'')[e'/x]$\`since $x$ does not occur in $e$\\
+    Subcase $\D$ is split between $e$ and $e''$\\
+    $x$ cannot occur in either, so the substitution is trivial, and $x$ can be weakened.
 
 \end{tabbing}
 
@@ -153,6 +165,8 @@ By structural induction on the first derivation.
     (6) $\G,\y[\D'][\s']; \D,\D',\D'' \vdash e''[e'/x] : \vp$\` by i.h. (1,5)\\
     (7) $\G;\D,\D',\D'' \vdash \llet{\y[\D'][\s'] = e}{e''[e'/x]} : \vp$\` by (let)\\
     (8) $\llet{\y[\D'][\s'] = e}{e''[e'/x]} = (\llet{\y[\D'][\s'] = e}{e''})[e'/x]$\\\` since $x$ cannot occur in $e$\\
+    Subcase $\D$ is split between $e$ and $e''$\\
+    $x$ cannot occur in either, so the substitution is trivial, and $x$ can be weakened.
 \end{tabbing}
 
 \item[Case:] LetRec
@@ -174,6 +188,8 @@ By structural induction on the first derivation.
     (7) $\G,\ov{\var[y_i][\D'][\s'_i]}; \D,\D',\D'' \vdash e''[e'/x] : \vp$\` by i.h. (1,6)\\
     (8) $\ov{e_i[e'/x] = e_i}$\` since $x$ cannot occur in $\ov{e_i}$\\
     (9) $\G;\D,\D',\D'' \vdash \lletrec{\ov{\var[y_i][\D'][\s'_i] = e_i}}{e''[e'/x]} : \vp$\` by (let)\\
+    Subcase $\D$ is split between $e$ and $e''$\\
+    $x$ cannot occur in either, so the substitution is trivial, and $x$ can be weakened.
 \end{tabbing}
 
 \item[Case:] CaseWHNF
@@ -196,6 +212,9 @@ By structural induction on the first derivation.
     (7) $\ov{\G,\xD,\z[\D'][\s']; \D,\D',\D'' \vdash_{alt} \rho \to e'' :^z_{\D'} : \s' \Rightarrow \vp}$\\
     (8) $\ov{\G,\z[\D'][\s']; \D,\D',\D'' \vdash_{alt} \rho \to e''[e'/x] :^z_{\D'} \s' \Rightarrow \vp}$\` by subst. of $\D$ vars on case alts\\
     (9) $\G;\D,\D',\D'' \vdash \ccase{e[e'/x]}{\z[\D'][\s']~\{\ov{\rho \to e''[e'/x]}\}} : \vp$\` by $CaseWHNF$\\
+    Subcase $\D$ is partially used in $e$\\
+    This is like the subcase above, but consider $\D'$ to contain some of part
+    of $\D$ and $\D$ to refer to the other part only.
 \end{tabbing}
 
 \item[Case:] CaseNotWHNF
@@ -217,6 +236,9 @@ By structural induction on the first derivation.
     (5) $\ov{\G,\xD,\z[\irr{\D'}][\s']; \D,[\D'],\D'' \vdash_{alt} \rho \to e'' :^z_{\irr{\D'}} \s'\Rightarrow\vp}$\` by inv.\\
     (7) $\ov{\G,\z[\irr{\D'}][\s']; \D,[\D'],\D'' \vdash_{alt} \rho \to e''[e'/x] :^z_{\irr{\D'}} \s'\Rightarrow\vp}$\\\` by subst. of $\D$-vars in case alternatives\\
     (8) $\G; \D, \D', \D'' \vdash \ccase{e}{\z[\irr{\D,\D'}][\s']~\{\ov{\rho\to e''[e'/x]}\}}$\`by $CaseNotWHNF$\\
+    Subcase $\D$ is partially used in $e$\\
+    This is like the subcase above, but consider $\D'$ to contain some of part
+    of $\D$ and $\D$ to refer to the other part only.
 \end{tabbing}
 
 \end{description}
@@ -227,7 +249,7 @@ By structural induction on the first derivation.
 \begin{sublemma}[Substitution of $\Delta$-bound variables on case alternatives
     preserves typing]
 If $\G,\xD; \D,\D' \vdash_{alt} \rho \to e :^z_{\Delta_s} \s' \Rightarrow \vp$ and
-    $\G; \D \vdash e' : \s$ and $\Delta_s \subseteq (\Delta,\Delta')$ and $\Delta \neq \emptyset$ then $\G; \D, \D' \vdash_{alt} \rho \to e[e'/x] :^z_{\Delta_s} \s' \Rightarrow \vp$
+    $\G; \D \vdash e' : \s$ and $\Delta_s \subseteq (\Delta,\Delta')$ then $\G; \D, \D' \vdash_{alt} \rho \to e[e'/x] :^z_{\Delta_s} \s' \Rightarrow \vp$
     TODO: Do we still need delta /= 0?
 \end{sublemma}
 
@@ -247,14 +269,35 @@ By structural induction on the $alt$ judgment.
 
 \item[Case:] $Alt0$
 \begin{tabbing}
-TODO. Fault. Delta var subst. is unsound on this case.
-On one hand we (used to) need the $\G[\cdot/\D]$ subst to ensure the case
-binder became unrestricted inside of alternatives with no linear patterns, and
-on the other hand we CANNOT have this $\G[\cdot/\D]$ because it means some
-other variables also become unrestricted, and allow duplicate usage of
-resources. We need an alternative way to make the case-binder unrestricted
-while keeping the existing variables unusable inside of the case expression.
-Examples in the call-notes.
+% Fault. Delta var subst. used to be unsound on this case.
+% On one hand we (used to) need the $\G[\cdot/\D]$ subst to ensure the case
+% binder became unrestricted inside of alternatives with no linear patterns, and
+% on the other hand we CANNOT have this $\G[\cdot/\D]$ because it means some
+% other variables also become unrestricted, and allow duplicate usage of
+% resources. We need an alternative way to make the case-binder unrestricted
+% while keeping the existing variables unusable inside of the case expression.
+% Examples in the call-notes.
+    (1) $\G; \D \vdash e' : \s$\\
+    Subcase $\D$ occurs in scrutinee\\
+    (2) $\G,\xD; \D,\D',\D'' \vdash_{alt} K~\ov{\x}~\to e :^z_{\D,\D'} \s' \Rightarrow \vp$\\
+    (3) $(\G,\xD)[\cdot/\D,\D']_z; (\D,\D',\D'')[\cdot/\D,\D'] \vdash e : \vp$\\
+    (4) $\G[\cdot/\D,\D']_z, \xD; \D'' \vdash e : \vp$\\\`by def. of $[]_z$ subst. and $[]$ subst.\\
+    (5) $\G[\cdot/\D,\D']_z, \xD; \D'' \vdash e[e'/x] : \vp$\\\`by $x$ cannot occur in $e$ by $\D$ not available\\
+    (6) $\G[\cdot/\D,\D']_z; \D'' \vdash e[e'/x] : \vp$\\\`by (admissible) $Weaken_\D$\\
+    (7) $\cdot = (\D,\D')[\cdot/\D,\D']$\\
+    (8) $\G[\cdot/\D,\D']_z; (\D,\D',\D'')[\cdot/\D,\D'] \vdash e[e'/x] : \vp$\\\`by (6,7)\\
+    (9) $\G;\D,\D',\D'' \vdash_{alt} e[e'/x] :^z_{\D,\D'} \s' \Rightarrow \vp$\\
+    Subcase $\D$ does not occur in the scrutinee\\
+    (2) $\G,\xD; \D,\D',\D'' \vdash_{alt} K~\ov{\x}~\to e :^z_{\D'} \s' \Rightarrow \vp$\\
+    (3) $(\G,\xD)[\cdot/\D']_z; (\D,\D',\D'')[\cdot/\D'] \vdash e : \vp$\\
+    (4) $\G[\cdot/\D']_z, \xD; \D,\D'' \vdash e : \vp$\\\`by def. of $[]_z$ subst. and $[]$ subst.\\
+    (5) $\G[\cdot/\D']_z; \D,\D'' \vdash e[e'/x] : \vp$\` by $\D$-subst. lemma\\
+    (6) $\cdot = \D'[\cdot/\D']$\\
+    (7) $\G[\cdot/\D']_z; (\D,\D',\D'')[\cdot/\D'] \vdash e[e'/x] : \vp$\` by (5,6)\\
+    (8) $\G;\D,\D',\D'' \vdash_{alt} \vdash e[e'/x] :^z_{\D'} \s' \Rightarrow \vp$\`by $Alt0$\\
+    Subcase $\D$ is partially used in the scrutinee\\
+    This is like the subcase above, but consider $\D'$ to contain some of part
+    of $\D$ and $\D$ to refer to the other part only.
 \end{tabbing}
 
 \item[Case:] $Alt_\_$ (trivial induction)

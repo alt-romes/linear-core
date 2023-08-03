@@ -63,4 +63,4 @@ inferDeltaAnnsExpr expr = do
 
 
 makeDeltaAnnFrom :: UsageEnv -> DeltaAnn
-makeDeltaAnnFrom ue
+makeDeltaAnnFrom ue = _
