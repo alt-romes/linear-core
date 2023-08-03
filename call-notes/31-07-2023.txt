@@ -1,0 +1,69 @@
+# Escrever a tese
+
+Vamos incluir as provas na tese.
+
+Não tenho de mexer muito no Background and Related Work
+
+# Introduction
+
+# Expandir background
+    * Falta /principalmente/ uma discussão sobre evaluation em Haskell e call-by-need semantics
+        * Foreshadowing para que syntatically coisas aparecem muitas vezes, but not a problem
+        * Call-by-need linear calculus (https://www.sciencedirect.com/science/article/pii/S1571066104000222)
+            * Extração de estratégias de evaluation através de interpretações de tipos
+        * Falar de thunks e de evaluation more in depth
+    * Expandir opts
+        * Principalmente com os reverse-binder-swaps
+        * E com enunciados sobre os quais fazemos as provas para os outros
+
+# Linear Core++ (payload)
+
+    (Ter demasiado dos sistemas obsoletos confunde o leitor.)
+
+    Inicío deve motivar o leitor, e temos de explicar qual é o problema da
+    linearidade sintatica em Haskell (vs semantica), e a interação disso com o
+    call-by-need/lazy evaluation. Quase como se fosse um paper.
+
+    * Introdução
+    * Interação de linearity com a call-by-need/laziness
+    * Explicar regras interleaved com exemplos
+        * Falar das ideas dos usage environments (ideia de exclusão mutua)
+        * Incluir algumas justificações que incorporam as coisas que não
+          correram bem, mas só falar do que não funcionou para explicar a forma
+          como funciona bem.
+
+    * Metatheory
+        * Type safety
+        * Validação das optimizações
+        * Discussão do reverse binder swap
+            * Principalmente a questão de ter ou não ter
+              CaseVar+ReverseBinderSwap+NaiveLinearAnalysisForBetaReduction, ou ter NoCaseVar+NoRevBinderSwap+SmartLinearBetaReduction
+            * Tradeoffs...
+
+    * Infer Usage Environments
+        * Não está formalizado
+        * Mas temos uma implementação (a funcionar).
+    * Implementação dita
+        * Plugin do GHC que valida coisas
+        * Tentativa de mudar o GHC
+        * Em último caso, implementação standalone (saber desistir...)
+
+    * Evaluation
+        * Resultado de type safety
+        * Validações de transformações
+        * Resultados do plugin
+            * Expressões que conseguimos
+            * E que não conseguimos
+
+
+# Closing chapter
+
+    Preamble
+
+    # Related Work (desta vez a sério)
+        * Fractionless permissions
+        * Sequent Core (sobre WHNFs e assim) (não muito importante)
+        * ...
+
+    # Future Work
+        * Falar de Multiplicity Coercions (que aparecem fore-shadowed no background na parte dos GADTs e Core Coercions)

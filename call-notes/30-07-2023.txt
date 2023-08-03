@@ -1,4 +1,4 @@
-In the case WHNF rule we can't do Γ[[Δ]/Δ] for the case alternatives. Instead,
+In the case NOT WHNF rule we can't do Γ[[Δ]/Δ] for the case alternatives. Instead,
 we need to just keep Γ untouched.
 
 The issue became aparent in the delta-var substitution rule.
@@ -48,9 +48,9 @@ resources. We need an alternative way to make the case-binder unrestricted
 while keeping the existing variables unusable inside of the case expression.
 Example:
 
-    let x = use y in
+    let x(y) = use y in
     case h x of
-        K2 -> x
+        K2 ->(y consumed) x
 
 (no linear pats, so x becomes unrestricted bc it's usage environment matches the case usage environment.
 but now, do substitution)

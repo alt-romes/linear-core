@@ -64,10 +64,10 @@ By structural induction on the first derivation.
 \begin{tabbing}
   (1) $\G;x{:}_1\sigma \vdash x : \sigma$\\
   (2) $\G;\D' \vdash e' : \sigma$\\
-  (3) $x[e'/x] = e'$ \` by def. of substitution\\
+  (3) $\G[\D'/x]; \D' \vdash e' : \s$\` by weaken\\
+  (4) $x[e'/x] = e'$ \` by def. of substitution\\
   % (4) $\cdot[\lin{\G'}/x] = \cdot$ \` by def. of substitution\\
-  TODO, can I weaken the G to G with subst?\\
-  (4) $\G;\D' \vdash e' : \sigma$ \` by (2)\\
+  (5) $\G[\D'/x];\D' \vdash e' : \sigma$ \` by (3)\\
 \end{tabbing}
 
 \item[Case:] $Var_\omega$\\
@@ -78,8 +78,7 @@ By structural induction on the first derivation.
   (1) $\G,y{:}_{\Delta,\xl}\varphi; \D, x{:}_1\sigma \vdash y : \varphi$\\
   (2) $\G; \D' \vdash e' : \sigma$\\
   (3) $y[e'/x] = y$\\
-  (4) $\G[\D'/x],y{:}_{\Delta,\D'}\varphi; \D,\D'; \vdash y : \varphi$ \` by congruence, or something...TODO\\
-  This needs to be true bc if we substitute `x` elsewhere, y must still be well-typed??
+  (4) $\G[\D'/x],y{:}_{\Delta,\D'}\varphi; \D,\D'; \vdash y : \varphi$ \` by $Var_\Delta$\\
 \end{tabbing}
 
 \item[Case:] $Split$
@@ -176,17 +175,17 @@ By structural induction on the first derivation.
   (2) $\judg[\G][\D,\xl,\D'']{\ccase{e}{\z[\D,\xl][\s']~\{\ov{\rho\to e''}\}}}{\vp}$\\
   (3) $e$ is in WHNF\\
   (4) $\judg[\G][\D,\xl]{e}{\s'}$\\
-  (5) $\ov{\judg[\G,\zr{\D,\xl}{\s'}][\D,\xl,\D'']{\rho\to e''}{\s' \Longrightarrow \vp}[alt][\D,\xl]}$\\
+    (5) $\ov{\judg[\G,\zr{\D,\xl}{\s'}][\D,\xl,\D'']{\rho\to e''}{\s' \Longrightarrow \vp}[alt][\D,\xl][z]}$\\
   (6) $\judg[\subst{\G}{\D'}{x}][\D,\D']{e[e'/x]}{\vp}$\`by i.h.\\
-  (7) $\ov{\judg[\subst{\G}{\D'}{x},\zr{\D,\D'}{\s'}][\D,\D',\D'']{\rho\to e''[e'/x]}{\s' \Longrightarrow \vp}[alt][\D,\D']}$\` by i.h.\\
+    (7) $\ov{\judg[\subst{\G}{\D'}{x},\zr{\D,\D'}{\s'}][\D,\D',\D'']{\rho\to e''[e'/x]}{\s' \Longrightarrow \vp}[alt][\D,\D'][z]}$\` by lin. subst. alts.\\
   (8) $\judg[\subst{\G}{\D'}{x}][\D,\D',\D'']{\ccase{e[e'/x]}{\z[\D,\D'][\s']~\{\ov{\rho\to e''[e'/x]}\}}}{\vp}$\\
   Subcase $x$ occurs in $\ov{e''}$\\
   (2) $\judg[\G][\D,\D'',\xl]{\ccase{e}{\z[\D][\s']~\{\ov{\rho\to e''}\}}}{\vp}$\\
   (3) $e$ is in WHNF\\
   (4) $\judg[\G][\D]{e}{\s'}$\\
-  (5) $\ov{\judg[\G,\zr{\D}{\s'}][\D,\D'',\xl]{\rho\to e''}{\s' \Longrightarrow \vp}[alt][\D]}$\\
+    (5) $\ov{\judg[\G,\zr{\D}{\s'}][\D,\D'',\xl]{\rho\to e''}{\s' \Longrightarrow \vp}[alt][\D][z]}$\\
   (6) $e[e'/x] = e$\` by $x$ does not occur in $e$\\
-  (7) $\ov{\judg[\subst{\G}{\D'}{x},\zr{\D}{\s'}][\D,\D'',\D']{\rho\to e''[e'/x]}{\s' \Longrightarrow \vp}[alt][\D]}$\`by i.h.\\
+    (7) $\ov{\judg[\subst{\G}{\D'}{x},\zr{\D}{\s'}][\D,\D'',\D']{\rho\to e''[e'/x]}{\s' \Longrightarrow \vp}[alt][\D][z]}$\`by i.h.\\
   (8) $\judg[\subst{\G}{\D'}{x}][\D,\D'',\D']{\ccase{e}{\z[\D][\s']~\{\ov{\rho\to e''[e'/x]}\}}}{\vp}$\\
 \end{tabbing}
 
@@ -198,9 +197,9 @@ By structural induction on the first derivation.
     (2) $\judg[\G][\D,\xl,\D'']{\ccase{e}{\z[\irr{\D,\xl}][\s']~\{\ov{\rho\to e''}\}}}{\vp}$\\
     (3) $e$ is definitely not in WHNF\\
     (4) $\judg[\G][\D,\xl]{e}{\s'}$\`by inv.\\
-    (5) $\ov{\judg[\G,\zr{\irr{\D,\xl}}{\s'}][\irr{\D,\xl},\D'']{\rho\to e''}{\s' \Longrightarrow \vp}[alt][\irr{\D,\xl}]}$\`by inv.\\
+    (5) $\ov{\judg[\G,\zr{\irr{\D,\xl}}{\s'}][\irr{\D,\xl},\D'']{\rho\to e''}{\s' \Longrightarrow \vp}[alt][\irr{\D,\xl}][z]}$\`by inv.\\
     (6) $\judg[\subst{\G}{\D'}{x}][\D,\D']{e[e'/x]}{\vp}$\`by i.h.\\
-    (7) $\ov{\judg[\subst{\G}{\D'}{x},\zr{\irr{\D,\D'}}{\s'}][\irr{\D,\D'},\D'']{\rho\to e''[e'/x]}{\s' \Longrightarrow \vp}[alt][\irr{\D,\D'}]}$\\
+    (7) $\ov{\judg[\subst{\G}{\D'}{x},\zr{\irr{\D,\D'}}{\s'}][\irr{\D,\D'},\D'']{\rho\to e''[e'/x]}{\s' \Longrightarrow \vp}[alt][\irr{\D,\D'}][z]}$\\
     \` by subst. of p. irr. vars in alt.\\
     \` or, simply, congruence? \\
     \` (x only occurs in ctxts, so replace all xs by $\D'$, starting by $\G$)?\\
@@ -209,9 +208,9 @@ By structural induction on the first derivation.
     (2) $\judg[\G][\D,\D'',\xl]{\ccase{e}{\z[\irr{\D}][\s']~\{\ov{\rho\to e''}\}}}{\vp}$\\
     (3) $e$ is definitely not in WHNF\\
     (4) $\judg[\G][\D]{e}{\s'}$\`by inv.\\
-    (5) $\ov{\judg[\G,\zr{\irr{\D}}{\s'}][\irr{\D},\D'',\xl]{\rho\to e''}{\s' \Longrightarrow \vp}[alt][\irr{\D}]}$\`by inv.\\
+    (5) $\ov{\judg[\G,\zr{\irr{\D}}{\s'}][\irr{\D},\D'',\xl]{\rho\to e''}{\s' \Longrightarrow \vp}[alt][\irr{\D}][z]}$\`by inv.\\
     (6) $e[e'/x] = e$\` by $x$ does not occur in $e$\\
-    (7) $\ov{\judg[\subst{\G}{\D'}{x},\zr{\irr{\D}}{\s'}][\irr{\D},\D'',\D']{\rho\to e''[e'/x]}{\s' \Longrightarrow \vp}[alt][\irr{\D}]}$\`by i.h.\\
+    (7) $\ov{\judg[\subst{\G}{\D'}{x},\zr{\irr{\D}}{\s'}][\irr{\D},\D'',\D']{\rho\to e''[e'/x]}{\s' \Longrightarrow \vp}[alt][\irr{\D}][z]}$\`by lin. subst. on alts\\
     (8) $\judg[\subst{\G}{\D'}{x}][\D,\D'',\D']{\ccase{e}{\z[\irr{\D}][\s']~\{\ov{\rho\to e''[e'/x]}\}}}{\vp}$\\
 \end{tabbing}
 
@@ -227,10 +226,10 @@ By structural induction on the first derivation.
 
 \begin{sublemma}[Substitution of linear variables on case alternatives
     preserves typing]
-  If $\judg[\G][\D,\xl]{\rho\to e}{\s \Longrightarrow \vp}[alt][\D_s]$ and
+    If $\judg[\G][\D,\xl]{\rho\to e}{\s \Longrightarrow \vp}[alt][\D_s][z]$ and
     $\judg[\G][\D']{e'}{\s}$ and
     $\D_s \subseteq \D,x$ then
-    $\judg[\subst{\G}{\D'}{x}][\D,\D']{\rho \to e[e'/x]}{\s \Longrightarrow \vp}[alt][\subst{\D_s}{\D'}{x}]$
+    $\judg[\subst{\G}{\D'}{x}][\D,\D']{\rho \to e[e'/x]}{\s \Longrightarrow \vp}[alt][\subst{\D_s}{\D'}{x}][z]$
 \end{sublemma}
 
 \begin{proof}
@@ -240,11 +239,11 @@ By structural induction on the $alt$ judgment.
 \item[Case:] $AltN$
 \begin{tabbing}
   (1) $\judg[\G][\D']{e'}{\s}$\\
-  (2) $\judg[\G][\D,\xl]{\konstructor~\to e}{\s' \Longrightarrow \vp}[alt][\D_s]$\\
+    (2) $\judg[\G][\D,\xl]{\konstructor~\to e}{\s' \Longrightarrow \vp}[alt][\D_s][z]$\\
   (3) $n > 0$\\
   (4) $\judg[\G,\ov{\xo},\ov{y_i{:}_{\lctag{\D_s}{K_i}}\s_i}][\D,\xl]{e}{\vp}$\\
   (5) $\judg[\subst{\G}{\D'}{x},\ov{\xo},\ov{y_i{:}_{\lctag{\subst{\D_s}{\D'}{x}}{K_i}}\s_i}][\D,\D']{e[e'/x]}{\vp}$\` by i.h.\\
-  (6) $\judg[\subst{\G}{\D'}{x}][\D,\D']{\rho \to e[e'/x]}{\s' \Longrightarrow \vp}[alt][\subst{\D_s}{\D'}{x}]$\\
+    (6) $\judg[\subst{\G}{\D'}{x}][\D,\D']{\rho \to e[e'/x]}{\s' \Longrightarrow \vp}[alt][\subst{\D_s}{\D'}{x}][z]$\\
 \end{tabbing}
 
 \item[Case:] $Alt0$
@@ -258,40 +257,44 @@ By structural induction on the $alt$ judgment.
             \item The third insight is to \emph{create} linear resources
                 seemingly out of nowhere \emph{under a substitution that
                 removes them}. We see this happen in the case where $x$ occurs
-                in the scrutinee, for both the linear and affine contexts (see 5 and 6).
+                in the scrutinee, for both the linear and affine contexts (see (5,6)).
+                We must also see that we can swap $x$ for $\D'$ if neither can occur (see (7)).
         \end{itemize}
         TODO: Validate the two TODOs in the source
         NEW:TODO: This needs to be redone in light of the update to Alt0
 \begin{tabbing}
   (1) $\judg[\G][\D']{e'}{\s}$\\
   Subcase $x$ occurs in scrutinee\\
-    (2) $\judg[\G][\D,\xl]{K~\ov{\xo}~\to e}{\s' \Longrightarrow \vp}[alt][\D_s,\xl]$\\
-    (2.5) $\judg[\subst{\G}{\cdot}{\D_s,x},\ov{\xo}][\subst{(\D,\xl)}{\cdot}{\D_s,x}]{e}{\vp}$\`by inv.\\
-    (3) $\judg[\subst{\G}{\cdot}{\D_s,x},\ov{\xo}][\subst{\D}{\cdot}{\D_s}]{e}{\vp}$\\
+    (2) $\judg[\G][\D,\xl]{K~\ov{\xo}~\to e}{\s' \Longrightarrow \vp}[alt][\D_s,\xl][z]$\\
+    (2.5) $\judg[\subst{\G}{\cdot}{\D_s,x}_z,\ov{\xo}][\subst{(\D,\xl)}{\cdot}{\D_s,x}]{e}{\vp}$\`by inv.\\
+    (3) $\judg[\subst{\G}{\cdot}{\D_s,x}_z,\ov{\xo}][\subst{\D}{\cdot}{\D_s}]{e}{\vp}$\\
     (4) $e[e'/x] = e$\` since $x$ cannot occur in $e$ (erased from cx)\\
     (5) $\D[\cdot/\D_s] = (\D,\D')[\cdot/\D_s,\D']$   \` by cong. of subst.\\
-    (6) $\G[\cdot/\D_s,x] = \G[\D'/x][\cdot/\D_s,\D']$\` by cong. of subst.\\
-    (7) $\judg[\subst{\subst{\G}{\D'}{x}}{\cdot}{\D_s,\D'},\ov{\xo}][\subst{(\D,\D')}{\cdot}{\D_s,\D'}]{e[e'x]}{\vp}$\` by (4,5,6)\\
+    (6) $\G[\cdot/\D_s,x]_z[\D'/x] = \G[\D'/x][\cdot/\D_s,\D']_z$\` by cong. of subst. and more\\
+    (7) $\forall x,\D,\D',\G:x\notin\Delta \land \Delta'\not\subset\D \land \G;\D \vdash e :\s \Longrightarrow \G[\D'/x];\D \vdash e : \s$\` by Weaken\\
+    \` and variables in $\G$ cannot occur in $e$ if they mention $x$ nor if they mention $\D'$ \\
+    % (6) $\G[\cdot/\D_s,x]_z = \G[\D'/x][\cdot/\D_s,\D']_z$\` by cong. of subst.\\
+    (8) $\judg[\subst{\subst{\G}{\D'}{x}}{\cdot}{\D_s,\D'}_z,\ov{\xo}][\subst{(\D,\D')}{\cdot}{\D_s,\D'}]{e[e'x]}{\vp}$\` by (4,5,6,7)\\\` and $x$ and $\D'$ are erased from ctx\\
     % (8) $\judg[\G,\ov{\xo}][\subst{(\D,\D')}{\cdot}{\D_s,\D'}][\subst{\subst{\G}{\D'}{x},\d'}{\cdot}{\D_s,\D'}]{e[e'x]}{\vp}$\` by $Weaken_\Delta$\\
-    (9) $\judg[\subst{\G}{\D'}{x}][\D,\D']{K~\ov{\xo}~\to e[e'/x]}{\s' \Longrightarrow \vp}[alt][\D_s,\D']$\` by $Alt0$\\
+    (9) $\judg[\subst{\G}{\D'}{x}][\D,\D']{K~\ov{\xo}~\to e[e'/x]}{\s' \Rightarrow \vp}[alt][\D_s,\D'][z]$\` by $Alt0$\\
   Subcase $x$ does not occur in scrutinee\\
-    (2) $\judg[\G][\D,\xl]{K~\ov{\xo}~\to e}{\s' \Longrightarrow \vp}[alt][\D_s]$\\
-    (3) $\judg[\subst{\G}{\cdot}{\D_s},\ov{\xo}][\subst{\D}{\cdot}{\D_s},\xl]{e}{\vp}$\`by $x$ does not occur in $\D_s$ and inv.\\
-    (4) $\judg[\subst{\subst{\G}{\D'}{x}}{\cdot}{\D_s},\ov{\xo}][\subst{\D}{\cdot}{\D_s},\D']{e[e'/x]}{\vp}$\`by i.h. and $x$ does not occur in $\D_s$\\
-    (5) $\judg[\subst{\subst{\G}{\D'}{x}}{\cdot}{\D_s},\ov{\xo}][\subst{(\D,\D')}{\cdot}{\D_s}]{e[e'/x]}{\vp}$\\
+    (2) $\judg[\G][\D,\xl]{K~\ov{\xo}~\to e}{\s' \Longrightarrow \vp}[alt][\D_s][z]$\\
+    (3) $\judg[\subst{\G}{\cdot}{\D_s}_z,\ov{\xo}][\subst{\D}{\cdot}{\D_s},\xl]{e}{\vp}$\`by $x$ does not occur in $\D_s$ and inv.\\
+    (4) $\judg[\subst{\subst{\G}{\D'}{x}}{\cdot}{\D_s}_z,\ov{\xo}][\subst{\D}{\cdot}{\D_s},\D']{e[e'/x]}{\vp}$\\\`by i.h. and $x$ does not occur in $\D_s$\\
+    (5) $\judg[\subst{\subst{\G}{\D'}{x}}{\cdot}{\D_s}_z,\ov{\xo}][\subst{(\D,\D')}{\cdot}{\D_s}]{e[e'/x]}{\vp}$\\
     \`by $\D$ and $\D'$ being disjoint by hypothesis,\\
     \`and $\D_s$ being a subset of $\D$\\ % (TODO CHECK: Done, we require this as requirement to invoke the lemma)\\
     (6) $\D_s[\D'/x] = \D_s$\`by $x$ does not occur in $\D_s$\\
-    (7) $\judg[\subst{\G}{\D'}{x}][\D,\D']{K~\ov{\xo}~\to e[e'/x]}{\s' \Longrightarrow \vp}[alt][\subst{\D_s}{\D'}{x}]$\\
+    (7) $\judg[\subst{\G}{\D'}{x}][\D,\D']{K~\ov{\xo}~\to e[e'/x]}{\s' \Rightarrow \vp}[alt][\subst{\D_s}{\D'}{x}][z]$\\
 \end{tabbing}
 
 \item[Case:] $Alt\_$ (trivial induction)
 \begin{tabbing}
     (1) $\judg[\G][\D']{e'}{\s}$\\
-    (2) $\judg[\G][\D,\xl]{\_~\to e}{\s' \Longrightarrow \vp}[alt][\D_s]$\\
+    (2) $\judg[\G][\D,\xl]{\_~\to e}{\s' \Longrightarrow \vp}[alt][\D_s][z]$\\
     (3) $\judg[\G][\D,\xl]{e}{\vp}$\\
     (4) $\judg[\subst{\G}{\D'}{x}][\D,\D']{e[e'/x]}{\vp}$\\
-    (5) $\judg[\subst{\G}{\D'}{x}][\D,\D']{\_~\to e[e'/x]}{\s' \Longrightarrow \vp}[alt][\D_s,\D']$\\
+    (5) $\judg[\subst{\G}{\D'}{x}][\D,\D']{\_~\to e[e'/x]}{\s' \Rightarrow \vp}[alt][\D_s,\D'][z]$\\
 \end{tabbing}
 
 \end{description}

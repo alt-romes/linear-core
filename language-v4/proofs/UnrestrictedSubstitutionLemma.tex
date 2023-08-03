@@ -165,8 +165,8 @@ By structural induction on the first derivation.
 
 \begin{sublemma}[Substitution of unrestricted variables on case alternatives
     preserves typing]
-If $\G, \xo; \D \vdash_{alt} \rho \to e :_\Delta \s' \Rightarrow \vp$ and $\G; \D \vdash e' : \s$ and
-    then $\G; \D \vdash_{alt} \rho \to e[e'/x] :_{\Delta_s} \s' \Rightarrow \vp$
+If $\G, \xo; \D \vdash_{alt} \rho \to e :^z_{\Delta_s} \s' \Rightarrow \vp$ and $\G; \D \vdash e' : \s$ and
+    then $\G; \D \vdash_{alt} \rho \to e[e'/x] :^z_{\Delta_s} \s' \Rightarrow \vp$
 \end{sublemma}
 
 \begin{proof}
@@ -176,10 +176,10 @@ By structural induction on the $alt$ judgment.
 \item[Case:] $AltN$ (trivial induction)
 \begin{tabbing}
     (1) $\G; \cdot \vdash e : \s$\\
-    (2) $\G,\xo;\D \vdash_{alt} \konstructor~\to e :_{\D_s} \s' \Rightarrow \vp$\\
+    (2) $\G,\xo;\D \vdash_{alt} \konstructor~\to e :^z_{\D_s} \s' \Rightarrow \vp$\\
     (3) $\G,\xo,\ov{\xo},\ov{y_i{:}_{\lctag{\subst{\D_s}{\D'}{x}}{K_i}}\s_i}; \D \vdash e : \vp $\\
     (4) $\G,\ov{\xo},\ov{y_i{:}_{\lctag{\subst{\D_s}{\D'}{x}}{K_i}}\s_i}; \D \vdash e[e'/x] : \vp $\` by i.h.\\
-    (5) $\G;\D \vdash_{alt} \konstructor~\to e[e'/x] :_{\D_s} \s' \Rightarrow \vp$\` by $AltN$\\
+    (5) $\G;\D \vdash_{alt} \konstructor~\to e[e'/x] :^z_{\D_s} \s' \Rightarrow \vp$\` by $AltN$\\
 \end{tabbing}
 
 \item[Case:] $Alt0$
@@ -193,7 +193,7 @@ By structural induction on the $alt$ judgment.
     (2) $\G,\xo;\D \vdash_{alt} \_ \to e :_{\D_s} \s' \Rightarrow \vp$\\
     (3) $\G,\xo;\D \vdash e : \vp$\\
     (4) $\G;\D \vdash e[e'/x] : \vp$\` by i.h.\\
-    (5) $\G;\D \vdash_{alt} \_ \to e[e'/x] :_{\D_s} \s' \Rightarrow \vp$\` by $Alt_\_$\\
+    (5) $\G;\D \vdash_{alt} \_ \to e[e'/x] :^z_{\D_s} \s' \Rightarrow \vp$\` by $Alt_\_$\\
 \end{tabbing}
 
 \end{description}

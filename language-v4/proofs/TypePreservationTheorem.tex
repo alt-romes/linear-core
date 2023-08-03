@@ -106,7 +106,7 @@ By structural induction on the small-step reduction.
     (1) $\G;\D,\D' \vdash \ccase{K~\ov{e}}{\zD~\{\dots,\_ \to e'\}} : \vp$\\
     (2) $\G;\D \vdash K~\ov{e} : \s$\\
     (3) $K~\ov{e}$ is in WHNF\\
-    (4) $\G,\zD;\D,\D' \vdash_{alt} \_ \to e' :_{\D} \s \Rightarrow \vp$\`by inv on $CaseWHNF$\\
+    (4) $\G,\zD;\D,\D' \vdash_{alt} \_ \to e' :^z_{\D} \s \Rightarrow \vp$\`by inv on $CaseWHNF$\\
     (5) $\G,\zD;\D,\D' \vdash e' : \vp$\`by inv on $Alt_\_$\\
     (6) $\G;\D,\D' \vdash e'[K~\ov{e}/z] : \vp$\` by $\D$-subst.\\
 \end{tabbing}
@@ -135,6 +135,12 @@ By structural induction on the small-step reduction.
 \begin{tabbing}
     (1) $e \longrightarrow e'$ \` by inversion on case reduction \\
     (2) $\Gamma; \D, \D' \vdash \ccase{e}{z{:}_{\Delta}\sigma~\{\rho_i\to e'_i\}} : \varphi$\\
+    (3) $e$ is not in WHNF \` since it can evaluate further by (1)\\
+    \` TODO: that's not quite the definition of WHNF!\\
+    (4) $\G;\D \vdash e : \s$\` by inv.\\
+    (5) $\ov{\G,\z[\irr{\D}][\s]; \irr{\D},\D' \vdash_{alt} \rho \to e'' :^z_{\irr{\D}} \s \Rightarrow \vp}$\\
+    (6) $\G;\D \vdash e' : \s'$\` by i.h. (1,4)\\
+    (7) $\Gamma; \D, \D' \vdash \ccase{e'}{z{:}_{\Delta}\sigma~\{\rho_i\to e'_i\}} : \varphi$\` by $CaseNotWHNF$\\
 % (3) $\Gamma \vdash e : \sigma$ \` by inversion on case \\
 % % TODO: HOW i?
 % (4) $\overline{\Gamma', z{:}_{\Delta_i}\sigma \vdash_{alt} \rho_i \to e'_i : \varphi}$ \` by inversion on case \\

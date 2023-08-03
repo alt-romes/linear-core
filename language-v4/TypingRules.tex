@@ -82,7 +82,7 @@
     \mprset{flushleft}
     \infer[(CaseWHNF)]
     {\textrm{e is in \emph{WHNF}} \\ \judg{e}{\s}
-    \\ \ov{\judg[\G,\zD][\D,\D']{\rho\to e'}{\s \Longrightarrow \vp}[alt][\D]}}
+    \\ \ov{\judg[\G,\zD][\D,\D']{\rho\to e'}{\s \Longrightarrow \vp}[alt][\D][z]}}
     {\judg[\G][\D,\D']{\ccase{e}{\zD~\{\ov{\rho \to e'}\}}}{\vp}}
 }
 
@@ -91,7 +91,7 @@
     \infer[(CaseNotWHNF)]
     {\textrm{e is definitely not in \emph{WHNF}} \\
     \judg{e}{\s}
-    \\ \ov{\judg[\subst{\G}{\irr{\D}}{\D},z{:}_{\irr{\D}}\s][\irr{\D},\D']{\rho\to e'}{\s \Longrightarrow \vp}[alt][\irr{\D}]}}
+    \\ \ov{\judg[\subst{\G}{\irr{\D}}{\D},z{:}_{\irr{\D}}\s][\irr{\D},\D']{\rho\to e'}{\s \Longrightarrow \vp}[alt][\irr{\D}][z]}}
     {\splitjudg{\ccase{e}{\z[\irr{\D}]~\{\ov{\rho \to e'}\}}}{\vp}}
     % TODO: Add that [d1] entails moving all delta usages to [delta] usages in all vars i d1
 }
@@ -101,7 +101,7 @@
     \infer[(CaseNotWHNF)]
     {\textrm{e is definitely not in \emph{WHNF}} \\
     \judg{e}{\s}
-    \\ \ov{\judg[\G,z{:}_{\irr{\D}}\s][\irr{\D},\D']{\rho\to e'}{\s \Longrightarrow \vp}[alt][\irr{\D}]}}
+    \\ \ov{\judg[\G,z{:}_{\irr{\D}}\s][\irr{\D},\D']{\rho\to e'}{\s \Longrightarrow \vp}[alt][\irr{\D}][z]}}
     {\splitjudg{\ccase{e}{\z[\irr{\D}]~\{\ov{\rho \to e'}\}}}{\vp}}
     % TODO: Add that [d1] entails moving all delta usages to [delta] usages in all vars i d1
 }
@@ -112,7 +112,7 @@
     \mprset{flushleft}
     \infer[(CaseVar)]
     {\textrm{x is a \emph{var}} \\ \judg{x}{\s}
-    \\ \ov{\judg[\G][\D',\xl][\d',z{:}_x\s]{\rho\to e'}{\s \Longrightarrow \vp}[alt][x]}}
+    \\ \ov{\judg[\G][\D',\xl][\d',z{:}_x\s]{\rho\to e'}{\s \Longrightarrow \vp}[alt][x][z]}}
     {\splitjudg{\ccase{x}{\z[x]~\{\ov{\rho \to e'}\}}}{\vp}}
     % TODO: Explain that \delta becomes irrelevant since all its variables were
     % consumed. Perhaps there's a case to be made about pseudo-unrestricted
@@ -125,22 +125,22 @@
     { \judg[\G,\ov{\xo},\ov{y_i{:}_{\lctag{\D_s}{K_i}}\s_i}^n][\D]{e}{\vp}
     \\ n > 0
     }
-    {\judg{K~\ov{\xo},\ov{y_i{:}_1\s_i}^n\to e}{\s \Longrightarrow \vp}[alt][\D_s]}
+    {\judg{K~\ov{\xo},\ov{y_i{:}_1\s_i}^n\to e}{\s \Longrightarrow \vp}[alt][\D_s][z]}
 }
 
 \renewcommand{\TypeAltZero}{
     \mprset{flushleft}
     \infer[(Alt0)]
-    { \judg[\subst{\G}{\cdot}{\D_s},\ov{\xo}][\subst{\D}{\cdot}{\D_s}]{e}{\vp}
+    { \judg[\subst{\G}{\cdot}{\D_s}_z,\ov{\xo}][\subst{\D}{\cdot}{\D_s}]{e}{\vp}
     }
-    {\judg{K~\ov{\xo}\to e}{\s \Longrightarrow \vp}[alt][\D_s]}
+    {\judg{K~\ov{\xo}\to e}{\s \Longrightarrow \vp}[alt][\D_s][z]}
 }
 
 \renewcommand{\TypeAltWild}{
     \mprset{flushleft}
     \infer[(Alt\_)]
     { \judg{e}{\vp} }
-    {\judg{\_ \to e}{\s \Longrightarrow \vp}[alt][\D_s]}
+    {\judg{\_ \to e}{\s \Longrightarrow \vp}[alt][\D_s][z]}
 }
 
 \begin{figure}[h]
@@ -183,7 +183,7 @@
 % \\[1em]
 %     \TypeCaseVar
 \\[2em]
-    \judgment{\judg{\rho \to e}{\sigma \Rightarrow \varphi}[alt][\Delta_s]}
+    \judgment{\judg{\rho \to e}{\sigma \Rightarrow \varphi}[alt][\Delta_s][z]}
 \\[1em]
     \TypeAltN
 \\[1em]
