@@ -241,4 +241,18 @@ That makes the new $AltN$ rule
 where $\ov{\D_i}$ is any (non-empty) combination of $K$-fragmented resources
 from $\D_s$.
 
+This almost works, were it not for the fact we might want to substitute
+the pattern variable by an expression that doesn't use resources, despite the
+pattern-variable being linear.
+
+In the case alternative, we must treat all linear variables equally in a way
+that ensures if one of them is used then all of them are used exactly once.
+Splitting resources equally amongst the variable works, but requires
+rearranging s.t. the substitution environment matches the variable environment.
+By allowing the var environment to be any (non-empty) arrangement a-priori we
+facilitate the substitution.
+
+Regarding the arragement being necessarily non-empty: perhaps when substituting
+we can identify these variables and say something special about them in the
+proof, like what? Perhaps the posterior rearrangement really is the best idea?
 

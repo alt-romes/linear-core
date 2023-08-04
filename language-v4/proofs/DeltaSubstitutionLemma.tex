@@ -213,8 +213,8 @@ By structural induction on the first derivation.
     (8) $\ov{\G,\z[\D'][\s']; \D,\D',\D'' \vdash_{alt} \rho \to e''[e'/x] :^z_{\D'} \s' \Rightarrow \vp}$\` by subst. of $\D$ vars on case alts\\
     (9) $\G;\D,\D',\D'' \vdash \ccase{e[e'/x]}{\z[\D'][\s']~\{\ov{\rho \to e''[e'/x]}\}} : \vp$\` by $CaseWHNF$\\
     Subcase $\D$ is partially used in $e$\\
-    This is like the subcase above, but consider $\D'$ to contain some of part
-    of $\D$ and $\D$ to refer to the other part only.
+    This is like the subcase above, but consider $\D'$\\
+    to contain some of part of $\D$ and $\D$ to refer to the other part only.
 \end{tabbing}
 
 \item[Case:] CaseNotWHNF
@@ -237,8 +237,8 @@ By structural induction on the first derivation.
     (7) $\ov{\G,\z[\irr{\D'}][\s']; \D,[\D'],\D'' \vdash_{alt} \rho \to e''[e'/x] :^z_{\irr{\D'}} \s'\Rightarrow\vp}$\\\` by subst. of $\D$-vars in case alternatives\\
     (8) $\G; \D, \D', \D'' \vdash \ccase{e}{\z[\irr{\D,\D'}][\s']~\{\ov{\rho\to e''[e'/x]}\}}$\`by $CaseNotWHNF$\\
     Subcase $\D$ is partially used in $e$\\
-    This is like the subcase above, but consider $\D'$ to contain some of part
-    of $\D$ and $\D$ to refer to the other part only.
+    This is like the subcase above, but consider $\D'$\\
+    to contain some of part of $\D$ and $\D$ to refer to the other part only.
 \end{tabbing}
 
 \end{description}
@@ -250,7 +250,6 @@ By structural induction on the first derivation.
     preserves typing]
 If $\G,\xD; \D,\D' \vdash_{alt} \rho \to e :^z_{\Delta_s} \s' \Rightarrow \vp$ and
     $\G; \D \vdash e' : \s$ and $\Delta_s \subseteq (\Delta,\Delta')$ then $\G; \D, \D' \vdash_{alt} \rho \to e[e'/x] :^z_{\Delta_s} \s' \Rightarrow \vp$
-    TODO: Do we still need delta /= 0?
 \end{sublemma}
 
 \begin{proof}
@@ -262,9 +261,10 @@ By structural induction on the $alt$ judgment.
   (1) $\G; \D \vdash e' : \s$\\
   (2) $\G,\xD; \D,\D' \vdash_{alt} \konstructor~\to e :^z_{\D_s} \s' \Rightarrow \vp$\\
   (3) $n > 0$ \` by inv.\\
-  (4) $\G,\xD,\ov{\xo},\ov{y_i{:}_{\lctag{\D_s}{K_i}}\s_i}^n; \D, \D' \vdash e : \vp$\` by inv.\\
-  (5) $\G,\ov{\xo},\ov{y_i{:}_{\lctag{\D_s}{K_i}}\s_i}^n; \D, \D' \vdash e[e'/x] : \vp$\` by i.h.\\
-  (6) $\G; \D,\D' \vdash_{alt} \konstructor~\to e[e'/x] :^z_{\D_s} \s' \Rightarrow \vp$\` by $AltN$\\
+  (4) $\ov{\D_i} = \ov{\lctag{\D_s}{K_j}}$\`by inv.\\
+  (5) $\G,\xD,\ov{\xo},\ov{y_i{:}_{\D_i}\s_i}; \D, \D' \vdash e : \vp$\` by inv.\\
+  (6) $\G,\ov{\xo},\ov{y_i{:}_{\D_i}\s_i}; \D, \D' \vdash e[e'/x] : \vp$\` by i.h.\\
+  (7) $\G; \D,\D' \vdash_{alt} \konstructor~\to e[e'/x] :^z_{\D_s} \s' \Rightarrow \vp$\` by $AltN$\\
 \end{tabbing}
 
 \item[Case:] $Alt0$
@@ -296,8 +296,8 @@ By structural induction on the $alt$ judgment.
     (7) $\G[\cdot/\D']_z; (\D,\D',\D'')[\cdot/\D'] \vdash e[e'/x] : \vp$\` by (5,6)\\
     (8) $\G;\D,\D',\D'' \vdash_{alt} \vdash e[e'/x] :^z_{\D'} \s' \Rightarrow \vp$\`by $Alt0$\\
     Subcase $\D$ is partially used in the scrutinee\\
-    This is like the subcase above, but consider $\D'$ to contain some of part
-    of $\D$ and $\D$ to refer to the other part only.
+    This is like the subcase above, but consider $\D'$\\
+    to contain some of part of $\D$ and $\D$ to refer to the other part only.
 \end{tabbing}
 
 \item[Case:] $Alt_\_$ (trivial induction)

@@ -238,12 +238,15 @@ By structural induction on the $alt$ judgment.
 \begin{description}
 \item[Case:] $AltN$
 \begin{tabbing}
-  (1) $\judg[\G][\D']{e'}{\s}$\\
+    (1) $\judg[\G][\D']{e'}{\s}$\\
     (2) $\judg[\G][\D,\xl]{\konstructor~\to e}{\s' \Longrightarrow \vp}[alt][\D_s][z]$\\
-  (3) $n > 0$\\
-  (4) $\judg[\G,\ov{\xo},\ov{y_i{:}_{\lctag{\D_s}{K_i}}\s_i}][\D,\xl]{e}{\vp}$\\
-  (5) $\judg[\subst{\G}{\D'}{x},\ov{\xo},\ov{y_i{:}_{\lctag{\subst{\D_s}{\D'}{x}}{K_i}}\s_i}][\D,\D']{e[e'/x]}{\vp}$\` by i.h.\\
-    (6) $\judg[\subst{\G}{\D'}{x}][\D,\D']{\rho \to e[e'/x]}{\s' \Longrightarrow \vp}[alt][\subst{\D_s}{\D'}{x}][z]$\\
+    (3) $n > 0$\`by inv.\\
+    (4) $\ov{\D_i}=\ov{\lctag{\D_s}{K_j}}^n$\`by inv.\\
+    (5) $\ov{\D_i\neq\cdot}$\\
+    (6) $\judg[\G,\ov{\xo},\ov{y_i{:}_{\D_i}\s_i}][\D,\xl]{e}{\vp}$\`by inv.\\
+    (7) $\judg[\subst{\G}{\D'}{x},\ov{\xo},\ov{y_i{:}_{\subst{\D_i}{\D'}{x}}\s_i}][\D,\D']{e[e'/x]}{\vp}$\` by i.h.\\
+    (8) $\ov{\D_i[\D'/x]}=\ov{\lctag{\D_s[\D'/x]}{K_j}}^n$\`by (4) and cong.\\
+    (8) $\judg[\subst{\G}{\D'}{x}][\D,\D']{\rho \to e[e'/x]}{\s' \Longrightarrow \vp}[alt][\subst{\D_s}{\D'}{x}][z]$\\
 \end{tabbing}
 
 \item[Case:] $Alt0$

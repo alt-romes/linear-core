@@ -74,11 +74,22 @@ By structural induction on the small-step reduction.
 % TODO: Subcases when \Delta == {}?
 \item[Case:]
     $\ccase{K~\overline{e}}{z{:}_{\Delta}\sigma}~\{\dots,K~\overline{x{:}_\pi\sigma}\to e'\}\ \longrightarrow e'\overline{[e/x]}[K~\overline{e}/z]$
-This is another of the most interesting cases. We must invoke split, use Alt0
-or AltN, use delta and unr. substitution, subcases where the case
-binder is used and isn't, etc...
+This is definitely another of the most interesting cases. We must invoke split,
+use Alt0 or AltN, use delta and unr. substitution, subcases where the
+case binder is used and isn't, use CaseWHNF and realize that if it were
+an expression reduced first with CaseNotWHNF then the usage environment
+is proof irrelevant, rearrange the usage environments of the case pattern alternatives, etc...
 \begin{tabbing}
-    TODO
+    (1) $\G;\D,\D'\vdash \ccase{K~\ov{e_i}}{\zD~\{\dots,K~\var[w][\pi][\s]\to e'\}} : \vp$\\
+    (2) $K~\ov{e_i}$ is in WHNF\` by def. of WHNF\\
+    (3) $\G;\D \vdash K~\ov{e_i} : \s$\` by inv. on $CaseWHNF$\\
+    (4) $\G,\zD;\D,\D' \vdash_{alt} K~\ov{\var[w][\pi][\s]} \to e' :^z_\D \s \Rightarrow \vp$\` by inv. on $CaseWHNF$\\
+    % Good, if ^ this evaluated through case e of -> case e' of, then $\D$ will contain lots of proof-irrelevant stuff gotten from CaseNotWHNF evaluation.
+    Subcase $K~\ov{\var[w][\pi][\s]} = \konstructor, n>0$\\
+    (5) $K:\ov{\s_i\to_\pi}\s \in \G$\`by inv. on $AltN$\\
+    (6) $\ov{\G; \cdot \vdash e_i : \s},\ov{\G;\D_i \vdash e_i : \s},\ov{\D_i}=\D$\` by constructor application lemma (3,5)\\
+    (7) $\G,\zD,\ov{\xo},\ov{y_i{:}_{\D_i}\s_i}; \D,\D' \vdash e' : \vp$\`by inv. on $AltN$\\
+    (8) $\G,\zD,\ov{y_i{:}_{\D_i}\s_i}; \D,\D' \vdash e' : \vp$\`by inv. on $AltN$\\
 %(1) $\Gamma,\Gamma',\Delta \vdash \ccase{K~\overline{e}}{z{:}_{\overline{\Delta}}\sigma~\{\dots,K~\overline{x{:}_\pi\sigma}\to e'\}} : \varphi$ \` by assumption \\
 %(2) $\hasnolinearvars{\Gamma}$\\
 %(3) $\Gamma, \Delta \vdash K~\overline{e} : \sigma$ \` by inversion on (case) \\
@@ -121,7 +132,7 @@ binder is used and isn't, etc...
 (3) $\G; \D \vdash e_1 : \sigma \to_\pi \varphi$ \` by inversion on ($\lambda E$) \\
 (4) $\G; \D' \vdash e_2 : \sigma$ \` by inversion on ($\lambda E$) \\
 (5) $\G; \D \vdash e_1' : \sigma \to_\pi \varphi$ \` by induction hypothesis in (3,1) \\
-(6) $\G; \D, \D' \Gamma' \vdash e_1'~e_2 : \varphi$ \` by ($\lambda E$) (4,5) \\
+(6) $\G; \D, \D' \vdash e_1'~e_2 : \varphi$ \` by ($\lambda E$) (4,5) \\
 \end{tabbing}
 
 \item[Case:] $e~\pi \longrightarrow e'~\pi$

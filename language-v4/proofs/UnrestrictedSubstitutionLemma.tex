@@ -177,8 +177,8 @@ By structural induction on the $alt$ judgment.
 \begin{tabbing}
     (1) $\G; \cdot \vdash e : \s$\\
     (2) $\G,\xo;\D \vdash_{alt} \konstructor~\to e :^z_{\D_s} \s' \Rightarrow \vp$\\
-    (3) $\G,\xo,\ov{\xo},\ov{y_i{:}_{\lctag{\subst{\D_s}{\D'}{x}}{K_i}}\s_i}; \D \vdash e : \vp $\\
-    (4) $\G,\ov{\xo},\ov{y_i{:}_{\lctag{\subst{\D_s}{\D'}{x}}{K_i}}\s_i}; \D \vdash e[e'/x] : \vp $\` by i.h.\\
+    (3) $\G,\xo,\ov{\xo},\ov{y_i{:}_{\D_i}\s_i}; \D \vdash e : \vp $\\
+    (4) $\G,\ov{\xo},\ov{y_i{:}_{\D_i}\s_i}; \D \vdash e[e'/x] : \vp $\` by i.h.\\
     (5) $\G;\D \vdash_{alt} \konstructor~\to e[e'/x] :^z_{\D_s} \s' \Rightarrow \vp$\` by $AltN$\\
 \end{tabbing}
 
