@@ -1,0 +1,64 @@
+Bom tarde Prof. Toninho,
+
+Espero que o começo das férias esteja a correr bem.
+Queria explicar que já tenho todas as provas à exceção de uma - a Type preservation para `case K /e of K /x -> …`.
+Há uma dificuldade nesse caso para o qual pensei já nalgumas soluções; uma quase excelente, mas que na prática (por muito pouco) não foi suficiente.
+
+Estou a escrever este e-mail, apesar do período de férias, porque acho que este ponto da prova é crucial e a última peça do puzzle, e que a sua ajuda nesta situação seria muito valiosa para eu dar por concluído o sistema de tipos com um design bom.
+
+(Entretanto vou avançar a implementação e a escrita, logo não há dita urgência. No entanto, preferia resolver isto o quanto antes)
+
+## Problem Statement
+
+Na preservation do caso
+
+	case K /e of z {K /x -> e’}
+	===>
+	e’[/e / /x][K /e / z]
+
+Temos de aplicar o lemma da substituição de ∆-variables para cada um das case-pattern-bound variables.
+Esse lemma da substituição diz que para substituir uma ∆-variable precisamos de ter uma expressão que use exatamente as variáveis que estão no ∆ da ∆-var:
+If Γ,x:∆σ;∆,∆′ ⊢e:φ and Γ;∆⊢e′ :σ then Γ;∆,∆′ ⊢e[e′/x]:φ
+
+Inicialmente, tínhamos posto a hipótese de dividir o usage environment do scrutinee de forma igual por todas as linear case-pattern-variables.
+De acordo com essa hipótese, no exemplo
+
+	f x y = case K x y of
+			K a b -> e
+
+Ambos a e b seriam ∆-variables, a com ∆={x#K1, y#K1}, e b com ∆={x#K2, y#K2}.
+
+Se tentarmos aplicar a substituição nessas condições, com [x/a] e [y/b], vamos falhar — x usa x, mas `a` usa x#K1,y#K1, por isso o lemma não se aplica.
+Mas há uma forma boa de resolver isto: não dividir os resources do scrutinee /igualmente/ pelas pattern-variables.
+
+Em vez disso, digamos que as variáveis do scrutinee (na verdade, as variáveis do scrutinee “split” naquele construtor K) apenas têm de ser distribuídas pelas variáveis lineares, como for desejado.
+Na prática, qualquer forma de partir os resources do scrutinee pelas pattern variables vai obrigar a que todas as pattern variables sejam usadas, porque apenas todas combinadas conseguimos usar todos os recursos do scrunitee.
+
+Para o mesmo exemplo,
+
+	f x y = case K x y of
+			K a b -> e
+
+isto significa que podemos distribuir x#K1,x#K2 e y#K1, y#K2 como quisermos por `a` e `b`.
+Ótimo, damos x#K1,x#K2 a `a` e y#K1,y#K2 a `b`.
+Agora, para aplicar o lemma, fazemos split de `x` em `K` antes de o substituir por `a`, e a mesma coisa para `y` e `b`.
+
+A falha nesta solução é que para garantir que /todas as linear pattern variables/ são usadas, temos de atribuir /pelo menos uma/ (fragmented) resource do scrutinee a cada linear pattern variable.
+No entanto, isso já não nos permite aplicar o lemma da substituição porque pode haver argumentos ao constructor, que são substituídos por variáveis lineares, mas que não consomem recursos.
+Por exemplo,
+
+	f x = case K x () of
+			K a b -> e
+
+em `e`, precisamos que `a` e `b` sejam ambos usados exatamente uma vez (modulo case binders etc), para isso temos de atribuir a cada um um bocado de `x` (e.g. `a` com x#K1 e `b` com x#K2).
+Agora, já não conseguimos aplicar a substituição (oh não!).
+
+(De um ponto de vista prático, os fragmented resources garantem que todas as linear pattern variables aparecem no corpo do case, mas isso não é suficiente para definir bem a substituição.)
+
+Não consegui dar a volta a isto sozinho, professor.
+
+Agradeço desde já a sua ajuda e disponibilidade.
+
+Obrigado,
+Rodrigo Mesquita
+
