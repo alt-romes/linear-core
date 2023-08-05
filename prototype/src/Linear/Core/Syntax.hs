@@ -1,5 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE DerivingStrategies #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE UndecidableInstances #-}
 {-# LANGUAGE TypeFamilyDependencies #-}
@@ -20,11 +22,12 @@ import GHC.Types.Literal
 -- import GHC.TypeLits
 import Debug.Trace
 import Data.Text (Text)
--- import qualified Data.Text as T
+import qualified Data.Text as T
 import Data.Functor.Foldable.TH (makeBaseFunctor)
+import qualified Data.Char as C
 import Data.Map (Map)
--- import qualified Data.Map as M
 import Data.Set (Set)
+import qualified Data.Map as M
 -- import qualified Data.Set as S
 
 import Data.Functor.Foldable
@@ -53,9 +56,6 @@ types, instead of by type synonyms
 
 * We must also implement the algorithm for inferring usage environments, which
 we still need to figure out when exactly it should be run
-
-* Nevermind, we simply support type abstractions, variables, and type
-constructor applications, because removing them is too awful.
 -}
 
 type Name = Text
@@ -70,7 +70,7 @@ data Id = MkId { varType   :: Ty
                , idBinding :: IdBinding
                , varName'   :: Name
                }
-               deriving (Eq, Show)
+               deriving Show
 newtype MultVar = MkMultVar { varName' :: Name }
   deriving (Eq,Show)
 
@@ -78,7 +78,7 @@ varName :: Var -> Name
 varName (Id _ _ n)  = n
 varName (MultVar n) = n
 
-data Var = Id' Id | MultVar' MultVar deriving (Eq, Show)
+data Var = Id' Id | MultVar' MultVar deriving Show
 {-# COMPLETE Id, MultVar #-}
 
 pattern Id :: Ty -> IdBinding -> Name -> Var
@@ -115,8 +115,8 @@ data Ty
   -- = TyMultVar Name          -- p -- no, multiplicities can't exist on their own, only attached to functions (or datatype univ. vars)
   = Datatype Name [Mult]    -- K π_1 ... π_n
   | FunTy   Ty   Mult Ty    -- φ ->π σ
-  | Scheme  Name Ty         -- ∀p. φ (both multiplicity and type abstractions...)
-  deriving (Eq,Show)
+  | Scheme  Name Ty         -- ∀p. φ
+  deriving (Show)
 
 data Expr b where
   Var  :: b -> Expr b -- Only term variables and constructors. Type variables at the term level would be (Ty (TyMultVar "p"))
@@ -132,16 +132,15 @@ data Expr b where
   -- construct doesn't occur in the elaborated program.
   Ann  :: Expr b -> Ty -> Expr b
 
-deriving instance Eq b => Eq (Expr b)
 deriving instance Show b => Show (Expr b)
 
 data Bind b = NonRec b (Expr b)
             | Rec [(b, Expr b)]
-            deriving (Eq,Show)
+            deriving (Show)
 
 data Alt b
     = Alt (AltCon b) [b] (Expr b)
-    deriving (Eq,Show)
+    deriving (Show)
 
 data AltCon b
   = DataAlt (DataCon b)
@@ -150,7 +149,6 @@ data AltCon b
   | DEFAULT
   -- ^ Trivial alternative: @case e of { _ -> ... }@
 
-deriving instance Eq b => Eq (AltCon b)
 deriving instance Show b => Show (AltCon b)
 
 newtype Literal_ = L Literal deriving Eq
@@ -168,7 +166,6 @@ data DataCon b where
           -> DataCon Id  -- ^ Elaborated DataCon
   DataConName :: Name -> DataCon Name -- ^ Parsed DataCon
   
-deriving instance Eq b => Eq (DataCon b)
 deriving instance Show b => Show (DataCon b)
 
 data Scaled a = Scaled !Mult a
@@ -282,4 +279,85 @@ instance Pretty Ty where
     go (FunTyF t1 Many t2)   = parens t1 <+> "->" <+> parens t2
     go (FunTyF t1 m t2)      = parens t1 <+> "%" <> pretty m <+> "->" <+> parens t2
     go (SchemeF n ty)        = "∀" <> pretty n <> "." <+> ty
+
+
+--------------------------------------------------------------------------------
+----- Renaming Substitution ----------------------------------------------------
+--------------------------------------------------------------------------------
+
+-- | Name substitution, for renaming
+-- We use these substitutions for equality in the Eq instance of Ty
+type RenameEnv = M.Map Name Name
+
+class Renamable a where
+  rename :: RenameEnv -> a -> a
+
+instance Renamable Name where
+  rename env n = case M.lookup n env of
+                   Nothing -> n
+                   Just n' -> n'
+
+instance Renamable a => Renamable [a] where
+  rename env = map (rename env)
+
+deriving newtype instance Renamable MultVar
+
+instance Renamable Mult where
+  rename env = \case
+    Many -> Many
+    One  -> One
+    MV' mv -> MV' $ rename env mv
+
+instance Renamable Ty where
+  rename env = \case
+      Datatype name mults -> Datatype name (rename env mults)
+      FunTy t1 m t2       -> FunTy (rename env t1) (rename env m) (rename env t2)
+      Scheme n ty
+        | Nothing <- M.lookup n env
+        -- if it's not binding the same name, rename
+        -> Scheme n (rename env ty)
+        | otherwise --, don't rename this name in its body
+        -> Scheme n (rename (M.delete n env) ty)
+
+--------------------------------------------------------------------------------
+----- Some Equality ------------------------------------------------------------
+--------------------------------------------------------------------------------
+
+instance Eq Ty where
+  Datatype name mults == Datatype name' mults'
+    | C.isLower (T.head name) || C.isLower (T.head name')
+    -- One of the variables used to be a type variable that can be instantiated to any type.
+    -- This is one of the awfulawful hacks we have to do because we translate
+    -- Core to a simpler representation without type abstractions
+    -- We assume unification is OK, and move on
+    = mults == mults'
+
+    -- Another great hack, if we keep coming up with these this will be
+    -- absolutely horrendous, and we'll have to try again typechecking core
+    -- directly
+    --
+    -- When we look through a pattern synonym whose RHS is an implicit
+    -- parameter (like ?callstack :: CallStack), we get "IP" as the data type,
+    -- which is the TyCon of an ImplicitParameter class, it seems)
+    -- We just unify it against anything. Hack.
+    | name == "IP" || name' == "IP"
+    = mults == mults'
+
+    -- Do a normal thing
+    | otherwise
+    = name == name' && mults == mults'
+  FunTy t1 m t2 == FunTy t1' m' t2' = t1 == t1' && m == m' && t2 == t2'
+  Scheme n ty == Scheme n' ty' = ty == rename (M.singleton n' n) ty'
+  _ == _ = False
+
+-- These have to be defined later here because of template haskell and the Eq Ty needing the `rename` function
+
+deriving instance Eq Id
+deriving instance Eq Var
+
+deriving instance Eq b => Eq (Expr b)
+deriving instance Eq b => Eq (AltCon b)
+deriving instance Eq b => Eq (DataCon b)
+deriving instance Eq b => Eq (Bind b)
+deriving instance Eq b => Eq (Alt b)
 

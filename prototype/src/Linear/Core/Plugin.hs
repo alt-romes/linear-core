@@ -27,6 +27,7 @@ import Data.Text (Text)
 import qualified Data.Text as T
 import Prettyprinter
 
+import GHC.Core.TyCon
 import GHC.Core.TyCo.Rep
 import GHC.Types.Var
 import GHC.Plugins
@@ -220,10 +221,16 @@ fromType :: HasCallStack => Type -> LC.Ty
 fromType = \case
   TyVarTy v -> -- error $ "A type variable " ++ show (varNameT v) ++ " by itself is not a type, since multiplicities only appear in functions?"
     -- We might be calling fromType e.g. on the type of an imported expression, which might have polymorphic type variables
-    -- Se simply replace all poly vars by (), because we don't care about type polymorphism.
-    LC.Datatype "()" []
+    -- Se simply replace all type vars by their name, as if they were atoms, because we don't care about type polymorphism.
+    LC.Datatype (varNameT v) []
   AppTy t1 t2 -> -- We can treat an AppTy as a data constructor name... with spaces... for type variables :)?
     error $ "This is for higher kinded var types applications: " ++ showPprUnsafe (ppr $ AppTy t1 t2)
+
+  -- Look through pattern synonyms
+  TyConApp tc _
+    | Just rhsty <- synTyConRhs_maybe tc
+    -> fromType rhsty 
+
   -- what happens if we have data K a b = K a b, where a b are type variables
   -- (not mult vars)? If we drop a b, we get K a b... Maybe we really need to
   -- accept that?
@@ -232,8 +239,10 @@ fromType = \case
   -- wouldn't that be easier...?
   --
   -- Rather, let's just replace all type variables by () xD, so even if we
-  -- delete them from here it will otherwise match
-  TyConApp tc kotys -> LC.TyConApp (tcNameT tc) (mapMaybe fromTypeMult kotys)
+  -- delete them from here it will otherwise match.
+  --
+  -- Nope.
+  TyConApp tc kotys -> LC.Datatype (tcNameT tc) (mapMaybe fromTypeMult kotys)
   ForAllTy (binderVar -> b) ty
     | hasVarKindMult b
     -> LC.Scheme (varNameT b) (fromType ty)
