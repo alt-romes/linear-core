@@ -21,6 +21,7 @@ import Control.Monad.Except
 import Text.Megaparsec
 import Text.Megaparsec.Char
 import Control.Monad.Combinators.Expr
+import Control.Monad.IO.Class
 import qualified Text.Megaparsec.Char.Lexer as L
 
 import Linear.Core.Syntax

@@ -18,6 +18,7 @@ import qualified Data.Map as M
 import Prelude hiding (lookup)
 import Linear.Core.Syntax
 import Data.Functor.Foldable
+import Control.Monad
 import Control.Monad.Reader
 import Control.Monad.Except
 import Control.Applicative

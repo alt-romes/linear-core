@@ -53,6 +53,9 @@ types, instead of by type synonyms
 
 * We must also implement the algorithm for inferring usage environments, which
 we still need to figure out when exactly it should be run
+
+* Nevermind, we simply support type abstractions, variables, and type
+constructor applications, because removing them is too awful.
 -}
 
 type Name = Text
@@ -112,7 +115,7 @@ data Ty
   -- = TyMultVar Name          -- p -- no, multiplicities can't exist on their own, only attached to functions (or datatype univ. vars)
   = Datatype Name [Mult]    -- K π_1 ... π_n
   | FunTy   Ty   Mult Ty    -- φ ->π σ
-  | Scheme  Name Ty         -- ∀p. φ
+  | Scheme  Name Ty         -- ∀p. φ (both multiplicity and type abstractions...)
   deriving (Eq,Show)
 
 data Expr b where
@@ -275,8 +278,8 @@ instance Pretty Ty where
   pretty = cata go where
     go (DatatypeF name [])   = pretty name
     go (DatatypeF name mult) = pretty name <+> hsep (map pretty mult)
-    go (FunTyF t1 One t2)    = t1 <+> "-o" <+> t2
-    go (FunTyF t1 Many t2)   = t1 <+> "->" <+> t2
-    go (FunTyF t1 m t2)      = t1 <+> "%" <> pretty m <+> "->" <+> t2
+    go (FunTyF t1 One t2)    = parens t1 <+> "-o" <+> parens t2
+    go (FunTyF t1 Many t2)   = parens t1 <+> "->" <+> parens t2
+    go (FunTyF t1 m t2)      = parens t1 <+> "%" <> pretty m <+> "->" <+> parens t2
     go (SchemeF n ty)        = "∀" <> pretty n <> "." <+> ty
 
