@@ -90,6 +90,7 @@ is proof irrelevant, rearrange the usage environments of the case pattern altern
     (6) $\ov{\G; \cdot \vdash e_i : \s},\ov{\G;\D_i \vdash e_i : \s},\ov{\D_i}=\D$\` by constructor application lemma (3,5)\\
     (7) $\G,\zD,\ov{\xo},\ov{y_i{:}_{\D_i}\s_i}; \D,\D' \vdash e' : \vp$\`by inv. on $AltN$\\
     (8) $\G,\zD,\ov{y_i{:}_{\D_i}\s_i}; \D,\D' \vdash e' : \vp$\`by inv. on $AltN$\\
+    TODO: $\D_i$ must be empty in order to type AltN/invoke substitution
 %(1) $\Gamma,\Gamma',\Delta \vdash \ccase{K~\overline{e}}{z{:}_{\overline{\Delta}}\sigma~\{\dots,K~\overline{x{:}_\pi\sigma}\to e'\}} : \varphi$ \` by assumption \\
 %(2) $\hasnolinearvars{\Gamma}$\\
 %(3) $\Gamma, \Delta \vdash K~\overline{e} : \sigma$ \` by inversion on (case) \\
