@@ -43,7 +43,7 @@ import Data.Functor
 import Linear.Core
 
 type CoreCheck = ReaderT CoreProgram (ExceptT (Doc Void) CoreM)
-type CoreConv  = ReaderT (VarEnv LC.Var) CoreCheck
+type CoreConv  = ReaderT (VarEnv Var) CoreCheck
 
 plugin :: Plugin
 plugin = defaultPlugin { installCoreToDos = install }
@@ -62,8 +62,8 @@ linearCorePass guts = do
 
   msgs <- Linear.Core.runLinearCore prog
   case msgs of
-    Right () -> pure ()
-    Left e -> fatalErrorMsg e
+    [] -> pure ()
+    errs -> fatalErrorMsg (ppr errs)
 
   return guts -- unchanged guts, after validating them.
 

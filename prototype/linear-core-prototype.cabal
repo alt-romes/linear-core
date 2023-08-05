@@ -36,7 +36,7 @@ common common
 library
     import:           common
     exposed-modules:  Linear.Core, Linear.Core.Monad,
-                      Linear.Core.Plugin
+                      Linear.Core.Plugin,
                       -- Linear.Core.Syntax, Linear.Core.Parser,
                       -- Linear.Core.Check, Linear.Core.Infer,
     hs-source-dirs:   src
