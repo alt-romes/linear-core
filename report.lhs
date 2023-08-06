@@ -450,9 +450,9 @@ non-linear programs are deemed linear);
 
 \include{chapters/c3.tex}
 
-\include{chapters/c4.tex}
-
-\include{chapters/c5.tex}
+% \include{chapters/c4.tex}
+% 
+% \include{chapters/c5.tex}
 
 \include{chapters/c6.tex}
 

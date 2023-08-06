@@ -1,3 +1,17 @@
+\renewcommand{\llet}[2]{\mathbf{let}~#1~\mathbf{in}~#2}
+\renewcommand{\lletrec}[2]{\mathbf{let~rec}~#1~\mathbf{in}~#2}
+\renewcommand{\ccase}[2]{\mathbf{case}~#1~\mathbf{of}~#2}
+\newcommand{\judgment}[1]{
+    \begin{tabular}{V{2.7}cV{2.7}}
+    \hlineB{2.7}
+    $#1$\\
+    \hlineB{2.7}
+    \end{tabular}
+}
+\newcommand{\datatype}[2]{
+  \mathbf{data}~#1~\mathbf{where}~#2
+}
+
 % Environments
 \renewcommand{\G}{\Gamma}
 \renewcommand{\D}{\Delta}

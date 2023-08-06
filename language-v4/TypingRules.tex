@@ -1,60 +1,60 @@
 % We don't need explicit weaking and contract: contexts without context are always split, contexts without weaking must be empty in the var rule.
-\renewcommand{\TypeVarOmega}{
+\newcommand{\TypeVarOmega}{
     \infer*[right=($Var_\omega$)]
     {\,}
     {\judg[\G,\xo][\cdot]{x}{\s}}
 }
 
-\renewcommand{\TypeLinearVar}{
+\newcommand{\TypeLinearVar}{
     \infer*[right=($Var_1$)]
     {\,}
     {\judg[\G][\xl]{x}{\s}}
 }
 
-\renewcommand{\TypeVarDelta}{
+\newcommand{\TypeVarDelta}{
     \infer*[right=($Var_{\D}$)]
     {\,}
     {\judg[\G,\xD][\D]{x}{\s}}
 }
 
 % TODO: split tagged stuff and proof irrelevant stuff
-\renewcommand{\TypeVarSplit}{
+\newcommand{\TypeVarSplit}{
     \infer*[right=($Split$)]
     {\judg[\G][\D,\x]{e}{\vp} \and \hasargs{K}{n}}
     {\judg[\G][\D,\ov{\xt{K_i}}^n]{x}{\s}}
 }
 
-\renewcommand{\TypeMultLamIntro}{
+\newcommand{\TypeMultLamIntro}{
     \infer*[right=($\Lambda I$)]
     {\judg[\G,p]{e}{\s} \and p\notin\Gamma}
     {\judg{\Lambda p.~e}{\forall p.~\s}}
 }
 
-\renewcommand{\TypeMultLamElim}{
+\newcommand{\TypeMultLamElim}{
     \infer*[right=($\Lambda E$)]
     {\judg{e}{\forall p.~\s} \and \Gamma\vdash_{mult}\pi}
     {\judg{e~\pi}{\s[\pi/p]}}
 }
 
-\renewcommand{\TypeLamIntroL}{
+\newcommand{\TypeLamIntroL}{
     \infer*[right=($\lambda I_1$)]
     {\judg[\G][\D,\xl]{e}{\vp} \and x\notin\Delta}
     {\judg{\lambda \xl.~e}{\s\to_{1}\vp}}
 }
 
-\renewcommand{\TypeLamIntroW}{
+\newcommand{\TypeLamIntroW}{
     \infer*[right=($\lambda I_\omega$)]
     {\judg[\G,\xo]{e}{\vp} \and x\notin\Delta}
     {\judg{\lambda \xo.~e}{\s\to_{\omega}\vp}}
 }
 
-\renewcommand{\TypeLamElimL}{
+\newcommand{\TypeLamElimL}{
     \infer*[right=($\lambda E_1$)]
     {\judg[\G][\D]{e}{\s\to_{1}\vp} \and \judg[\G][\D']{e'}{\s}}
     {\splitjudg{e~e'}{\vp}}
 }
 
-\renewcommand{\TypeLamElimW}{
+\newcommand{\TypeLamElimW}{
 % TODO: It's not entirely obvious whether we should split \delta and give some to the RHS
 % Any \delta occurring in e' must have an empty usage environment and can be
 % used unrestrictedly, so it could perhaps make more sense to move the variable from \delta to \Gamma
@@ -63,7 +63,7 @@
     {\judg{e~e'}{\vp}}
 }
 
-\renewcommand{\TypeLet}{
+\newcommand{\TypeLet}{
     % \infer*[right=($Let$)]
     \infer[(Let)]
     {\judg[\G][\D]{e}{\s} \\ \judg[\G,\xr{\D}{\s}][\D,\D']{e'}{\vp}}
@@ -71,14 +71,14 @@
 }
 
 
-\renewcommand{\TypeLetRec}{
+\newcommand{\TypeLetRec}{
     % \infer*[right=($LetRec$)]
   \infer[(LetRec)]
     {\ov{\judg[\G,\ov{\xr{\D}{\s}}][\D]{e}{\s}} \\ \judg[\G,\ov{\xr{\D}{\s}}][\D,\D']{e'}{\vp}}
     {\judg[\G][\D,\D']{\lletrec{\ov{\x[\D] = e}}{e'}}{\vp}}
 }
 
-\renewcommand{\TypeCaseWHNF}{
+\newcommand{\TypeCaseWHNF}{
     \mprset{flushleft}
     \infer[(CaseWHNF)]
     {\textrm{e is in \emph{WHNF}} \\ \judg{e}{\s}
@@ -96,7 +96,7 @@
     % TODO: Add that [d1] entails moving all delta usages to [delta] usages in all vars i d1
 }
 
-\renewcommand{\TypeCaseNotWHNF}{
+\newcommand{\TypeCaseNotWHNF}{
     \mprset{flushleft}
     \infer[(CaseNotWHNF)]
     {\textrm{e is definitely not in \emph{WHNF}} \\
@@ -108,7 +108,7 @@
 
 % We no longer do this, because with beta-reduction this isn't sound.
 % Great, we become uniform in that variables are considered not in WHNF
-\renewcommand{\TypeCaseVar}{
+\newcommand{\TypeCaseVar}{
     \mprset{flushleft}
     \infer[(CaseVar)]
     {\textrm{x is a \emph{var}} \\ \judg{x}{\s}
@@ -132,7 +132,7 @@
     {\judg{K~\ov{\xo},\ov{y_i{:}_1\s_i}^n\to e}{\s \Longrightarrow \vp}[alt][\D_s][z]}
 }
 
-\renewcommand{\TypeAltN}{
+\newcommand{\TypeAltN}{
     \mprset{flushleft}
     \infer[(AltN)]
     { \judg[\G,\ov{\xo},\ov{y_i{:}_{\D_i}\s_i}][\D]{e}{\vp}
@@ -143,7 +143,7 @@
     {\judg{K~\ov{\xo},\ov{y_i{:}_1\s_i}^n\to e}{\s \Longrightarrow \vp}[alt][\D_s][z]}
 }
 
-\renewcommand{\TypeAltZero}{
+\newcommand{\TypeAltZero}{
     \mprset{flushleft}
     \infer[(Alt0)]
     { \judg[\subst{\G}{\cdot}{\D_s}_z,\ov{\xo}][\subst{\D}{\cdot}{\D_s}]{e}{\vp}
@@ -152,7 +152,7 @@
     {\judg{K~\ov{\xo}\to e}{\s \Longrightarrow \vp}[alt][\D_s][z]}
 }
 
-\renewcommand{\TypeAltWild}{
+\newcommand{\TypeAltWild}{
     \mprset{flushleft}
     \infer[(Alt\_)]
     { \judg{e}{\vp} }
