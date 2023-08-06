@@ -36,6 +36,16 @@ Notes:
 * We don't allow multiplicity variables to appear anywhere besides function
 types, so we don't need a type-level multiplicity variable
 
+------
+
+* Checking types after translation from Core is anything but trivial, because
+the conversion is very lossy - we lose casts, coercions, type constructors,
+type variables, synonyms, etc...
+
+* Therefore, we no longer check types. Type checking is already done by the Core typechecker
+
+* Instead, we only check that linearity is maintained and ignore the types.
+
 -}
 
 newtype Check a = Check {unCheck :: StateT Ctx (Except (Doc Void)) a} -- romes:Todo: Except (Diagnostic Text)
@@ -92,8 +102,8 @@ use evar = do
             LambdaBound One -> do
               modify (M.delete name)
             LambdaBound (MV' _) -> do
-              -- ROMES:TODO: I suppose we must treat polymorphic variables as if
-              -- they were linear, bc they might be instantiated to 'One' later on.
+              -- We must treat polymorphic variables as if they were linear, bc
+              -- they might be instantiated to 'One' later on.
               modify (M.delete name)
             DeltaBound ue -> do
               mapM_ (use . Right) (S.toList ue) -- all elements should already have mult == One.
@@ -396,9 +406,12 @@ typecheck = cata \case
 -- exprTy :: CoreExpr -> Ty
 -- exprTy = cata undefined
 
+-- Note! We don't check types because of the elaborate types in Core in comparison to Linear (mini) Core.
+-- This is a noop now.
 checkEqTy :: Ty -> Ty -> Check ()
-checkEqTy t1 t2 = if t1 == t2 then pure ()
-                              else throwError $ "Expecting" <+> pretty t1 <+> "and" <+> pretty t2 <+> "to match."
+checkEqTy _ _ = pure ()
+-- checkEqTy t1 t2 = if t1 == t2 then pure ()
+--                               else throwError $ "Expecting" <+> pretty t1 <+> "and" <+> pretty t2 <+> "to match."
 
 allEq :: Eq a => [a] -> Bool
 allEq = allEq' Nothing where
