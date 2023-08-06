@@ -1,0 +1,3 @@
+Multiplicity polymorphism isn't that relevant for us, is it?
+Maybe for scaling things/optimizations that scale
+And the usage env inference algorithm?

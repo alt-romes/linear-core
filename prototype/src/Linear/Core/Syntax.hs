@@ -163,7 +163,7 @@ data DataCon b where
   DataCon :: Name        -- ^ dcName
           -> [Mult]      -- ^ dcUnivMultVars
           -> [Scaled Ty] -- ^ dcArgTys, with corresponding multiplicity
-          -> DataCon Id  -- ^ Elaborated DataCon
+          -> DataCon Var -- ^ Elaborated DataCon
   DataConName :: Name -> DataCon Name -- ^ Parsed DataCon
   
 deriving instance Show b => Show (DataCon b)

@@ -153,15 +153,36 @@ fromCore = \case
   Lam b e
     | Just b' <- fromLamVar b
     -> do
-      e' <- fromJust <$> extend b b' (fromCore e) -- the body of the lambda can't just be a type in a well-typed expression, can it?
+      Just e' <- extend b b' (fromCore e) -- the body of the lambda can't just be a type in a well-typed expression, can it?
       return $ Just $ LC.Lam b' e'
     | otherwise
     -- type abstractions are removed
     -> fromCore e
 
-  Let b e -> undefined
+  Let (NonRec b e1) e2
+    | Just b' <- fromDeltaVar b
+    -> do
+      Just e1' <- fromCore e2
+      Just e2' <- extend b b' (fromCore e1)
+      return $ Just $ LC.Let (LC.NonRec b' e1') e2'
+    | otherwise -> error "hwat"
 
-  Case e b t alts -> undefined
+  Let (Rec (unzip . filter (isId . fst) -> (bs,es))) e'
+    | Just bs' <- traverse fromDeltaVar bs
+    -> do
+      Just es' <- sequence <$> traverse (extends (zip bs bs') . fromCore) es
+      Just e'' <- extends (zip bs bs') $ fromCore e'
+      return $ Just $ LC.Let (LC.Rec (zip bs' es')) e''
+    | otherwise -> error "hwat"
+
+  Case e b _t alts
+    | Just b' <- fromDeltaVar b
+    -> do
+      Just e' <- fromCore e
+      alts' <- traverse (extend b b' . fromCoreAlt) alts
+      return $ Just $ LC.Case e' b' alts'
+
+    | otherwise -> error "what"
 
   Cast e _co -> fromCore e -- ignore coercions
   Tick _tick e -> fromCore e -- and ticks
@@ -171,6 +192,25 @@ fromCore = \case
     pure $ LC.Mult m
 
   Coercion _co -> error "Coercion" -- how to handle moving from coercion to expr? where can coercions occur?
+
+fromCoreAlt :: CoreAlt -> CoreConv LC.CoreAlt
+fromCoreAlt (Alt con bs e)
+  | Just bs' <- traverse fromLamVar bs
+  = do
+    let con' = fromCoreAltCon con
+    Just e' <- extends (zip bs bs') (fromCore e)
+    return $ LC.Alt con' bs' e'
+
+  | otherwise = error "what"
+
+fromCoreAltCon :: AltCon -> LC.AltCon LC.Var
+fromCoreAltCon = \case
+  DEFAULT  -> LC.DEFAULT
+  LitAlt l -> LC.DataAlt (LC.DataCon (literalNameT l) [] [])
+  DataAlt dc -> LC.DataAlt (LC.DataCon (dataConNameT dc) (map fromMultVar $ filter hasVarKindMult $ dataConUnivTyVars dc) (map (fromCoreScaled fromType) $ dataConOrigArgTys dc))
+
+fromCoreScaled :: (a -> b) -> Scaled a -> LC.Scaled b
+fromCoreScaled from (Scaled m a) = LC.Scaled (fromMult m) (from a)
 
 -- In 'fromVar' this also needs to take a binding site (does it reallly matter ? perhaps
 -- we could always talk about usage environments, which might be empty
@@ -195,6 +235,21 @@ fromLamVar b
   = Just $ LC.Id (fromType $ varType b) (LC.LambdaBound (fromMult (varMult b))) (varNameT b)
   | otherwise = error "impossible"
 
+fromDeltaVar :: Var -> Maybe LC.Var
+fromDeltaVar b
+  | hasVarKindMult b
+  = Just $ LC.MultVar $ varNameT b
+
+  -- ignore multiplicity expressions for abstractions other than multiplicity ones
+  | isTyVar b
+  = Nothing
+
+  | isId b
+  -- We always use an empty delta environment when translating.
+  -- In the subsequent "inference" pass we can determine the correct usage environments.
+  = Just $ LC.Id (fromType $ varType b) (LC.DeltaBound mempty) (varNameT b)
+  | otherwise = error "impossible"
+
 -- | INVARIANT: Var has kind Mult!
 fromMult :: Mult -> LC.Mult
 fromMult m
@@ -206,6 +261,10 @@ fromMult m
   | TyVarTy v <- m
   = LC.MV $ varNameT v
   | otherwise = error "impossible"
+
+-- INVARIANT: Var has kind kult
+fromMultVar :: Var -> LC.Mult
+fromMultVar v = LC.MV' $ LC.MkMultVar (varNameT v)
 
 -- | Return Just Mult if the Type has kind Mult (is a multiplicity) and Nothing otherwise
 fromTypeMult :: Type -> Maybe LC.Mult
@@ -265,6 +324,12 @@ runConv = flip runReaderT mempty
 
 varNameT :: Var -> Text
 varNameT = T.pack . showPprUnsafe . varName
+
+literalNameT :: Literal -> Text
+literalNameT l = T.pack (showPprUnsafe l)
+
+dataConNameT :: DataCon -> Text
+dataConNameT dc = T.pack (showPprUnsafe $ dataConName dc)
 
 tcNameT :: TyCon -> Text
 tcNameT = T.pack . showPprUnsafe . tyConName
