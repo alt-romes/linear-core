@@ -4,7 +4,7 @@ all: $(DOCNAME).pdf
 
 .PHONY: clean final
 
-DEPS=lwnovathesis.cls chapters/c2.tex chapters/c3.tex chapters/c4.tex chapters/c5.tex chapters/c6.tex proof.tex language/* language/proofs/* language-v2/* language-v3/* language-v4/*
+DEPS=lwnovathesis.cls chapters/c2.tex chapters/c3.tex chapters/c4.tex chapters/c5.tex chapters/c6.tex chapters/c7.tex proof.tex language/* language/proofs/* language-v2/* language-v3/* language-v4/*
 
 # and all_proofs.tex
 
@@ -25,4 +25,4 @@ final: $(DOCNAME).tex $(DEPS)
 	lhs2TeX $< -o $@
 
 clean:
-	rm -f *.out *.blg *.bbl *.aux *.log *.toc *.ptb *.glg *.glo *.gls *.ist *.lof *.lot chapters/*.aux report.tex chapters/c2.tex chapters/c3.tex chapters/c4.tex chapters/c5.tex chapters/c6.tex
+	rm -f *.out *.blg *.bbl *.aux *.log *.toc *.ptb *.glg *.glo *.gls *.ist *.lof *.lot chapters/*.aux report.tex chapters/c2.tex chapters/c3.tex chapters/c4.tex chapters/c5.tex chapters/c6.tex chapters/c7.tex

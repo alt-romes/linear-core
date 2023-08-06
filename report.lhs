@@ -1,7 +1,7 @@
 \documentclass{lwnovathesis}
 \usepackage{boldline}
 \usepackage{xargs}
-\usepackage{todonotes}
+\usepackage[colorinlistoftodos=true]{todonotes}
 \usepackage{cmll}
 \usepackage{amssymb}
 \usepackage{amsmath}
@@ -73,6 +73,17 @@
 }
 
 \begin{document}
+
+%%%%%%%%%%%%%% TODOs %%%%%%%%%%%%%
+\listoftodos
+
+\todostyle{blue}{color=blue}   % For todos without a home
+\todostyle{pink}{color=pink} % For foreshadowing things, or for saying them later on instead
+\todo[blue, inline]{We need to handle EmptyCase}
+\todo[blue, inline]{And discuss how we didn't handle multiplicity coercions}
+\todo[blue, inline]{Consider dropping some bits about GADTs?}
+
+%%%%%%%%%% End TODOs %%%%%%%%%%%%%
 
 \frontmatter
 
@@ -427,6 +438,21 @@ be able to inform optimizing transformations with linearity.
 % about the usage of resources in a
 % programming language.
 
+\todo[inline]{We should discuss the alternative motivation of figuring out how
+to typecheck linearity in the presence of laziness on its own, why its hard and
+how it allows simpler use of linear types since the compiler doesn't constrain
+the programmer so much}
+
+\todo[inline]{Explain examples of non-trivial interaction of linearity with
+laziness, with both lets and also with case expressions not evaluating
+expressions in WHNF, and otherwise}
+
+\todo[inline]{Glimpse at how core optimizations can get us into these situations where we have to see this linearity}
+
+\todo[inline]{Saying, finally, what we are going to do, and that our system is
+capable of seeing linearity in all of these programs, and more -- it is capable
+of typechecking almost all optimizing transformations we studied}
+
 \section*{Goals}
 
 From a high-level view, our goals for the dissertation include:
@@ -437,12 +463,12 @@ From a high-level view, our goals for the dissertation include:
 \begin{itemize}
 \item Extending Core's type system and type-checking algorithm with additional
 linearity information in order to successfully type-check linearity in Core
-across transformations;
+across transformations; DONE
 \item Validating that our type-system accepts programs before and after each
-transformation is applied;
+transformation is applied; WIP Proofs of optimizations
 \item Arguing the soundness of the resulting system (i.e. no semantically
-non-linear programs are deemed linear);
-\item Implementing our extensions to Core in GHC, the leading Haskell Compiler.
+non-linear programs are deemed linear); DONE (modulo 1)
+\item Implementing our extensions to Core in GHC, the leading Haskell Compiler. NOPE.
 \end{itemize}
 
 
@@ -453,8 +479,10 @@ non-linear programs are deemed linear);
 % \include{chapters/c4.tex}
 % 
 % \include{chapters/c5.tex}
-
+%
 \include{chapters/c6.tex}
+
+\include{chapters/c7.tex}
 
 \begin{SingleSpace}
 \bibliographystyle{abbrv}

@@ -324,7 +324,8 @@ lack of statements and the language purity guarantees.
 As an example, consider these functions that do I/O and their types. The first
 opens a file by path and returns its handle, the second gets the size of a file
 from its handle, and the third closes the handle. It is important that the
-handle be closed exactly once, but currently nothing enforces that usage policy.
+handle be closed exactly once, but currently nothing in the type system
+enforces that usage policy.
 
 \begin{code}
 openFile :: FilePath -> IOMode -> IO Handle
@@ -334,7 +335,9 @@ hClose   :: Handle -> IO ()
 
 The following function makes use of the above definitions to return the size of
 a file given its path. Note that the function silently leaks the handle to the
-file, despite compiling successfully.
+file, despite compiling successfully. In this example Haskell program, the use
+of linear types could eventually prevent the handle from being leaked by
+requiring it to be used exactly once.
 
 \begin{code}
 countWords :: FilePath -> IO Integer
@@ -414,8 +417,8 @@ their type parameters, which restricts the use of specific constructors and
 their subsequent deconstruction through pattern matching.
 %
 % TODO: Rewrite this bit below
-Pattern matching against GADTs can introduce local type refinements, that is,
-refines the type information used for typechecking individual case alternatives.
+Pattern matching against GADTs can introduce local type refinements, i.e.
+refine the type information used for typechecking individual case alternatives.
 We develop the length-indexed lists example without discussing the type system
 and type inference details of GADTs as desribed in~\cite{cite:outsideinx}.
 % which we later explore in~\ref{related-work-gadts}.
@@ -461,7 +464,7 @@ different depending on the constructor that constructs the list.
 To define the safe \texttt{head} function, we must specify the type of the input
 list taking into account that the size must not be zero. To that effect, the
 function takes as input a \texttt{Vec (S n) a}, that is, a vector with size
-(n+1) for all possible n's, making a call to \texttt{head} on a list of type
+(n+1) for all possible n's. This definition makes a call to \texttt{head} on a list of type
 \texttt{Vec Z a} (an empty list) a compile-time type error.
 
 \begin{code}
@@ -491,6 +494,9 @@ implement a material system in a game engine\cite{cite:ghengin}.
 Linear types are, similarly, an extension to Haskell's type system that makes it
 even more expressive, by providing a finer control over the usage of certain
 resources at the type level.
+\todo[inline]{As we'll see after introducing linear
+haskell and multiplicities, GADTs/local equality evidence and multiplicity
+polymorphism interact in a non-trivial manner, and the way }
 
 % TODO:
 % Is it outside the scope of this report to discuss the merits and disadvantages
@@ -516,7 +522,7 @@ described in Linear Haskell~\cite{cite:linearhaskell}. While in
 Section~\ref{sec:related-work-linear-haskell} we discuss the reasoning and
 design choices behind retrofitting linear types to Haskell, here we focus on
 linear types solely as they exist in the language, and re-work the file handle
-example seen in the previous section to make sure it doesn't typecheck.
+example seen in the previous section to make sure it doesn't typecheck when the handle is forgotten.
 
 A linear function ($f :: A \lolli B$) guarantees that if ($f~x$) is consumed
 exactly once, then the argument $x$ is consumed exactly once. The precise
@@ -535,6 +541,9 @@ paraphrasing Linear Haskell~\cite{cite:linearhaskell}:
         consumed once.
 \end{itemize}
 
+\todo[pink, inline]{Either hint at a the importance of the definition of
+consuming values and expressions here, or be very clear about it in the Linear
+Core section}
 
 In Haskell, linear types are introduced through \emph{linearity on the function
 arrow}.
@@ -595,12 +604,11 @@ The linearity annotations~\texttt{1} and \texttt{Many} are just a
 specialization of the more general so-called \emph{multiplicity annotations}. A
 multiplicity of \texttt{1} entails that the function argument must be consumed
 once, and a function annotated with it ($\to_1$) is called a linear function
-(often written with $\lolli$). A function with multiplicity of \texttt{Many}
+(often written with $\lolli$). A function with a multiplicity of \texttt{Many}
 ($\to_\omega$) is an unrestricted function, which may consume its argument 0 or more times.
 Unrestricted functions are equivalent to the standard function type and, in fact,
 the usual function arrow ($\to$) implicitly has multiplicity \texttt{Many}.
-Multiplicities naturally allow for \emph{multiplicity polymorphism}, which we
-explain below.
+Multiplicities naturally allow for \emph{multiplicity polymorphism}.
 
 Consider the functions $f$ and $g$ which take as an argument a function from
 @Bool@ to @Int@. Function $f$ expects a linear function ($Bool~\to_1~Int$),
@@ -646,6 +654,26 @@ $f$ and $g$ ($m$ will unify with $1$ and $\omega$ at the call sites).
     % \item Talvez na próxima. Que relaciona o systemFC com o calculo lambda linear
 % \end{itemize}
 
+\section{Haskell's lazy evaluation semantics}
+
+\todo[inline]{Introduce evaluation semantics, call-by-value as the most common, call-by-need, call-by-name, call-by-let?}
+\todo[inline]{Call-by-need, refer to background work, discuss sharing etc?}
+
+\todo[inline]{We've already introduced linear haskell, so be sure to include at
+least one example of linearity with laziness, and how the linear typechecker
+doesn't see it}
+
+\todo[inline]{Foreshadowing para que syntatically coisas aparecem muitas vezes, but not a problem}
+
+\todo[inline]{Also refer that paper about call-by-need linear lambda calculus,
+but only discuss it later in Related Work}
+
+\todo[inline]{Falar de thunks + sharing, de suspended computations e de coisas
+em memória serem overwritten. Talvez deixar a discussão sobre interação com
+linearidade para mais tarde}
+
+\todo[inline]{Falar de WHNF vs NF, possivelmente numa subsecção}
+
 \section{Core and System $F_C$\label{sec:core}}
 
 % The section on coercions should probably mention roles, although I imagine you
@@ -667,8 +695,8 @@ representation.
 %
 To illustrate the difference in complexity, in GHC's implementation of Haskell,
 the abstract syntax tree is defined through dozens of datatypes and hundreds of
-constructors, while the GHC's implementation of Core is defined in 3 types
-(expressions, types, and coercions) and 15 constructors~\cite{cite:ghc-source}.
+constructors, while the GHC's implementation of Core is defined in 3 main types
+(expressions, types, and coercions) corresponding to 15 constructors~\cite{cite:ghc-source}.
 %
 The existence of Core and its use is a major design decision in GHC Haskell with
 significant benefits which have proved themselves in the development of the
@@ -703,7 +731,7 @@ the $System~F_C$~\cite{cite:systemfc} type system (i.e., System F extended with
 a notion of type coercion), while Haskell is implicitly typed and its type
 system is based on the constraint-based type inference system
 $OutsideIn(X)$~\cite{cite:outsideinx}. Therefore, typechecking Core is simple,
-fast and requires no type inference, whereas Haskell's typechecker must account
+fast, and requires no type inference, whereas Haskell's typechecker must account
 for almost the entirety of Haskell's syntax,
 % some features such as record updates, overloaded labels and overloaded
 % rebindable syntax are desugared before the typechecker
@@ -793,7 +821,7 @@ short, these three features are desugared as follows:
 Core further extends $System~F_C$ with \emph{jumps} and \emph{join
 points}~\cite{maurer2017compiling}, allowing new optimizations to be performed
 which ultimately result in efficient code using labels and jumps, and
-with a construct used for internal notes such as profiling information.
+with a construct used for internal notes such as profiling information.\todo{We could mention Sequent Core as the origin of jumps and joins here, or simply cite it}
 
 % $System~F_C$ is expressive enough as a target for Haskell
 
@@ -918,7 +946,7 @@ Foreshadowing the fact that Core is the main object of our study, we want to typ
 linearity in Core before \emph{and} after each optimizing transformation is
 applied (Section~\ref{sec:core}).
 %
-In that light, we describe below some of the individual Core-to-Core
+In light of it, we describe below some of the individual Core-to-Core
 transformations, using $\Longrightarrow$ to denote a program transformation. In
 the literature, the first set of Core-to-Core optimizations was described
 in~\cite{santos1995compilation,peytonjones1997a}. These were subsequently
@@ -1065,7 +1093,7 @@ larger extent because we needn't worry about evaluation order or side effects,
 contrary to most imperative and strict languages. \emph{Inlining} consists of
 replacing an occurrence of a let-bound variable by its right-hand side:
 \[
-\llet{x = e}{\dots x \dots}~\Longrightarrow~\llet{x = e}{\dots e \dots}
+\llet{x = e}{e'}~\Longrightarrow~\llet{x = e}{e'[e/x]}
 \]
 Effective inlining is crucial to optimization because, by bringing the
 definition of a variable to the context in which it is used, many other local
@@ -1250,6 +1278,13 @@ receives boxed values, unwraps them, and simply calls the worker function
 expressions other than the wrapper, saving allocations and being possibly much
 faster, especially if the worker recursively ends up calling itself rather than
 the wrapper.
+
+\todo[inline]{Add examples/definitions to the three previous transformations}
+
+\todo[inline]{Add a paragraph about the binder swap, and another about the
+reverse binder swap, possibly foreshadowing how it is important in our study as
+something that is only linearity preserving because of the way other
+optimizations are defined.}
 
 \begin{figure}[t]
 
