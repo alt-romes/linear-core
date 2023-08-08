@@ -1,6 +1,14 @@
 {-# LANGUAGE LinearTypes, UnicodeSyntax #-}
 module F where
 
+r,t :: Bool -> Bool
+r x = case x of
+        True -> t x
+        False -> True
+t x = case x of
+        True -> False
+        False -> r x
+
 my_f :: Int -> Int
 my_f x = x
 
