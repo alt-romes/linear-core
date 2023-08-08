@@ -70,7 +70,8 @@ runLinearCore :: CoreProgram -> CoreM [SDoc]
 runLinearCore pgr = do
   dflags <- getDynFlags 
   let
-    defcfg = initLintConfig dflags []
+    localTopBindings = bindersOfBinds pgr
+    defcfg = initLintConfig dflags localTopBindings
       
   case initLRes defcfg (inferDeltaAnns pgr) of
                       (w, Nothing) -> pprPanic "inferDeltaAnns failed" (ppr w)
