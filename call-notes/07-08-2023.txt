@@ -1,0 +1,85 @@
+Prof:
+> Ah, não. A ideia não funciona. Se fizermos bound de forma linear as pattern variables que não usam recursos vamos ser obrigados a usá-las, e perdemos a possibilidade de usar ou o case binder ou as pattern variables.
+
+Não percebi.
+
+case K 23 "hello" of z
+  K a b -> e
+
+aqui, em e, usar o z é o mesmo que usar a E b (e mais nada porque o case não depende de nada). Se se usar o a OU o b podemos usar o z?
+
+case K x "hello" of z
+  K a b -> e
+
+aqui, em e, se usar o z estou a "usar" o x, o a e o b, não? 
+
+Estou a ver qualquer coisa mal certamente.
+
+Eu:
+Bom exemplo.
+
+case K 23 "hello" of z
+  K a b -> e
+
+* Podemos usar `z` unrestrictedly porque o scrutinee não usa recursos.
+* Até agora dizia que dividimos o usage environment do scrutinee pelas pattern variables, mas nunca tinha considerado o caso do environment vazio.
+	* Percebi agora que se calhar não faz mal se não atribuirmos nenhuma variável linear a uma pattern variable.
+
+case K x "hello" of z
+  K a b -> e
+
+* Aqui usar o `z` é usar `x`
+* E, até à pouco tempo, usar `a` E `b` os dois seria usar `x`, porque dávamos x#K1 a `a` e x#K2 a `b`
+	* Com a nova ideia de poder atribuir os usage environments como der mais jeito às pattern variables, podemos dizer que `a` fica com `x` e `b` fica vazio
+	* Em e-mails anteriores eu disse que não sabia lidar com o u.e. de `b` ser vazio — mas agora já percebi — significa que `b` pode realmente ser usado muitas vezes! Porque utilizar `b` não usa recursos.
+
+No entanto, temos que considerar o exemplo em que a distribuição de recursos não é trivial. Por exemplo:
+
+	case close x of z
+		K a b -> e
+
+Neste caso não temos forma de distribuir corretamente os recursos pelas pattern variables, porque para além de não sabermos como `close` funciona, até pode não haver uma forma dita "correta”.
+Por isso o que fazemos? Fragmentamos o usage environment (boa, então isto ainda serve para alguma coisa)
+
+	case close x of z{x}
+		K a{x#K1} b{x#K2} -> e
+
+Isto garante que em `e`, ambos `a` E `b` são usados 1 vez, ou que `z` é usado 1 vez.
+
+Boa, isso significa que podemos remover aquela restrição de ∆_i ≠ {} da regra AltN que enviei nos últimos e-mails.
+
+Se atribuirmos um usage environment vazio a uma pattern variável então ela fica realmente unrestricted — só que só podemos fazer isto se soubermos exatamente o usage environment da expressão que vai substituir aquela pattern variable. Se não soubermos temos de dividir de alguma forma
+
+Mas então como passo do exemplo em que o scrutinee está em WHNF para o exemplo em que não está? Há aqui uma falha no meu entendimento algures…
+
+Eu tenho uma small-step operational semantic que me dá
+
+(1) case e of z {… K /x -> …} —> case e’ of z {… K /x -> …}
+
+(2) case K /e of z {K /x —> e’} —> e’/[e/x][K /e/z]
+
+E tenho uma AltN rule que me diz que eu posso distribuir o usage environment pelas variáveis como eu quiser.
+Mas na verdade não é bem como eu quiser, eu tenho de saber exatamente quais são as expressões que vão substituir as pattern variables para fazer os environments precisos, e se não souber preciso de fragmentar o usage environment e dividir irmamente pelas pattern variables.
+
+Estou confuso que parece que se chegar ao case K /e of … tenho sabedoria sobre quais recursos são usados onde, mas não é nada óbvio…
+
+Assumindo que `close x = let lazy = use x in K lazy ()`
+
+.; x |- case close x of z {K a b -> e’} : T
+==beta=>
+.; x |- case (let lazy = use x in close K lazy ()) of z {K a b -> e’} : T
+==let=>
+.; x |- case K (use x) () of z{x} {K a{x} b{} -> e’} : T
+==case constr.=>
+.; x |- e’[x/a][()/b] : T
+
+Pois… se calhar a minha confusão é a pensar que a forma como e’ está tipificado vai mudando à medida que avançamos na evaluation, apesar de de um ponto de vista exterior nada mudar.
+E se calhar posso simplesmente assumir que no `case e of z … —> case e’ of z …` faço a redução com o splitting do environment, assumindo que não sei nada, mas no outro caso assumo que sei exatamente que recursos vão para onde??
+
+Sinto que estamos perto de uma solução!
+
+Se calhar faria sentido fazer uma chamada durante uma semana que não seja demasiado inconveniente para o professor.
+Eu tenho mais trabalho para avançar para a tese, por isso não estou completamente “stuck” — não é preciso fazer isto urgentemente, mas cedo era melhor.
+
+Muito agradecido,
+Rodrigo
