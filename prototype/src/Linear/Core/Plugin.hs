@@ -39,9 +39,9 @@ import qualified Linear.Core.Syntax as LC
 import qualified Linear.Core.Check as LC
 import GHC.Core.Map.Type
 import Data.Maybe
-import Data.Functor
+import Data.Functor hiding (unzip)
 
--- import Linear.Core
+import Linear.Core
 
 type CoreCheck = ReaderT CoreProgram (ExceptT (Doc Void) CoreM)
 type CoreConv  = ReaderT (VarEnv LC.Var) CoreCheck
@@ -51,22 +51,22 @@ plugin = defaultPlugin { installCoreToDos = install }
 
 install :: [CommandLineOption] -> [CoreToDo] -> CoreM [CoreToDo]
 install _opts todo =
-  return (concatMap (:[CoreDoPluginPass "Linear Core Pass" validateLinearGuts]) todo)
+  return (concatMap (:[CoreDoPluginPass "Linear Core Pass" linearCorePass]) todo)
 
 --------------------------------------------------------------------------------
 ----- Attempt 2 - Typecheck Linearity in Core directly--------------------------
 --------------------------------------------------------------------------------
 
--- linearCorePass :: ModGuts -> CoreM ModGuts
--- linearCorePass guts = do
---   let prog = mg_binds guts
+linearCorePass :: ModGuts -> CoreM ModGuts
+linearCorePass guts = do
+  let prog = mg_binds guts
 
---   msgs <- Linear.Core.runLinearCore prog
---   case msgs of
---     [] -> pure ()
---     errs -> fatalErrorMsg (ppr errs)
+  msgs <- Linear.Core.runLinearCore prog
+  case msgs of
+    [] -> pure ()
+    errs -> fatalErrorMsg (ppr errs)
 
---   return guts -- unchanged guts, after validating them.
+  return guts -- unchanged guts, after validating them.
 
 --------------------------------------------------------------------------------
 ----- Attempt 1 - From Core to Linear Core first -------------------------------

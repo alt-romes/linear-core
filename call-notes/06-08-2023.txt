@@ -1,3 +1,86 @@
 Multiplicity polymorphism isn't that relevant for us, is it?
 Maybe for scaling things/optimizations that scale
 And the usage env inference algorithm?
+
+Continuação dos e-mails:
+
+Prof:
+Oi,
+
+    Por exemplo,
+
+        f x = case K x () of
+                K a b -> e
+
+    em `e`, precisamos que `a` e `b` sejam ambos usados exatamente uma vez (modulo case binders etc), para isso temos de atribuir a cada um um bocado de `x` (e.g. `a` com x#K1 e `b` com x#K2).
+    Agora, já não conseguimos aplicar a substituição (oh não!).
+
+Não percebo porque é preciso distribuir o x pelo a e pelo b. Intuitivamente o a
+vai "ser" o x por isso qual o problema exactamente?
+
+Eu:
+Olá Prof.,
+
+`a` vai “ser” o `x`, mas na prática temos de dizer que em `e`, substituímos `a` por `x`, ou seja:
+
+	case K x () of
+		K a b -> e
+	===>
+	e[x/a][()/b]
+
+A questão é que não podemos aplicar a substituição porque o usage de
+environment de `a` não é exatamente `x`, e o usage environment de `b` não é
+exatamente vazio (e o lemma da substituição requer isso).
+
+Porque é que os usage environments não são exatamente esses?
+
+Para tipificar a case alternative, a regra que temos de momento diz que temos
+de distribuir os recursos usados no scrutinee pelas case pattern variables, mas
+que nenhuma das case pattern variables pode ficar com um usage environment
+vazio (a intuição é que se o usage env fosse vazio, já não garantimos que essa
+pattern variable é usada (seria como se fosse unrestricted))
+
+Screenshot das regras do AltN
+
+Isto garante que todas as pattern variables são usadas, porque cada uma
+contribuiu um fragmento do usage env. do scrutinee.
+
+Mais uma vez, obrigado.
+Rodrigo
+
+Prof:
+Então mas em geral como é que tu tipificas:
+
+case K 23 "hello" of
+  K a b -> e
+
+se a regra altN nao tem cobertura no caso de em que o scrutinee tem o usage env vazio?
+
+Eu:
+É exatamente aí onde estou bloqueado.
+A restrição do env não poder ser vazio foi adicionado mais tarde, sobre aquela ideia de que podíamos dividir o usage environment como desse mais jeito, desde que todas as variáveis fossem usadas.
+
+Antes tínhamos que dividir os recursos igualmente por todas as pattern variables, para isso é que servia a ideia dos fragmentos.
+
+Ah! Mas ao escrever isto acabei de me aperceber da solução!
+Para as case alternatives, podemos distribuir os recursos do environment como preferirmos por todas as linear pattern variables, incluindo atribuir zero recursos a uma das pat. variables.
+No caso de não atribuir recursos a uma das pat. variables, essa pattern variable, em vez de ficar delta-bound, fica linearly-bound! Fácil.
+
+Assim, substituimos variáveis a que atribuímos recursos com os recursos que lhes atribuímos usando o ∆-subst lemma.
+Para as variáveis a que não atribuímos recursos, usamos o linear-substitution lemma.
+
+Voltando brevemente à ideia de fragmentar os usage environments: Quase nem precisamos de splitting de todo.
+Acho que aqui entra a ideia do sistema ser syntax directed ou não.
+Usando esta ideia de que na alternativa atribuímos de qualquer forma os recursos a cada uma das pattern-variables, e aquelas a que não damos recursos fazem-se lineares, temos uma regra muito difícil de implementar.
+
+No entanto, para uma versão syntax directed do algoritmo talvez a ideia de fragmentar os recursos de forma agnóstica à distribuição dos recursos é a mais certa, e depois pode-se de alguma forma converter uma no outro, porque de ambas as formas vão ser usadas as linearly bound patterns exatamente uma vez.
+
+Ah, não. A ideia não funciona. Se fizermos bound de forma linear as pattern variables que não usam recursos vamos ser obrigados a usá-las, e perdemos a possibilidade de usar ou o case binder ou as pattern variables.
+
+Acho que precisamos de algo mais subtil para garantir que as variáveis a que não atribuímos recursos são usadas se todas as outras do pattern forem também usadas.
+
+Vou deixar ficar o texto completo porque acho que ilustra o tipo de pensamento que estou a ter para confrontar isto.
+Voltando ao início, é exatamente aí que estou bloqueado com a regra nova; com a regra antiga AltN fazíamos a fragmentação dos recursos todos irmamente pelas variáveis, mas depois não conseguimos aplicar a ∆-substituição.
+
+Mais uma vez, obrigado,
+Rodrigo

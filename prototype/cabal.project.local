@@ -103,7 +103,7 @@ constraints:
   siphash ==1.0.3,
   stm-containers ==1.2.0.2,
   stm-hamt ==1.2.0.11,
-  th-abstraction ==0.5.0.0,
+  th-abstraction ==0.6.0.0,
   th-compat ==0.1.4,
   th-desugar ==1.14,
   true-name ==0.1.0.3,

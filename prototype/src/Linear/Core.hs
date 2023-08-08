@@ -19,7 +19,6 @@ import GHC.Utils.Trace
 import GHC.Core.Lint
 import GHC.Types.Var.Env
 import Data.Map as M
-import Unsafe.Coerce
 
 type LCProgram = [LCBind]
 type LCBind = Bind LCVar
@@ -69,7 +68,7 @@ instance OutputableBndr LCVar where
 
 runLinearCore :: CoreProgram -> CoreM [SDoc]
 runLinearCore pgr = do
-  dflags <- getDynFlags
+  dflags <- getDynFlags 
   let
     defcfg = initLintConfig dflags []
       
@@ -98,7 +97,7 @@ inferDeltaAnnsBind (Rec (unzip -> (bs,es))) = do
 
 
 inferDeltaAnnsExpr :: CoreExpr -> LintM LCExpr
-inferDeltaAnnsExpr expr = pure (unsafeCoerce expr)
+inferDeltaAnnsExpr expr = error "inferDeltaAnnsExpr"
 
 deltaBinding :: UsageEnv -> IdBinding
 deltaBinding = DeltaBound . DeltaAnn
