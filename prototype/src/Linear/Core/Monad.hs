@@ -77,3 +77,7 @@ unrestricted computation = LinearCtxT do
   return result
 
 
+-- | Run a computation and record the linear resources used in that computation
+record :: Monad m => LinearCtxT k v m a -> LinearCtxT k v m (a, [k])
+record computation = Linear
+

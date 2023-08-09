@@ -77,6 +77,60 @@ computeRecUsageEnvs l =
     ) l l
 
 --------------------------------------------------------------------------------
+----- Typechecking Linear Core (mostly ignoring types) -------------------------
+--------------------------------------------------------------------------------
+
+checkProgram :: Monad m => CoreProgram -> m LCProgram
+checkProgram = traverse checkBind
+
+checkBind :: Monad m => CoreBind -> m LCBind
+checkBind (NonRec b e)
+  | isId b
+  = do e' <- checkExpr e
+       return (NonRec (LCVar b Nothing) e')
+  | otherwise
+  = do e' <- checkExpr e
+       -- This is really instanced to Nothing, since TyVars are not accounted for as linear resources.
+       return (NonRec (LCVar b Nothing) e')
+
+checkBind (Rec bs) = do
+  let (ids,rhss) = unzip bs
+  rhss' <- traverse checkExpr rhss
+  let ids' = L.map (`LCVar` Nothing) ids
+  return (Rec (zip ids' rhss'))
+
+checkExpr :: Monad m => CoreExpr -> m LCExpr
+checkExpr expr = case expr of
+  Var v       -> return (Var v)
+  Lit l       -> return (Lit l)
+  Type ty     -> return (Type ty)
+  Coercion co -> return (Coercion co)
+  App e1 e2   -> App <$> checkExpr e1 <*> checkExpr e2
+  Lam b e     -> Lam (LCVar b (multBinding b)) <$> checkExpr e
+  Let bind@(NonRec _b _) body
+    -> Let <$> checkBind bind
+           <*> checkExpr body
+  Let bind@(Rec _bs) body
+    -> Let <$> checkBind bind
+           <*> checkExpr body
+  Case e b ty alts -> do
+    Case <$> checkExpr e
+         <*> pure (LCVar b Nothing)
+         <*> pure ty
+         <*> mapM (checkAlt) alts
+
+  Tick t e  -> Tick t <$> checkExpr e
+  Cast e co -> Cast <$> checkExpr e <*> pure co
+
+checkAlt :: Monad m
+           => CoreAlt
+           -> m LCAlt
+checkAlt (Alt con args rhs) = do
+  rhs' <- checkExpr rhs
+  let args' = L.map (\a -> LCVar a Nothing) args
+  return (Alt con args' rhs')
+
+--------------------------------------------------------------------------------
 ----- Initial conversion to operate on LCVar binders ---------------------------
 --------------------------------------------------------------------------------
 -- We make an initial conversion from CoreProgram to LCProgram because our
