@@ -38,10 +38,10 @@ common common
 
 library
     import:           common
-    exposed-modules:  Linear.Core.Monad,
+    exposed-modules:  Linear.Core.Monad, Linear.Core.Multiplicities,
                       Linear.Core.Plugin,
-                      Linear.Core.Syntax, Linear.Core.Parser,
-                      Linear.Core.Check, Linear.Core.Infer,
+                      Linear.Core.Translate.Syntax, Linear.Core.Translate.Parser,
+                      Linear.Core.Translate.Check, Linear.Core.Translate.Infer,
                       Linear.Core
     hs-source-dirs:   src
 

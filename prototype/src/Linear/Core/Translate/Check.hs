@@ -3,7 +3,7 @@
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE LambdaCase #-}
 {-# OPTIONS_GHC -Wno-name-shadowing #-}
-module Linear.Core.Check where
+module Linear.Core.Translate.Check where
 
 -- import Debug.Trace
 import Data.List ((\\))
@@ -22,7 +22,7 @@ import Prettyprinter
 import Data.Void
 -- import Error.Diagnose
 
-import Linear.Core.Syntax
+import Linear.Core.Translate.Syntax
 import GHC.Driver.Ppr (showPprUnsafe)
 import GHC.Plugins (literalType)
 

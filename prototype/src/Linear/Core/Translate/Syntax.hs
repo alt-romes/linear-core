@@ -8,8 +8,8 @@
 {-# LANGUAGE PatternSynonyms #-}
 {-# LANGUAGE MonoLocalBinds, DataKinds #-}
 {-# LANGUAGE DeriveTraversable, TemplateHaskell #-}
-module Linear.Core.Syntax
-  ( module Linear.Core.Syntax
+module Linear.Core.Translate.Syntax
+  ( module Linear.Core.Translate.Syntax
 
   -- * Re-exports
   , pretty

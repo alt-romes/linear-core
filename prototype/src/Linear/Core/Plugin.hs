@@ -35,8 +35,8 @@ import Control.Monad
 import Control.Monad.Reader
 import Control.Monad.Except
 
-import qualified Linear.Core.Syntax as LC
-import qualified Linear.Core.Check as LC
+import qualified Linear.Core.Translate.Syntax as LC
+import qualified Linear.Core.Translate.Check as LC
 import GHC.Core.Map.Type
 import Data.Maybe
 import Data.Functor hiding (unzip)
@@ -70,7 +70,9 @@ linearCorePass guts = do
 
 --------------------------------------------------------------------------------
 ----- Attempt 1 - From Core to Linear Core first -------------------------------
+----- See also Linear.Core.Translate.* modules ---------------------------------
 --------------------------------------------------------------------------------
+-- Everything below this line is unused, but still typechecks
 
 validateLinearGuts :: ModGuts -> CoreM ModGuts
 validateLinearGuts guts = do
@@ -364,7 +366,8 @@ printPretty str a = liftIO $ do
 instance MonadFail CoreM where
   fail = error
 
--------------------
--- Tomorrow:
--- Re-do type-checker implementation directly on Core using the new contexts.
--- Nevermind, we're going back and forth between translation and direct typechecking...
+-----------------
+ -- Tomorrow:
+ -- Re-do type-checker implementation directly on Core using the new contexts.
+ -- Nevermind, we're going back and forth between translation and direct typechecking...
+ -- No, do go back to direct typechecking

@@ -10,13 +10,13 @@ https://dl.acm.org/doi/pdf/10.1145/3450952
 Perhaps this would all be easier accounting for linearity using the rules in Sec. 6?
 
 -}
-module Linear.Core.Infer where
+module Linear.Core.Translate.Infer where
 
 import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Data.Map as M
 import Prelude hiding (lookup)
-import Linear.Core.Syntax
+import Linear.Core.Translate.Syntax
 import Data.Functor.Foldable
 import Control.Monad
 import Control.Monad.Reader
@@ -27,7 +27,7 @@ import Data.Void
 import Prettyprinter
 
 -- We run 'typecheck' after the naive inference, to check linearity and validation.
-import qualified Linear.Core.Check as Core
+import qualified Linear.Core.Translate.Check as Core
 
 -- We don't have SrcSpans yet, for reporting error messages.
 

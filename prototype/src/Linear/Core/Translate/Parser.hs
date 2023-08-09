@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE BlockArguments #-}
 {-# OPTIONS -Wno-orphans #-} -- HasHints Void
-module Linear.Core.Parser where
+module Linear.Core.Translate.Parser where
 
 {-
 It could be more interesting to also transform Core into this language, than to
@@ -24,7 +24,7 @@ import Control.Monad.Combinators.Expr
 import Control.Monad.IO.Class
 import qualified Text.Megaparsec.Char.Lexer as L
 
-import Linear.Core.Syntax
+import Linear.Core.Translate.Syntax
 import Error.Diagnose
 import Error.Diagnose.Compat.Megaparsec
 import System.Exit

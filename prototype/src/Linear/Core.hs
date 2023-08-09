@@ -14,16 +14,16 @@ module Linear.Core
 
 import GHC.Utils.Outputable
 import Control.Monad.Reader
-import GHC.Core.UsageEnv
-import GHC.Driver.Config.Diagnostic
 import GHC.Driver.Config.Core.Lint
-import GHC.Plugins
+import GHC.Plugins hiding (Mult)
 import GHC.Utils.Trace
-import GHC.Core.Lint
 import GHC.Types.Var.Env
 import Data.Map as M
 import Data.List as L
 import Data.Maybe
+
+import Linear.Core.Multiplicities
+import Data.Functor.Identity
 
 type LCProgram = [LCBind]
 type LCBind = Bind LCVar
@@ -47,38 +47,13 @@ Meaning this pass is not fit for our purposes.
 -- but requires splitting the resources between proof-irrelevant and relevant.
 type InferDeltas a = ReaderT (VarEnv LCVar) CoreM
 
--- Usage environments annotated to delta variables:
--- The linear variables and proof irrelevant linear variables that suspended on
--- a computation bound to the annotated delta var
-newtype DeltaAnn = DeltaAnn
-  { linear :: UsageEnv
-  }
-  deriving newtype Outputable
-
-data IdBinding = LambdaBound LCMult  -- lambda
-               | DeltaBound DeltaAnn -- both let and case binders
-instance Outputable IdBinding where
-  ppr (LambdaBound m) = text "λ=" GHC.Plugins.<> ppr m
-  ppr (DeltaBound an) = text "Δ=" GHC.Plugins.<> ppr an
-
-data LCMult = Relevant Mult
-            | Irrelevant Mult
-
-instance Outputable LCMult where
-  ppr (Relevant m) = text "Relevant" <+> ppr m
-  ppr (Irrelevant m) = text "Irrelevant" <+> ppr m
+data IdBinding = LambdaBound Mult    -- lambdas
+               | DeltaBound UsageEnv -- both let and case binders (including pattern variables)
 
 data LCVar = LCVar
   { id :: Var
   , binding :: Maybe IdBinding -- we only have Id bindings for Ids (not for TyVars)
   }
-
-instance Outputable LCVar where
-  ppr (LCVar id Nothing) = ppr id
-  ppr (LCVar id (Just b)) = ppr id <+> ppr b
-instance OutputableBndr LCVar where
-  pprPrefixOcc v = ppr v
-  pprInfixOcc v = text "`" GHC.Plugins.<> ppr v GHC.Plugins.<> text "`"
 
 
 runLinearCore :: CoreProgram -> CoreM [SDoc]
@@ -87,98 +62,195 @@ runLinearCore pgr = do
   let
     localTopBindings = bindersOfBinds pgr
     defcfg = initLintConfig dflags localTopBindings
-      
-  case initLRes defcfg (inferDeltaAnns pgr) of
-                      (w, Nothing) -> pprPanic "inferDeltaAnns failed" (ppr w $$ ppr pgr)
-                      (_, Just x) -> pprPanic "ok" (ppr x)
+
+    prg = runIdentity (convertProgram pgr)
+
+  pprTraceM "Program:" (ppr prg)
+  return []
 -- TODO : Then pipe inferred output to typechecker action
 
-inferDeltaAnns :: CoreProgram -> LintM LCProgram
-inferDeltaAnns = traverse (inferDeltaAnnsBind TopLevel)
+computeRecUsageEnvs :: [(Var, UsageEnv)] -- ^ Recursive usage environments associated to their recursive call
+                    -> [(Var, UsageEnv)] -- ^ Non-recursive usage environments (vars keep input order)
+computeRecUsageEnvs l =
+  L.foldl (\acc (v, vEnv) ->
+      L.map (\(n, nEnv) -> (n, ((v `lookupUE` nEnv) `scaleUE` (v `deleteUE` vEnv)) `supUE` (v `deleteUE` nEnv))) acc
+    ) l l
 
-inferDeltaAnnsBind :: TopLevelFlag -> CoreBind -> LintM LCBind
-inferDeltaAnnsBind topflag (NonRec b e)
+--------------------------------------------------------------------------------
+----- Initial conversion to operate on LCVar binders ---------------------------
+--------------------------------------------------------------------------------
+-- We make an initial conversion from CoreProgram to LCProgram because our
+-- recursive typechecking action operates on LCPrograms.
+--
+-- This will not populate DeltaBindings correctly, but it will populate correctly LambdaBindings.
+-- For DeltaBindings, it'll trivially instantiate the IdBindings to Nothing.
+--
+-- The typechecking action will determine the usage environments for each
+-- binder during checking, because we already have to calculate the usage environment of the binder bodies.
+-- Even if this is not the most optimal strategy, it seems the simplest.
+
+convertProgram :: Monad m => CoreProgram -> m LCProgram
+convertProgram = traverse convertBind
+
+convertBind :: Monad m => CoreBind -> m LCBind
+convertBind (NonRec b e)
   | isId b
-  = do (_ty, ue) <- lintCoreExpr e
-       e'        <- inferDeltaAnnsExpr e
-       return (NonRec (LCVar b (deltaBinding ue)) e')
+  = do e' <- convertExpr e
+       return (NonRec (LCVar b Nothing) e')
   | otherwise
-  = do e'        <- inferDeltaAnnsExpr e
+  = do e' <- convertExpr e
+       -- This is really instanced to Nothing, since TyVars are not accounted for as linear resources.
        return (NonRec (LCVar b Nothing) e')
 
-inferDeltaAnnsBind topflag (Rec bs) = do
+convertBind (Rec bs) = do
   let (ids,rhss) = unzip bs
-  (rhss', naiveUes) <- lintRecBindings topflag bs (\_ -> traverse inferDeltaAnnsExpr rhss)
-  let ids' = L.map (\(id',ue') -> LCVar id' (deltaBinding ue'))
-              $ computeRecUsageEnvs (zip ids naiveUes)
+  rhss' <- traverse convertExpr rhss
+  let ids' = L.map (`LCVar` Nothing) ids
   return (Rec (zip ids' rhss'))
 
 
-inferDeltaAnnsExpr :: CoreExpr -> LintM LCExpr
-inferDeltaAnnsExpr expr = case expr of
+convertExpr :: Monad m => CoreExpr -> m LCExpr
+convertExpr expr = case expr of
   Var v       -> return (Var v)
   Lit l       -> return (Lit l)
   Type ty     -> return (Type ty)
   Coercion co -> return (Coercion co)
-  App e1 e2   -> App <$> inferDeltaAnnsExpr e1 <*> inferDeltaAnnsExpr e2
-  Lam b e     -> Lam (LCVar b (multBinding b)) <$> extend LambdaBind b (inferDeltaAnnsExpr e)
-  Let bind@(NonRec b _) body
-    -> Let <$> inferDeltaAnnsBind NotTopLevel bind
-           <*> extend LetBind b (inferDeltaAnnsExpr body)
-  Let bind@(Rec bs) body
-    -> Let <$> inferDeltaAnnsBind NotTopLevel bind
-           <*> extendRecBindings NotTopLevel bs (inferDeltaAnnsExpr body)
+  App e1 e2   -> App <$> convertExpr e1 <*> convertExpr e2
+  Lam b e     -> Lam (LCVar b (multBinding b)) <$> convertExpr e
+  Let bind@(NonRec _b _) body
+    -> Let <$> convertBind bind
+           <*> convertExpr body
+  Let bind@(Rec _bs) body
+    -> Let <$> convertBind bind
+           <*> convertExpr body
   Case e b ty alts -> do
-    (_ty, ue) <- lintCoreExpr e
-    Case <$> inferDeltaAnnsExpr e
-         <*> pure (LCVar b (deltaBinding ue))
+    Case <$> convertExpr e
+         <*> pure (LCVar b Nothing)
          <*> pure ty
-         <*> extend CaseBind b (mapM (inferDeltaAnnsAlt ue) alts)
+         <*> mapM (convertAlt) alts
 
-  Tick t e  -> Tick t <$> inferDeltaAnnsExpr e
-  Cast e co -> Cast <$> inferDeltaAnnsExpr e <*> pure co
+  Tick t e  -> Tick t <$> convertExpr e
+  Cast e co -> Cast <$> convertExpr e <*> pure co
 
-inferDeltaAnnsAlt :: UsageEnv -- ^ The usage environment of the scrutinee
-                  -> CoreAlt
-                  -> LintM LCAlt
-inferDeltaAnnsAlt ue (Alt con args rhs) = do
-  rhs' <- extends CasePatBind args $ inferDeltaAnnsExpr rhs
-  -- ROMES:TODO: This is wrong for now, we need to update this with the right
-  -- way of inferring usage envs for case pattern variables, but we first
-  -- should decide how they typecheck altogether
-  let args' = L.map (\a -> LCVar a (deltaBinding ue)) args
+convertAlt :: Monad m
+           => CoreAlt
+           -> m LCAlt
+convertAlt (Alt con args rhs) = do
+  rhs' <- convertExpr rhs
+  let args' = L.map (\a -> LCVar a Nothing) args
   return (Alt con args' rhs')
 
-extend :: BindingSite -> Var -> LintM a -> LintM a
-extend s b lact = lintBinder s b $ \_ -> lact
+--------------------------------------------------------------------------------
+----- Utilities ----------------------------------------------------------------
+--------------------------------------------------------------------------------
 
-extends :: BindingSite -> [Var] -> LintM a -> LintM a
-extends s bs lact = lintBinders s bs $ \_ -> lact
-
--- extend' :: TopLevelFlag -> BindingSite -> Var -> LintM a -> LintM a
--- extend' t s b lact = lintIdBndr t s b $ \_ -> lact
-
-extendRecBindings :: TopLevelFlag -> [(Var,CoreExpr)] -> LintM a -> LintM a
-extendRecBindings flg ids lact = fst <$> lintRecBindings flg ids (\_ -> lact)
-
--- TODO: The usage environments must be redefined because the multiplicities
--- within may be relevant or irrelevant, and we're currently not accounting that
 deltaBinding :: UsageEnv -> Maybe IdBinding
-deltaBinding = Just . DeltaBound . DeltaAnn
+deltaBinding = Just . DeltaBound
 
 multBinding :: Var -> Maybe IdBinding
 multBinding v
   | isId v    = Just $ LambdaBound $ Relevant (idMult v)
   | otherwise = Nothing
 
-computeRecUsageEnvs :: [(Var, UsageEnv)] -- ^ Recursive usage environments associated to their recursive call
-                    -> [(Var, UsageEnv)] -- ^ Non-recursive usage environments (vars keep input order)
-computeRecUsageEnvs l =
-  L.foldl (\acc (v, vEnv) ->
-      L.map (\(n, nEnv) -> (n, ((nEnv `lookupUE` v) `scaleUEWithUsage` (vEnv `deleteUE` v)) `supUE` (nEnv `deleteUE` v))) acc
-    ) l l
-  where
-    scaleUEWithUsage :: Usage -> UsageEnv -> UsageEnv
-    scaleUEWithUsage Zero ue = ue
-    scaleUEWithUsage Bottom ue = ue
-    scaleUEWithUsage (MUsage m) ue = m `scaleUE` ue
+--------------------------------------------------------------------------------
+----- Outputable Instances -----------------------------------------------------
+--------------------------------------------------------------------------------
+
+instance Outputable IdBinding where
+  ppr (LambdaBound m) = text "λ=" GHC.Plugins.<> ppr m
+  ppr (DeltaBound an) = text "Δ=" GHC.Plugins.<> ppr an
+
+instance Outputable LCVar where
+  ppr (LCVar id' Nothing)  = ppr id'
+  ppr (LCVar id' (Just b)) = ppr id' <+> ppr b
+
+instance OutputableBndr LCVar where
+  pprPrefixOcc v = ppr v
+  pprInfixOcc v = text "`" GHC.Plugins.<> ppr v GHC.Plugins.<> text "`"
+
+--------------------------------------------------------------------------------
+----- Attempt 1 - Calling LintM actions for the Usage Env ----------------------
+--------------------------------------------------------------------------------
+
+-- Note:
+-- Unlike [Attempt 1] in Linear.Core.Plugin, we can't leave this uncommented for typechecking.
+-- This code only compiled when using a patched GHC that exposed functions for linting and LintM.
+-- We comment it so we can go back to a released GHC version, one with HLS support :)
+
+-- runLinearCore :: CoreProgram -> CoreM [SDoc]
+-- runLinearCore pgr = do
+--   dflags <- getDynFlags 
+--   let
+--     localTopBindings = bindersOfBinds pgr
+--     defcfg = initLintConfig dflags localTopBindings
+      
+--   case initLRes defcfg (inferDeltaAnns pgr) of
+--                       (w, Nothing) -> pprPanic "inferDeltaAnns failed" (ppr w $$ ppr pgr)
+--                       (_, Just x) -> pprPanic "ok" (ppr x)
+-- -- TODO : Then pipe inferred output to typechecker action
+
+-- inferDeltaAnns :: CoreProgram -> LintM LCProgram
+-- inferDeltaAnns = traverse (inferDeltaAnnsBind TopLevel)
+
+-- inferDeltaAnnsBind :: TopLevelFlag -> CoreBind -> LintM LCBind
+-- inferDeltaAnnsBind topflag (NonRec b e)
+--   | isId b
+--   = do (_ty, ue) <- lintCoreExpr e
+--        e'        <- inferDeltaAnnsExpr e
+--        return (NonRec (LCVar b (deltaBinding ue)) e')
+--   | otherwise
+--   = do e'        <- inferDeltaAnnsExpr e
+--        return (NonRec (LCVar b Nothing) e')
+
+-- inferDeltaAnnsBind topflag (Rec bs) = do
+--   let (ids,rhss) = unzip bs
+--   (rhss', naiveUes) <- lintRecBindings topflag bs (\_ -> traverse inferDeltaAnnsExpr rhss)
+--   let ids' = L.map (\(id',ue') -> LCVar id' (deltaBinding ue'))
+--               $ computeRecUsageEnvs (zip ids naiveUes)
+--   return (Rec (zip ids' rhss'))
+
+
+-- inferDeltaAnnsExpr :: CoreExpr -> LintM LCExpr
+-- inferDeltaAnnsExpr expr = case expr of
+--   Var v       -> return (Var v)
+--   Lit l       -> return (Lit l)
+--   Type ty     -> return (Type ty)
+--   Coercion co -> return (Coercion co)
+--   App e1 e2   -> App <$> inferDeltaAnnsExpr e1 <*> inferDeltaAnnsExpr e2
+--   Lam b e     -> Lam (LCVar b (multBinding b)) <$> extend LambdaBind b (inferDeltaAnnsExpr e)
+--   Let bind@(NonRec b _) body
+--     -> Let <$> inferDeltaAnnsBind NotTopLevel bind
+--            <*> extend LetBind b (inferDeltaAnnsExpr body)
+--   Let bind@(Rec bs) body
+--     -> Let <$> inferDeltaAnnsBind NotTopLevel bind
+--            <*> extendRecBindings NotTopLevel bs (inferDeltaAnnsExpr body)
+--   Case e b ty alts -> do
+--     (_ty, ue) <- lintCoreExpr e
+--     Case <$> inferDeltaAnnsExpr e
+--          <*> pure (LCVar b (deltaBinding ue))
+--          <*> pure ty
+--          <*> extend CaseBind b (mapM (inferDeltaAnnsAlt ue) alts)
+
+--   Tick t e  -> Tick t <$> inferDeltaAnnsExpr e
+--   Cast e co -> Cast <$> inferDeltaAnnsExpr e <*> pure co
+
+-- inferDeltaAnnsAlt :: UsageEnv -- ^ The usage environment of the scrutinee
+--                   -> CoreAlt
+--                   -> LintM LCAlt
+-- inferDeltaAnnsAlt ue (Alt con args rhs) = do
+--   rhs' <- extends CasePatBind args $ inferDeltaAnnsExpr rhs
+--   -- ROMES:TODO: This is wrong for now, we need to update this with the right
+--   -- way of inferring usage envs for case pattern variables, but we first
+--   -- should decide how they typecheck altogether
+--   let args' = L.map (\a -> LCVar a (deltaBinding ue)) args
+--   return (Alt con args' rhs')
+
+-- extend :: BindingSite -> Var -> LintM a -> LintM a
+-- extend s b lact = lintBinder s b $ \_ -> lact
+
+-- extends :: BindingSite -> [Var] -> LintM a -> LintM a
+-- extends s bs lact = lintBinders s bs $ \_ -> lact
+
+-- extendRecBindings :: TopLevelFlag -> [(Var,CoreExpr)] -> LintM a -> LintM a
+-- extendRecBindings flg ids lact = fst <$> lintRecBindings flg ids (\_ -> lact)
+
