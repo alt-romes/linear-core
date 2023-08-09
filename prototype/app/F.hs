@@ -1,6 +1,10 @@
 {-# LANGUAGE LinearTypes, UnicodeSyntax #-}
 module F where
 
+data Y = Y Y Y
+
+f y = let z = Y z y in z
+
 r,t :: Bool -> Bool
 r x = case x of
         True -> t x

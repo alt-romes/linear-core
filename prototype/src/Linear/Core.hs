@@ -23,6 +23,7 @@ import GHC.Core.Lint
 import GHC.Types.Var.Env
 import Data.Map as M
 import Data.List as L
+import Data.Maybe
 
 type LCProgram = [LCBind]
 type LCBind = Bind LCVar
@@ -95,11 +96,12 @@ inferDeltaAnnsBind topflag (NonRec b e)
   = do e'        <- inferDeltaAnnsExpr e
        return (NonRec (LCVar b Nothing) e')
 
-inferDeltaAnnsBind topflag (Rec (unzip -> (bs,es))) = do
-  (unzip -> (_tys, naiveUes)) <- mapM lintCoreExpr es
-  pprTraceM "rec things" $ ppr (Rec (zip bs es))
-  pprTraceM "naive ues" $ ppr naiveUes
-  error "OK"
+inferDeltaAnnsBind topflag (Rec bs) = do
+  let (ids,rhss) = unzip bs
+  (rhss', naiveUes) <- lintRecBindings topflag bs (\_ -> traverse inferDeltaAnnsExpr rhss)
+  let ids' = L.map (\(id',ue') -> LCVar id' (deltaBinding ue'))
+              $ computeRecUsageEnvs (zip ids naiveUes)
+  return (Rec (zip ids' rhss'))
 
 
 inferDeltaAnnsExpr :: CoreExpr -> LintM LCExpr
@@ -132,7 +134,7 @@ inferDeltaAnnsAlt :: UsageEnv -- ^ The usage environment of the scrutinee
 inferDeltaAnnsAlt ue (Alt con args rhs) = do
   rhs' <- extends CasePatBind args $ inferDeltaAnnsExpr rhs
   -- ROMES:TODO: This is wrong for now, we need to update this with the right
-  -- way of inferring usage envs. for case pattern variables, but we first
+  -- way of inferring usage envs for case pattern variables, but we first
   -- should decide how they typecheck altogether
   let args' = L.map (\a -> LCVar a (deltaBinding ue)) args
   return (Alt con args' rhs')
@@ -159,9 +161,14 @@ multBinding v
   | isId v    = Just $ LambdaBound $ Relevant (idMult v)
   | otherwise = Nothing
 
--- computeRecUsageEnvs :: [(Var, UsageEnv)] -- ^ Recursive usage environments associated to their recursive call
---                     -> [(Var, UsageEnv)] -- ^ Non-recursive usage environments
--- computeRecUsageEnvs l =
---   foldl (\acc (v,vEnv) ->
---       map (\(n, nEnv) -> (n, ((fromMaybe 0 $ v `M.lookup` nEnv) `scaleUE` (M.delete v vEnv)) `supUE` (M.delete v nEnv))) acc
---     ) l l
+computeRecUsageEnvs :: [(Var, UsageEnv)] -- ^ Recursive usage environments associated to their recursive call
+                    -> [(Var, UsageEnv)] -- ^ Non-recursive usage environments (vars keep input order)
+computeRecUsageEnvs l =
+  L.foldl (\acc (v, vEnv) ->
+      L.map (\(n, nEnv) -> (n, ((nEnv `lookupUE` v) `scaleUEWithUsage` (vEnv `deleteUE` v)) `supUE` (nEnv `deleteUE` v))) acc
+    ) l l
+  where
+    scaleUEWithUsage :: Usage -> UsageEnv -> UsageEnv
+    scaleUEWithUsage Zero ue = ue
+    scaleUEWithUsage Bottom ue = ue
+    scaleUEWithUsage (MUsage m) ue = m `scaleUE` ue
