@@ -30,6 +30,15 @@ type LCBind = Bind LCVar
 type LCExpr = Expr LCVar
 type LCAlt  = Alt LCVar
 
+{-
+I realize now this whole approach of leveraging `lintCoreExpr` to get the usage
+environments on a pass before typechecking linear core is likely wrong.
+The way Core determines a usage environment is not the same way we do, because
+we see linearity and usage of resources in a different way.
+
+Meaning this pass is not fit for our purposes.
+ -}
+
 -- | Whenever we recurse into the body of a case expression (whose scrutinee is
 -- not in WHNF) to determine the delta annotations of the Delta-bound variables,
 -- we need to move the linear variables from the scrutinee to the
@@ -49,8 +58,8 @@ newtype DeltaAnn = DeltaAnn
 data IdBinding = LambdaBound LCMult  -- lambda
                | DeltaBound DeltaAnn -- both let and case binders
 instance Outputable IdBinding where
-  ppr (LambdaBound m) = text "LambdaBound" <+> ppr m
-  ppr (DeltaBound an) = text "DeltaBound" <+> ppr an
+  ppr (LambdaBound m) = text "λ=" GHC.Plugins.<> ppr m
+  ppr (DeltaBound an) = text "Δ=" GHC.Plugins.<> ppr an
 
 data LCMult = Relevant Mult
             | Irrelevant Mult
@@ -65,7 +74,8 @@ data LCVar = LCVar
   }
 
 instance Outputable LCVar where
-  ppr v = ppr v.id <+> ppr v.binding
+  ppr (LCVar id Nothing) = ppr id
+  ppr (LCVar id (Just b)) = ppr id <+> ppr b
 instance OutputableBndr LCVar where
   pprPrefixOcc v = ppr v
   pprInfixOcc v = text "`" GHC.Plugins.<> ppr v GHC.Plugins.<> text "`"

@@ -3,6 +3,7 @@ module F where
 
 data Y = Y Y Y
 
+f :: Y -> Y
 f y = let z = Y z y in z
 
 r,t :: Bool -> Bool
@@ -27,7 +28,7 @@ my_t :: Maybe Int -> Maybe Int
 my_t x = x
 
 my_g :: (a %1 -> b) -> Maybe a %1 -> Maybe b
-my_g f x = case x of
+my_g f' x = case x of
              Nothing -> Nothing
-             Just y -> Just (f y)
+             Just y -> Just (f' y)
 
