@@ -119,11 +119,21 @@ reverse-binder-swap optimization -- otherwise we would duplicate resources.
 In this case, it is not a matter of syntatic vs semantic linearity
 }
 
-\section{Inferring usage environments}
+\section{Syntax Directed System}
+
+\todo[inline]{In the other system we assume that the recursive lets are strongly connected, i.e. the expressions always}
+
+\input{language-v4/SyntaxDirectedSystem}
+
+\subsection{Inferring usage environments}
+
+\todo[inline]{The difference between this and the previous section is a bit blurry}
 
 \todo[inline]{There's one more concern: usage environments aren't readily
 available, especially in recursive lets. We must perform inference of usage
 environments before we can typecheck using them. This is how:}
+
+\todo[inline]{Rather, we define a syntax directed type system that infers usage environments while checking...}
 
 \chapter{Implementation}
 

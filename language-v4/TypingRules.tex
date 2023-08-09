@@ -1,3 +1,7 @@
+\todo[inline]{Symbol to stand for both $1$ and $p$, and notation to make proof
+irrelevant stuff in the types so we can also refer to relevant and irrelevant
+at the same time with some symbol (e.g. for Split)}
+
 % We don't need explicit weaking and contract: contexts without context are always split, contexts without weaking must be empty in the var rule.
 \newcommand{\TypeVarOmega}{
     \infer*[right=($Var_\omega$)]
@@ -44,7 +48,7 @@
 
 \newcommand{\TypeLamIntroW}{
     \infer*[right=($\lambda I_\omega$)]
-    {\judg[\G,\xo]{e}{\vp} \and x\notin\Delta}
+    {\judg[\G,\xo]{e}{\vp} \and x\notin\Gamma}
     {\judg{\lambda \xo.~e}{\s\to_{\omega}\vp}}
 }
 
