@@ -14,6 +14,7 @@ module Linear.Core
 
 import GHC.Utils.Outputable
 import Control.Monad.Reader
+import Control.Monad.Except
 import GHC.Driver.Config.Core.Lint
 import GHC.Plugins hiding (Mult)
 import GHC.Utils.Trace
@@ -21,9 +22,10 @@ import GHC.Types.Var.Env
 import Data.Map as M
 import Data.List as L
 import Data.Maybe
+import Data.Functor.Identity
 
 import Linear.Core.Multiplicities
-import Data.Functor.Identity
+import Linear.Core.Monad
 
 type LCProgram = [LCBind]
 type LCBind = Bind LCVar
@@ -45,10 +47,7 @@ Meaning this pass is not fit for our purposes.
 -- proof-irrelevant context. This context is needed for 'makeDeltaAnnFrom',
 -- which creates a delta-env based on the usage environment of an expression,
 -- but requires splitting the resources between proof-irrelevant and relevant.
-type InferDeltas a = ReaderT (VarEnv LCVar) CoreM
-
-data IdBinding = LambdaBound Mult    -- lambdas
-               | DeltaBound UsageEnv -- both let and case binders (including pattern variables)
+-- type InferDeltas a = ReaderT (VarEnv LCVar) CoreM
 
 data LCVar = LCVar
   { id :: Var
@@ -63,35 +62,30 @@ runLinearCore pgr = do
     localTopBindings = bindersOfBinds pgr
     defcfg = initLintConfig dflags localTopBindings
 
-    prg = runIdentity (convertProgram pgr)
+    lcprg = runIdentity (convertProgram pgr)
 
-  pprTraceM "Program:" (ppr prg)
-  return []
--- TODO : Then pipe inferred output to typechecker action
-
-computeRecUsageEnvs :: [(Var, UsageEnv)] -- ^ Recursive usage environments associated to their recursive call
-                    -> [(Var, UsageEnv)] -- ^ Non-recursive usage environments (vars keep input order)
-computeRecUsageEnvs l =
-  L.foldl (\acc (v, vEnv) ->
-      L.map (\(n, nEnv) -> (n, ((v `lookupUE` nEnv) `scaleUE` (v `deleteUE` vEnv)) `supUE` (v `deleteUE` nEnv))) acc
-    ) l l
+  case runExcept $ runLinearCoreT mempty (checkProgram lcprg) of
+    Left e -> return [text e]
+    Right x -> pprTraceM "Safe prog:" (ppr x) >> return []
 
 --------------------------------------------------------------------------------
 ----- Typechecking Linear Core (mostly ignoring types) -------------------------
 --------------------------------------------------------------------------------
 
-checkProgram :: Monad m => CoreProgram -> m LCProgram
+type LinearCoreM = LinearCoreT (Except String)
+
+checkProgram :: LCProgram -> LinearCoreM LCProgram
 checkProgram = traverse checkBind
 
-checkBind :: Monad m => CoreBind -> m LCBind
+checkBind :: LCBind -> LinearCoreM LCBind
 checkBind (NonRec b e)
-  | isId b
-  = do e' <- checkExpr e
-       return (NonRec (LCVar b Nothing) e')
+  | isId b.id
+  = do e' <- record $ checkExpr e
+       return (NonRec (LCVar b.id Nothing) e')
   | otherwise
   = do e' <- checkExpr e
        -- This is really instanced to Nothing, since TyVars are not accounted for as linear resources.
-       return (NonRec (LCVar b Nothing) e')
+       return (NonRec (LCVar b.id Nothing) e')
 
 checkBind (Rec bs) = do
   let (ids,rhss) = unzip bs
@@ -99,7 +93,7 @@ checkBind (Rec bs) = do
   let ids' = L.map (`LCVar` Nothing) ids
   return (Rec (zip ids' rhss'))
 
-checkExpr :: Monad m => CoreExpr -> m LCExpr
+checkExpr :: LCExpr -> LinearCoreM LCExpr
 checkExpr expr = case expr of
   Var v       -> return (Var v)
   Lit l       -> return (Lit l)
@@ -117,18 +111,27 @@ checkExpr expr = case expr of
     Case <$> checkExpr e
          <*> pure (LCVar b Nothing)
          <*> pure ty
-         <*> mapM (checkAlt) alts
+         <*> mapM (checkAlt ue) alts
 
   Tick t e  -> Tick t <$> checkExpr e
   Cast e co -> Cast <$> checkExpr e <*> pure co
 
-checkAlt :: Monad m
-           => CoreAlt
-           -> m LCAlt
-checkAlt (Alt con args rhs) = do
+checkAlt :: UsageEnv -- ^ The scrutinee's usage environment
+         -> LCAlt -> LinearCoreM LCAlt
+checkAlt ue (Alt con args rhs) = do
   rhs' <- checkExpr rhs
   let args' = L.map (\a -> LCVar a Nothing) args
   return (Alt con args' rhs')
+
+
+-- | Implements the algorithm to compute the recursive usage environments of a
+-- not-necessarily-strongly-connected group of recursive let bindings
+computeRecUsageEnvs :: [(Var, UsageEnv)] -- ^ Recursive usage environments associated to their recursive call
+                    -> [(Var, UsageEnv)] -- ^ Non-recursive usage environments (vars keep input order)
+computeRecUsageEnvs l =
+  L.foldl (\acc (v, vEnv) ->
+      L.map (\(n, nEnv) -> (n, ((v `lookupUE` nEnv) `scaleUE` (v `deleteUE` vEnv)) `supUE` (v `deleteUE` nEnv))) acc
+    ) l l
 
 --------------------------------------------------------------------------------
 ----- Initial conversion to operate on LCVar binders ---------------------------
@@ -137,7 +140,7 @@ checkAlt (Alt con args rhs) = do
 -- recursive typechecking action operates on LCPrograms.
 --
 -- This will not populate DeltaBindings correctly, but it will populate correctly LambdaBindings.
--- For DeltaBindings, it'll trivially instantiate the IdBindings to Nothing.
+-- For DeltaBindings, it'll trivially instantiate the IdBindings to DeltaBound with an empty usage environment.
 --
 -- The typechecking action will determine the usage environments for each
 -- binder during checking, because we already have to calculate the usage environment of the binder bodies.
@@ -150,7 +153,7 @@ convertBind :: Monad m => CoreBind -> m LCBind
 convertBind (NonRec b e)
   | isId b
   = do e' <- convertExpr e
-       return (NonRec (LCVar b Nothing) e')
+       return (NonRec (LCVar b (deltaBinding emptyUE)) e')
   | otherwise
   = do e' <- convertExpr e
        -- This is really instanced to Nothing, since TyVars are not accounted for as linear resources.
@@ -159,7 +162,7 @@ convertBind (NonRec b e)
 convertBind (Rec bs) = do
   let (ids,rhss) = unzip bs
   rhss' <- traverse convertExpr rhss
-  let ids' = L.map (`LCVar` Nothing) ids
+  let ids' = L.map (`LCVar` (deltaBinding emptyUE)) ids
   return (Rec (zip ids' rhss'))
 
 
@@ -179,7 +182,7 @@ convertExpr expr = case expr of
            <*> convertExpr body
   Case e b ty alts -> do
     Case <$> convertExpr e
-         <*> pure (LCVar b Nothing)
+         <*> pure (LCVar b (deltaBinding emptyUE))
          <*> pure ty
          <*> mapM (convertAlt) alts
 
@@ -191,7 +194,7 @@ convertAlt :: Monad m
            -> m LCAlt
 convertAlt (Alt con args rhs) = do
   rhs' <- convertExpr rhs
-  let args' = L.map (\a -> LCVar a Nothing) args
+  let args' = L.map (\a -> LCVar a (deltaBinding emptyUE)) args
   return (Alt con args' rhs')
 
 --------------------------------------------------------------------------------
@@ -209,10 +212,6 @@ multBinding v
 --------------------------------------------------------------------------------
 ----- Outputable Instances -----------------------------------------------------
 --------------------------------------------------------------------------------
-
-instance Outputable IdBinding where
-  ppr (LambdaBound m) = text "λ=" GHC.Plugins.<> ppr m
-  ppr (DeltaBound an) = text "Δ=" GHC.Plugins.<> ppr an
 
 instance Outputable LCVar where
   ppr (LCVar id' Nothing)  = ppr id'

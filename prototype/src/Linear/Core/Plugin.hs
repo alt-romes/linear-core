@@ -39,7 +39,6 @@ import qualified Linear.Core.Translate.Syntax as LC
 import qualified Linear.Core.Translate.Check as LC
 import GHC.Core.Map.Type
 import Data.Maybe
-import Data.Functor hiding (unzip)
 
 import Linear.Core
 
