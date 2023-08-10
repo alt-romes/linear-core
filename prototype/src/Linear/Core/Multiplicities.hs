@@ -28,7 +28,7 @@ isBindingLinear _ = False
 data Mult = Relevant C.Mult
           | Irrelevant C.Mult
 
--- ROMES:TODO: This is an incorrect instance of equality for mults...
+-- ROMES:TODO: This is an incorrect instance of equality for mults because of mult. vars.
 instance Eq Mult where
   Relevant m1 == Relevant m2 = deBruijnize m1 == deBruijnize m2
   Irrelevant m1 == Irrelevant m2 = deBruijnize m1 == deBruijnize m2
@@ -54,10 +54,12 @@ newtype UsageEnv = UsageEnv (M.Map Var Mult)
   deriving Eq
 
 lookupUE :: Var -> UsageEnv -> Usage
-lookupUE = undefined
+lookupUE v (UsageEnv m) = case M.lookup v m of
+                            Nothing   -> Zero
+                            Just mult -> LCM mult
 
 deleteUE :: Var -> UsageEnv -> UsageEnv
-deleteUE = undefined
+deleteUE v (UsageEnv m) = UsageEnv (M.delete v m)
 
 supUE :: UsageEnv -> UsageEnv -> UsageEnv
 supUE = undefined

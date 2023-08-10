@@ -13,19 +13,18 @@ module Linear.Core
   ) where
 
 import GHC.Utils.Outputable
-import Control.Monad.Reader
 import Control.Monad.Except
 import GHC.Driver.Config.Core.Lint
 import GHC.Plugins hiding (Mult)
 import GHC.Utils.Trace
-import GHC.Types.Var.Env
-import Data.Map as M
+import Data.Map.Internal as M
 import Data.List as L
 import Data.Maybe
-import Data.Functor.Identity
+import GHC.Core.Utils
 
 import Linear.Core.Multiplicities
 import Linear.Core.Monad
+import GHC.Core.Multiplicity (scaledMult)
 
 type LCProgram = [LCBind]
 type LCBind = Bind LCVar
@@ -80,8 +79,8 @@ checkProgram = traverse checkBind
 checkBind :: LCBind -> LinearCoreM LCBind
 checkBind (NonRec b e)
   | isId b.id
-  = do e' <- record $ checkExpr e
-       return (NonRec (LCVar b.id Nothing) e')
+  = do (e', ue) <- record $ checkExpr e
+       return (NonRec (LCVar b.id (deltaBinding ue)) e')
   | otherwise
   = do e' <- checkExpr e
        -- This is really instanced to Nothing, since TyVars are not accounted for as linear resources.
@@ -95,43 +94,100 @@ checkBind (Rec bs) = do
 
 checkExpr :: LCExpr -> LinearCoreM LCExpr
 checkExpr expr = case expr of
-  Var v       -> return (Var v)
+  Var v       -> use v >> return (Var v)
   Lit l       -> return (Lit l)
   Type ty     -> return (Type ty)
   Coercion co -> return (Coercion co)
   App e1 e2   -> App <$> checkExpr e1 <*> checkExpr e2
-  Lam b e     -> Lam (LCVar b (multBinding b)) <$> checkExpr e
+
+  Lam b e 
+    -- We use make type variables unrestricted in the environment (fromMaybe)
+    -> Lam b <$> extend b.id (fromMaybe (LambdaBound (Relevant ManyTy)) (multBinding b.id)) (checkExpr e)
   Let bind@(NonRec _b _) body
-    -> Let <$> checkBind bind
-           <*> checkExpr body
+    -> do
+      bind'@(NonRec (LCVar b (Just delta)) _) <- checkBind bind
+      Let <$> pure bind'
+          <*> extend b delta (checkExpr body)
   Let bind@(Rec _bs) body
-    -> Let <$> checkBind bind
-           <*> checkExpr body
-  Case e b ty alts -> do
-    Case <$> checkExpr e
-         <*> pure (LCVar b Nothing)
-         <*> pure ty
-         <*> mapM (checkAlt ue) alts
+    -> do
+      bind'@(Rec (unzip -> (bs, _))) <- checkBind bind
+      Let <$> pure bind'
+          <*> extends (L.map (\(LCVar b (Just d)) -> (b,d)) bs) (checkExpr body)
+  Case e b ty alts
+    -- Expression is in WHNF (HNF? See Note [exprIsHNF] and discuss -- seems exactly what we want)
+    | exprIsHNF (unconvertExpr e)
+    -> do
+      (e', ue) <- record $ checkExpr e
+      Case <$> pure e'
+           <*> pure (LCVar b.id (Just (DeltaBound ue)))
+           <*> pure ty
+           <*> mapM (checkAlt ue) alts
+    -- Expression is definitely not in WHNF (right? or do we mean HNF)
+    | otherwise
+    -> do
+      (e', ue) <- record $ checkExpr e
+      Case <$> pure e'
+           <*> pure (LCVar b.id (Just (DeltaBound ue)))
+           <*> pure ty
+           <*> mapM (checkAlt ue) alts
 
   Tick t e  -> Tick t <$> checkExpr e
   Cast e co -> Cast <$> checkExpr e <*> pure co
 
 checkAlt :: UsageEnv -- ^ The scrutinee's usage environment
          -> LCAlt -> LinearCoreM LCAlt
-checkAlt ue (Alt con args rhs) = do
+
+--- * ALT_
+checkAlt _ (Alt DEFAULT [] rhs) = do
   rhs' <- checkExpr rhs
-  let args' = L.map (\a -> LCVar a Nothing) args
+  return (Alt DEFAULT [] rhs')
+
+checkAlt _ (Alt DEFAULT _ _) = error "impossible"
+
+--- * ALT0
+checkAlt ue (Alt (LitAlt l) [] rhs) = do
+  rhs' <- Linear.Core.Monad.drop ue $ checkExpr rhs
+  return (Alt (LitAlt l) [] rhs')
+
+checkAlt _ (Alt (LitAlt _) _ _) = error "impossible"
+
+--- * ALT0
+checkAlt ue (Alt (DataAlt con) args rhs)
+  | L.null $ L.filter (not . isManyTy . scaledMult) (dataConOrigArgTys con)
+  = do
+  rhs' <- Linear.Core.Monad.drop ue $ checkExpr rhs
+  return (Alt (DataAlt con) args rhs')
+
+checkAlt ue (Alt (DataAlt con) args rhs) = do
+  -- ALTN
+  rhs' <- checkExpr rhs
+  -- TODO: We need to figure out how to typecheck alternatives (in the syntax directed form too) before we do this right.
+  let args' = L.map (\a -> LCVar a.id (deltaBinding ue)) args
   return (Alt con args' rhs')
 
 
 -- | Implements the algorithm to compute the recursive usage environments of a
 -- not-necessarily-strongly-connected group of recursive let bindings
-computeRecUsageEnvs :: [(Var, UsageEnv)] -- ^ Recursive usage environments associated to their recursive call
-                    -> [(Var, UsageEnv)] -- ^ Non-recursive usage environments (vars keep input order)
+-- computeRecUsageEnvs :: [(Var, UsageEnv)] -- ^ Recursive usage environments associated to their recursive call
+--                     -> [(Var, UsageEnv)] -- ^ Non-recursive usage environments (vars keep input order)
+-- computeRecUsageEnvs l =
+--   L.foldl (\acc (v, vEnv) ->
+--       L.map (\(n, nEnv) -> (n, ((v `lookupUE` nEnv) `scaleUE` (v `deleteUE` vEnv)) `supUE` (v `deleteUE` nEnv))) acc
+--     ) l l
+
+-- | Instead of the above, we compute the recursive usage environments from all
+-- variable occurrences, not just the usage environments.
+computeRecUsageEnvs :: [(Var, M.Map Var Int)] -- ^ Recursive usage environments associated to their recursive call
+                    -> [(Var, M.Map Var Int)] -- ^ Non-recursive usage environments
 computeRecUsageEnvs l =
-  L.foldl (\acc (v, vEnv) ->
-      L.map (\(n, nEnv) -> (n, ((v `lookupUE` nEnv) `scaleUE` (v `deleteUE` vEnv)) `supUE` (v `deleteUE` nEnv))) acc
-    ) l l
+  L.foldl (flip $ \(v,vEnv) -> L.map $ \(n, nEnv) ->
+      (n, ((fromMaybe 0 $ v `M.lookup` nEnv) `scale` (M.delete v vEnv)) `sup` (M.delete v nEnv))) l l
+  where
+    sup :: M.Map Var Int -> M.Map Var Int -> M.Map Var Int
+    sup = M.merge M.preserveMissing M.preserveMissing (M.zipWithMatched $ \_ x y -> max x y)
+      
+    scale :: Int -> M.Map Var Int -> M.Map Var Int
+    scale m = M.map (*m)
 
 --------------------------------------------------------------------------------
 ----- Initial conversion to operate on LCVar binders ---------------------------
@@ -208,6 +264,48 @@ multBinding :: Var -> Maybe IdBinding
 multBinding v
   | isId v    = Just $ LambdaBound $ Relevant (idMult v)
   | otherwise = Nothing
+
+--------------------------------------------------------------------------------
+----- Initial conversion to operate on LCVar binders ---------------------------
+--------------------------------------------------------------------------------
+-- This is the product of realizing later on that we need the original
+-- expressions to use Core functions, e.g. to call exprIsWHNF
+-- We might have been able to get away with deriving functor for Expr, and then mapping over it, but oh well.
+
+unconvertBind :: LCBind -> CoreBind
+unconvertBind (NonRec b e) = NonRec b.id (unconvertExpr e)
+unconvertBind (Rec bs) =
+  let (ids,rhss) = unzip bs
+      rhss' = L.map unconvertExpr rhss
+      ids' = L.map (.id) ids
+   in (Rec (zip ids' rhss'))
+
+
+unconvertExpr :: LCExpr -> CoreExpr
+unconvertExpr expr = case expr of
+  Var v       -> Var v
+  Lit l       -> Lit l
+  Type ty     -> Type ty
+  Coercion co -> Coercion co
+  App e1 e2   -> App (unconvertExpr e1) (unconvertExpr e2)
+  Lam b e     -> Lam b.id (unconvertExpr e)
+  Let bind body
+    -> Let (unconvertBind bind)
+           (unconvertExpr body)
+  Case e b ty alts -> do
+    Case (unconvertExpr e)
+         (b.id)
+         ty
+         (L.map unconvertAlt alts)
+
+  Tick t e  -> Tick t (unconvertExpr e)
+  Cast e co -> Cast (unconvertExpr e) co
+
+unconvertAlt :: LCAlt -> CoreAlt
+unconvertAlt (Alt con args rhs) =
+  let rhs' = unconvertExpr rhs
+      args' = L.map (.id) args
+   in (Alt con args' rhs')
 
 --------------------------------------------------------------------------------
 ----- Outputable Instances -----------------------------------------------------

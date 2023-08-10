@@ -9,12 +9,15 @@ module Linear.Core.Monad
   -- * Operations
   , use
   , extend
+  , extends
+  , drop
   , unrestricted
   , record
   , recordNonLinear
   )
   where
 
+import Prelude hiding (drop)
 import qualified GHC.Types.Unique.FM as FM
 import Control.Monad
 import Data.String
@@ -123,6 +126,21 @@ extend key value computation = LinearCoreT do
     -- Returns 'Nothing' if it was consumed, and Just m otherwise
     wasConsumed x = gets $ (M.lookup x)
 
+-- | 'extend' multiple variables
+extends :: (MonadError e m, IsString e) => [(Var, IdBinding)] -> LinearCoreT m a -> LinearCoreT m a
+extends [] comp = comp
+extends ((v,b):bs) comp = extend v b $ extends bs comp
+
+-- | 'drop' resources listed in a usage environment from the available resources in the computation
+drop :: (MonadError e m, IsString e) => UsageEnv -> LinearCoreT m a -> LinearCoreT m a
+drop (UsageEnv env) comp = do
+  prev <- LinearCoreT get
+  -- Consume resources from the usage env then run the computation
+  _ <- traverse use (M.keys env)
+  a <- comp
+  -- Restore resources
+  LinearCoreT (put prev)
+  return a
 
 -- | Runs a computation that threads linear resources and fails if the
 -- computation consumed any resource at all (i.e. fails if the input and output
@@ -145,14 +163,14 @@ unrestricted computation = LinearCoreT do
 -- In practice, however, we record all resources that were used together with
 -- their multiplicity. This is needed if we want to compute the recursive usage
 -- environments for a group of recursive lets
-record :: (MonadError e m, IsString e) => LinearCoreT m a -> LinearCoreT m (a, M.Map Var Mult)
+record :: (MonadError e m, IsString e) => LinearCoreT m a -> LinearCoreT m (a, UsageEnv)
 record computation = LinearCoreT do
   prev <- get
   result <- unLC computation
   after <- get
   let diff = prev M.\\ after
   diffMults <- traverse (\case LambdaBound m -> pure m; DeltaBound _ -> throwError "record: Non linear things disappeared from the context?") diff
-  return (result, diffMults)
+  return (result, UsageEnv diffMults)
 
 -- | Count the number of times unrestricted and delta-bound variables in a
 -- computation are used.
