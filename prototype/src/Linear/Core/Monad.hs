@@ -27,7 +27,6 @@ import GHC.Types.Var.Env
 import Linear.Core.Multiplicities
 import GHC.Driver.Ppr (showPprUnsafe)
 import qualified Data.Map as M
-import GHC.Types.Unique.FM (NonDetUniqFM(..))
 
 -- | Computations that thread through a linear context from which resources must
 -- be used exactly once, and resources of other multiplicities that can be
@@ -58,13 +57,13 @@ import GHC.Types.Unique.FM (NonDetUniqFM(..))
 -- * The Reader, Bool, determines whether to record all variables used in the writer env.
 --    * This bool will only be true when recordNonLinear sets in order to record variables.
 --    * This ensures we only collect variables within recordNonLinear, after which we wipe the writer
-newtype LinearCoreT m a = LinearCoreT { unLC :: RWST Bool [Var] (VarEnv IdBinding) m a }
+newtype LinearCoreT m a = LinearCoreT { unLC :: RWST Bool [Var] (M.Map Var IdBinding) m a }
   deriving (Functor, Applicative, Monad, MonadTrans)
 
-runLinearCoreT :: (MonadError e m, IsString e) => VarEnv IdBinding -> LinearCoreT m a -> m a
+runLinearCoreT :: (MonadError e m, IsString e) => M.Map Var IdBinding -> LinearCoreT m a -> m a
 runLinearCoreT s comp = do
   (a, renv, _unrestrictedUsed) <- runRWST (unLC comp) False s
-  if isEmptyVarEnv $ filterVarEnv isBindingLinear renv
+  if M.null $ M.filter isBindingLinear renv
     then return a
     else throwError "Not all linear resources in a computation were consumed"
 
@@ -73,12 +72,12 @@ runLinearCoreT s comp = do
 -- If the key doesn't exist, no resources are consumed
 use :: (MonadError e m, IsString e) => Var -> LinearCoreT m ()
 use key = LinearCoreT do
-  mv <- gets (`lookupVarEnv` key)
+  mv <- gets (M.lookup key)
   case mv of
     Nothing -> throwError $ fromString $ "Tried to use a linear resource " <> showPprUnsafe key <> " a second time!"
     Just (LambdaBound v)
       | isLinear v -> do
-        modify (`delVarEnv` key)
+        modify (M.delete key)
         return ()
       | otherwise -> do
         -- If it's an unrestricted variable, we don't remove it from the
@@ -104,10 +103,10 @@ use key = LinearCoreT do
 extend :: (MonadError e m, IsString e)
        => Var -> IdBinding -> LinearCoreT m a -> LinearCoreT m a
 extend key value computation = LinearCoreT do
-  gets (`lookupVarEnv` key) >>= \case
+  gets (M.lookup key) >>= \case
     Just _ -> throwError $ fromString $ "Tried to extend a computation with a resource that was already in the environment: " ++ showPprUnsafe key ++ "."
     Nothing -> do
-      modify (\env -> extendVarEnv env key value)
+      modify (M.insert key value)
       result <- unLC computation
       wasConsumed key >>= \case
         Nothing -> return result
@@ -118,11 +117,11 @@ extend key value computation = LinearCoreT do
           | otherwise
           -> do
             -- Non linear resource needs to be deleted from scope, or otherwise would escape
-            modify (`delVarEnv` key)
+            modify (M.delete key)
             return result
   where
     -- Returns 'Nothing' if it was consumed, and Just m otherwise
-    wasConsumed x = gets $ (`lookupVarEnv` x)
+    wasConsumed x = gets $ (M.lookup x)
 
 
 -- | Runs a computation that threads linear resources and fails if the
@@ -132,12 +131,12 @@ extend key value computation = LinearCoreT do
 -- That is, run a computation that does not use linear resources (i.e. an unrestricted computation)
 unrestricted :: (MonadError e m, IsString e) => LinearCoreT m a -> LinearCoreT m a
 unrestricted computation = LinearCoreT do
-  prev :: VarEnv IdBinding <- get
+  prev <- get
   result <- unLC computation
   after <- get
   when (prev /= after) $
     throwError $ fromString $
-      "An unrestricted computation should consume no linear resources, but instead it used " ++ showPprUnsafe (prev `minusVarEnv` after) ++ "."
+      "An unrestricted computation should consume no linear resources, but instead it used " ++ showPprUnsafe (prev M.\\ after) ++ "."
   return result
 
 
@@ -146,13 +145,13 @@ unrestricted computation = LinearCoreT do
 -- In practice, however, we record all resources that were used together with
 -- their multiplicity. This is needed if we want to compute the recursive usage
 -- environments for a group of recursive lets
-record :: (MonadError e m, IsString e) => LinearCoreT m a -> LinearCoreT m (a, VarEnv Mult)
+record :: (MonadError e m, IsString e) => LinearCoreT m a -> LinearCoreT m (a, M.Map Var Mult)
 record computation = LinearCoreT do
-  prev :: VarEnv IdBinding <- get
+  prev <- get
   result <- unLC computation
   after <- get
-  let diff = prev `minusVarEnv` after
-  NonDetUniqFM diffMults <- traverse (\case LambdaBound m -> pure m; DeltaBound _ -> throwError "record: Non linear things disappeared from the context?") (NonDetUniqFM diff)
+  let diff = prev M.\\ after
+  diffMults <- traverse (\case LambdaBound m -> pure m; DeltaBound _ -> throwError "record: Non linear things disappeared from the context?") diff
   return (result, diffMults)
 
 -- | Count the number of times unrestricted and delta-bound variables in a
