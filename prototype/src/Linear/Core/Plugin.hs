@@ -22,6 +22,7 @@ Using usage environments instead of unrestricted and linear resources (empty UE 
 * this isn't useful for linear resources, since they would be duplicated
  -}
 
+import Data.Functor
 import Data.Void
 import Data.Text (Text)
 import qualified Data.Text as T

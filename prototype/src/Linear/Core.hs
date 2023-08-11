@@ -16,11 +16,12 @@ import GHC.Utils.Outputable
 import Control.Monad.State
 import Control.Monad.Except
 import GHC.Driver.Config.Core.Lint
-import GHC.Plugins hiding (Mult, count)
+import GHC.Plugins hiding (Mult, count, unrestricted)
 import GHC.Utils.Trace
 import Data.Map.Internal as M
 import Data.List as L
 import Data.Maybe
+import GHC.Core.TyCo.Rep (Type(..))
 
 import Linear.Core.Multiplicities
 import Linear.Core.Monad
@@ -67,8 +68,8 @@ runLinearCore pgr = do
     lcprg = runIdentity (convertProgram pgr)
 
   case runExcept $ runLinearCoreT bindingsMap (checkProgram lcprg) of
-    Left e -> return [text e]
-    Right x -> pprTraceM "Safe prog:" (ppr x) >> return []
+    Left e -> pprTraceM "Failed to typecheck linearity!" (ppr lcprg) >> return [text e]
+    Right x -> pprTraceM "Safe prog!" (ppr x) >> return []
 
 --------------------------------------------------------------------------------
 -- {{{ Typechecking Linear Core (mostly ignoring types) ------------------------
@@ -93,7 +94,8 @@ checkBind (Rec bs) = do
   let (ids,rhss) = unzip bs
   inScope <- get
   -- The extended expressions will use the empty usage environment for the delta variables.
-  (rhss', naiveUsages) <- unzip <$> traverse (recordAll . extends (L.map (\(LCVar b (Just d)) -> (b,d)) ids) . checkExpr) rhss
+  (rhss', naiveUsages) <- unzip <$> extends (L.map (\(LCVar b (Just d)) -> (b,d)) ids)
+                                            (traverse (recordAll . checkExpr) rhss)
   let recUsages = computeRecUsageEnvs (zip (L.map (.id) ids) naiveUsages)
       -- Repeated ocurrences of linear variables will be represented as many
       -- times as they occur in the recursive bindings in the usage
@@ -109,8 +111,11 @@ checkExpr expr = case expr of
   Lit l       -> return (Lit l)
   Type ty     -> return (Type ty)
   Coercion co -> return (Coercion co)
-  App e1 e2   -> App <$> checkExpr e1 <*> checkExpr e2
-
+  App e1 e2
+    | FunTy _ ManyTy _ _ <- exprType (unconvertExpr e1)
+    -> App <$> checkExpr e1 <*> unrestricted (checkExpr e2)
+    | otherwise -- Linear or variable multiplicity (still linear) arrow
+    -> App <$> checkExpr e1 <*> checkExpr e2
   Lam b e 
     -- We use make type variables unrestricted in the environment (fromMaybe)
     -> Lam b <$> extend b.id (fromMaybe (LambdaBound (Relevant ManyTy)) (multBinding b.id)) (checkExpr e)
