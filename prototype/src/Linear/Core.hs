@@ -68,7 +68,7 @@ runLinearCore pgr = do
     Right x -> pprTraceM "Safe prog:" (ppr x) >> return []
 
 --------------------------------------------------------------------------------
------ Typechecking Linear Core (mostly ignoring types) -------------------------
+-- {{{ Typechecking Linear Core (mostly ignoring types) ------------------------
 --------------------------------------------------------------------------------
 
 type LinearCoreM = LinearCoreT (Except String)
@@ -163,7 +163,7 @@ checkAlt ue (Alt (DataAlt con) args rhs) = do
   rhs' <- checkExpr rhs
   -- TODO: We need to figure out how to typecheck alternatives (in the syntax directed form too) before we do this right.
   let args' = L.map (\a -> LCVar a.id (deltaBinding ue)) args
-  return (Alt con args' rhs')
+  return (Alt (DataAlt con) args' rhs')
 
 
 -- | Implements the algorithm to compute the recursive usage environments of a
@@ -189,8 +189,9 @@ computeRecUsageEnvs l =
     scale :: Int -> M.Map Var Int -> M.Map Var Int
     scale m = M.map (*m)
 
+-- }}}
 --------------------------------------------------------------------------------
------ Initial conversion to operate on LCVar binders ---------------------------
+-- {{{ Initial conversion to operate on LCVar binders --------------------------
 --------------------------------------------------------------------------------
 -- We make an initial conversion from CoreProgram to LCProgram because our
 -- recursive typechecking action operates on LCPrograms.
@@ -253,8 +254,9 @@ convertAlt (Alt con args rhs) = do
   let args' = L.map (\a -> LCVar a (deltaBinding emptyUE)) args
   return (Alt con args' rhs')
 
+-- }}}
 --------------------------------------------------------------------------------
------ Utilities ----------------------------------------------------------------
+-- {{{ Utilities ---------------------------------------------------------------
 --------------------------------------------------------------------------------
 
 deltaBinding :: UsageEnv -> Maybe IdBinding
@@ -265,8 +267,9 @@ multBinding v
   | isId v    = Just $ LambdaBound $ Relevant (idMult v)
   | otherwise = Nothing
 
+-- }}}
 --------------------------------------------------------------------------------
------ Initial conversion to operate on LCVar binders ---------------------------
+-- {{{ Initial conversion to operate on LCVar binders --------------------------
 --------------------------------------------------------------------------------
 -- This is the product of realizing later on that we need the original
 -- expressions to use Core functions, e.g. to call exprIsWHNF
@@ -307,8 +310,9 @@ unconvertAlt (Alt con args rhs) =
       args' = L.map (.id) args
    in (Alt con args' rhs')
 
+-- }}}
 --------------------------------------------------------------------------------
------ Outputable Instances -----------------------------------------------------
+-- {{{ Outputable Instances ----------------------------------------------------
 --------------------------------------------------------------------------------
 
 instance Outputable LCVar where
@@ -319,8 +323,9 @@ instance OutputableBndr LCVar where
   pprPrefixOcc v = ppr v
   pprInfixOcc v = text "`" GHC.Plugins.<> ppr v GHC.Plugins.<> text "`"
 
+-- }}}
 --------------------------------------------------------------------------------
------ Attempt 1 - Calling LintM actions for the Usage Env ----------------------
+-- {{{ Attempt 1 - Calling LintM actions for the Usage Env ---------------------
 --------------------------------------------------------------------------------
 
 -- Note:
@@ -405,3 +410,6 @@ instance OutputableBndr LCVar where
 -- extendRecBindings :: TopLevelFlag -> [(Var,CoreExpr)] -> LintM a -> LintM a
 -- extendRecBindings flg ids lact = fst <$> lintRecBindings flg ids (\_ -> lact)
 
+-- }}}
+--------------------------------------------------------------------------------
+-- vim: fdm=marker foldenable
