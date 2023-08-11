@@ -13,19 +13,17 @@ module Linear.Core.Monad
   , drop
   , unrestricted
   , record
-  , recordNonLinear
+  , recordAll
   )
   where
 
 import Prelude hiding (drop)
-import qualified GHC.Types.Unique.FM as FM
 import Control.Monad
 import Data.String
 import Control.Monad.State
 import Control.Monad.RWS.CPS
 import Control.Monad.Except
 import GHC.Types.Var
-import GHC.Types.Var.Env
 
 import Linear.Core.Multiplicities
 import GHC.Driver.Ppr (showPprUnsafe)
@@ -61,7 +59,7 @@ import qualified Data.Map as M
 --    * This bool will only be true when recordNonLinear sets in order to record variables.
 --    * This ensures we only collect variables within recordNonLinear, after which we wipe the writer
 newtype LinearCoreT m a = LinearCoreT { unLC :: RWST Bool [Var] (M.Map Var IdBinding) m a }
-  deriving (Functor, Applicative, Monad, MonadTrans)
+  deriving (Functor, Applicative, Monad, MonadTrans, MonadFail, MonadState (M.Map Var IdBinding))
 
 runLinearCoreT :: (MonadError e m, IsString e) => M.Map Var IdBinding -> LinearCoreT m a -> m a
 runLinearCoreT s comp = do
@@ -74,10 +72,13 @@ runLinearCoreT s comp = do
 -- | Uses a resource from the environment, making it unavailable in subsequent computations if it was/consumed a linear resource.
 -- If the key doesn't exist, no resources are consumed
 use :: (MonadError e m, IsString e) => Var -> LinearCoreT m ()
+use key | isGlobalId key = pure () -- See Note [GlobalId/LocalId]
 use key = LinearCoreT do
+  shouldRecord <- ask
+  when shouldRecord $ tell [key]
   mv <- gets (M.lookup key)
   case mv of
-    Nothing -> throwError $ fromString $ "Tried to use a linear resource " <> showPprUnsafe key <> " a second time!"
+    Nothing -> throwError $ fromString $ "Tried to use a linear resource " <> showPprUnsafe key <> " a second time! (Or is it a variable not in scope?)"
     Just (LambdaBound v)
       | isLinear v -> do
         modify (M.delete key)
@@ -85,15 +86,12 @@ use key = LinearCoreT do
       | otherwise -> do
         -- If it's an unrestricted variable, we don't remove it from the
         -- environment because it can still be used.
-
-        -- However, we do write it to the used unrestricted/Δ variables if recordingunrestricted is enabled
-        shouldRecord <- ask
-
-        if shouldRecord then tell [key]
-                        else pure ()
-
+        return ()
     Just (DeltaBound (UsageEnv env)) -> do
-      mapM_ (unLC . use) (M.keys env)
+      -- Record the usage of the delta bound var, and not the usages of the
+      -- underlying vars
+      local (const False) $
+        mapM_ (unLC . use) (map fst env)
 
 
 -- | Extend a computation that threads linear resources with a resource that
@@ -135,8 +133,8 @@ extends ((v,b):bs) comp = extend v b $ extends bs comp
 drop :: (MonadError e m, IsString e) => UsageEnv -> LinearCoreT m a -> LinearCoreT m a
 drop (UsageEnv env) comp = do
   prev <- LinearCoreT get
-  -- Consume resources from the usage env then run the computation
-  _ <- traverse use (M.keys env)
+  -- Remove (don't consume!) resources ocurring in the given usage env from the available resources, then run the computation
+  _ <- modify (M.\\ (M.fromList env))
   a <- comp
   -- Restore resources
   LinearCoreT (put prev)
@@ -170,17 +168,16 @@ record computation = LinearCoreT do
   after <- get
   let diff = prev M.\\ after
   diffMults <- traverse (\case LambdaBound m -> pure m; DeltaBound _ -> throwError "record: Non linear things disappeared from the context?") diff
-  return (result, UsageEnv diffMults)
+  return (result, UsageEnv (M.toList diffMults))
 
--- | Count the number of times unrestricted and delta-bound variables in a
--- computation are used.
-recordNonLinear :: Monad m => LinearCoreT m a -> LinearCoreT m (a, VarEnv Int)
-recordNonLinear comp = LinearCoreT do
+-- | Count the number of times linear, unrestricted, and delta-bound variables in a computation are used.
+recordAll :: Monad m => LinearCoreT m a -> LinearCoreT m (a, M.Map Var Int)
+recordAll comp = LinearCoreT do
   -- We listen to a local computation in which recording flag is true
   (a, w) <- listen $ local (const True) (unLC comp)
 
   -- Make a usage environment from the number of times some variable is used.
-  let w' = FM.listToUFM_C (+) (map (,1) w)
+  let w' = M.fromListWith (+) (map (,1) w)
   isRecording <- ask
   if isRecording
      -- We're recording, so we keep everything written so far

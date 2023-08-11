@@ -1,12 +1,13 @@
 {-# LANGUAGE GHC2021, ViewPatterns, DerivingVia, GeneralizedNewtypeDeriving, OverloadedRecordDot #-}
 module Linear.Core.Multiplicities where
 
+import Data.Function
 import GHC.Utils.Outputable
 import qualified GHC.Core.Multiplicity as C
 import GHC.Types.Var
 import qualified GHC.Core.Type as C
 import GHC.Core.Map.Type (deBruijnize)
-import qualified Data.Map as M
+import qualified Data.List as L
 import qualified GHC.Plugins
 
 --------------------------------------------------------------------------------
@@ -50,23 +51,25 @@ data Usage = Zero | LCM Mult
 -- Usage environments annotated to delta variables:
 -- The linear variables and proof irrelevant linear variables that suspended on
 -- a computation bound to the annotated delta var
-newtype UsageEnv = UsageEnv (M.Map Var Mult)
+newtype UsageEnv = UsageEnv [(Var,Mult)]
+-- INVARIANT: Two ocurrences of the same variable must have the same mult
   deriving Eq
 
 lookupUE :: Var -> UsageEnv -> Usage
-lookupUE v (UsageEnv m) = case M.lookup v m of
+lookupUE v (UsageEnv m) = case lookup v m of
                             Nothing   -> Zero
                             Just mult -> LCM mult
 
+-- | Delete all occurrences of a Variable
 deleteUE :: Var -> UsageEnv -> UsageEnv
-deleteUE v (UsageEnv m) = UsageEnv (M.delete v m)
+deleteUE v (UsageEnv m) = UsageEnv (L.deleteBy ((==) `on` fst) (v,undefined) m)
 
-supUE :: UsageEnv -> UsageEnv -> UsageEnv
-supUE = undefined
+-- supUE :: UsageEnv -> UsageEnv -> UsageEnv
+-- supUE = undefined
 
-scaleUE :: Usage -> UsageEnv -> UsageEnv
-scaleUE Zero ue = ue
-scaleUE (LCM m) ue = m `undefined` ue
+-- scaleUE :: Usage -> UsageEnv -> UsageEnv
+-- scaleUE Zero ue = ue
+-- scaleUE (LCM m) ue = m `undefined` ue
 
 emptyUE :: UsageEnv
 emptyUE = UsageEnv mempty

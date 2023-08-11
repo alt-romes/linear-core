@@ -13,14 +13,14 @@ module Linear.Core
   ) where
 
 import GHC.Utils.Outputable
+import Control.Monad.State
 import Control.Monad.Except
 import GHC.Driver.Config.Core.Lint
-import GHC.Plugins hiding (Mult)
+import GHC.Plugins hiding (Mult, count)
 import GHC.Utils.Trace
 import Data.Map.Internal as M
 import Data.List as L
 import Data.Maybe
-import GHC.Core.Utils
 
 import Linear.Core.Multiplicities
 import Linear.Core.Monad
@@ -59,11 +59,14 @@ runLinearCore pgr = do
   dflags <- getDynFlags 
   let
     localTopBindings = bindersOfBinds pgr
+    -- The local top-level bindings have empty usage environments, and GlobalIds are treated as constants so we don't need to include them here
+    -- See also Note [GlobalId/LocalId]
+    bindingsMap = M.fromList $ L.map (,DeltaBound emptyUE) localTopBindings
     defcfg = initLintConfig dflags localTopBindings
 
     lcprg = runIdentity (convertProgram pgr)
 
-  case runExcept $ runLinearCoreT mempty (checkProgram lcprg) of
+  case runExcept $ runLinearCoreT bindingsMap (checkProgram lcprg) of
     Left e -> return [text e]
     Right x -> pprTraceM "Safe prog:" (ppr x) >> return []
 
@@ -88,8 +91,16 @@ checkBind (NonRec b e)
 
 checkBind (Rec bs) = do
   let (ids,rhss) = unzip bs
-  rhss' <- traverse checkExpr rhss
-  let ids' = L.map (`LCVar` Nothing) ids
+  inScope <- get
+  -- The extended expressions will use the empty usage environment for the delta variables.
+  (rhss', naiveUsages) <- unzip <$> traverse (recordAll . extends (L.map (\(LCVar b (Just d)) -> (b,d)) ids) . checkExpr) rhss
+  let recUsages = computeRecUsageEnvs (zip (L.map (.id) ids) naiveUsages)
+      -- Repeated ocurrences of linear variables will be represented as many
+      -- times as they occur in the recursive bindings in the usage
+      -- environments with a linear multiplicity.
+      -- In practice, when recursive binders are used, we'll try to use the linear variables more than once, if they exist more than once
+  recUes <- mapM (\i -> reconstructUe i recUsages inScope) (L.map (.id) ids)
+  let ids' = L.zipWith (\i b -> LCVar i.id (deltaBinding b)) ids recUes
   return (Rec (zip ids' rhss'))
 
 checkExpr :: LCExpr -> LinearCoreM LCExpr
@@ -119,17 +130,17 @@ checkExpr expr = case expr of
     -> do
       (e', ue) <- record $ checkExpr e
       Case <$> pure e'
-           <*> pure (LCVar b.id (Just (DeltaBound ue)))
+           <*> pure (LCVar b.id (deltaBinding ue))
            <*> pure ty
-           <*> mapM (checkAlt ue) alts
+           <*> extend (b.id) (DeltaBound ue) (mapM (checkAlt ue) alts)
     -- Expression is definitely not in WHNF (right? or do we mean HNF)
     | otherwise
     -> do
       (e', ue) <- record $ checkExpr e
       Case <$> pure e'
-           <*> pure (LCVar b.id (Just (DeltaBound ue)))
+           <*> pure (LCVar b.id (deltaBinding ue))
            <*> pure ty
-           <*> mapM (checkAlt ue) alts
+           <*> extend (b.id) (DeltaBound ue) (mapM (checkAlt ue) alts)
 
   Tick t e  -> Tick t <$> checkExpr e
   Cast e co -> Cast <$> checkExpr e <*> pure co
@@ -155,16 +166,35 @@ checkAlt _ (Alt (LitAlt _) _ _) = error "impossible"
 checkAlt ue (Alt (DataAlt con) args rhs)
   | L.null $ L.filter (not . isManyTy . scaledMult) (dataConOrigArgTys con)
   = do
-  rhs' <- Linear.Core.Monad.drop ue $ checkExpr rhs
+  rhs' <- extends (L.map (\arg -> (arg.id, LambdaBound (Relevant ManyTy))) args) $ Linear.Core.Monad.drop ue $ checkExpr rhs
   return (Alt (DataAlt con) args rhs')
 
+--- * ALTN
 checkAlt ue (Alt (DataAlt con) args rhs) = do
-  -- ALTN
+  -- TODO: Partition unrestricted and linear variables
   rhs' <- checkExpr rhs
   -- TODO: We need to figure out how to typecheck alternatives (in the syntax directed form too) before we do this right.
   let args' = L.map (\a -> LCVar a.id (deltaBinding ue)) args
   return (Alt (DataAlt con) args' rhs')
 
+-- }}}
+--------------------------------------------------------------------------------
+-- {{{ Algorithms for computing usage environments -----------------------------
+--------------------------------------------------------------------------------
+
+-- | Reconstruct the usage environment for a given variable with
+--  1. The counts of usages in a group of recursive bindings
+--  2. The In Scope Variables and their corresponding bindings
+reconstructUe :: MonadFail m => Var -> [(Var, M.Map Var Int)] -> M.Map Var IdBinding -> m UsageEnv
+reconstructUe v usageMap inscope = do
+  Just usages <- pure $ L.lookup v usageMap
+  return $ M.foldlWithKey go (UsageEnv []) usages
+  where
+    go :: UsageEnv -> Var -> Int -> UsageEnv
+    go (UsageEnv acc) var count = case M.lookup var inscope of
+      Nothing -> error "Var not in scope??"
+      Just (LambdaBound mult) -> UsageEnv $ replicate count (var,mult) ++ acc
+      Just (DeltaBound (UsageEnv env)) -> UsageEnv $ (concat $ L.take count $ repeat env) ++ acc
 
 -- | Implements the algorithm to compute the recursive usage environments of a
 -- not-necessarily-strongly-connected group of recursive let bindings
@@ -266,6 +296,9 @@ multBinding :: Var -> Maybe IdBinding
 multBinding v
   | isId v    = Just $ LambdaBound $ Relevant (idMult v)
   | otherwise = Nothing
+
+instance {-# OVERLAPPING #-} MonadFail (Except String) where
+  fail = throwError
 
 -- }}}
 --------------------------------------------------------------------------------
@@ -412,4 +445,5 @@ instance OutputableBndr LCVar where
 
 -- }}}
 --------------------------------------------------------------------------------
--- vim: fdm=marker foldenable
+-- foldenable
+-- vim: fdm=marker
