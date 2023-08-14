@@ -55,6 +55,9 @@ newtype UsageEnv = UsageEnv [(Var,Mult)]
 -- INVARIANT: Two ocurrences of the same variable must have the same mult
   deriving Eq
 
+makeIrrelevant :: UsageEnv -> UsageEnv
+makeIrrelevant (UsageEnv ue) = UsageEnv $ M.map (\case Relevant m -> Irrelevant m; Irrelevant m -> Irrelevant m) ue
+
 lookupUE :: Var -> UsageEnv -> Usage
 lookupUE v (UsageEnv m) = case lookup v m of
                             Nothing   -> Zero

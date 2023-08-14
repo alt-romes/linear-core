@@ -138,10 +138,10 @@ checkExpr expr = case expr of
            <*> pure (LCVar b.id (deltaBinding ue))
            <*> pure ty
            <*> extend (b.id) (DeltaBound ue) (mapM (checkAlt ue) alts)
-    -- Expression is definitely not in WHNF (right? or do we mean HNF)
     | otherwise
+    -- Expression is definitely not in WHNF (right? or do we mean HNF)
     -> do
-      (e', ue) <- record $ checkExpr e
+      (e', makeIrrelevant -> ue) <- record $ checkExpr e
       Case <$> pure e'
            <*> pure (LCVar b.id (deltaBinding ue))
            <*> pure ty
@@ -171,14 +171,17 @@ checkAlt _ (Alt (LitAlt _) _ _) = error "impossible"
 checkAlt ue (Alt (DataAlt con) args rhs)
   | L.null $ L.filter (not . isManyTy . scaledMult) (dataConOrigArgTys con)
   = do
-  rhs' <- extends (L.map (\arg -> (arg.id, LambdaBound (Relevant ManyTy))) args) $ Linear.Core.Monad.drop ue $ checkExpr rhs
+  rhs' <- extends (L.map (\arg -> (arg.id, LambdaBound (Relevant ManyTy))) args)
+          $ Linear.Core.Monad.drop ue
+          $ checkExpr rhs
   return (Alt (DataAlt con) args rhs')
 
 --- * ALTN
 checkAlt ue (Alt (DataAlt con) args rhs) = do
-  -- TODO: Partition unrestricted and linear variables
-  rhs' <- checkExpr rhs
+  let (unrestricted_args, linear_args) = L.partition (isManyTy . scaledMult)
   -- TODO: We need to figure out how to typecheck alternatives (in the syntax directed form too) before we do this right.
+  rhs' <- extends (L.map (\arg -> (arg.id, LambdaBound (Relevant ManyTy))) unrestricted_args)
+          $ checkExpr rhs
   let args' = L.map (\a -> LCVar a.id (deltaBinding ue)) args
   return (Alt (DataAlt con) args' rhs')
 
