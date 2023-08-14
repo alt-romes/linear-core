@@ -325,6 +325,12 @@ Core-to-Core optimizing transformations, eliminate and rearrange most of the
 syntactic constructs through which linearity checking is performed -- often
 resulting in programs completely different from the original.
 
+\todo[inline]{In reality, the Core optimizing transformations only expose a
+more fundamental issue in the existing linear types in Haskell -- its mismatch
+with the evaluation model. In call-by-need languages a mention of a variable
+might not entail using that variable - it depends on it being required or not.
+This is not explored at all and we're the first to do so as far as we know}
+
 However, these transformed programs that no longer type-check because of
 linearity are \emph{semantically linear}, that is, linear resources are still
 used exactly once, despite the type-system no longer accepting those programs.
@@ -438,10 +444,15 @@ be able to inform optimizing transformations with linearity.
 % about the usage of resources in a
 % programming language.
 
+\todo[inline]{Change some of the second part of the introduction}
+
 \todo[inline]{We should discuss the alternative motivation of figuring out how
 to typecheck linearity in the presence of laziness on its own, why its hard and
 how it allows simpler use of linear types since the compiler doesn't constrain
 the programmer so much}
+
+\todo[inline]{Rather, the linearity x call-by-need should be the original
+motivation, with linear core as the prime example?}
 
 \todo[inline]{Explain examples of non-trivial interaction of linearity with
 laziness, with both lets and also with case expressions not evaluating
@@ -452,6 +463,13 @@ expressions in WHNF, and otherwise}
 \todo[inline]{Saying, finally, what we are going to do, and that our system is
 capable of seeing linearity in all of these programs, and more -- it is capable
 of typechecking almost all optimizing transformations we studied}
+
+\todo[inline]{Changing our Goals into things we actually did}
+
+\todo[inline]{Conclude by explaining that the document is structured in such a
+way that the payload starts in chapter 3 after delivering the background
+knowledge necessary to read through it (enumerate), and that we revise the
+introduction there, more in depth, assuming understanding of the background concepts}
 
 \section*{Goals}
 
@@ -483,6 +501,8 @@ non-linear programs are deemed linear); DONE (modulo 1)
 \include{chapters/c6.tex}
 
 \include{chapters/c7.tex}
+
+\include{chapters/c8.tex}
 
 \begin{SingleSpace}
 \bibliographystyle{abbrv}

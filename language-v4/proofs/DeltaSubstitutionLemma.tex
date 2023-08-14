@@ -179,7 +179,7 @@ By structural induction on the first derivation.
     (5) $\ov{\G,\xD,\ov{\var[y_i][\D,\D'][\s'_i]}; \D, \D' \vdash e_i : \s'_i}$\` by inversion on (let)\\
     (6) $\ov{\G,\ov{\var[y_i][\D,\D'][\s'_i]}; \D,\D' \vdash e_i[e'/x] : \s'_i}$\` by induction hypothesis (1,5)\\
     (7) $e''[e'/x] = e''$\` since $x$ cannot occur in $e''$\\
-    (8) $\G; \D,\D',\D'' \lletrec{\ov{\var[y_i][\D,\D'][\s_i'] = e_i[e'/x]}}{e''} : \vp$\` by (let) (4,6)\\
+    (8) $\G; \D,\D',\D'' \vdash \lletrec{\ov{\var[y_i][\D,\D'][\s_i'] = e_i[e'/x]}}{e''} : \vp$\` by (let) (4,6)\\
     Subcase $\D$ occurs in $e''$\\
     (2) $\G, \xD; \D, \D', \D'' \vdash \lletrec{\ov{\var[y_i][\D'][\s_i'] = e_i}}{e''} : \vp$\\
     (3) $\ov{\G,\xD,\ov{\var[y_i][\D'][\s'_i]}; \D' \vdash e_i : \s'_i}$\` by inversion on (let)\\

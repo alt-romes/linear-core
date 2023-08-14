@@ -9,11 +9,7 @@
 
 \chapter{Linear Core}
 
-\section{How Linearity Interacts with Call-by-need/Haskell's lazy evaluation semantics}
-
-\todo[inline]{A section in main chapter could be named how linearity interacts with lazy/Haskell's/call-by-need evaluation}
-
-\section{Introduction}
+\todo[inline]{This is the Introduction. We should start elsewhere}
 
 \todo[inline]{
     Inicío deve motivar o leitor, e temos de explicar qual é o problema da
@@ -33,6 +29,10 @@ preserves linearity, but in a non-trivial semantic way.}
 of lazy evaluation, and validate multiple GHC core-to-core optimizations in
 this system, showing they can preserve types in our system where in the current
 implemented Core type system they don't preserve linearity.}
+
+\section{Lazy Linearity}
+
+\todo[inline]{A section in main chapter could be named how linearity interacts with lazy/Haskell's/call-by-need evaluation}
 
 \section{Typechecking Linearity in Core}
 
@@ -119,6 +119,16 @@ reverse-binder-swap optimization -- otherwise we would duplicate resources.
 In this case, it is not a matter of syntatic vs semantic linearity
 }
 
+\todo[inline]{On the reverse binder swap, mention
+From Call-by-name, call-by-value, call-by-need and the linear lambda calculus:
+The call-by-name calculus is not entirely suitable for reasoning about
+functional programs in lazy languages, because the beta rule may copy the
+argument of a function any number of times. The call-by-need calculus uses a
+diferent notion of reduction, observationally equivalent to the call-by-name
+calculus. But call-by-need, like call-by-value, guarantees that the argument
+to a function is not copied before it is reduced to a value.
+}
+
 \section{Syntax Directed System}
 
 \todo[inline]{In the other system we assume that the recursive lets are strongly connected, i.e. the expressions always}
@@ -135,6 +145,6 @@ environments before we can typecheck using them. This is how:}
 
 \todo[inline]{Rather, we define a syntax directed type system that infers usage environments while checking...}
 
-\chapter{Implementation}
+\section{Implementation}
 
 

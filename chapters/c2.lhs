@@ -1,13 +1,13 @@
 %include polycode.fmt
 
-\chapter{Background and Related Work}
+\chapter{Background}
 
 In this section we review the concepts required to understand our work. In
 short, we discuss linear types, the Haskell programming language, linear types
 as they exist in Haskell (dubbed Linear Haskell), Haskell's main intermediate
 language (Core) and its formal foundation (System $F_C$) and, finally, an
-overview of GHC's pipeline with explanations of some Core-to-Core optimizing
-transformations.
+overview of GHC's pipeline with explanations of crucial Core-to-Core optimizing
+transformations that we'll try to validate.
 
 \section{Linear Types\label{sec:linear-types}}
 
@@ -654,7 +654,123 @@ $f$ and $g$ ($m$ will unify with $1$ and $\omega$ at the call sites).
     % \item Talvez na próxima. Que relaciona o systemFC com o calculo lambda linear
 % \end{itemize}
 
-\section{Haskell's lazy evaluation semantics}
+\section{Evaluation Strategies}
+
+\todo[inline]{Edit first draft. Não gosto particularmente do que escrevi}
+\todo[inline]{Cite Ariola's work, Plotkins? Who to cite for call-by-value?}
+
+Unlike most mainstream programming languages, Haskell has a so called
+\emph{lazy} evaluation strategy, namely \emph{call-by-need}.
+\emph{Call-by-need} evaluation dictates that an expression is only evaluated
+when it is needed (so no work is done to evaluate expressions that are unused
+at runtime), and the values that are indeed evaluated are memoized and shared
+across use sites. For example, the following program will only compute
+|factorial 2500| if |expr| evaluates to |True|, and in
+that case the work to compute it is only done once, despite being used twice:
+\begin{code}
+let f res = if expr then res * res else 0
+in f (factorial 2500)
+\end{code}
+In contrast, mainstream languages commonly use an \emph{eager} evaluation
+strategy called \emph{call-by-value}, in which expressions are eagerly
+evaluated to a value. In the above example, under \emph{call-by-value},
+|factorial 2500| would always be evaluated and passed as a value, regardless of
+being used in the body. It is out of the scope of this work to discuss the
+merits and tradeoffs of eager vs. lazy evaluation.
+
+% Infinite data structures,...
+% A fun trick is defining lazy sorting algorithms that will only sort as many
+% elements as you need from the start of the list.
+
+A third option is the \emph{call-by-name} evaluation strategy. In
+\emph{call-by-name}, expressions are only evaluated when needed, however, there
+is no sharing. In the above example, it would only evaluate |factorial 2500|
+\emph{twice} if |expr| were |True|. Despite being similar to
+\emph{call-by-need}, in practice, language implementors prefer
+\emph{call-by-need} over \emph{call-by-name} to achieve
+\emph{non-strict} semantics, because the latter duplicates a lot of work, while
+the former only does work once and then shares the result.
+
+
+\emph{Call-by-value}, \emph{call-by-name}, and \emph{call-by-need} are the most
+common evaluation strategies used to describe a language's execution model.
+Each has a different definition of $\beta$-reduction for the operational semantics of the language:
+\begin{itemize}
+\item Under \emph{call-by-value}, a function application is reduced to a value
+by evaluating the function and the argument to a \emph{value}, then
+substituting occurrences of the function argument variable by the argument
+value:
+\[
+\begin{array}{c}
+\infer{e\longrightarrow e'}{(\lambda x. b)~e \longrightarrow v~e'}
+\qquad
+(\lambda x. b)~v \longrightarrow b[v/x]
+\end{array}
+\]
+\item Under \emph{call-by-name}, a function application is reduced to a value
+by evaluating the function to a \emph{value} (a lambda), then
+substituting occurrences of the function argument variable by the whole
+argument expression:
+\[
+\begin{array}{c}
+(\lambda x. e)~e' \longrightarrow e[e'/x]
+\end{array}
+\]
+\item Under \emph{call-by-need}, a function application is reduced to a value
+by evaluating the function to a \emph{value}, then transforming the function
+application into a \textbf{let} binding:
+\[
+\begin{array}{c}
+(\lambda x. e)~e' \longrightarrow \llet{x = e'}{e}
+\end{array}
+\]
+The \textbf{let} binding introduces a suspended computation known as a
+\emph{thunk}, whose value is only computed when the binding is \emph{forced}.
+After evaluating the expression, the binding is overwritten with the result of
+the computation and subsequent uses of the binding use the
+computed value without additional work.
+\end{itemize}
+
+In essence, \emph{call-by-value} gives the language \emph{strict} evaluation
+semantics ($f(\bot)=\bot$) by evaluating the arguments in order before the body
+of the function, whereas \emph{call-by-name} and \emph{call-by-need} give the
+language \emph{non-strict} semantics, by evaluating the arguments only when
+they are needed ($f(\bot)$ is not $\bot$ if $f$'s argument isn't used).
+\emph{Call-by-need} additionally guarantees work is only done once by
+suspending computations into a \emph{thunk} that is overwritten with the value
+of running the suspended computation when it is \emph{forced}, ensuring
+sharing.
+
+The subtleties of suspending computations (i.e.~creating \emph{thunks}) and
+\emph{forcing} them under \emph{call-by-need} evaluation are especially
+relevant in the context of our work regarding linearity in Core, so we discuss
+them in more depth below.
+
+\subsection{Evaluation in Haskell}
+
+\todo[inline]{When do we require an argument for the call-by-need lambda
+calculus without case? I suppose when arguments appear in function position}
+
+In Haskell, applying a function to an expression, in
+general\footnote{Optimisations such as ocurrence analysis, allow us to
+substitute some expressions in a \emph{call-by-name}-style without creating a
+let binding if the argument is only used once in the body.}, results in a
+\textbf{let} binding that suspends the evaluation of the expression/computation
+of the result (seen in the $\beta$-reduction rule under call-by-need).
+
+Suspending a computation amounts to giving a name to the unevaluated
+expression. When this name itself is evaluated then the computation is said to be
+\emph{forced}, and a result is computed by evaluating the expression associated
+to that name. The result of the computation then overwrites the unevaluated
+expression the name was associated with, and subsequent uses of the same name
+will now refer to the computed result. The suspended computation is called a
+\emph{thunk}, and call-by-need evaluation is usually modelled with a mutable
+heap for the existing thunks or values they are overwritten with~\cite{}.
+
+
+\todo[inline]{Connection between forcing thunks and consuming resources}
+
+\todo[inline]{Cite https://www.sciencedirect.com/science/article/pii/S1571066104000222}
 
 \todo[inline]{Introduce evaluation semantics, call-by-value as the most common, call-by-need, call-by-name, call-by-let?}
 \todo[inline]{Call-by-need, refer to background work, discuss sharing etc?}
@@ -673,6 +789,10 @@ em memória serem overwritten. Talvez deixar a discussão sobre interação com
 linearidade para mais tarde}
 
 \todo[inline]{Falar de WHNF vs NF, possivelmente numa subsecção}
+
+\todo[inline]{Haskell isn't really call-by-need, it's like a mix of things,
+right? e.g. linear applications are evaluated w/ call by name without
+allocating closures}
 
 \section{Core and System $F_C$\label{sec:core}}
 
@@ -1326,126 +1446,3 @@ generation backends\footnote{GHC is not \emph{yet} runtime retargetable, i.e.
 to use a particular native code generation backend the compiler must be built
 targetting it.}, such as LLVM, x86 and x64, or (recently) JavaScript and WebAssembly.
 
-\section{Related Work}
-
-% TODO: A brief introduction to the related work section?
-
-\parawith{Formalization of Core}
-
-System $F_C$~\cite{cite:systemfc} (Section~\ref{sec:core}) does not
-account for linearity in its original design, and, to the best of our
-knowledge, no extension to System $F_C$ with linearity and non-strict
-semantics exists.
-%
-As such, there exists no formal definition of Core that
-accounts for linearity. In this context, we intend to introduce a linearly typed
-System $F_C$ with multiplicity annotations and typing rules to serve
-as a basis for a linear Core. Critically, this Core linear language
-must account for call-by-need evaluation semantics and be valid in
-light of Core-to-Core optimizing transformations.
-
-% \parawith{System FC}
-
-% \begin{itemize}
-% \item SystemFC tal como está não tem linearidade de todo
-% \item Formalmente nao temos published definição de linearidade no Core
-% \item Regras para sistema tipo FC com linearidade
-% \item mas uma extensão tipo linear lambda calculus nao consegui exprimir as transformações do core
-% \end{itemize}
-
-% Haskell Core's foundational language was imbued with linear types, but it does
-% not account for linearity with the whole of the type system
-% 
-% Multiplicity annotations in SystemFC?
-% 
-% Rules?
-
-\parawith{Linear Haskell\label{sec:related-work-linear-haskell}}
-
-Haskell, contrary to most programming languages with linear types, has existed
-for 31 years of its life \emph{without} linear types. As such, the introduction
-of linear types to Haskell comes with added challenges that do not exist in
-languages that were designed with linear types from the start:
-%
-\begin{itemize}
-    \item Backwards compatibility. The addition of linear types shouldn't break
-        all existing Haskell code.
-    \item Code re-usability. The linearly-typed part of Haskell's ecosystem and
-        its non-linearly-typed counterpart should fit in together and it must be
-        possible to define functions readily usable by both sides
-        simultaneously.
-    \item Future-proofing. Haskell, despite being an
-        industrial-strength language, is also a petri-dish for experimentation
-        and innovation in the field of programming languages. Therefore, Linear
-        Haskell takes care to accomodate possible future features, in
-        particular, its design is forwards compatible with affine and dependent
-        types.
-\end{itemize}
-%
-Linear Haskell~\cite{cite:linearhaskell} is thus concerned with retrofitting
-linear types in Haskell, taking into consideration the above design goals, but
-is not concerned with extending Haskell's intermediate language(s),
-which presents its own challenges. 
-
-Nonetheless, while the Linear Haskell work keeps Core unchanged, its
-implementation in GHC does modify and extend Core with linearity/multiplicity
-annotations, and said extension of Core with linear types does not account for
-optimizing transformations and the non-strict semantics of Core.
-
-Our work on linear Core intends to overcome the limitations of linear types as
-they exist in Core, i.e. integrating call-by-need semantics and validating the
-Core-to-Core passes, ultimately doubling as a validation of the implementation
-of Linear Haskell.
-
-
-% \subsection{OutsideIn(X)\label{related-work-gadts}}
-% 
-% Defines constraint-based type system parametrized over X which does not account
-% for local type refinements regarding linearity.
-% 
-% Se for modificar o typechecker com as multiplicity coercions vou ter de falar
-% disto.
-
-% \subsection{Rust}
-% 
-% Rust has a core based on linear types. Describe Rust's architecture?
-% How do they handle linearity plus optimizations
-% They probabluy don't typecheck linearity in Core
-
-\parawith{Linearity-influenced optimizations}
-
-Core-to-Core transformations appear in many works across the research
-literature~\cite{cite:let-floating,peytonjones1997a,santos1995compilation,peytonjones2002secrets,baker-finch2004constructed,maurer2017compiling,Breitner2016_1000054251,sergey_vytiniotis_jones_breitner_2017},
-all designed in the context of a typed language (Core) which does not have
-linear types. However,
-~\cite{cite:let-floating,peytonjones1997a,cite:linearhaskell} observe that
-certain optimizations (in particular, let-floating and inlining) greatly
-benefit from linearity analysis and, in order to improve those transformation,
-linear-type-inspired systems were created specifically for the purpose of the
-transformation.
-
-By fully supporting linear types in Core, these optimizing transformations
-could be informed by the language inherent linearity, and, consequently, avoid
-an ad-hoc or incomplete linear-type inference pass custom-built for
-optimizations. Additionally, the linearity information may potentially be used
-to the benefit of optimizing transformations that currently don't take any
-linearity into account.
-
-% \begin{itemize}
-% \item Transfs. core to core aparecem em vários artigos, e são desenhadas no contexto de uma linguagem tipificada mas que não é linearly typed.
-% \item nestes dois artigos é observado que se houvesse a capacidade de explorar linearidade podiamos fazer as coisas de forma diferente
-% \item Todas estas optimizaçoes de decadas foram desenhadas sem linear types e há sitios onde linear types podiam ajudar mas não existiam na altura
-% \item POdemos usar linear types multiplicitpiadads para lazy language core q definimos para nao ter de fazer sistemas lineares de proposito para optimizações
-% \item Ser ad-hoc incompleto ou nao feito de todo
-% \end{itemize}
-
-% \parawith{A transformation based optimizer for Haskell}
-% They discuss a cardinality analysis based on a linear type system but create (an
-% ad-hoc?) one suited. Comparison in the measure of creating optimizations based
-% on linearity.
-% 
-% \parawith{Let-Floating: Moving Bindings to Give Faster Programs\label{sec:rw:let-floating}}
-% In the paper~\cite{cite:let-floating}...
-% They say they are doing work on a linear type system to identify places where
-% the lambda is linearly used and therefore floating-in is beneficial and
-% floating-out not as productive.

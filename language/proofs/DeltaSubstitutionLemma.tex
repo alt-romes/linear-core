@@ -168,7 +168,7 @@ By structural induction on the first derivation.
     (6) $\ov{\hasnolinearvars{\G''_i}}$\` by inversion on (let)\\
     (7) $\ov{\G',\D',\G''_i,\D \vdash e_i[e'/x] : \s'_i}$\` by induction hypothesis (1,2,5)\\
     (8) $e''[e'/x] = e''$\` since $x$ does not occur in $e''$\\
-    (9) $\G,\G',\ov{\G''_i},\D,\D' \lletrec{\ov{\var[y_i][\D,\D'][\s_i'] = e_i[e'/x]}}{e''} : \vp$\` by (let) (2,4,5,6,7)\\
+    (9) $\G,\G',\ov{\G''_i},\D,\D' \vdash \lletrec{\ov{\var[y_i][\D,\D'][\s_i'] = e_i[e'/x]}}{e''} : \vp$\` by (let) (2,4,5,6,7)\\
     Subcase $\xD$ occurs in $e''$\\
     (3) $\G, \ov{\G''_i}, \D', \D, \xD \vdash \lletrec{\ov{\var[y_i][\D'][\s_i'] = e_i}}{e''} : \vp$\\
     (4) $\ov{\G'',\D' \vdash e_i : \s'_i}$\` by inversion on (let)\\
