@@ -1,4 +1,5 @@
 %include polycode.fmt
+%format ⊸ = "\lolli"
 
 % Needed bc of renewcommand in orders...
 % \input{proof}
@@ -30,15 +31,149 @@ of lazy evaluation, and validate multiple GHC core-to-core optimizations in
 this system, showing they can preserve types in our system where in the current
 implemented Core type system they don't preserve linearity.}
 
-\section{Lazy Linearity}
+Our contributions are (to rewrite):
+\begin{itemize}
+\item We expose a connection between the definition of \emph{consuming} a
+resource in a linear type system and with the fundamental definition of
+\emph{evaluation/progress} and the evaluation strategy of a language, making
+the \emph{consuming} more precise across languages (in fact, generalizing the
+definition of consuming a resource from Linear Haskell).
+% \item We present a linear type system that can leverage this connection to be
+% more flexible and allow more programs as linearly well-typed.
+% \item This type system is defined over a language capturing the linear essence of Core
+% \item We prove soundness and that Core optimisations preserve types in this system, where they previously were unable to
+\end{itemize}
 
-\todo[inline]{A section in main chapter could be named how linearity interacts with lazy/Haskell's/call-by-need evaluation}
+\section{Consuming resources under call-by-need}
+
+A linear type system statically guarantees that linear resources are
+\emph{consumed} exactly once. Consequently, whether a program is well-typed
+under a linear type system intrisically depends on the precise definition of
+\emph{consuming} a resource. Even though \emph{consuming} a resource is commonly regarded
+as synonymous with \emph{using} a resource, i.e. with the syntatic occurrence
+of the resource in the program, that is not always the case.
+%
+In fact, this section highlights the distinction between using resources
+syntatically and semantically as a principal limitation of linear type
+systems for (especially) non-strict languages.
+
+% and we show how a linear type system found on
+% \emph{consuming resources semantically} rather than \emph{using resources
+% syntatically} can accept
+
+Consider, for example, the following program in a functional pseudo-language,
+where a computation that closes the given |handle| is bound to |x| before the
+|handle| is returned:
+%
+\begin{code}
+f : Handle ⊸ Handle
+f handle = let x = close handle in handle
+\end{code}
+%
+In this seemingly innocent example, the |handle| appears to be closed before
+returned, whereas in fact the handle will only be closed if the let bound
+computation is run (i.e. evaluated).
+%
+The example illustrates how \emph{consuming} a resource is not necessarily
+synonymous with using it syntatically, as depending on the evaluation strategy
+of the pseudo-language, the computation that closes the handle might or not be
+evaluated, and if it isn't, the |handle| in that unused computation
+is not consumed.
+%
+Expanding on the same example program, consider it under distinct evaluation strategies:
+%
+\begin{description}
+
+\item[Call-by-value] With \emph{eager} evaluation, the let bound expression |close
+handle| is eagerly evaluated, and the |handle| will be closed before being
+returned. It is clear that a linear type system should not accept such a
+program since the linear resource |handle| is duplicated -- it is used a
+computation that closes it, while still being made available to the caller of
+the function.
+
+\item[Call-by-need] On the other hand, with \emph{lazy} evaluation, the let
+bound expression will only be evaluated when the binding |x| is needed. We return
+the |handle| right away, and the let binding is forgotten as it cannot be
+used outside the scope of the function, so the handle is not closed by |f|.
+Under the lens of \emph{call-by-need} evaluation, \emph{using} a resource in a
+let binding only results in the resource being \emph{consumed} if the binding
+itself is \emph{consumed}. We argue that a linear type system under
+\emph{call-by-need} evaluation should accept the above program, unlike a linear
+type system for the same program evaluated \emph{call-by-value}.
+
+\end{description}
+%
+%Rather, \emph{consuming} a resource is intrisically defined by the evaluation model of the language.
+%
+% Under distinct evaluation strategies, the above example (and programs in general) have different semantics:
+%
+%
+Intuitively, a computation that depends on a linear resource to produce a
+result consumes that resource iff the result is effectively computed; in
+contrast, a computation that depends on a linear resource but is never run,
+will not consume that resource.
+
+From this observation, and exploring the connection between computation and evaluation,\todo{Alguma dificuldade em dizer exatamente como é que evaluation drives/is computation}
+it becomes clear that \emph{linearity} and \emph{consuming resources}, in the
+above example and programs in general, should be defined in function of the
+language's evaluation strategy.
+
+\todo[inline]{Re-read little section about linearity and strictness in Linear Haskell}
+
+\todo[inline]{We could almost say that eventually everything all linear
+resources must be evaluated to NF to be consumed, or returned by a function
+s.t. a continuation of that function has to evaluate the result to NF., or something.}
+
+\todo[inline]{give some call-by-value examples and say how it is probably exactly syntatic linearity}
+
+\subsection{Call-by-need with case expressions?}
+\todo[inline]{Introduce Haskell Core, talk about when things are consumed}
+
+\subsection{Generalizing}
+
+\todo[inline]{Discuss definition of consuming resources of linear haskell}
+\todo[inline]{Discuss our own generalized (call-by-value, call-by-name, etc)
+definition of consuming resources by evaluation. Something like, if an
+expression is fully evaluated, all linear resources that expression depends on
+to compute a result are consumed, or something...}
+  
+\subsection{Leftover}
+
+\todo[inline]{unrestricted call-by-name with resources can duplicate the resources, as if it were unsound?}
+
+\todo[inline]{Quanto é que eu devia falar de call-by-need labmda calculus sem
+cases? não é mt interessante, pq as exps avaliadas sao sempre avaliadas pra
+funcções (e arg) -> (e' arg), e por isso os recursos são todos completamente
+consumidos. A questão de WHNF e assim só aparece mais à frente; mas se calhar serve de começo?}
 
 \section{Typechecking Linearity in Core}
+
+In this section, we develop a linear calculus titled \emph{Linear Core} that 
+combines the linearity-in-the-arrow and multiplicity polymorphism introduced by
+Linear Haskell~\cite{linearhaskell} with all the key features from GHC's Core
+language, except for type equality coercions\footnote{We explain a main avenue of
+future work, multiplicity coercions, in Section~\ref{sec:future-work}}.
+%
+Specifically, our core calculus system is a linear lambda calculus with
+algebraic datatypes, case expressions, recursive let bindings, and multiplicity
+polymorphism.
+ 
+We start by introducing the Core-like language, $\dots$ usage environments as a
+way to encode choice between the way a resource is used $\dots$
+%
+We also note that, despite the focus on GHC Core's linearity, the fundamental
+ideas for understanding linearity in a call-by-need calculus can be readily
+applied to other call-by-need languages.\todo{make better sentence}
 
 \todo[inline]{Explicar algumas das ideias fundamentais, e apresentar as regras
 iterativamente. Podemos começar com as triviais e avançar para os dois pontos
 mais difíceis : Lets e Cases}
+
+\subsection{Linear Core}
+
+\todo[inline]{Syntax, examples}
+
+\todo[inline]{Remember to mention we assume all patterns are exhaustive}
 
 \subsection{Usage environments}
 

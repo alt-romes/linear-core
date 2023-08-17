@@ -768,6 +768,10 @@ will now refer to the computed result. The suspended computation is called a
 heap for the existing thunks or values they are overwritten with~\cite{}.
 
 
+\todo[inline]{On second thought, it might be better to discuss the notion of
+consuming resources in the call-by-need lambda calculus in the first section of
+the Linear Core chapter (note, all resources are consumed when something is evaluated to a lambda, so function application is already correct}
+\todo[inline]{As for the call-by-need linear lambda calculus paper, it might be better to discuss it there}
 \todo[inline]{Connection between forcing thunks and consuming resources}
 
 \todo[inline]{Cite https://www.sciencedirect.com/science/article/pii/S1571066104000222}
@@ -788,7 +792,7 @@ but only discuss it later in Related Work}
 em memória serem overwritten. Talvez deixar a discussão sobre interação com
 linearidade para mais tarde}
 
-\todo[inline]{Falar de WHNF vs NF, possivelmente numa subsecção}
+\todo[inline]{Falar de WHNF vs NF, possivelmente numa subsecção (maybe not and leave this for third chapter)}
 
 \todo[inline]{Haskell isn't really call-by-need, it's like a mix of things,
 right? e.g. linear applications are evaluated w/ call by name without

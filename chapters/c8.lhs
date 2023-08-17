@@ -126,7 +126,13 @@ linearity into account.
 % the lambda is linearly used and therefore floating-in is beneficial and
 % floating-out not as productive.
 
-\section{Future Work}
+\section{Future Work\label{sec:future-work}}
+
+\begin{itemize}
+\item Linear(X), a linear type system defined by the underlying definition of evaluation (which in turn implies how consuming a resource is defined)
+\item Implementation in Core
+\item Generalization to source level language, being more permissive in the handling of resources imposes less burden on the programmer
+\end{itemize}
 
 \section{Conclusions}
 
