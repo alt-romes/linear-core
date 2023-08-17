@@ -19,6 +19,7 @@ import GHC.Driver.Config.Core.Lint
 import GHC.Plugins hiding (Mult, count, unrestricted)
 import GHC.Utils.Trace
 import Data.Map.Internal as M
+import Data.List.NonEmpty (NonEmpty(..))
 import Data.List as L
 import Data.Maybe
 import GHC.Core.TyCo.Rep (Type(..))
@@ -107,7 +108,7 @@ checkBind (Rec bs) = do
 
 checkExpr :: LCExpr -> LinearCoreM LCExpr
 checkExpr expr = case expr of
-  Var v       -> use v >> return (Var v)
+  Var v       -> use v Nothing >> return (Var v)
   Lit l       -> return (Lit l)
   Type ty     -> return (Type ty)
   Coercion co -> return (Coercion co)
@@ -177,12 +178,19 @@ checkAlt ue (Alt (DataAlt con) args rhs)
   return (Alt (DataAlt con) args rhs')
 
 --- * ALTN
+-- We do the simplest thing here:
+--  Split the environment by all pattern variables, regardless of the scrutinee expression
+-- We need to correctly assign exactly the resources from the scrutinee to each pattern variable in theory, because the substitution lemma can't be applied to case pattern vars otherwise.
+-- But in practice, it's sufficient to assign split (tagged) resources to all pattern variables -- it is enough to ensure they are all used exclusively.
+-- We do lose the ability to make a linear pattern variable unrestricted if no resources were assigned to it, but that's probably never going to happen in the transformations.
+-- It's probably not worth it trying to be that smart, and we don't do substitution here (only checking). Even if we did substituttion things would likely work since all linear variables are used once, despite the theory not working
+-- TODO: Do the simple thing
 checkAlt ue (Alt (DataAlt con) args rhs) = do
-  let (unrestricted_args, linear_args) = L.partition (isManyTy . scaledMult)
+  let (unrestricted_args, linear_args) = L.partition (isManyTy . scaledMult) (dataConOrigArgTys con)
   -- TODO: We need to figure out how to typecheck alternatives (in the syntax directed form too) before we do this right.
   rhs' <- extends (L.map (\arg -> (arg.id, LambdaBound (Relevant ManyTy))) unrestricted_args)
           $ checkExpr rhs
-  let args' = L.map (\a -> LCVar a.id (deltaBinding ue)) args
+  let args' = L.zipWith (\a i -> LCVar a.id (deltaBindingTagged con i ue)) args [1..]
   return (Alt (DataAlt con) args' rhs')
 
 -- }}}
@@ -193,7 +201,7 @@ checkAlt ue (Alt (DataAlt con) args rhs) = do
 -- | Reconstruct the usage environment for a given variable with
 --  1. The counts of usages in a group of recursive bindings
 --  2. The In Scope Variables and their corresponding bindings
-reconstructUe :: MonadFail m => Var -> [(Var, M.Map Var Int)] -> M.Map Var IdBinding -> m UsageEnv
+reconstructUe :: MonadFail m => Var -> [(Var, M.Map Var Int)] -> M.Map Var (NonEmpty IdBinding) -> m UsageEnv
 reconstructUe v usageMap inscope = do
   Just usages <- pure $ L.lookup v usageMap
   return $ M.foldlWithKey go (UsageEnv []) usages
@@ -201,8 +209,11 @@ reconstructUe v usageMap inscope = do
     go :: UsageEnv -> Var -> Int -> UsageEnv
     go (UsageEnv acc) var count = case M.lookup var inscope of
       Nothing -> error "Var not in scope??"
-      Just (LambdaBound mult) -> UsageEnv $ replicate count (var,mult) ++ acc
-      Just (DeltaBound (UsageEnv env)) -> UsageEnv $ (concat $ L.take count $ repeat env) ++ acc
+      Just bindings -> UsageEnv $ concatMap (go' var count) bindings ++ acc
+
+    go' :: Var -> Int -> IdBinding -> [(Var, Mult)]
+    go' var count (LambdaBound mult)          = replicate count (var,mult)
+    go' _   count (DeltaBound (UsageEnv env)) = concat $ L.take count $ repeat env
 
 -- | Implements the algorithm to compute the recursive usage environments of a
 -- not-necessarily-strongly-connected group of recursive let bindings
@@ -300,13 +311,16 @@ convertAlt (Alt con args rhs) = do
 deltaBinding :: UsageEnv -> Maybe IdBinding
 deltaBinding = Just . DeltaBound
 
+deltaBindingTagged :: DataCon -> Int -- index
+                   -> UsageEnv -> Maybe IdBinding
+deltaBindingTagged = _
+
 multBinding :: Var -> Maybe IdBinding
 multBinding v
   | isId v    = Just $ LambdaBound $ Relevant (idMult v)
   | otherwise = Nothing
 
-instance {-# OVERLAPPING #-} MonadFail (Except String) where
-  fail = throwError
+instance {-# OVERLAPPING #-} MonadFail (Except String) where fail = throwError
 
 -- }}}
 --------------------------------------------------------------------------------

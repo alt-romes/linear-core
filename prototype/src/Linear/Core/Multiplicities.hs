@@ -1,4 +1,4 @@
-{-# LANGUAGE GHC2021, ViewPatterns, DerivingVia, GeneralizedNewtypeDeriving, OverloadedRecordDot #-}
+{-# LANGUAGE GHC2021, ViewPatterns, DerivingVia, GeneralizedNewtypeDeriving, OverloadedRecordDot, LambdaCase #-}
 module Linear.Core.Multiplicities where
 
 import Data.Function
@@ -20,7 +20,7 @@ data IdBinding = LambdaBound Mult    -- lambdas
 
 isBindingLinear :: IdBinding -> Bool
 isBindingLinear (LambdaBound m) = isLinear m
-isBindingLinear _ = False
+isBindingLinear (DeltaBound  _) = False
 
 --------------------------------------------------------------------------------
 ----- Multiplicities -----------------------------------------------------------
@@ -28,12 +28,19 @@ isBindingLinear _ = False
 
 data Mult = Relevant C.Mult
           | Irrelevant C.Mult
+          | Tagged Tag Mult
+
+data Tag = Tag GHC.Plugins.DataCon Int
 
 -- ROMES:TODO: This is an incorrect instance of equality for mults because of mult. vars.
 instance Eq Mult where
   Relevant m1 == Relevant m2 = deBruijnize m1 == deBruijnize m2
   Irrelevant m1 == Irrelevant m2 = deBruijnize m1 == deBruijnize m2
+  Tagged t1 m1 == Tagged t2 m2 = t1 == t2 && m1 == m2
   _ == _ = False
+
+instance Eq Tag where
+  Tag c1 i1 == Tag c2 i2 = c1 == c2 && i1 == i2
 
 isLinear :: Mult -> Bool
 isLinear = not . isUnrestricted
@@ -41,6 +48,7 @@ isLinear = not . isUnrestricted
 isUnrestricted :: Mult -> Bool
 isUnrestricted (Relevant m)   = C.isManyTy m
 isUnrestricted (Irrelevant m) = C.isManyTy m
+isUnrestricted (Tagged _ m) = isUnrestricted m
 
 data Usage = Zero | LCM Mult
 
@@ -56,7 +64,11 @@ newtype UsageEnv = UsageEnv [(Var,Mult)]
   deriving Eq
 
 makeIrrelevant :: UsageEnv -> UsageEnv
-makeIrrelevant (UsageEnv ue) = UsageEnv $ M.map (\case Relevant m -> Irrelevant m; Irrelevant m -> Irrelevant m) ue
+makeIrrelevant (UsageEnv ue) = UsageEnv $ L.map (\(x,m) -> (x,go m)) ue
+  where
+    go (Relevant m)   = Irrelevant m
+    go (Irrelevant m) = Irrelevant m
+    go (Tagged t m) = Tagged t (go m)
 
 lookupUE :: Var -> UsageEnv -> Usage
 lookupUE v (UsageEnv m) = case lookup v m of
@@ -88,6 +100,10 @@ instance Outputable IdBinding where
 instance Outputable Mult where
   ppr (Relevant m) = text "Relevant" <+> ppr m
   ppr (Irrelevant m) = text "Irrelevant" <+> ppr m
+  ppr (Tagged t m) = ppr m GHC.Utils.Outputable.<> text "#" GHC.Utils.Outputable.<> ppr t
+
+instance Outputable Tag where
+  ppr (Tag c i) = ppr c GHC.Utils.Outputable.<> text "_" GHC.Utils.Outputable.<> ppr i
 
 deriving newtype instance Outputable UsageEnv
 

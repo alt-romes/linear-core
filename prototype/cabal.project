@@ -1,9 +1,10 @@
 packages: .
+          ~/Developer/recursion-schemes/
 
 package diagnose
     flags: +megaparsec-compat
 
-source-repository-package
-  type:     git
-  location: https://github.com/alt-romes/recursion-schemes.git
+-- source-repository-package
+--   type:     git
+--   location: https://github.com/alt-romes/recursion-schemes.git
 
