@@ -131,7 +131,12 @@ linearity into account.
 \begin{itemize}
 \item Linear(X), a linear type system defined by the underlying definition of evaluation (which in turn implies how consuming a resource is defined)
 \item Implementation in Core
-\item Generalization to source level language, being more permissive in the handling of resources imposes less burden on the programmer
+\item Generalization to source level language, being more permissive in the
+handling of resources imposes less burden on the programmer
+\item It's harder to typecheck linearity like this in the source level because
+of the interaction with other source features, but seems feasible and an
+improvement to the usability of linear types. It allows more lazy functional
+programming idioms with linear types (also because laziness and strictness is less well defined as in Core, bc opts)
 \end{itemize}
 
 \section{Conclusions}

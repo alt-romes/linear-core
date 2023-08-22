@@ -1,18 +1,16 @@
-
-\begin{figure}[h]
-\begin{framed}
-\[
-\begin{array}{l}
-%
-\textbf{Types} \\
+\newcommand{\SyntaxTypes}{
+\ensuremath{
 \begin{array}{lcll}
     \varphi,\sigma  & ::=  & T~\overline{p}         & \textrm{Datatype} \\
                     & \mid & \varphi \to_\pi \sigma & \textrm{Function with multiplicity}\\
                     & \mid & \forall p.~\varphi     & \textrm{Multiplicity universal scheme}\\
                    % TODO: Eventually Coercions
-\end{array}\\\\
-%
-\textbf{Terms}\\
+\end{array}
+}
+}
+
+\newcommand{\SyntaxTerms}{
+\ensuremath{
 \begin{array}{lcll}
     u                & ::=  & x,y,z \mid K                                                     & \textrm{Variables and data constructors}\\
     e                & ::=  & u                                                                & \textrm{Term atoms}\\
@@ -26,9 +24,12 @@
 %    p               & ::=  & K~\overline{b{:}\kappa}~\overline{x{:}\sigma}                    & \textrm{Pattern} \\
     \rho             & ::=  & K~\overline{x{:}_\pi\sigma} \mid \_                              & \textrm{Pattern and wildcard} \\
 % Currently we don't care about the existential multiplicity variables, but later on we might
-\end{array}\\\\
-%
-\textbf{Environments}\\
+\end{array}
+}
+}
+
+\newcommand{\SyntaxEnvironments}{
+\ensuremath{
 \begin{array}{lcll}
 % TODO: Introduzir tagged resources
   \Gamma   & ::=  & \cdot \mid \Gamma,x{:}_\omega\sigma \mid \Gamma,K{:}\sigma \mid \Gamma,p \mid z{:}_{\Delta}\sigma & \textrm{Unrestricted (delta-)variables} \\
@@ -37,7 +38,23 @@
          % & \mid & \Gamma,x{:}_{\overline{\Delta}}\sigma & \textrm{Case bound variables} -- NOPE
          % &  \mid & \Gamma,K{:}\sigma      &         & \textrm{Data constructor}\\
          % &  \mid & \Gamma,p               &         & \textrm{Multiplicity variable}\\
-\end{array}\\\\
+\end{array}
+}
+}
+
+\begin{figure}[h]
+\begin{framed}
+\[
+\begin{array}{l}
+%
+\textbf{Types} \\
+\SyntaxTypes\\\\
+%
+\textbf{Terms}\\
+\SyntaxTerms\\\\
+%
+\textbf{Environments}\\
+\SyntaxEnvironments\\\\
 %
 \textbf{Multiplicities}\\
 \begin{array}{lcll}

@@ -4,10 +4,10 @@
 
 In this section we review the concepts required to understand our work. In
 short, we discuss linear types, the Haskell programming language, linear types
-as they exist in Haskell (dubbed Linear Haskell), Haskell's main intermediate
-language (Core) and its formal foundation (System $F_C$) and, finally, an
-overview of GHC's pipeline with explanations of crucial Core-to-Core optimizing
-transformations that we'll try to validate.
+as they exist in Haskell (dubbed Linear Haskell), evaluation strategies,
+Haskell's main intermediate language (Core) and its formal foundation (System
+$F_C$) and, finally, an overview of GHC's pipeline with explanations of crucial
+Core-to-Core optimizing transformations that we'll try to validate.
 
 \section{Linear Types\label{sec:linear-types}}
 
@@ -746,7 +746,7 @@ The subtleties of suspending computations (i.e.~creating \emph{thunks}) and
 relevant in the context of our work regarding linearity in Core, so we discuss
 them in more depth below.
 
-\subsection{Evaluation in Haskell}
+\subsection{Evaluation in Haskell\label{sec:bg:evaluation-haskell}}
 
 \todo[inline]{When do we require an argument for the call-by-need lambda
 calculus without case? I suppose when arguments appear in function position}
@@ -1409,6 +1409,29 @@ the wrapper.
 reverse binder swap, possibly foreshadowing how it is important in our study as
 something that is only linearity preserving because of the way other
 optimizations are defined.}
+
+\begin{code}
+f x = letrec go y = case x of z { (a,b) -> ...(expensive z)... }
+        in ...
+\end{code}
+
+If we do the reverse binder-swap we get
+
+\begin{code}
+f x = letrec go y = case x of z { (a,b) -> ...(expensive x)... }
+        in ...
+\end{code}
+
+and now we can float out:
+
+\begin{code}
+f x = let t = expensive x
+        in letrec go y = case x of z { (a,b) -> ...(t)... }
+        in ...
+\end{code}
+
+Now (expensive x) is computed once, rather than once each time around the 'go' loop..
+
 
 \begin{figure}[t]
 
