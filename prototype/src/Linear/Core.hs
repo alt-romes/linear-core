@@ -27,6 +27,7 @@ import GHC.Core.TyCo.Rep (Type(..))
 import Linear.Core.Multiplicities
 import Linear.Core.Monad
 import GHC.Core.Multiplicity (scaledMult)
+import GHC.Core.Multiplicity (scaledThing)
 
 type LCProgram = [LCBind]
 type LCBind = Bind LCVar
@@ -68,7 +69,7 @@ runLinearCore pgr = do
 
     lcprg = runIdentity (convertProgram pgr)
 
-  case runExcept $ runLinearCoreT bindingsMap (checkProgram lcprg) of
+  case runIdentity $ runLinearCoreT bindingsMap (checkProgram lcprg) of
     Left e -> pprTraceM "Failed to typecheck linearity!" (ppr lcprg) >> return [text e]
     Right x -> pprTraceM "Safe prog!" (ppr x) >> return []
 
@@ -76,7 +77,7 @@ runLinearCore pgr = do
 -- {{{ Typechecking Linear Core (mostly ignoring types) ------------------------
 --------------------------------------------------------------------------------
 
-type LinearCoreM = LinearCoreT (Except String)
+type LinearCoreM = LinearCoreT Identity
 
 checkProgram :: LCProgram -> LinearCoreM LCProgram
 checkProgram = traverse checkBind
@@ -108,7 +109,7 @@ checkBind (Rec bs) = do
 
 checkExpr :: LCExpr -> LinearCoreM LCExpr
 checkExpr expr = case expr of
-  Var v       -> use v Nothing >> return (Var v)
+  Var v       -> use v >> return (Var v)
   Lit l       -> return (Lit l)
   Type ty     -> return (Type ty)
   Coercion co -> return (Coercion co)
@@ -188,7 +189,7 @@ checkAlt ue (Alt (DataAlt con) args rhs)
 checkAlt ue (Alt (DataAlt con) args rhs) = do
   let (unrestricted_args, linear_args) = L.partition (isManyTy . scaledMult) (dataConOrigArgTys con)
   -- TODO: We need to figure out how to typecheck alternatives (in the syntax directed form too) before we do this right.
-  rhs' <- extends (L.map (\arg -> (arg.id, LambdaBound (Relevant ManyTy))) unrestricted_args)
+  rhs' <- extends (L.map (\arg -> (scaledThing arg, LambdaBound (Relevant ManyTy))) unrestricted_args)
           $ checkExpr rhs
   let args' = L.zipWith (\a i -> LCVar a.id (deltaBindingTagged con i ue)) args [1..]
   return (Alt (DataAlt con) args' rhs')
@@ -319,8 +320,6 @@ multBinding :: Var -> Maybe IdBinding
 multBinding v
   | isId v    = Just $ LambdaBound $ Relevant (idMult v)
   | otherwise = Nothing
-
-instance {-# OVERLAPPING #-} MonadFail (Except String) where fail = throwError
 
 -- }}}
 --------------------------------------------------------------------------------

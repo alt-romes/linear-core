@@ -63,11 +63,14 @@ import qualified Data.Map as M
 -- * The Reader, Bool, determines whether to record all variables used in the writer env.
 --    * This bool will only be true when recordNonLinear sets in order to record variables.
 --    * This ensures we only collect variables within recordNonLinear, after which we wipe the writer
-newtype LinearCoreT m a = LinearCoreT { unLC :: RWST Bool [Var] (M.Map Var (NonEmpty IdBinding)) m a }
-  deriving (Functor, Applicative, Monad, MonadTrans, MonadFail, MonadState (M.Map Var (NonEmpty IdBinding)))
+newtype LinearCoreT m a = LinearCoreT { unLC :: RWST Bool [Var] (M.Map Var (NonEmpty IdBinding)) (ExceptT String m) a }
+  deriving (Functor, Applicative, Monad, MonadState (M.Map Var (NonEmpty IdBinding)), MonadError String)
 
-runLinearCoreT :: (MonadError e m, IsString e) => M.Map Var IdBinding -> LinearCoreT m a -> m a
-runLinearCoreT s comp = do
+instance Monad m => MonadFail (LinearCoreT m) where
+  fail = throwError
+
+runLinearCoreT :: Monad m => M.Map Var IdBinding -> LinearCoreT m a -> m (Either String a)
+runLinearCoreT s comp = runExceptT $ do
   (a, renv, _unrestrictedUsed) <- runRWST (unLC comp) False (M.map (:| []) s)
   if M.null $ M.filter (all isBindingLinear) renv
     then return a
@@ -76,46 +79,47 @@ runLinearCoreT s comp = do
 
 -- | Uses a resource from the environment, making it unavailable in subsequent computations if it was/consumed a linear resource.
 -- If the key doesn't exist, no resources are consumed
---
+use :: Monad m => Var -> LinearCoreT m ()
+use = flip use' Nothing where
 -- The variable being used might be associated to a tag, in which case we must ensure the resources are split before consumed
 -- * The variable will be paired with a tag only in the usage environment of case pattern variables (we recursively invoke this function for usage envs, and that's when the tag exists)
 -- * To model this, we receive an explicit multiplicity that the variable should have as an argument
 -- * And try to instance a var with the requested multiplicity if it exists, or split a linear variable into multiple tagged vars otherwise
-use :: (MonadError e m, IsString e) => Var -> Maybe Mult -> LinearCoreT m ()
-use key _    | isGlobalId key = pure () -- See Note [GlobalId/LocalId]
-use key mmult = LinearCoreT do
-  shouldRecord <- ask
-  when shouldRecord $ tell [key]
-  mv <- gets (M.lookup key)
-  case mv of
-    Nothing -> throwError $ fromString $ "Tried to use a linear resource " <> showPprUnsafe key <> " a second time! (Or is it a variable not in scope?)"
-    Just ( (LambdaBound mult) :|  )
-      | isLinear mult -> do -- isLinear looks through tags
-        modify (M.delete key)
-        case mmult of
-          Nothing -> return ()
-          Just mmult -> return ()
-            -- This variable is likely tagged, so either the variable is
-            -- available tagged in the environment, or we have to split the
-            -- linear variable
-            -- if mmult == mult
-            --    then -- hmmm, this Map business is a bit fishy. Maybe the tag should be a property of the variable rather than mult.
-               -- how can we have multiple vars with the same name?
-      | otherwise -> do
-        -- If it's an unrestricted variable, we don't remove it from the
-        -- environment because it can still be used.
-        -- We don't split it either or look at the tag. We don't have to care
-        -- because it's unrestricted.
-        return ()
-    Just ( DeltaBound (UsageEnv env):|[] )-> do
-      -- Record the usage of the delta bound var, but not the usages of the
-      -- underlying vars
-      local (const False) $
-        mapM_ (unLC . go) env
-          where
-            go (v, Tagged t m) = use v (Just (Tagged t m))
-            go (v, _) = use v Nothing
-    Just ( DeltaBound _:|_ ) -> error "impossible, shouldn't happen"
+  use' :: Monad m => Var -> Maybe Mult -> LinearCoreT m ()
+  use' key _    | isGlobalId key = pure () -- See Note [GlobalId/LocalId]
+  use' key mmult = LinearCoreT do
+    shouldRecord <- ask
+    when shouldRecord $ tell [key]
+    mv <- gets (M.lookup key)
+    case mv of
+      Nothing -> throwError $ fromString $ "Tried to use a linear resource " <> showPprUnsafe key <> " a second time! (Or is it a variable not in scope?)"
+      Just ( (LambdaBound mult) :| )
+        | isLinear mult -> do -- isLinear looks through tags
+          modify (M.delete key)
+          case mmult of
+            Nothing -> return ()
+            Just mmult -> return ()
+              -- This variable is likely tagged, so either the variable is
+              -- available tagged in the environment, or we have to split the
+              -- linear variable
+              -- if mmult == mult
+              --    then -- hmmm, this Map business is a bit fishy. Maybe the tag should be a property of the variable rather than mult.
+                 -- how can we have multiple vars with the same name?
+        | otherwise -> do
+          -- If it's an unrestricted variable, we don't remove it from the
+          -- environment because it can still be used.
+          -- We don't split it either or look at the tag. We don't have to care
+          -- because it's unrestricted.
+          return ()
+      Just ( DeltaBound (UsageEnv env):|[] )-> do
+        -- Record the usage of the delta bound var, but not the usages of the
+        -- underlying vars
+        local (const False) $
+          mapM_ (unLC . go) env
+            where
+              go (v, Tagged t m) = use' v (Just (Tagged t m))
+              go (v, _) = use' v Nothing
+      Just ( DeltaBound _:|_ ) -> error "impossible, shouldn't happen"
 
 
 -- | Extend a computation that threads linear resources with a resource that
@@ -125,7 +129,7 @@ use key mmult = LinearCoreT do
 -- If the resource escapes the given computation, the resulting computation fails.
 --
 -- If the resource was already in the context it also fails.
-extend :: (MonadError e m, IsString e)
+extend :: Monad m
        => Var -> IdBinding -> LinearCoreT m a -> LinearCoreT m a
 extend key value computation = LinearCoreT do
   gets (M.lookup key) >>= \case
@@ -149,12 +153,12 @@ extend key value computation = LinearCoreT do
     wasConsumed x = gets $ (M.lookup x)
 
 -- | 'extend' multiple variables
-extends :: (MonadError e m, IsString e) => [(Var, IdBinding)] -> LinearCoreT m a -> LinearCoreT m a
+extends :: Monad m => [(Var, IdBinding)] -> LinearCoreT m a -> LinearCoreT m a
 extends [] comp = comp
 extends ((v,b):bs) comp = extend v b $ extends bs comp
 
 -- | 'drop' resources listed in a usage environment from the available resources in the computation
-drop :: (MonadError e m, IsString e) => UsageEnv -> LinearCoreT m a -> LinearCoreT m a
+drop :: Monad m => UsageEnv -> LinearCoreT m a -> LinearCoreT m a
 drop (UsageEnv env) comp = do
   prev <- LinearCoreT get
   -- Remove (don't consume!) resources ocurring in the given usage env from the available resources, then run the computation
@@ -169,7 +173,7 @@ drop (UsageEnv env) comp = do
 -- resources are not the same).
 --
 -- That is, run a computation that does not use linear resources (i.e. an unrestricted computation)
-unrestricted :: (MonadError e m, IsString e) => LinearCoreT m a -> LinearCoreT m a
+unrestricted :: Monad m => LinearCoreT m a -> LinearCoreT m a
 unrestricted computation = LinearCoreT do
   prev <- get
   result <- unLC computation
@@ -185,7 +189,7 @@ unrestricted computation = LinearCoreT do
 -- In practice, however, we record all resources that were used together with
 -- their multiplicity. This is needed if we want to compute the recursive usage
 -- environments for a group of recursive lets
-record :: (MonadError e m, IsString e) => LinearCoreT m a -> LinearCoreT m (a, UsageEnv)
+record :: Monad m => LinearCoreT m a -> LinearCoreT m (a, UsageEnv)
 record computation = LinearCoreT do
   prev :: M.Map Var (NonEmpty IdBinding) <- get
   result <- unLC computation
