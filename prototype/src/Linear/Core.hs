@@ -132,7 +132,7 @@ checkExpr expr = case expr of
       Let <$> pure bind'
           <*> extends (L.map (\(LCVar b (Just d)) -> (b,d)) bs) (checkExpr body)
   Case e b ty alts
-    -- Expression is in WHNF (HNF? See Note [exprIsHNF] and discuss -- seems exactly what we want)
+    -- Expression is in WHNF (See Note [exprIsHNF] and #23771, function is really "exprIsWHNF")
     | exprIsHNF (unconvertExpr e)
     -> do
       (e', ue) <- record $ checkExpr e

@@ -1,24 +1,96 @@
 %include polycode.fmt
 %format ⊸ = "\lolli"
 
-% Needed bc of renewcommand in orders...
-% \input{proof}
-% \input{language-v2/proof}
-% \input{language-v3/proof}
-% % Proof macros for v4
-% \input{language-v4/proof}
+% Needed in order of creation because of the new vs renew commands
+\input{proof}
+\input{language-v2/proof}
+\input{language-v3/proof}
+\input{language-v4/proof}
 
 \chapter{Linear Core}
 
+\begin{itemize}
+
+\item A linear type system statically guarantees that linear resources are consumed
+\emph{exactly once}.
+\item With linear types, programmers can create powerful abstractions that enforce
+certain resources to be used linearly, such as file handles or allocated
+memory.
+
+\item Linear Haskell brings the promises of linear types to the Haskell, and is
+available in the Glasgow Haskell Compiler (GHC) starting from version 9.0.
+
+\item For example: trivial linear haskell program
+
+\item GHC desugars Linear Haskell into an intermediate language called Core, a
+System FC, and then applies multiple so-called Core-to-Core optimising
+transformations in succession.
+
+\item For example: some simple inlining
+
+\item Linear functions are likewise optimised by the compiler but, crucially,
+the optimisations must preserve linearity! It would indeed be disastrous if the
+compiler discarded or duplicated resources such as a file handle or some allocated memory.
+
+\item From the above example, consider |x| linear. It might seem as though |x|
+is being used twice, but since Core's evaluation strategy is call-by-need, we
+will only evaluate the let when the value is required, and since after
+optimisation it is never used, we'll never compute the value and thus never use the resource
+
+\item In essence, in a lazy language such as Haskell, there's a mismatch
+between syntactic and semantic linearity, with the former referring to
+syntactic occurrences of a linear resource in the program text, and the latter
+to whether the program consumes the resource exactly once in a semantic sense,
+accounting for the evaluation strategy such as in the let example above.
+
+\item The problem: Core is not aware of this. Its linear type system is still
+very naive, in that it doesn't understand semantic linearity, and will reject
+most transformed linear programs, since often transformations turn programs
+that are syntactically linear to programs that are only semantically linear.
+
+\item Despite using Core's type system to validate the implementation
+of the optimising transformations preserve types (and all their combinations),
+we don't use the Core's linear type system to validate whether the
+optimisations and their implementation preserves \emph{linearity}. We
+only \emph{think} that the current optimisations preserve linearity, but we
+don't check it.
+
+\item Understanding semantic linearity isn't trivial, and, in fact, we aren't
+aware of any linear type system that accounts for non-strict evaluation
+semantics besides our own.
+
+\item We develop a linear type system for Core that understands semantic
+linearity. We prove the usual preservation and progress theorems with it, and
+then prove that multiple optimisations preserve types With it, we can accept
+all intermediate programs GHC produces while applying Core-to-core optimising
+transformations.
+
+\item We implemented a GHC plugin that validates every Core program produced by
+the optimising pipeline using our type system
+
+\item Contributions (ref section for each):
+\begin{itemize}
+\item We explain and build intuition for semantic linearity in Core programs by example
+\item We present a linear type system for call-by-need Core which understands
+all axis of semantic linearity we previously exposed; and we prove type
+safety of that system
+\item We prove that multiple Core-to-core optimising transformations preserve linearity +
+types under the type system; and discuss 
+\item We develop a GHC plugin that checks all intermediate Core programs using
+our type system
+\end{itemize}
+
+\end{itemize}
+
 \todo[inline]{This is the Introduction. We should start elsewhere}
+
+\todo[inline]{The introduction needs a lot of motivation!}
 
 \todo[inline]{
     Inicío deve motivar o leitor, e temos de explicar qual é o problema da
     linearidade sintatica em Haskell (vs semantica), e a interação disso com o
     call-by-need/lazy evaluation. Quase como se fosse um paper.
 }
-
-\todo[inline]{Syntatic vs semantic linearity. Various examples}
 
 \todo[inline]{Interação de linearity com a call-by-need/laziness}
 
@@ -263,22 +335,19 @@ language's evaluation strategy.
 %
 We turn our focus to \emph{linearity} under \emph{call-by-need}, not only
 because GHC Core is \emph{call-by-need}, but also because the distinction between
-semantically and syntactically consuming a resource only arises under non-strict semantics.
+semantically and syntactically consuming a resource is only exposed under non-strict semantics.
 %
 Indeed, under \emph{call-by-value}, syntactic occurrences of a linear resource
 directly correspond to semantically using that resource\todo{with the exception
 of trivial aliases, maybe not worth mentioning} because \emph{all}
 expressions are eagerly evaluated -- if all computations are eagerly run, all
-linear resources required by computations are \emph{eagerly consumed}.
+linear resources required by computations are \emph{eagerly consumed}.\todo{Better connection with next section?}
 
 \todo[inline]{Não adoro esta secção, parece desconexa, apesar de ser um ponto
 fundamental. Acho que tudo à volta precisa de ajudar a empurrar isto.}
 
-\todo[inline]{Re-read little section about linearity and strictness in Linear Haskell}
-
-\todo[inline]{give some call-by-value examples and say how it is probably exactly syntactic linearity}
-
-\todo[inline]{I dislike the current connection between this end and the beginning of the next subsection.}
+\todo[inline]{give some call-by-value examples and say how it is probably
+exactly syntactic linearity? Perhaps in the beginning of the next section we could mark it as green}
 
 \subsection{Semantic Linearity by Example\label{sec:semantic-linearity-examples}}
 
@@ -299,7 +368,8 @@ A \colorbox{noway}{\nowaycolorname} background indicates that the program
 simply isn't linear, not even semantically, i.e. the program effectively
 discards or duplicates linear resources.
 
-We start our discussion with non-strict let bindings, i.e. let bindings whose
+\subsubsection{Let bindings}
+We start our discussion with non-strict (non-recursive) let bindings, i.e. let bindings whose
 body is evaluated only when the binding is needed, rather than when declared.
 In Core, a let binding entails the creation of a \emph{thunk} that suspends the
 evaluation of the let body (for background, see
@@ -313,7 +383,8 @@ In a linear type system, a non-strict let binding that depends on a linear
 resource |x| doesn't consume the resource as long as the binding isn't
 evaluated -- the suspended computation only uses the resource if it is run. For
 this reason, we can't naively tell whether |x| is consumed just by looking at
-the let body. In the following example, we assign a computation that the resource |x| to a binder which is then returned:
+the let binding body. In the following example, we assign a computation that
+depends on the resource |x| to a binder, which is then returned:
 %
 \begin{notyet}
 \begin{code}
@@ -344,7 +415,7 @@ program should typecheck in Linear Haskell, it is rejected by GHC.
 
 The next example exposes the case in which the let binder is ignored in the let
 body. Here, the linear resource |x| is used in |y|'s body and in the let
-body, however, the resource is still used linearly (semantically) because |y| isn't used at all.
+body, however, the resource is still used linearly semantically because |y| isn't used at all, thus |x| is consumed just once in the let body:
 %
 \begin{notyet}
 \begin{code}
@@ -358,13 +429,13 @@ f2 use x =
 Programmers don't often write bindings that are completely unused, yet, an
 optimising compiler will produce intermediate\footnote{Unused bindings are then
 also dropped by the optimising compiler} programs with unused bindings
-due to transformations such as inlining, which can substitute out occurrences
+from transformations such as inlining, which can substitute out occurrences
 of the binder (e.g. |y| is inlined in the let body).
 
 Let bindings can also go unused if they are defined before branching on case
 alternatives. At runtime, depending on the branch taken, the let binding will
 be evaluated only if it occurs in that branch.
-Both optimising transformations (float-out), and programmers, can produce
+Both optimising transformations (float-out), and programmers used to non-strict evaluation, can produce
 programs with bindings that are selectively used in the case alternatives, for
 instance:
 %
@@ -386,12 +457,12 @@ alternatives, directly or indirectly.
 
 Shifting our focus from not using a let binding to using it (more than once),
 we reiterate that a let binding creates a \emph{thunk} which is only evaluated
-once, and re-used subsequently. Despite linear resources in the binder body
-just being used to compute a result once, we can only consume the result of the
-computation once; perhaps surprisingly, as the perception so far is ``resources
-are consumed during computation'', and multiple uses of the same let binder
-share the result that was computed only once. In short, the following program
-must \emph{not} typecheck:
+once, and re-used subsequently. Despite the binder body only being evaluated
+once, and thus its resources only used once to compute a result, we can still
+only consume said result of the computation once -- perhaps surprisingly, as the
+perception so far is that ``resources are consumed during computation'' and
+multiple uses of the same let binder share the result that was computed only
+once. Illustratively, the following program must \emph{not} typecheck:
 %
 \begin{noway}
 \begin{code}
@@ -402,8 +473,8 @@ f4 use x =
 \end{code}
 \end{noway}
 %
-Intuitively, the result of the computation must still be used exactly once,
-despite only being effectively computed once, because the result may still
+Intuitively, the result of the computation must also be used exactly once,
+despite being effectively computed just once, because said result may still
 contain (parts of) the linear resource. The trivial example is |f4| applied to
 |id| -- the result of computing |id x| is |x|, and |x| must definitely not be
 shared! Indeed, if the result of the computation involving the linear resource
@@ -439,8 +510,8 @@ example also violates linearity.
 The examples so far build an intuition for semantic linearity in the presence
 of lazy let bindings. In essence, an unused let binding doesn't consume any
 resources, and a let binding used exactly once consumes its resources exactly
-once. Therefore, let binders depending on linear resources must be used at most
-once (are \emph{affine} in the let body).
+once. Let binders that depend on linear resources must be used *at most
+once* -- let bound variables are \emph{affine} in the let body.
 %
 Moreover, if the let binding ($y$) isn't used in the let body, then the
 resources it depends on ($\ov{x}$) must be used instead -- the binding $y$ is
@@ -449,6 +520,52 @@ linearly, either the binder occurs exactly once $y$, or the resources $\ov{x}$
 do). We'll later see how we can encode this principle of mutual exclusivity
 between let bindings and their dependencies using so called \emph{usage
 environments}, in Section~\ref{sec:usage-environments}.
+
+\subsubsection{Recursive let bindings}
+Secondly, we look into recursive let bindings. For the most part,
+recursive let bindings behave as non-recursive let bindings, i.e. we must use them \emph{at
+most once} because, when evaluated, the linear resources free in the binders
+bodies are consumed. The defining property of a group of mutually recursive let
+bindings is that the binders bound in that group can occur, without restrictions, in
+the bodies of those same binders. The same way that, in a let body, evaluating
+a binding that uses some resource exactly once consumes that resource once,
+using the binding in its own definition also entails using that resource once.
+Consider the following program, that calls a recursive let-bound function
+defined in terms of the linear resource |x| and itself:
+%
+\begin{notyet}
+\begin{code}
+f6 :: Bool -> a ⊸ a
+f6 bool x =
+  let go b
+        = case b of
+           True -> x
+           False -> go (not b)
+  in go bool
+\end{code}
+\end{notyet}
+%
+
+Mutually recursive now
+\begin{notyet}
+\begin{code}
+f7 :: Bool -> a ⊸ a
+f7 bool x =
+  let go1 b
+        = case b of
+           True -> go2 b
+           False -> go1 (not b)
+      go2 b
+        = case b of
+           True -> x
+           False -> go1 b
+  in go1 bool
+\end{code}
+\end{notyet}
+
+\todo[inline]{We need to get a least upper bound of the usage envs}
+
+\subsubsection{Of case expressions}
 
 \begin{code}
 f :: A -o B -o C
@@ -550,15 +667,13 @@ f y = let x = use y
        in case x of z { K a b -> t; K2 w -> w }
 \end{code}
 
-\subsection{Call-by-need lets and cases}
+\subsubsection{Function applications}
+\todo[inline]{unrestricted call-by-name with resources can duplicate the resources, as if it were unsound?}
+We reduce function applications in two distinct ways, call by name (for linear functions) and call by need
 
-\todo[inline]{Não sei se falo nesta secção apenas de avaliação Call by need ou
-se falo já de Core constructs e da forma como eles são avaliados. Se falo de
-WHNF e NF e HNF? já, ou mais tarde $\dots$}
+Foreshadow to issues with reverse binder swap
 
-\todo[inline]{Introduce Haskell Core, talk about when things are consumed?}
-
-\subsection{Generalizing}
+\subsection{Generalizing linearity in function of evaluation}
 
 We propose a generalization of the definition of consuming a resource in terms of evaluation:
 
@@ -580,11 +695,7 @@ definition of consuming resources by evaluation. Something like, if an
 expression is fully evaluated, all linear resources that expression depends on
 to compute a result are consumed, or something...}
   
-\subsection{Leftover}
-
-\todo[inline]{unrestricted call-by-name with resources can duplicate the resources, as if it were unsound?}
-
-\todo[inline]{Quanto é que eu devia falar de call-by-need labmda calculus sem
+\todo[inline]{Quanto é que eu devia falar de call-by-need lambda calculus sem
 cases? não é mt interessante, pq as exps avaliadas sao sempre avaliadas pra
 funcções (e arg) -> (e' arg), e por isso os recursos são todos completamente
 consumidos. A questão de WHNF e assim só aparece mais à frente; mas se calhar serve de começo?}
@@ -592,13 +703,14 @@ consumidos. A questão de WHNF e assim só aparece mais à frente; mas se calhar
 \subsection{Linearity and strictness}
 
 maybe. see also section of the same name in Linear Haskell
+\todo[inline]{Re-read little section about linearity and strictness in Linear Haskell}
 
 \section{Typechecking Linearity in Core}
 
 \todo[inline]{We kind of ignore the multiplicity semiring. We should discuss
 how we don't do ring operations ... but that's kind of wrong.}
 
-In this section, we develop a linear calculus titled \emph{Linear Core} that 
+In this section, we develop a linear calculus $\lambda_\Delta^\pi$, dubbed \emph{Linear Core}, that 
 combines the linearity-in-the-arrow and multiplicity polymorphism introduced by
 Linear Haskell~\cite{linearhaskell} with all the key features from GHC's Core
 language, except for type equality coercions\footnote{We explain a main avenue of
@@ -608,11 +720,12 @@ Specifically, our core calculus is a linear lambda calculus with
 algebraic datatypes, case expressions, recursive let bindings, and multiplicity
 polymorphism.
 
-Linear Core makes precise the various insights discussed in the previous
-section by putting them together in a linear type system for which we prove
-soundness via the common preservation and progress theorems. Crucially, the
-Linear Core type system accepts all the \emph{semantically linear} example
-programs from Section~\ref{sec:semantic-linearity-examples} that Core currently
+Linear Core makes much more precise the various insights discussed in the
+previous section by putting them together in a linear type system for which we
+prove soundness via the usual preservation and progress theorems. Crucially,
+the Linear Core type system accepts all the \emph{semantically linear} example
+programs (highlighted with \colorbox{notyet}{\notyetcolorname})
+from Section~\ref{sec:semantic-linearity-examples}, which Core currently
 rejects.
  
 % We start by introducing the Core-like language, $\dots$ usage environments as a
@@ -657,6 +770,8 @@ that evaluation to WHNF doesn't necessarily consume all resources}
 
 \todo[inline]{Assign usage environments to let-bound variables, trivial usage
 of usage environments (in contrast with case expressions)}
+
+\subsection{Splitting}
 
 \subsection{Case expressions evaluate to WHNF}
 
@@ -703,14 +818,43 @@ own, so we can have a reverse-binder-swap subsection}
 \todo[inline]{We proved soundness of our system...}
 \todo[inline]{The harder cases are for the interesting ones - lets, cases, and case alternatives}
 
-\subsection{Optimisations preserve linearity}
+\input{language-v4/proofs/TypePreservationTheorem}
+
+\input{language-v4/proofs/ProgressTheorem}
+
+\input{language-v4/proofs/LinearSubstitutionLemma}
+
+\input{language-v4/proofs/UnrestrictedSubstitutionLemma}
+
+\input{language-v4/proofs/DeltaSubstitutionLemma}
+ 
+TODO! Substitution of proof-irrelevant linear variables preserves typing. The
+term always remains the same because $x$ cannot occur in any term, however, all
+variables that refer to $x$ in their usage environment must now refer the usage env. of the substitee (e.g. $[x] => [\D]$).
+This seems trivial to see correct, since all occurrences are in environments, so we get some equivalence similar to the one we need for the proof of Alt0.
+
+\begin{lemma}[Substitution of proof-irrelevant linear variables preserves typing]
+If $\judg[\G][\D,\irr{\x}][\d]{e}{\vp}$ and $\judg[\G][\D'][\d']{e'}{\s}$ then $\judg[\G][\D,\irr{\D'}][\subst{\d}{\D'}{x},\d']{e}{\vp}$
+\end{lemma}
+
+TODO: Multiplicity substitution preserves typing lemma
+
+TODO: Canonical forms lemma
+
+TODO: Corollary of $\Delta$-var subst. for $\ov{\Delta}$
+
+TODO: Constructor app typing:
+If $\Gamma, \Delta \vdash K~\ov{e}$ and $K{:}\ov{\sigma\to\pi}~T~\ov{p} \in \Gamma$ and $\hasnolinearvars{\Gamma}$
+then $\ov{\Gamma, \Delta_i \vdash e_i : \sigma_i}$
+
+\subsection{Core-to-Core optimisations preserve linearity}
+
+\todo[inline]{We proved multiple optimizing transformations preserve linearity}
 
 \subsubsection{Inlining}
 
 To the best of our knowledge, there is no linear type system for which inlining
 preserves linearity\footnote{https://github.com/ghc-proposals/ghc-proposals/blob/master/proposals/0111-linear-types.rst\#id90}
-
-\todo[inline]{We proved multiple optimizing transformations preserve linearity}
 
 \subsubsection{Reverse Binder Swap Considered Harmful}
 
@@ -790,6 +934,6 @@ environments before we can typecheck using them. This is how:}
 
 \todo[inline]{Rather, we define a syntax directed type system that infers usage environments while checking...}
 
-\section{Implementation}
+\chapter{Implementation}
 
 

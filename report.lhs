@@ -67,7 +67,7 @@
 \newcommand{\lletrec}[2]{\mathsf{letrec}~#1~\mathsf{in}~#2}
 \newcommand{\ccase}[2]{\mathsf{case}~#1~\mathsf{of}~#2}
 
-\title{Type-checking Linearity in Core/System FC}
+\title{Type-checking Linearity in Core\\ or: Semantic Linearity for a Lazy Optimising Compiler}
 \author{Rodrigo Mesquita \\ Bernardo Toninho}
 
 
@@ -505,14 +505,14 @@ non-linear programs are deemed linear); DONE (modulo 1)
 
 \include{chapters/c2.tex}
 
-\include{chapters/c3.tex}
-
-% \include{chapters/c4.tex}
-% 
-% \include{chapters/c5.tex}
+%\include{chapters/c3.tex}
 %
-\include{chapters/c6.tex}
-
+%\include{chapters/c4.tex}
+% 
+%\include{chapters/c5.tex}
+%
+%\include{chapters/c6.tex}
+%
 \include{chapters/c7.tex}
 
 \include{chapters/c8.tex}

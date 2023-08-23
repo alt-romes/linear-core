@@ -1,0 +1,11 @@
+Does
+
+f b x =
+  let y = case b of
+            True -> x
+            False -> ()
+  in y
+
+typecheck?
+
+No, because the resources used in the case alternatives differ
