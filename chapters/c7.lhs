@@ -510,11 +510,11 @@ example also violates linearity.
 The examples so far build an intuition for semantic linearity in the presence
 of lazy let bindings. In essence, an unused let binding doesn't consume any
 resources, and a let binding used exactly once consumes its resources exactly
-once. Let binders that depend on linear resources must be used *at most
-once* -- let bound variables are \emph{affine} in the let body.
+once. Let binders that depend on linear resources must be used \emph{at most
+once} -- let bound variables are \emph{affine} in the let body.
 %
 Moreover, if the let binding ($y$) isn't used in the let body, then the
-resources it depends on ($\ov{x}$) must be used instead -- the binding $y$ is
+resources it depends on ($\ov{x}$) must still be used -- the binding $y$ is
 mutually exclusive with the resources $\ov{x}$ (for the resources to be used
 linearly, either the binder occurs exactly once $y$, or the resources $\ov{x}$
 do). We'll later see how we can encode this principle of mutual exclusivity
@@ -545,20 +545,98 @@ f6 bool x =
 \end{code}
 \end{notyet}
 %
-Function |f6| is a linear because it uses |x| exactly once. To understand
-linearity here, one must think of the recursive call as eventually consuming
-all linear resources. By case analysis on the example,
+Function |f6| is semantically linear because, iff it is consumed exactly once,
+then |x| is consumed exactly once. We can see this by case analysis on |go|'s argument
 \begin{itemize}
-\item
+\item When |bool| is |True|, we'll use the resource |x|
+\item When |bool| is |False|, we recurse by calling |go| on |True|, which in turn will use the resource |x|.
 \end{itemize}
+In |go|'s body, |x| is used directly in one branch and indirectly in the
+other, by recursively calling |go| (which we know will result in using |x|
+linearly).\todo{this bit is quite hard to explain. It is some sort of cyclic
+argument -- we kind of assume go uses x linearly s.t. when go itself is used
+then we're using x linearly. recursion...}
+%
+It so happens that |go| will terminate on any input, and will always consume
+|x|. However, termination is not a requirement for a binding to use |x| linearly,
+and we could have a similar example in which |go| might never terminate but still
+uses |x| linearly if evaluated:
+%
+\begin{notyet}
+\begin{code}
+f7 :: Bool -> a ⊸ a
+f7 bool x =
+  let go b
+        = case b of
+           True -> x
+           False -> go b
+  in go bool
+\end{code}
+\end{notyet}
+%
+The key to linearity in the presence of non-termination is Linear Haskell's
+definition of a linear function: \emph{if a linear function application (|f u|) is
+consumed exactly once, then the argument (|u|) is consumed exactly once}.
+If |f u| doesn't terminate, it is never consumed, thus the claim holds
+vacuously; that's why |f8| typechecks:
+\begin{working}
+\begin{code}
+f8 :: a ⊸ b
+f8 x = f8 x
+\end{code}
+\end{working}
+%
+If |go| doesn't terminate, we aren't able to compute (nor consume) the result
+of |f7|, so we do not promise anything about |x| being consumed (|f7|'s
+linearity holds trivially). If it did terminate, it would consume |x| exactly
+once (e.g. if |go| was applied to |True|).
 
-The key to understanding linearity in recursive let bindings is to think of the
-recursive calls as potentially using all linear resources that occur 
+Determining the linear resources used in a recursive binding might feel
+peculiar since we need to know the linear resources used by the binder to determine the linear resources it uses.
+%
+The paradoxical definition is difficult to grasp, just how learning that a
+function can be defined in terms of itself is perplexing when one is first
+introduced to general recursion.
+%
+Informally, we \emph{assume} the binding will consume some linear resources
+exactly once, and use that assumption when reasoning about recursive calls such
+that those linear resources are used exactly once.
 
+%This high-level reasoning isn't amenable for a computer that must check
+%whether the program is linear.
+
+Generalizing, we need to find a set of linear resources ($\Delta$) that satisfies the recursive equation
+\todo{unclear?}
+\footnote{This set of resources will basically be the least upper bound of the sets of resources used in each
+mutually recursive binding scaled by the times each binding was used}
+\todo{this footnote might not be correct}
+arising from given binding $x$, such that:
+\begin{enumerate}
+\item Occurrences of $x$ in its own body are synonymous with using all resources in $\Delta$ exactly once,
+\item And if the binding $x$ is fully evaluated, then all resources in $\Delta$ are consumed exactly once
+\end{enumerate}
+Finding a solution to this equation is akin to finding a (principle) type for a
+recursive binding: the binding needs to be given a type such that occurrences of
+that binding in its own body typecheck using that type.
+%
+Foreshadowing, the core system we developed assumes recursive let bindings to
+be annotated with a set of resources satisfying the equations; but we also
+present an algorithm to determine this solution, and distinguish between an
+\emph{inference} and a \emph{checking} phase, where we first determine the
+linear resources used by a group of recursive bindings and only then check
+whether the binding is linear, in our implementation of checking of recursive
+lets.\todo{We might not need the inferrence phase, somehow. Anyhow it seems like our inferrence is not really about determining a solution but more about determining how many times each thing gets used}
+
+There might not be a solution to the set of equations. In this case, the
+binding undoubtedly entails using a linear resource more than once. For
+example, if we use a linear resource |x| in one case alternative, and invoke
+the recursive call more than once, we might eventually consume |x| more than
+once:
+%
 \begin{noway}
 \begin{code}
-f6 :: Bool -> Bool ⊸ Bool
-f6 bool x =
+f9 :: Bool -> Bool ⊸ Bool
+f9 bool x =
   let go b
         = case b of
            True -> x
@@ -566,12 +644,16 @@ f6 bool x =
   in go bool
 \end{code}
 \end{noway}
+Note that if returned |x| instead of |go bool| in the let body, then, despite
+the binding using |x| more than once, we would still consume |x| exactly once,
+since recursive bindings are still lazy.
 
-Mutually recursive now
+Lastly, we extend our single-binding running example to use two mutually recursive bindings that
+depend a linear resource:
 \begin{notyet}
 \begin{code}
-f7 :: Bool -> a ⊸ a
-f7 bool x =
+f10 :: Bool -> a ⊸ a
+f10 bool x =
   let go1 b
         = case b of
            True -> go2 b
@@ -583,8 +665,26 @@ f7 bool x =
   in go1 bool
 \end{code}
 \end{notyet}
+As before, we must find a solution to the set of equations defined by the
+mutually recursive bindings to determine which resources will be consumed.
+In this case, |go1| and |go2| both consume |x| exactly once if evaluated.
+We additionally note that a strongly connected group of recursive bindings
+(i.e. all bindings are transitively reachable from any of them) will always
+consume the same set of resources -- if all bindings are potentially reachable,
+then all linear resources are too.
 
-\todo[inline]{We need to get a least upper bound of the usage envs}
+\parawith{Summary}
+Recursive let bindings behave like non-recursive let bindings in that if they
+aren't consumed, the resources they depend on aren't consumed either.  However,
+recursive let bindings are defined in terms of themselves, so the set of linear
+resources that will be consumed when the binder is evaluated is also defined in
+terms of itself (we need it to determine what resources are used when we
+recurse). We can intuitively think of this set of linear resources that will be
+consumed as a solution to a set of equations defined by a group of mutually
+recursive bindings, which we are able to reason about without an algorithm for
+simpler programs. In our work, the core type system isn't concerned with
+deriving said solution, but we present a simple algorithm for inferring with
+our implementation.
 
 \subsubsection{Of case expressions}
 

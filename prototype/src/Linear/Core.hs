@@ -96,6 +96,11 @@ checkBind (Rec bs) = do
   let (ids,rhss) = unzip bs
   inScope <- get
   -- The extended expressions will use the empty usage environment for the delta variables.
+  -- ROMES:TODO: This will fail because some linear resources will occur in one
+  -- branch and the recursive call in the others instead of the linear
+  -- resources, but currently we typecheck the recursive calls using an empty
+  -- delta environment, meaning the computations will fail to be linear
+  -- Perhaps we should really have a separate inferrence pass?.
   (rhss', naiveUsages) <- unzip <$> extends (L.map (\(LCVar b (Just d)) -> (b,d)) ids)
                                             (traverse (recordAll . checkExpr) rhss)
   let recUsages = computeRecUsageEnvs (zip (L.map (.id) ids) naiveUsages)
