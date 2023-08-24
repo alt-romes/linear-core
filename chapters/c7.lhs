@@ -398,7 +398,7 @@ f1 use x =
 The linear resource |x| is used exactly once, since it is used exactly once in
 the body of the binding and the binding is used exactly once in the let body.
 %
-According to Linear Haskell's core calculus ~$\lambda_{\to}^{Q}$~\cite{cite:linear-haskell}, let
+According to Linear Haskell's core calculus ~$\lambda_{\to}^{q}$~\cite{cite:linear-haskell}, let
 bound variables are annotated with a multiplicity which is multiplied (as per
 the multiplicities semiring) with the multiplicities of the variables that are
 free in the binder's body.
@@ -522,9 +522,9 @@ between let bindings and their dependencies using so called \emph{usage
 environments}, in Section~\ref{sec:usage-environments}.
 
 \subsubsection{Recursive let bindings}
-Secondly, we look into recursive let bindings. For the most part,
+Second, we look into recursive let bindings. For the most part,
 recursive let bindings behave as non-recursive let bindings, i.e. we must use them \emph{at
-most once} because, when evaluated, the linear resources free in the binders
+most once} because, when evaluated, the linear resources used in the binders
 bodies are consumed. The defining property of a group of mutually recursive let
 bindings is that the binders bound in that group can occur, without restrictions, in
 the bodies of those same binders. The same way that, in a let body, evaluating
@@ -545,6 +545,27 @@ f6 bool x =
 \end{code}
 \end{notyet}
 %
+Function |f6| is a linear because it uses |x| exactly once. To understand
+linearity here, one must think of the recursive call as eventually consuming
+all linear resources. By case analysis on the example,
+\begin{itemize}
+\item
+\end{itemize}
+
+The key to understanding linearity in recursive let bindings is to think of the
+recursive calls as potentially using all linear resources that occur 
+
+\begin{noway}
+\begin{code}
+f6 :: Bool -> Bool ⊸ Bool
+f6 bool x =
+  let go b
+        = case b of
+           True -> x
+           False -> go (not b) && go True
+  in go bool
+\end{code}
+\end{noway}
 
 Mutually recursive now
 \begin{notyet}
@@ -770,8 +791,7 @@ that evaluation to WHNF doesn't necessarily consume all resources}
 
 \todo[inline]{Assign usage environments to let-bound variables, trivial usage
 of usage environments (in contrast with case expressions)}
-
-\subsection{Splitting}
+\subsubsection{Recursive let bindings}
 
 \subsection{Case expressions evaluate to WHNF}
 
@@ -807,6 +827,8 @@ rules, one that fires when the scrutinee is in WHNF, the other when it isn't.}
 
 \todo[inline]{The case binder and pattern variables will consume the scrutinee
 resources, be those irrelevant or relevant resources}
+
+\subsubsection{Splitting}
 
 \section{Metatheory}
 
