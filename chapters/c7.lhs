@@ -706,28 +706,44 @@ our implementation.
 
 \subsubsection{Case expressions}
 
-Case expressions are the last major piece to understand linearity in Core
-because \emph{case expressions drive evaluation}. Up until now, the
-example linear functions have always transformed the linear resource, but never
-\emph{fully consumed} the resource in its body. In other words, all example functions
-so far returned a value that had to be itself fully consumed to ensure the linear
-argument was in turn consumed -- as opposed to functions whose application
-simply needs to be evaluated to guarantee its linear argument is consumed
-(functions that return an unrestricted value).
+Finally, we discuss semantic linearity for case expressions, which have been
+purposefully left for last as the key ingredient that brings together the
+semantic linearity insights developed thus far. Essentially,
+\emph{case expressions drive evaluation} and, as we've seen, semantic
+linearity can only be understood in function of how expressions are evaluated.
+
+Up until now, the example linear functions have always linearly transformed
+linear resources, taking into careful consideration how things will be
+evaluated (and thus consumed) to determine if resources are being used
+linearly. However, there have been no examples in which linear resources are
+\emph{fully consumed} in the bodies of linear functions. In other words, all
+example functions so far return a value that has to be itself consumed exactly
+once to ensure the linear argument is, in turn, consumed exactly once -- as
+opposed to functions whose application simply needs to be evaluated to
+guarantee its linear argument is consumed (functions that return an
+unrestricted value).
 %
-The latter are of particular relevance for linearly-typed abstractions, for
-example, to give as an argument to the function driving the linear array API presented in Linear Haskell:
+%The latter are of particular relevance because linearly-typed abstractions
+%usually require such a function to provide newly-created linear resources to.
+%
+For example, the entry point to the linear array API presented in Linear
+Haskell takes such a function as its second argument:
 \begin{working}
 \begin{code}
 newMArray :: Int -> (MArray a ⊸ Unrestricted b) ⊸ b
 \end{code}
 \end{working}
-Note how the second argument is a function that consumes |MArray a| linearly
-and returns an unrestricted result -- we don't need to consume said result
-exactly once to guarantee that |MArray a| is used linearly in the function
-body.
+%(The second argument is a function that consumes |MArray a| linearly
+%and returns an unrestricted result -- we don't need to consume said result
+%exactly once to guarantee that |MArray a| is used linearly in the function
+%body.)
 
-We review the definition of \emph{consuming a resource} from Linear Haskell:
+% ROMES:TODO: Há qualquer coisa que não gosto nada! na coerência deste paragrafo
+
+In short, case expressions enable us to consume resources and thus write
+functions that fully consume their linear arguments. To understand exactly how,
+we turn to the definition of \emph{consuming} a resource from Linear
+Haskell~\cite{cite:linearhaskell}:
 \begin{itemize}
     \item To consume a value of atomic base type (such as~\texttt{Int} or
         \texttt{Ptr}) exactly once, just evaluate~it.
@@ -735,29 +751,72 @@ We review the definition of \emph{consuming a resource} from Linear Haskell:
         and consume its result exactly once.
     \item To consume a value of an algebraic datatype exactly once,
         pattern-match on it, and consume all its linear components exactly once.
-        For example, a linear pair (equivalent to $\tensor$) is consumed exactly
-        once if pattern-matched on \emph{and} both the first and second element are
-        consumed once.
+        % For example, a linear pair (equivalent to $\tensor$) is consumed exactly
+        % once if pattern-matched on \emph{and} both the first and second element are
+        % consumed once.
 \end{itemize}
+That is, we can consume a linear resource by fully evaluating it; and it so
+happens that, again, case expressions drive evaluation. In section
+\ref{sec:generalizing-evaluation-consuming} we generalize the idea that
+consuming a resource is deeply tied to evaluation. Here, we continue building
+intuition for semantic linearity, first reviewing how case expressions evaluate
+expressions, and then exploring how they consume resources, by way of example.
 
+In Core, case expressions are of the form $\ccase{e_s}{z~\{\ov{\rho_i \to e_i}\}}$,
+where $e_s$ is the case \emph{scrutinee}, $z$ is the case \emph{binder}, and
+$\ov{\rho_i \to e_i}$ are the case \emph{alternatives}, composed of a pattern
+$\rho_i$ and of the corresponding expression $e_i$. Critically:
+\begin{enumerate}
+\item The case scrutinee is always evaluated to Weak Head Normal Form (WHNF).
 
-i.e., we haven't defined a linear
-function that consumes its argument and returns an unrestricted value.
+\item Evaluating to WHNF an expression that is already in WHNF is a no-op, that is,
+no computation whatsoever occurs, unlike evaluating a e.g. function application.
 
-returned an expression that used all 
-resources linearly (i.e. exactly once, in a semantic sense),
-but never one that actually \emph{consumed} the resource in its body.
+\item The case binder is an alias to the result of evaluating the scrutinee to WHNF.
 
-Turning to the definition of \emph{consuming a resource} given by Linear
-Haskell, which was reviewed at the start of this section, we find that
-\emph{evaluation} underlies 
+\item The alternative patterns are always exhaustive, i.e. there always exists
+a pattern that matches the WHNF of a value resulting from evaluating the
+scrutinee, where a pattern is either a wildcard that matches all expressions
+($\_$), or a constructor and its linear and non-linear component binders
+($K~\ov{x}\ov{y}$, with $\ov{x}$ as linearly-bound variables and $\ov{y}$ as
+unrestricted ones).
 
-\emph{Consuming exactly once} the result of applying the linear functions seen
-so far to linear resources \emph{consumes exactly once} those resources.
+\end{enumerate}
 
-In other words, to define a function |consume :: Handle ⊸ ()|, the constructs
-we've studied so far. We turn once again to the definition of consuming a
-resource from Linear Haskell...
+\parawith{WHNF} An expression is in Weak Head Normal Form when 
+
+% DELETE ME IN THE NEXT COMMIT; JUST FUN HOW HARD THIS SECTION WAS TO GET STARTED
+% the discussion so far has provided insights into how we can
+% \emph{manipulate} linear resources, in function of the evaluation strategy, 
+% 
+% In that sense, case expressions are the only Core construct that can
+% effectively consume linear resources
+% 
+% By introducing case expressions we unlock all the examples that make consuming a resource possible...
+% 
+% To complete the picture of semantic linearity in Core, 
+% Case expressions are the key to fully consuming resources because \emph{case
+% expressions drive evaluation}.
+% 
+% It becomes clear that we can 
+% 
+% i.e., we haven't defined a linear
+% function that consumes its argument and returns an unrestricted value.
+% 
+% returned an expression that used all 
+% resources linearly (i.e. exactly once, in a semantic sense),
+% but never one that actually \emph{consumed} the resource in its body.
+% 
+% Turning to the definition of \emph{consuming a resource} given by Linear
+% Haskell, which was reviewed at the start of this section, we find that
+% \emph{evaluation} underlies 
+% 
+% \emph{Consuming exactly once} the result of applying the linear functions seen
+% so far to linear resources \emph{consumes exactly once} those resources.
+% 
+% In other words, to define a function |consume :: Handle ⊸ ()|, the constructs
+% we've studied so far. We turn once again to the definition of consuming a
+% resource from Linear Haskell...
 
 \begin{code}
 f :: A -o B -o C
@@ -871,9 +930,10 @@ f y = let x = use y
        in case x of z { K a b -> t; K2 w -> w }
 \end{code}
 
-\subsection{Generalizing linearity in function of evaluation}
+\subsection{Generalizing linearity in function of evaluation\label{sec:generalizing-evaluation-consuming}}
 
-We propose a generalization of the definition of consuming a resource in terms of evaluation:
+Indeed, as hinted towards in the previous section, there's a deep connection
+between \emph{evaluation} and \emph{consuming resources}.
 
 Definition X.Y: A linear resource is consumed when it is either fully evaluated
 (NF) to a value, or when it is returned s.t. an application of that function

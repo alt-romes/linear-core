@@ -39,7 +39,7 @@
 % And solves (7) as well because footnotes' line spacing is unaltered
 % TODO: (7) for bibliography and acknoledgments must be set manually?
 % 
-% Nevermind, we use 1 line spacing because 1.5 is horrendous?
+% Nevermind, we use 1 line spacing because 1.5 is horrendous? (commented out)
 % \OnehalfSpacing
 
 % TODO: (3)

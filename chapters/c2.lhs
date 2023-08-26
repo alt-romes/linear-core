@@ -1433,7 +1433,7 @@ f x = let t = expensive x
 Now (expensive x) is computed once, rather than once each time around the 'go' loop..
 
 
-\begin{figure}[t]
+\begin{figure}[ht]
 
 \[
 \begin{array}{lc}
@@ -1454,6 +1454,8 @@ Now (expensive x) is computed once, rather than once each time around the 'go' l
 \caption{Example sequence of transformations}
 \label{fig:eg:transformations}
 \end{figure}
+
+\todo[inline]{Add another example sequence of transformations with the example Simon provided using reverse-binder-swap}
 
 \subsection{Code Generation}
 
