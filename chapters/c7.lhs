@@ -110,137 +110,138 @@ optimising compiler $\dots$}
 
 \todo[inline]{This was the old introduction to chapter 3. I think we can do better}
 
-Since the publication of Linear Haskell~\cite{cite:linearhaskell} and its
-implementation in GHC 9.0, Haskell's type system supports linearity annotations
-in functions. Linear Haskell effectively brings linear types to a mainstream,
-pure, and lazy functional language. Concretely, Haskell function types can be
-annotated with a multiplicity, where a multiplicity of \texttt{1} requires the
-argument to be consumed exactly once and a multiplicity of \texttt{Many} allows
-the function argument to be consumed unrestrictedly, i.e., zero or more times.
-
-% A function is linear if it consumes its arguments exactly once when it itself
-% is consumed exactly once.
-
-As mentioned in Section~\ref{sec:core}, GHC Haskell features two typed
-languages in its pipeline: Haskell and its main intermediate language, Core
+% ROMES:TODO:
+%Since the publication of Linear Haskell~\cite{cite:linearhaskell} and its
+%implementation in GHC 9.0, Haskell's type system supports linearity annotations
+%in functions. Linear Haskell effectively brings linear types to a mainstream,
+%pure, and lazy functional language. Concretely, Haskell function types can be
+%annotated with a multiplicity, where a multiplicity of \texttt{1} requires the
+%argument to be consumed exactly once and a multiplicity of \texttt{Many} allows
+%the function argument to be consumed unrestrictedly, i.e., zero or more times.
 %
-(Core is a much smaller language than the whole of Haskell, even though we can
-compile the whole of Haskell to Core).
+%% A function is linear if it consumes its arguments exactly once when it itself
+%% is consumed exactly once.
 %
-The addition of linear types to
-GHC Haskell required changing the type system of both languages. However,
-Linear Haskell only describes an extension to the surface-level Haskell type
-system, not Core. Nonetheless, in practice, Core is linearity-aware.
-
-We want Core and its type system to give us guarantees about desugaring and
-optimizing transformations with regard to linearity just as Core does for types
--- a linearly typed Core ensures that linearly-typed programs remain correct
-both after desugaring and across all GHC optimizing transformations,
-i.e.~linearity is preserved when desugaring and optimisations should not
-destroy linearity.
-
-% \todo[inline]{Nao e necessario reexplicar o que e o Core, o que e
-%   preciso aqui e explicar que o desugaring tem anotacoes de
-%   linearidade mas que sao ignoradas e explicar porque. Em particular,
-%   algum do texto que esta mais a frente a dizer as variaveis sao
-%   anotadas no Core mas que e tudo ignorado deve ficar claro nesta altura}
-
-% This type
-% checker (called \emph{Lint}) gives us guarantees of correctness in face of all
-% the complex transformations a Haskell program undergoes, such as desugaring and
-% core-to-core optimization passes, because the linter is always run on the resulting code
-% before ultimately being compiled to (untyped) machine code.
-
-% System FC is the formal system in which the implementation of GHC's intermediate
-% representation language \emph{Core} is based on.
-
-
-Core is already annotated with linearity, but its type-checker \textbf{currently ignores linearity annotations}.
+%As mentioned in Section~\ref{sec:core}, GHC Haskell features two typed
+%languages in its pipeline: Haskell and its main intermediate language, Core
+%%
+%(Core is a much smaller language than the whole of Haskell, even though we can
+%compile the whole of Haskell to Core).
+%%
+%The addition of linear types to
+%GHC Haskell required changing the type system of both languages. However,
+%Linear Haskell only describes an extension to the surface-level Haskell type
+%system, not Core. Nonetheless, in practice, Core is linearity-aware.
 %
-In spite of the strong formal foundations of linear types driving the
-implementation, their interaction with the whole of GHC is still far from
-trivial. The implemented type system cannot accomodate several optimising
-transformations that produce programs which violate linearity
-\emph{syntactically} (i.e.~multiple occurrences of linear variables in the
-program text), but ultimately preserve it in a \emph{semantic} sense,
+%We want Core and its type system to give us guarantees about desugaring and
+%optimizing transformations with regard to linearity just as Core does for types
+%-- a linearly typed Core ensures that linearly-typed programs remain correct
+%both after desugaring and across all GHC optimizing transformations,
+%i.e.~linearity is preserved when desugaring and optimisations should not
+%destroy linearity.
 %
-where a linear term is still \emph{consumed exactly once} -- this is compounded
-by lazy evaluation driving a non-trivial mismatch between syntactic and
-semantic linearity.
-
-\todo[inline]{Expand a bit on call-by-need vs call-by-value linearity. How can
-we make this a bigger part of our work and introduction?}
-
-Consider the example in Figure~\ref{fig:first-motivation}, an expression in which
-$y$ and $z$ are variables bound by a $\lambda$-abstraction, and both are
-annotated with a multiplicity of \texttt{1}. Note that let-binding $x$ doesn't
-necessarily consume $y$ and $z$ because of Core's call-by-need semantics.
+%% \todo[inline]{Nao e necessario reexplicar o que e o Core, o que e
+%%   preciso aqui e explicar que o desugaring tem anotacoes de
+%%   linearidade mas que sao ignoradas e explicar porque. Em particular,
+%%   algum do texto que esta mais a frente a dizer as variaveis sao
+%%   anotadas no Core mas que e tudo ignorado deve ficar claro nesta altura}
 %
-\begin{figure}[h]
-  \begin{minipage}[l]{0.49\textwidth}
-    \begin{code}
-    let x = (y, z) in
-    case e of
-      Pat1 -> … x …
-      Pat2 -> … y … z …
-    \end{code}
-  \end{minipage}
-  \begin{minipage}[r]{0.49\textwidth}
-    \caption{Example Inlining}
-  \end{minipage}
-\label{fig:first-motivation}
-\end{figure}
+%% This type
+%% checker (called \emph{Lint}) gives us guarantees of correctness in face of all
+%% the complex transformations a Haskell program undergoes, such as desugaring and
+%% core-to-core optimization passes, because the linter is always run on the resulting code
+%% before ultimately being compiled to (untyped) machine code.
 %
-In the example, it might not seem as though $y$ and $z$ are both being
-consumed linearly but, in fact, they both are. Given that in the first branch
-we use $x$ -- which entails using $y$ and $z$ linearly -- and in the second
-branch we use $y$ and $z$ directly, in both branches we are consuming both $y$
-and $z$ linearly.
-
-% TODO:HELP: Fix links to motivation-2 showing up as links to motivation-1
-Similarly, consider the program in Figure~\ref{fig:second-motivation} with a
-let-binding that uses $x$, a linearly bound $\lambda$-variable. In surface
-level Haskell, let-bindings always consume linear variables \texttt{Many} times
-to avoid dealing with the complexity of call-by-need semantics, so this program
-would not type-check, because $x$ is being consumed \texttt{Many} times instead
-of \texttt{1}.
+%% System FC is the formal system in which the implementation of GHC's intermediate
+%% representation language \emph{Core} is based on.
 %
-\begin{figure}[h]
-  \begin{minipage}[l]{0.49\textwidth}
-    \begin{code}
-    f :: a %1 -> a
-    f x = let y = x+2 in y
-    \end{code}
-  \end{minipage}
-  \begin{minipage}[r]{0.49\textwidth}
-    \caption{Example Let}
-  \end{minipage}
-\label{fig:second-motivation}
-\end{figure}
 %
-Despite not being accepted by the surface-level language, linear programs using
-lets occur naturally in Core due to optimising transformations that create let
-bindings, such as $\beta$-reduction. In a similar fashion, programs which
-violate syntactic linearity for other reasons other than let bindings are
-produced by Core transformations.
-
-% Therefore, the Core linear type-checker rejects various valid programs after
-% desugaring and optimizing transformations, because linearity is seemingly
-% violated.
+%Core is already annotated with linearity, but its type-checker \textbf{currently ignores linearity annotations}.
+%%
+%In spite of the strong formal foundations of linear types driving the
+%implementation, their interaction with the whole of GHC is still far from
+%trivial. The implemented type system cannot accomodate several optimising
+%transformations that produce programs which violate linearity
+%\emph{syntactically} (i.e.~multiple occurrences of linear variables in the
+%program text), but ultimately preserve it in a \emph{semantic} sense,
+%%
+%where a linear term is still \emph{consumed exactly once} -- this is compounded
+%by lazy evaluation driving a non-trivial mismatch between syntactic and
+%semantic linearity.
 %
-The current solution to valid programs being rejected by Core's linear
-type-checker is to effectively disable the linear type-checker since,
-alternatively, disabling optimizing transformations which violate linearity
-incurs significant performance costs.
+%\todo[inline]{Expand a bit on call-by-need vs call-by-value linearity. How can
+%we make this a bigger part of our work and introduction?}
 %
-However, we believe that GHC's transformations are correct, and it is the
-linear type-checker and its underlying type system that cannot sufficiently
-accommodate the resulting programs.
-
-Additionally, some Core-to-Core transformations such as let-floating and
-inlining already depend on custom linear type systems to produce more
-performant programs. Valid linearity annotations in Core could potentially
-inform and define more optimizations.
+%Consider the example in Figure~\ref{fig:first-motivation}, an expression in which
+%$y$ and $z$ are variables bound by a $\lambda$-abstraction, and both are
+%annotated with a multiplicity of \texttt{1}. Note that let-binding $x$ doesn't
+%necessarily consume $y$ and $z$ because of Core's call-by-need semantics.
+%%
+%\begin{figure}[h]
+%  \begin{minipage}[l]{0.49\textwidth}
+%    \begin{code}
+%    let x = (y, z) in
+%    case e of
+%      Pat1 -> … x …
+%      Pat2 -> … y … z …
+%    \end{code}
+%  \end{minipage}
+%  \begin{minipage}[r]{0.49\textwidth}
+%    \caption{Example Inlining}
+%  \end{minipage}
+%\label{fig:first-motivation}
+%\end{figure}
+%%
+%In the example, it might not seem as though $y$ and $z$ are both being
+%consumed linearly but, in fact, they both are. Given that in the first branch
+%we use $x$ -- which entails using $y$ and $z$ linearly -- and in the second
+%branch we use $y$ and $z$ directly, in both branches we are consuming both $y$
+%and $z$ linearly.
+%
+%% TODO:HELP: Fix links to motivation-2 showing up as links to motivation-1
+%Similarly, consider the program in Figure~\ref{fig:second-motivation} with a
+%let-binding that uses $x$, a linearly bound $\lambda$-variable. In surface
+%level Haskell, let-bindings always consume linear variables \texttt{Many} times
+%to avoid dealing with the complexity of call-by-need semantics, so this program
+%would not type-check, because $x$ is being consumed \texttt{Many} times instead
+%of \texttt{1}.
+%%
+%\begin{figure}[h]
+%  \begin{minipage}[l]{0.49\textwidth}
+%    \begin{code}
+%    f :: a %1 -> a
+%    f x = let y = x+2 in y
+%    \end{code}
+%  \end{minipage}
+%  \begin{minipage}[r]{0.49\textwidth}
+%    \caption{Example Let}
+%  \end{minipage}
+%\label{fig:second-motivation}
+%\end{figure}
+%%
+%Despite not being accepted by the surface-level language, linear programs using
+%lets occur naturally in Core due to optimising transformations that create let
+%bindings, such as $\beta$-reduction. In a similar fashion, programs which
+%violate syntactic linearity for other reasons other than let bindings are
+%produced by Core transformations.
+%
+%% Therefore, the Core linear type-checker rejects various valid programs after
+%% desugaring and optimizing transformations, because linearity is seemingly
+%% violated.
+%%
+%The current solution to valid programs being rejected by Core's linear
+%type-checker is to effectively disable the linear type-checker since,
+%alternatively, disabling optimizing transformations which violate linearity
+%incurs significant performance costs.
+%%
+%However, we believe that GHC's transformations are correct, and it is the
+%linear type-checker and its underlying type system that cannot sufficiently
+%accommodate the resulting programs.
+%
+%Additionally, some Core-to-Core transformations such as let-floating and
+%inlining already depend on custom linear type systems to produce more
+%performant programs. Valid linearity annotations in Core could potentially
+%inform and define more optimizations.
 
 \todo[inline]{Continue introduction}
 
@@ -259,7 +260,7 @@ definition of consuming a resource from Linear Haskell).
 
 \section{Linearity, Semantically}
 
-\colorbox{working}{A linear type system} statically guarantees that linear resources are
+A linear type system statically guarantees that linear resources are
 \emph{consumed} exactly once. Consequently, whether a program is well-typed
 under a linear type system intrinsically depends on the precise definition of
 \emph{consuming} a resource. Even though \emph{consuming} a resource is commonly regarded
@@ -294,7 +295,7 @@ of the pseudo-language, the computation that closes the handle might or not be
 evaluated, and if it isn't, the |handle| in that unused computation
 is not consumed.
 %
-Expanding on this, consider above the example program under distinct
+Expanding on this, consider the above example program under distinct
 evaluation strategies:
 %
 \begin{description}
@@ -338,16 +339,24 @@ because GHC Core is \emph{call-by-need}, but also because the distinction betwee
 semantically and syntactically consuming a resource is only exposed under non-strict semantics.
 %
 Indeed, under \emph{call-by-value}, syntactic occurrences of a linear resource
-directly correspond to semantically using that resource\todo{with the exception
-of trivial aliases, maybe not worth mentioning} because \emph{all}
+directly correspond to semantically using that resource\footnote{With the minor exception
+of trivial aliases, which don't entail any computation even in
+\emph{call-by-value}. In theory, we could use in mutual exclusion any of the
+aliases to refer to a resource without loss of linearity} because \emph{all}
 expressions are eagerly evaluated -- if all computations are eagerly run, all
-linear resources required by computations are \emph{eagerly consumed}.\todo{Better connection with next section?}
+linear resources required by computations are \emph{eagerly consumed}.
 
-\todo[inline]{Não adoro esta secção, parece desconexa, apesar de ser um ponto
-fundamental. Acho que tudo à volta precisa de ajudar a empurrar isto.}
-
-\todo[inline]{give some call-by-value examples and say how it is probably
-exactly syntactic linearity? Perhaps in the beginning of the next section we could mark it as green}
+% ROMES:IMPORTANT:TODO:
+% \subsection{Reductions / Function applications}
+% 
+% \todo[inline]{unrestricted call-by-name with resources can duplicate the resources, as if it were unsound?}
+% We reduce function applications in two distinct ways, call by name (for linear
+% functions) and call by need (we've now introduced linear lets, so we can look
+% at this now)
+% 
+% Foreshadow to issues with opt (reverse binder swap)?
+% 
+% Or maybe just drop this section altogether
 
 \subsection{Semantic Linearity by Example\label{sec:semantic-linearity-examples}}
 
@@ -356,7 +365,7 @@ that optimising transformations preserve linearity, and with the secondary goal
 of understanding linearity in a non-strict context, this section helps the
 reader build an intuition for semantic linearity through examples of Core
 programs that are semantically linear but rejected by Core's linear type
-system.\todo{and possibly by examples of transformations}
+system.
 %
 In the examples, a \colorbox{working}{\workingcolorname} background highlights programs that are
 syntactically linear and are accepted by Core's naive linear type system. A
@@ -427,8 +436,8 @@ f2 use x =
 \end{notyet}
 %
 Programmers don't often write bindings that are completely unused, yet, an
-optimising compiler will produce intermediate\footnote{Unused bindings are then
-also dropped by the optimising compiler} programs with unused bindings
+optimising compiler will produce intermediate programs with unused bindings\footnote{Unused bindings are then
+also dropped by the optimising compiler} 
 from transformations such as inlining, which can substitute out occurrences
 of the binder (e.g. |y| is inlined in the let body).
 
@@ -479,7 +488,12 @@ contain (parts of) the linear resource. The trivial example is |f4| applied to
 |id| -- the result of computing |id x| is |x|, and |x| must definitely not be
 shared! Indeed, if the result of the computation involving the linear resource
 was, e.g., an unrestricted integer, then sharing the result would not involve consuming the
-resource more than once.\todo{this kind of hints that maybe somehow in the alternative scrutinizing a "trivial" atom we could make the let binding unrestricted after we were sure it was evaluated once, but that isn't easy without erasing too many things before, we kind of tried this once}
+resource more than once.
+% ROMES:TODO:!!!!
+%\todo{this kind of hints that maybe somehow in the
+%alternative scrutinizing a "trivial" atom we could make the let binding
+%unrestricted after we were sure it was evaluated once, but that isn't easy
+%without erasing too many things before, we kind of tried this once}
 %
 Concretely, the result of evaluating a let binder body using linear resources, if computed, must be
 consumed exactly once, or, otherwise, we risk discarding or duplicating said resources.
@@ -553,9 +567,11 @@ then |x| is consumed exactly once. We can see this by case analysis on |go|'s ar
 \end{itemize}
 In |go|'s body, |x| is used directly in one branch and indirectly in the
 other, by recursively calling |go| (which we know will result in using |x|
-linearly).\todo{this bit is quite hard to explain. It is some sort of cyclic
-argument -- we kind of assume go uses x linearly s.t. when go itself is used
-then we're using x linearly. recursion...}
+linearly).
+% ROMES:TODO:!!
+%\todo{this bit is quite hard to explain. It is some sort of cyclic
+%argument -- we kind of assume go uses x linearly s.t. when go itself is used
+%then we're using x linearly. recursion...}
 %
 It so happens that |go| will terminate on any input, and will always consume
 |x|. However, termination is not a requirement for a binding to use |x| linearly,
@@ -606,10 +622,8 @@ that those linear resources are used exactly once.
 %whether the program is linear.
 
 Generalizing, we need to find a set of linear resources ($\Delta$) that satisfies the recursive equation
-\todo{unclear?}
 \footnote{This set of resources will basically be the least upper bound of the sets of resources used in each
 mutually recursive binding scaled by the times each binding was used}
-\todo{this footnote might not be correct}
 arising from given binding $x$, such that:
 \begin{enumerate}
 \item Occurrences of $x$ in its own body are synonymous with using all resources in $\Delta$ exactly once,
@@ -625,7 +639,11 @@ present an algorithm to determine this solution, and distinguish between an
 \emph{inference} and a \emph{checking} phase, where we first determine the
 linear resources used by a group of recursive bindings and only then check
 whether the binding is linear, in our implementation of checking of recursive
-lets.\todo{We might not need the inferrence phase, somehow. Anyhow it seems like our inferrence is not really about determining a solution but more about determining how many times each thing gets used}
+lets.
+% ROMES:TODO:!!!
+%\todo{We might not need the inferrence phase, somehow. Anyhow it seems like
+%our inferrence is not really about determining a solution but more about
+%determining how many times each thing gets used}
 
 There might not be a solution to the set of equations. In this case, the
 binding undoubtedly entails using a linear resource more than once. For
@@ -646,7 +664,7 @@ f9 bool x =
 \end{noway}
 Note that if returned |x| instead of |go bool| in the let body, then, despite
 the binding using |x| more than once, we would still consume |x| exactly once,
-since recursive bindings are still lazy.
+since recursive bindings are still lazy.\footnote{broken sentence}
 
 Lastly, we extend our single-binding running example to use two mutually recursive bindings that
 depend a linear resource:
@@ -686,7 +704,60 @@ simpler programs. In our work, the core type system isn't concerned with
 deriving said solution, but we present a simple algorithm for inferring with
 our implementation.
 
-\subsubsection{Of case expressions}
+\subsubsection{Case expressions}
+
+Case expressions are the last major piece to understand linearity in Core
+because \emph{case expressions drive evaluation}. Up until now, the
+example linear functions have always transformed the linear resource, but never
+\emph{fully consumed} the resource in its body. In other words, all example functions
+so far returned a value that had to be itself fully consumed to ensure the linear
+argument was in turn consumed -- as opposed to functions whose application
+simply needs to be evaluated to guarantee its linear argument is consumed
+(functions that return an unrestricted value).
+%
+The latter are of particular relevance for linearly-typed abstractions, for
+example, to give as an argument to the function driving the linear array API presented in Linear Haskell:
+\begin{working}
+\begin{code}
+newMArray :: Int -> (MArray a ⊸ Unrestricted b) ⊸ b
+\end{code}
+\end{working}
+Note how the second argument is a function that consumes |MArray a| linearly
+and returns an unrestricted result -- we don't need to consume said result
+exactly once to guarantee that |MArray a| is used linearly in the function
+body.
+
+We review the definition of \emph{consuming a resource} from Linear Haskell:
+\begin{itemize}
+    \item To consume a value of atomic base type (such as~\texttt{Int} or
+        \texttt{Ptr}) exactly once, just evaluate~it.
+    \item To consume a function value exactly once, apply it to one argument,
+        and consume its result exactly once.
+    \item To consume a value of an algebraic datatype exactly once,
+        pattern-match on it, and consume all its linear components exactly once.
+        For example, a linear pair (equivalent to $\tensor$) is consumed exactly
+        once if pattern-matched on \emph{and} both the first and second element are
+        consumed once.
+\end{itemize}
+
+
+i.e., we haven't defined a linear
+function that consumes its argument and returns an unrestricted value.
+
+returned an expression that used all 
+resources linearly (i.e. exactly once, in a semantic sense),
+but never one that actually \emph{consumed} the resource in its body.
+
+Turning to the definition of \emph{consuming a resource} given by Linear
+Haskell, which was reviewed at the start of this section, we find that
+\emph{evaluation} underlies 
+
+\emph{Consuming exactly once} the result of applying the linear functions seen
+so far to linear resources \emph{consumes exactly once} those resources.
+
+In other words, to define a function |consume :: Handle ⊸ ()|, the constructs
+we've studied so far. We turn once again to the definition of consuming a
+resource from Linear Haskell...
 
 \begin{code}
 f :: A -o B -o C
@@ -703,15 +774,19 @@ f :: A -o B -o C
 f x y = case let w = something x y in () of z { () -> ... }
 \end{code}
 
+\begin{notyet}
 \begin{code}
 f :: A -o B -o C
 f x y = case () of z { () -> z <> z }
 \end{code}
+\end{notyet}
 
 Bad! |x| has already been fully evaluated to K.
+\begin{noway}
 \begin{code}
 f x = case expensive x of z { K -> x }
 \end{code}
+\end{noway}
 
 This would be fine, but we're not able to see this
 \begin{code}
@@ -729,6 +804,7 @@ f x y = case g x y of z
 Getting harder ...
 
 This is not semantically linear!
+\begin{noway}
 \begin{code}
 f w = case w of z
         (a,b) ->
@@ -736,8 +812,10 @@ f w = case w of z
             (c,d) ->
                (a,c)
 \end{code}
+\end{noway}
 
 But this is!
+\begin{notyet}
 \begin{code}
 f w = case w of z
         (a,b) ->
@@ -745,22 +823,27 @@ f w = case w of z
             (c,d) ->
                (a,d)
 \end{code}
+\end{notyet}
 
 Bad bad bad! |x| and |y| have been "almost" consumed
+\begin{noway}
 \begin{code}
 f x y = let w = use x y
          in case h x y of
               K a b ->
                 return w
 \end{code}
+\end{noway}
 
 We say "almost", because they still need to be "fully consumed" by means of the pattern variables or case binder.
 i.e. this is not linear:
+\begin{noway}
 \begin{code}
 f x y = let w = use x y
          in case h x y of
               K a b -> ()
 \end{code}
+\end{noway}
 
 the harder ones regarding reverse binder swap. these give some intuition, but this is an unsound optimisation it seems
 
@@ -787,12 +870,6 @@ f y = let x = use y
       let t = expensive x
        in case x of z { K a b -> t; K2 w -> w }
 \end{code}
-
-\subsubsection{Function applications}
-\todo[inline]{unrestricted call-by-name with resources can duplicate the resources, as if it were unsound?}
-We reduce function applications in two distinct ways, call by name (for linear functions) and call by need
-
-Foreshadow to issues with reverse binder swap
 
 \subsection{Generalizing linearity in function of evaluation}
 

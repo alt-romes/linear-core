@@ -9,7 +9,7 @@ import Data.Function
 
 
 f6 :: Bool -> a -> a
-f6 bool x =
+f6 bool =
   let go b = case b of
         True -> x
         False -> go (not b)
