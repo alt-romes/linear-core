@@ -7,6 +7,9 @@
 \input{language-v3/proof}
 \input{language-v4/proof}
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% {{{ Chapter: Linear Core; Introduction
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \chapter{Linear Core}
 
 \begin{itemize}
@@ -258,6 +261,10 @@ definition of consuming a resource from Linear Haskell).
 % \item We prove soundness and that Core optimisations preserve types in this system, where they previously were unable to
 \end{itemize}
 
+% }}}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% {{{ Linearity, Semantically
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Linearity, Semantically}
 
 A linear type system statically guarantees that linear resources are
@@ -708,20 +715,19 @@ our implementation.
 
 Finally, we discuss semantic linearity for case expressions, which have been
 purposefully left for last as the key ingredient that brings together the
-semantic linearity insights developed thus far. Essentially,
-\emph{case expressions drive evaluation} and, as we've seen, semantic
-linearity can only be understood in function of how expressions are evaluated.
+semantic linearity insights developed thus far, because, essentially,
+\emph{case expressions drive evaluation} and semantic linearity can only be
+understood in function of how expressions are evaluated.
 
-Up until now, the example linear functions have always linearly transformed
-linear resources, taking into careful consideration how things will be
-evaluated (and thus consumed) to determine if resources are being used
-linearly. However, there have been no examples in which linear resources are
-\emph{fully consumed} in the bodies of linear functions. In other words, all
-example functions so far return a value that has to be itself consumed exactly
-once to ensure the linear argument is, in turn, consumed exactly once -- as
-opposed to functions whose application simply needs to be evaluated to
-guarantee its linear argument is consumed (functions that return an
-unrestricted value).
+Up until now, the example functions have always linearly transformed linear
+resources, taking into consideration how expressions will be evaluated (and thus
+consumed) to determine if resources are being used linearly. However, there
+have been no examples in which linear resources are \emph{fully consumed} in
+the bodies of linear functions. In other words, all example functions so far
+return a value that has to be itself consumed exactly once to ensure the linear
+argument is, in turn, consumed exactly once -- as opposed to functions whose
+application simply needs to be evaluated to guarantee its linear argument is
+consumed (functions that return an unrestricted value).
 %
 %The latter are of particular relevance because linearly-typed abstractions
 %usually require such a function to provide newly-created linear resources to.
@@ -783,7 +789,8 @@ unrestricted ones).
 
 \end{enumerate}
 
-\parawith{WHNF} An expression is in Weak Head Normal Form when 
+% ROMES:TODO: We should talk about WHNF in the background, not here.
+% \parawith{WHNF} An expression is in Weak Head Normal Form when 
 
 % DELETE ME IN THE NEXT COMMIT; JUST FUN HOW HARD THIS SECTION WAS TO GET STARTED
 % the discussion so far has provided insights into how we can
@@ -963,6 +970,10 @@ consumidos. A questão de WHNF e assim só aparece mais à frente; mas se calhar
 maybe. see also section of the same name in Linear Haskell
 \todo[inline]{Re-read little section about linearity and strictness in Linear Haskell}
 
+% }}}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% {{{ Typechecking Linearity in Core
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Typechecking Linearity in Core}
 
 \todo[inline]{We kind of ignore the multiplicity semiring. We should discuss
@@ -1067,6 +1078,11 @@ resources, be those irrelevant or relevant resources}
 
 \subsubsection{Splitting}
 
+
+% }}}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% {{{ Metatheory
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Metatheory}
 
 \todo[inline]{Consider making type safety and optimizations a section of their
@@ -1177,6 +1193,11 @@ Vs. call-by-need
         case x_v of _ -> x_v
 \end{code}
 
+
+% }}}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% {{{ Syntax Directed System
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Syntax Directed System}
 
 \todo[inline]{In the other system we assume that the recursive lets are strongly connected, i.e. the expressions always}
@@ -1193,6 +1214,64 @@ environments before we can typecheck using them. This is how:}
 
 \todo[inline]{Rather, we define a syntax directed type system that infers usage environments while checking...}
 
+% }}}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% {{{ Chapter: Implementation; Introduction
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 \chapter{Implementation}
 
+% Introduction...
 
+\section{Consuming tagged resources}
+
+As discussed in Section~\ref{}, constructor pattern bound linear variables are
+put in the context with a \emph{tagged} usage environment with the resources of
+the scrutinee. In a \emph{tagged} usage environment environment, all resources
+are tagged with a constructor and an index into the many fields of the
+constructor.
+
+In practice, a resource might have more than one tag. For example, in the following
+program, after the first pattern match, |a| and |b| have, respectively, usage
+environments $\{\lctag{x}{K_1}\}$ and $\{\lctag{x}{K_2}\}$:
+\begin{code}
+f x = case x of
+       K a b -> case a of
+        Pair n p -> (n,p)
+\end{code}
+However, in the following alternative, |n| has usage environment
+$\{\lctag{\lctag{x}{K_1}}{Pair_1}\}$ and |p| has
+$\{\lctag{\lctag{x}{K_1}}{Pair_2}\}$. To typecheck
+|(n,p)|, one has to $Split$ |x| first on |K| and then on |Pair|, in order for
+the usage environments to match.
+
+In our implementation, we split resources on demand (and don't directly allow
+splitting linear resources), i.e. when we use a tagged resource we split the
+linear resource in the linear environment (if available), but never split otherwise.
+%
+Namely, starting on the innermost tag (the closest to the variable name), we
+substitute the linear resource for its split fragments, and then we iteratively
+further split those fragments if there are additional tags.
+%
+We note that it is safe to destructively split the resource (i.e. removing the
+original and only leaving the split fragments) because we only split resources
+when we need to consume a fragment, and as soon as one fragment is consumed
+then using the original ``whole'' variable would violate linearity.
+
+In the example, if |n| is used, we have to use its usage environment, which in
+turn entails using $\lctag{\lctag{x}{K_1}}{Pair_1}$, which has two tags. In this order, we:
+\begin{itemize}
+\item Split $x$ into $\lctag{x}{K_1}$ and $\lctag{x}{K_2}$
+\item Split $\lctag{x}{K_1}$ and $\lctag{x}{K_2}$ into
+  \begin{itemize}
+  \item $\lctag{\lctag{x}{K_1}}{Pair_1}$ and $\lctag{\lctag{x}{K_1}}{Pair_2}$
+  \item Leave $\lctag{x}{K_2}$ untouched, as we only split on demand, and we aren't using a fragment of $\lctag{x}{K_2}$.
+  \end{itemize}
+\item Consume $\lctag{\lctag{x}{K_1}}{Pair_1}$, the usage environment of $n$, by removing it from the typing environment.
+\end{itemize}
+
+
+% }}}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% vim: fdm=marker foldenable

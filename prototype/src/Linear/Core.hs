@@ -100,7 +100,8 @@ checkBind (Rec bs) = do
   -- branch and the recursive call in the others instead of the linear
   -- resources, but currently we typecheck the recursive calls using an empty
   -- delta environment, meaning the computations will fail to be linear
-  -- Perhaps we should really have a separate inferrence pass?.
+  --
+  -- ROMES:TODO:IMPORTANT:TODO: Perhaps we should really have a separate inferrence pass? We could have a dummy value and record how many times it is consumed; or have a different mode of recording that doesn't crash when two resources are consumed, rather, it ups the multiplicity to many! (maybe that's it)
   (rhss', naiveUsages) <- unzip <$> extends (L.map (\(LCVar b (Just d)) -> (b,d)) ids)
                                             (traverse (recordAll . checkExpr) rhss)
   let recUsages = computeRecUsageEnvs (zip (L.map (.id) ids) naiveUsages)
@@ -146,7 +147,7 @@ checkExpr expr = case expr of
            <*> pure ty
            <*> extend (b.id) (DeltaBound ue) (mapM (checkAlt ue) alts)
     | otherwise
-    -- Expression is definitely not in WHNF (right? or do we mean HNF)
+    -- Expression is definitely not in WHNF (or do we really mean HNF?)
     -> do
       (e', makeIrrelevant -> ue) <- record $ checkExpr e
       Case <$> pure e'
@@ -178,7 +179,9 @@ checkAlt _ (Alt (LitAlt _) _ _) = error "impossible"
 checkAlt ue (Alt (DataAlt con) args rhs)
   | L.null $ L.filter (not . isManyTy . scaledMult) (dataConOrigArgTys con)
   = do
+          -- Add unrestricted binders
   rhs' <- extends (L.map (\arg -> (arg.id, LambdaBound (Relevant ManyTy))) args)
+          -- Drop from the environment the fully used resources
           $ Linear.Core.Monad.drop ue
           $ checkExpr rhs
   return (Alt (DataAlt con) args rhs')
@@ -192,11 +195,20 @@ checkAlt ue (Alt (DataAlt con) args rhs)
 -- It's probably not worth it trying to be that smart, and we don't do substitution here (only checking). Even if we did substituttion things would likely work since all linear variables are used once, despite the theory not working
 -- TODO: Do the simple thing
 checkAlt ue (Alt (DataAlt con) args rhs) = do
+
   let (unrestricted_args, linear_args) = L.partition (isManyTy . scaledMult) (dataConOrigArgTys con)
   -- TODO: We need to figure out how to typecheck alternatives (in the syntax directed form too) before we do this right.
+
+  -- First, extend computation with unrestricted resources
   rhs' <- extends (L.map (\arg -> (scaledThing arg, LambdaBound (Relevant ManyTy))) unrestricted_args)
           $ checkExpr rhs
+
+  -- Then add the tag the usage environment with the linear resources with this constructor and an index for each
+  -- It will ensure that when we consume the resources by using this environment, we'll just split the resource according to the tag.
   let args' = L.zipWith (\a i -> LCVar a.id (deltaBindingTagged con i ue)) args [1..]
+  
+  -- this is all wrong!
+
   return (Alt (DataAlt con) args' rhs')
 
 -- }}}

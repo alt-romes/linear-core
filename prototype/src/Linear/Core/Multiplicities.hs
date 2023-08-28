@@ -1,4 +1,4 @@
-{-# LANGUAGE GHC2021, ViewPatterns, DerivingVia, GeneralizedNewtypeDeriving, OverloadedRecordDot, LambdaCase #-}
+{-# LANGUAGE GHC2021, ViewPatterns, DerivingVia, GeneralizedNewtypeDeriving, OverloadedRecordDot, LambdaCase, MultiWayIf #-}
 module Linear.Core.Multiplicities where
 
 import Data.Function
@@ -9,6 +9,8 @@ import qualified GHC.Core.Type as C
 import GHC.Core.Map.Type (deBruijnize)
 import qualified Data.List as L
 import qualified GHC.Plugins
+import Control.Exception (assert)
+import GHC.Core.Multiplicity (scaledMult)
 
 --------------------------------------------------------------------------------
 ----- Id Binding ---------------------------------------------------------------
@@ -51,6 +53,44 @@ isUnrestricted (Irrelevant m) = C.isManyTy m
 isUnrestricted (Tagged _ m) = isUnrestricted m
 
 data Usage = Zero | LCM Mult
+
+-- | Extract all tags of a multiplicity, left to right
+--
+-- > extractTags 1#(,)_1#Pair_1#K_1 = [(,)_1, Pair_1, K_1]
+extractTags :: Mult -> [Tag]
+extractTags = reverse . go where go (Tagged t m) = t:go m
+                                 go _ = []
+
+-- | Split a resource as needed given a tagstack then consume the resource
+-- specified by the tag.
+--
+-- Returns the resource fragments that were split as needed, except for the
+-- fragment that was consumed
+splitAsNeededThenConsume :: [Tag] -> Mult -> [Mult]
+splitAsNeededThenConsume (Tag con i:ts) m
+  = concatMap (\case
+                 m'@(Tagged (Tag _ i') _)
+                    -- From the resources we split, this has the index we are
+                    -- looking for, so we keep splitting inside
+                    | i' == i -> splitAsNeededThenConsume ts m'
+
+                    -- Otherwise, the resource we need isn't down this path, so
+                    -- we can stop splitting here
+                    | otherwise -> [m']
+                 _ -> error "impossible, splitResourceAt only returns tagged resources")
+              (splitResourceAt con m)
+-- If there is no tag left then this is the resource we are looking for, so we
+-- consume it. We know this is the resource we need because we only recurse
+-- after splitting on the index we're looking for. If it's the last tag we're
+-- done, otherwise we keep splitting.
+splitAsNeededThenConsume [] _m = []
+
+-- | Splits a resource according to a constructor's number of linear fields
+splitResourceAt :: GHC.Plugins.DataCon -> Mult -> [Mult]
+splitResourceAt con mult = map (\i -> Tagged (Tag con i) mult) [1..numberOfLinearFields con]
+
+numberOfLinearFields :: GHC.Plugins.DataCon -> Int
+numberOfLinearFields = length . filter (not . GHC.Plugins.isManyTy . scaledMult) . GHC.Plugins.dataConOrigArgTys
 
 --------------------------------------------------------------------------------
 ----- Usage Environments -------------------------------------------------------

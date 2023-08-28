@@ -1,3 +1,4 @@
+{-# LANGUAGE MultiWayIf #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE BlockArguments #-}
 {-# LANGUAGE OverloadedStrings #-}
@@ -63,8 +64,14 @@ import qualified Data.Map as M
 -- * The Reader, Bool, determines whether to record all variables used in the writer env.
 --    * This bool will only be true when recordNonLinear sets in order to record variables.
 --    * This ensures we only collect variables within recordNonLinear, after which we wipe the writer
-newtype LinearCoreT m a = LinearCoreT { unLC :: RWST Bool [Var] (M.Map Var (NonEmpty IdBinding)) (ExceptT String m) a }
-  deriving (Functor, Applicative, Monad, MonadState (M.Map Var (NonEmpty IdBinding)), MonadError String)
+newtype LinearCoreT m a = LinearCoreT { unLC :: RWST Bool [Var] LCState (ExceptT String m) a }
+  deriving (Functor, Applicative, Monad, MonadState LCState, MonadError String)
+
+-- | The linear core state represents the resources available in a computation.
+-- Each resource might be either LambdaBound, DeltaBound, or be partially
+-- consumed, in which case it used to be lambda bound but is now fragmented
+-- into a set of tagged resources, represented by a non-empty list of (tagged) multiplicities
+type LCState = M.Map Var (Either IdBinding (NonEmpty Mult))
 
 instance Monad m => MonadFail (LinearCoreT m) where
   fail = throwError
@@ -80,47 +87,62 @@ runLinearCoreT s comp = runExceptT $ do
 -- | Uses a resource from the environment, making it unavailable in subsequent computations if it was/consumed a linear resource.
 -- If the key doesn't exist, no resources are consumed
 use :: Monad m => Var -> LinearCoreT m ()
-use = flip use' Nothing where
--- The variable being used might be associated to a tag, in which case we must ensure the resources are split before consumed
--- * The variable will be paired with a tag only in the usage environment of case pattern variables (we recursively invoke this function for usage envs, and that's when the tag exists)
--- * To model this, we receive an explicit multiplicity that the variable should have as an argument
--- * And try to instance a var with the requested multiplicity if it exists, or split a linear variable into multiple tagged vars otherwise
-  use' :: Monad m => Var -> Maybe Mult -> LinearCoreT m ()
-  use' key _    | isGlobalId key = pure () -- See Note [GlobalId/LocalId]
-  use' key mmult = LinearCoreT do
+use = flip use' [] where
+
+  -- | Variables in the being used might be associated to a tag, in which case we must ensure the resources are split before consumed
+  use' :: Monad m => Var -> [Tag] -> LinearCoreT m ()
+  use' key _    | isGlobalId key = pure () -- See Note [GlobalId/LocalId]; Global ids are top-level imported Ids, which are unrestricted
+  use' key mtags = LinearCoreT do
+
+    -- When recording, we eagerly write the variable used
     shouldRecord <- ask
     when shouldRecord $ tell [key]
+
+    -- Lookup the variable in the environment
     mv <- gets (M.lookup key)
     case mv of
+
+      -- Variable has already been consumed (it should be guaranteed to be in scope since Core programs are well-typed)
       Nothing -> throwError $ fromString $ "Tried to use a linear resource " <> showPprUnsafe key <> " a second time! (Or is it a variable not in scope?)"
-      Just ( (LambdaBound mult) :| )
-        | isLinear mult -> do -- isLinear looks through tags
-          modify (M.delete key)
-          case mmult of
-            Nothing -> return ()
-            Just mmult -> return ()
-              -- This variable is likely tagged, so either the variable is
-              -- available tagged in the environment, or we have to split the
-              -- linear variable
-              -- if mmult == mult
-              --    then -- hmmm, this Map business is a bit fishy. Maybe the tag should be a property of the variable rather than mult.
-                 -- how can we have multiple vars with the same name?
+
+
+      -- Resource is LambdaBound and hasn't been neither consumed nor split
+      Just (Left (LambdaBound mult))
+
+        -- Resource is linear
+        | isLinear mult -- isLinear looks through tags, but top level lambda-bound should never have tags anyway
+        -> do
+          case mtags of
+            -- We aren't trying to use a fragment of this resource,
+            -- so it is simply consumed
+            [] -> modify (M.delete key)
+
+            -- We are trying to use a fragment of this resource, so we split it
+            -- as necessary according to the tag stack until we can consume the
+            -- given tag (in the form of a tagstack)
+            tags -> let splits = splitAsNeededThenConsume tags mult
+                     in modify (M.insert key (Right splits))
+
+        -- Resource is unrestricted
         | otherwise -> do
           -- If it's an unrestricted variable, we don't remove it from the
           -- environment because it can still be used.
           -- We don't split it either or look at the tag. We don't have to care
           -- because it's unrestricted.
           return ()
-      Just ( DeltaBound (UsageEnv env):|[] )-> do
+
+      -- Resource is DeltaBound
+      Just (Left (DeltaBound (UsageEnv env))) -> do
         -- Record the usage of the delta bound var, but not the usages of the
-        -- underlying vars
+        -- underlying vars, i.e. disable recording
         local (const False) $
           mapM_ (unLC . go) env
             where
-              go (v, Tagged t m) = use' v (Just (Tagged t m))
-              go (v, _) = use' v Nothing
-      Just ( DeltaBound _:|_ ) -> error "impossible, shouldn't happen"
+              go (v, m) = use' v (extractTags m)
 
+      -- Resource was LambdaBound but has been split into a set of tagged resources which haven't yet been consumed
+      Just (Right mults) -> do
+        return error
 
 -- | Extend a computation that threads linear resources with a resource that
 -- must definitely not escape its scope (i.e. the given computation must
@@ -183,7 +205,6 @@ unrestricted computation = LinearCoreT do
       "An unrestricted computation should consume no linear resources, but instead it used " ++ showPprUnsafe (prev M.\\ after) ++ "."
   return result
 
-
 -- | Run a computation and record the linear resources used in that computation
 --
 -- In practice, however, we record all resources that were used together with
@@ -215,5 +236,4 @@ recordAll comp = LinearCoreT do
      then return (a, w')
      -- We weren't recording when we called this action, which means we're done recording -- erase the writer state
      else pass $ return ((a,w'), \_ -> [])
-
 
