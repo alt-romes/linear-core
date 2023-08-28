@@ -1,0 +1,9 @@
+Can we type-check
+
+f12 x y use = case (x,y) of z { (a,b) -> use x b }
+
+using our new-yet-undefined-ALTN rule? I think it's a requirement that this
+works in order to prove preservation
+
+In our system, everything? that is lazy in consuming resources basically is
+typed using a usage environment! That's quite good.

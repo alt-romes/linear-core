@@ -8,9 +8,9 @@
 \input{language-v4/proof}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% {{{ Chapter: Linear Core; Introduction
+% {{{ Chapter: A Type System for Semantic Linearity in Core; Introduction
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\chapter{Linear Core}
+\chapter{A Type System for Semantic Linearity in Core}
 
 \begin{itemize}
 
@@ -761,12 +761,12 @@ Haskell~\cite{cite:linearhaskell}:
         % once if pattern-matched on \emph{and} both the first and second element are
         % consumed once.
 \end{itemize}
-That is, we can consume a linear resource by fully evaluating it; and it so
-happens that, again, case expressions drive evaluation. In section
-\ref{sec:generalizing-evaluation-consuming} we generalize the idea that
-consuming a resource is deeply tied to evaluation. Here, we continue building
-intuition for semantic linearity, first reviewing how case expressions evaluate
-expressions, and then exploring how they consume resources, by way of example.
+That is, we can consume a linear resource by fully evaluating it, through case
+expressions. In section \ref{sec:generalizing-evaluation-consuming} we
+generalize the idea that consuming a resource is deeply tied to evaluation.
+Here, we continue building intuition for semantic linearity, first reviewing
+how case expressions evaluate expressions, and then exploring how they consume
+resources, by way of example.
 
 In Core, case expressions are of the form $\ccase{e_s}{z~\{\ov{\rho_i \to e_i}\}}$,
 where $e_s$ is the case \emph{scrutinee}, $z$ is the case \emph{binder}, and
@@ -792,71 +792,151 @@ unrestricted ones).
 % ROMES:TODO: We should talk about WHNF in the background, not here.
 % \parawith{WHNF} An expression is in Weak Head Normal Form when 
 
-% DELETE ME IN THE NEXT COMMIT; JUST FUN HOW HARD THIS SECTION WAS TO GET STARTED
-% the discussion so far has provided insights into how we can
-% \emph{manipulate} linear resources, in function of the evaluation strategy, 
-% 
-% In that sense, case expressions are the only Core construct that can
-% effectively consume linear resources
-% 
-% By introducing case expressions we unlock all the examples that make consuming a resource possible...
-% 
-% To complete the picture of semantic linearity in Core, 
-% Case expressions are the key to fully consuming resources because \emph{case
-% expressions drive evaluation}.
-% 
-% It becomes clear that we can 
-% 
-% i.e., we haven't defined a linear
-% function that consumes its argument and returns an unrestricted value.
-% 
-% returned an expression that used all 
-% resources linearly (i.e. exactly once, in a semantic sense),
-% but never one that actually \emph{consumed} the resource in its body.
-% 
-% Turning to the definition of \emph{consuming a resource} given by Linear
-% Haskell, which was reviewed at the start of this section, we find that
-% \emph{evaluation} underlies 
-% 
-% \emph{Consuming exactly once} the result of applying the linear functions seen
-% so far to linear resources \emph{consumes exactly once} those resources.
-% 
-% In other words, to define a function |consume :: Handle ⊸ ()|, the constructs
-% we've studied so far. We turn once again to the definition of consuming a
-% resource from Linear Haskell...
-
+To explore these case properties in the presence of linearity, we start with an
+example of a program that constructs a tuple from linear resources then pattern
+matches on it, then uses both linearly-bound variables from the tuple pattern
+match. This is well-typed in Linear Haskell:
+\begin{working}
 \begin{code}
-f :: A -o B -o C
-f x y = case (x,y) of z { (a,b) -> ... }
+f11 :: a ⊸ b ⊸ (a ⊸ b ⊸ c) -> c
+f11 x y use = case (x,y) of { (a,b) -> use a b }
 \end{code}
-
-\begin{code}
-f :: A -o B -o C
-f x y = case something x y of z { (a,b) -> ... }
-\end{code}
-
-\begin{code}
-f :: A -o B -o C
-f x y = case let w = something x y in () of z { () -> ... }
-\end{code}
-
+\end{working}
+What might be more surprising is that a similar program which discards the
+pattern variables and instead uses the resources in the scrutinee is also
+semantically linear, despite not being accepted by Linear Haskell:
 \begin{notyet}
 \begin{code}
-f :: A -o B -o C
-f x y = case () of z { () -> z <> z }
+f12 :: a ⊸ b ⊸ (a ⊸ b ⊸ c) -> c
+f12 x y use = case (x,y) of z { (a,b) -> use x y }
+\end{code}
+\end{notyet}
+We justify that |f12| is linear by appealing to property 2 -- since the
+expression (the tuple) being scrutinized is already in WHNF, evaluating it will
+not consume neither $x$ nor $y$. Even if the tuple was constructed with
+two expressions using $x$ and $y$ respectively, no computation would happen
+since we aren't using neither $a$ nor $b$ (thereby never forcing the arguments
+of the tuple). However, if we did use $a$ in the case body, then $x$ would be unavailable:
+\begin{noway}
+\begin{code}
+f13 :: a ⊸ a ⊸ (a ⊸ a ⊸ c) -> c
+f13 x y use = case (x,y) of z { (a,b) -> use a x }
+\end{code}
+\end{noway}
+This idea that $x$ and $a$ are mutually exclusive is the same behind let
+bindings being mutually exclusive to the resources that define them.
+By forcing the pattern variable (or the let binding) we run the computations
+defined in terms of the linear variables used for that constructor argument (or
+let binder body), but otherwise, if we don't use those binders, then we don't
+run the computation thus no resources are consumed.
+
+A third option for this example is to use the case binder $z$ instead of $a,b$ or $x,y$:
+\begin{notyet}
+\begin{code}
+f14 :: a ⊸ b ⊸ (a ⊸ b ⊸ c) -> c
+f14 x y use = case (x,y) of z { (a,b) -> uncurry use z }
+\end{code}
+\end{notyet}
+Again, $z$ is mutually exclusive with $a,b$ and with $x,y$, but at least one of
+the three must occur to ensure the linear resources are consumed. In this
+example, we can think that using $a$ entails using the resource $x$, $b$ the
+resource $y$, and the case binder $z$ entails using both $a$ and $b$.
+
+Dually, consider the scrutinee to be an expression that's not in WHNF, s.t.
+evaluating it to WHNF will require doing computation and thus consume linear
+resources that are used in it:
+\begin{notyet}
+\begin{code}
+f15 :: a ⊸ b ⊸ (a ⊸ b ⊸ (c,d)) -> (c,d)
+f15 x y use = case use x y of z { (a,b) -> z }
+\end{code}
+\end{notyet}
+Unlike when the scrutinee was in WHNF, we can no longer use $x,y$ in the case
+alternatives, but we \emph{must} still use either the case binder $z$ or the linear
+pattern variables $a,b$, e.g. it would be quite disastrous if any of the following typechecked:
+\begin{noway}
+\begin{code}
+doubleFree :: Ptr ⊸ (Ptr ⊸ Result) -> Result
+doubleFree x free = case free x of z { Result v -> free x }
+\end{code}
+\end{noway}
+\begin{noway}
+\begin{code}
+leakPointer :: Ptr -> ()
+leakPointer x = case id x of z { _ -> () }
+\end{code}
+\end{noway}
+%
+%whereas this is fine:
+%\begin{notyet}
+%\begin{code}
+%f16 :: Ptr ⊸ (Ptr ⊸ (Value,Int)) -> (Value,Int)
+%f16 x free = case K (free x) of z { K y -> free x }
+%\end{code}
+%\end{notyet}
+%
+The result of evaluating the scrutinee must be consumed exactly to guarantee
+that the resources used in the scrutinee are fully consumed, or risk them being only ``almost'' consumed. Take for example
+|use| in |f15| to simply be |(,)|: it is not sufficient for |use x y| to be
+evaluated to WHNF to consume |x| and |y|. Otherwise, if all the resources were
+considered to be fully consumed after the scrutinee were evaluated in a case
+expression, we could simply ignore the pattern variables, effectively
+discarding linear resources (for cases such as the |use = (,)| example). In
+short, if the scrutinee is not in WHNF we must either consume the case binder
+or the linear components of the pattern.
+
+However, it is crucial to also consider pattern matches on constructors without
+any linear components. If the constructor has no linear fields, it means the
+result can be consumed unrestrictedly and, therefore, all linear resources used
+in the computation have been fully consumed. For instance, the following
+program, where |K2| has no fields and |K1| has one linear field, shouldn't
+typecheck because in case alternatives that matched a constructor without
+linear fields the scrutinee resources are no longer available:
+\begin{noway}
+\begin{code}
+f :: a ⊸ a
+f x = case K1 x of z { K2 -> x; K1 a -> x }
+\end{code}
+\end{noway}
+This particular example has a known constructor being scrutinized which might
+seem like an unrealistic example, but we recall that during the transformations
+programs undergo in an optimizing compiler, many programs such as this
+naturally occur (e.g. if the definition of a function were inlined in the scrutinee).
+
+Moreover, in a branch of a constructor without linear fields we also know the
+result of evaluating the scrutinee to be unrestricted, so we can also use the
+case binder unrestrictedly to refer to it zero or more times. For example, this
+program is also linear:
+\begin{notyet}
+\begin{code}
+f16 :: () ⊸ ()
+f16 x = case x of z { () -> z <> z }
 \end{code}
 \end{notyet}
 
-Bad! |x| has already been fully evaluated to K.
-\begin{noway}
-\begin{code}
-f x = case expensive x of z { K -> x }
-\end{code}
-\end{noway}
 
-This would be fine, but we're not able to see this
+% TODO wildcards briefly
+
+% This is fine, because |x| in the case alternative is known to be K...
+% Variables really are weird case...
+% ROMES:TODO: Do something about this?
+% \begin{noway}
+% \begin{code}
+% f :: a ⊸ (a ⊸ K) ⊸ a
+% f x use = case x of z { K -> x }
+% \end{code}
+% \end{noway}
+
+\begin{notyet}
 \begin{code}
-f x = case x of z { K -> x }
+f17 :: a ⊸ b ⊸ (a ⊸ b ⊸ c) -> c
+f17 x y use = case let w = something x y in () of z { () -> ... }
+\end{code}
+\end{notyet}
+
+This would be fine, but we're not able to see this because of call-by-name substitution
+\begin{code}
+f x = case x of z { _ -> x }
 \end{code}
 
 We used to call NOT IN WHNF "negative" hah
@@ -890,26 +970,6 @@ f w = case w of z
                (a,d)
 \end{code}
 \end{notyet}
-
-Bad bad bad! |x| and |y| have been "almost" consumed
-\begin{noway}
-\begin{code}
-f x y = let w = use x y
-         in case h x y of
-              K a b ->
-                return w
-\end{code}
-\end{noway}
-
-We say "almost", because they still need to be "fully consumed" by means of the pattern variables or case binder.
-i.e. this is not linear:
-\begin{noway}
-\begin{code}
-f x y = let w = use x y
-         in case h x y of
-              K a b -> ()
-\end{code}
-\end{noway}
 
 the harder ones regarding reverse binder swap. these give some intuition, but this is an unsound optimisation it seems
 
@@ -972,9 +1032,9 @@ maybe. see also section of the same name in Linear Haskell
 
 % }}}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% {{{ Typechecking Linearity in Core
+% {{{ Linear Core
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Typechecking Linearity in Core}
+\section{Linear Core}
 
 \todo[inline]{We kind of ignore the multiplicity semiring. We should discuss
 how we don't do ring operations ... but that's kind of wrong.}
@@ -1216,10 +1276,14 @@ environments before we can typecheck using them. This is how:}
 
 % }}}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% {{{ Chapter: Implementation; Introduction
+% {{{ Chapter: Linear Core as a GHC Plugin; Introduction
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\chapter{Implementation}
+\chapter{Linear Core as a GHC Plugin}
+
+This section discusses the implementation of Linear Core as a GHC Plugin, with
+a dash of painful history in the attempt of implementing Linear Core directly
+into GHC
 
 % Introduction...
 
