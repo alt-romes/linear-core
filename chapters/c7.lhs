@@ -6,6 +6,7 @@
 \input{language-v2/proof}
 \input{language-v3/proof}
 \input{language-v4/proof}
+\input{language-v4/Syntax}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % {{{ Chapter: A Type System for Semantic Linearity in Core; Introduction
@@ -1059,31 +1060,116 @@ algebraic datatypes, case expressions, recursive let bindings, and multiplicity
 polymorphism.
 
 Linear Core makes much more precise the various insights discussed in the
-previous section by crystalizin them together in a linear type system for which we
+previous section by crystalizing them together in a linear type system for which we
 prove soundness via the usual preservation and progress theorems. Crucially,
 the Linear Core type system accepts all the \emph{semantically linear} example
 programs (highlighted with \colorbox{notyet}{\notyetcolorname})
 from Section~\ref{sec:semantic-linearity-examples}, which Core currently
 rejects.
- 
-% We start by introducing the Core-like language, $\dots$ usage environments as a
-% way to encode choice between the way a resource is used $\dots$\todo{$\dots$}
+%
+Besides type safety, we prove that multiple optimizing Core-to-Core
+transformations preserve linearity in Linear Core. These same transformations
+don't preserve linearity under Core's current type system. As far as we know,
+we are the first to prove optimisations preserve types in a non-strict linear
+language?
 
+The key idea to typing linearity semantically is to delay considering a
+resource to be used to when a computation that depends on that resource is
+effectively evaluated or returned, which is possible by annotating relevant
+binders with \emph{usage environments} and having two distinct rules for case
+expressions, branching on whether the scrutinee is in Weak Head Normal Form.
+% 
 We also note that despite the focus on GHC Core, the fundamental ideas for
 understanding linearity in a call-by-need calculus can be readily applied to
 other call-by-need languages.
 
-\todo[inline]{Explicar algumas das ideias fundamentais, e apresentar as regras
-iterativamente. Podemos começar com as triviais e avançar para os dois pontos
-mais difíceis : Lets e Cases}
+% We start by introducing the Core-like language, $\dots$ usage environments as a
+% way to encode choice between the way a resource is used $\dots$\todo{$\dots$}
+%
 
-\subsection{Linear Core Overview}
+%\todo[inline]{Explicar algumas das ideias fundamentais, e apresentar as regras
+%iterativamente. Podemos começar com as triviais e avançar para os dois pontos
+%mais difíceis : Lets e Cases}
 
-\emph{Linear Core} is a 
+\subsection{Typing and Language Syntax}
 
-\todo[inline]{Syntax, examples}
+The complete syntax of Linear Core is given by Figure~\ref{fig:full-linear-core-syntax}.
+% Figure~\ref{fig:linear-core-types} and Figure~\ref{fig:linear-core-terms}.
+%
+The types of Linear Core are algebraic datatypes, function types, and multiplicity schemes
+to support multiplicity polymorphism: datatypes ($T~\ov{p}$) are parametrised
+by multiplicities, function types ($\vp\to_\pi\s$) are also annotated with a
+multiplicity, and a multiplicity can be $1$, $\omega$ (read \emph{many}), or a
+multiplicity variable $p$ introduced by a multiplicity universal scheme
+($\forall p.~\vp$).
+%
+\[
+\SyntaxTypes
+\]
+%
+The terms are variables $x,y,z$, data constructors $K$, multiplicity
+abstractions $\Lambda p.~e$ and applications $e~\pi$, term abstractions
+$\lambda \x[\pi].~e$ and applications $e~e'$, where lambda binders are
+annotated with a multiplicity $\pi$ and a type $\s$. Then, there are
+non-recursive let bindings $\llet{\xD = e}{e'}$, recursive let bindings
+$\lletrec{\ov{\xD = e}}{e'}$, where the overline denotes a set of distinct
+bindings $x_1{:}_{\D_1}\s_1\dots x_n{:}_{\D_n}\s_n$ and associated expressions
+$e_1\dots e_n$, and case expressions $\ccase{e}{\zD~\{\ov{\rho \to e'}\}}$,
+where $z$ is the case binder and the overline denotes a set of distinct
+patterns $\rho_1\dots \rho_n$ and corresponding right hand sides $e'_1\dots
+e'_n$. Notably, (recursive) let-bound
+binders and case-bound binders are annotated
+with a so-called \emph{usage environment} $\Delta$ -- a fundamental construct
+for type-checking semantic linearity in the presence of laziness we present in
+Section~\ref{sec:usage-environments}.
+%
+Case patterns $\rho$ can be either the \emph{default} or \emph{wildcard}
+pattern $\_$, which matches any expression, or a constructor $K$ and a set of
+variables that bind its arguments, where each field of the constructor has an
+associated multiplicity denoting whether the pattern-bound variables must
+consumed linearly (ultimately, in order to consume the scrutinee linearly).
+Additionally, the set of patterns in a case expression is guaranteed to be exhaustive,
+i.e. there is always at least one pattern which matches the scrutinized expression.
+%
+\[
+\SyntaxTerms
+\]
+%
 
-\todo[inline]{Remember to mention we assume all patterns are exhaustive}
+
+% \begin{figure}[h]
+% \[
+% \SyntaxTypes
+% \]
+% \caption{$\lambda_\Delta^\pi$ Types}
+% \label{fig:linear-core-types}
+% \end{figure}
+
+% \begin{figure}[h]
+% \[
+% \SyntaxTerms
+% \]
+% \caption{$\lambda_\Delta^\pi$ Terms}
+% \label{fig:linear-core-terms}
+% \end{figure}
+
+\SyntaxFull
+
+%Linear Core is similar to Core without coercions, and with multiplicity
+%abstractions instead of type abstractions.
+%The key differences are that lets, recursive lets, case binders and
+%pattern-bound variables
+%the product of combining Linear Haskell's arrow linearity and
+%multiplicity polymorphism with Core's key features, except for type equality
+%coercions --
+%a linear lambda calculus with algebraic datatypes, case
+%expressions, recursive let bindings, and multiplicity abstractions. The 
+
+Linear Core takes from the unpublished Linear Mini-Core document by Arnaud
+Spiwack et. all~\cite{cite:linear-mini-core}, which first tentatively tackled
+Core's linearity issues, its base syntax, and annotating lets and letrecs with
+so-called usage environments. We discuss this work in more detail in
+Section~\ref{sec:linear-mini-core}.
 
 \subsection{Usage environments\label{sec:usage-environments}}
 
@@ -1147,6 +1233,10 @@ resources, be those irrelevant or relevant resources}
 
 \subsubsection{Splitting}
 
+\section{Linear Examples}
+
+\todo[inline]{The ones in the last section, but also the ones in 2.2 e.g.}
+\todo[inline]{Copy over examples from Linear Mini-Core}
 
 % }}}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

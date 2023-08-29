@@ -42,7 +42,8 @@
 }
 }
 
-\begin{figure}[h]
+\newcommand{\SyntaxFull}{
+\begin{figure}[ht]
 \begin{framed}
 \[
 \begin{array}{l}
@@ -59,11 +60,11 @@
 \textbf{Multiplicities}\\
 \begin{array}{lcll}
   \pi, \mu & ::= & 1 \mid \omega \mid p \mid \pi + \mu \mid \pi \cdot \mu\\
-% We don't use + and cdot yet, but we will
+% We don't use + and \cdot yet, but we will
 \end{array}\\\\
 %
 \textbf{Usage Environments}\\
-% something like dual njumbers, in that we now have the two components of each usage environment.
+% something like dual numbers, in that we now have the two components of each usage environment.
 \begin{array}{lcl}
   \Delta & ::= \cdot\mid\Delta_1+\Delta_2\mid\pi\Delta\\
 \end{array}\\\\
@@ -77,7 +78,8 @@
 \end{array}
 \]
 \end{framed}
-\caption{Linear Core* Syntax}
-\label{linear-core-syntax}
+\caption{Linear Core Syntax}
+\label{fig:full-linear-core-syntax}
 \end{figure}
+}
 

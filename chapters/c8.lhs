@@ -1,17 +1,17 @@
 \chapter{Discussion}
 
-\todo[inline]{Preamble}
+Preamble
 
 \section{Related Work}
 
 % TODO: A brief introduction to the related work section?
 
-\parawith{Formalization of Core}\todo{terrible paragraph name}
+\subsection{Formalization of Core}\todo{terrible paragraph name, and terrible paragraph}
 
-System $F_C$~\cite{cite:systemfc} (Section~\ref{sec:core}) does not
-account for linearity in its original design, and, to the best of our
-knowledge, no extension to System $F_C$ with linearity and non-strict
-semantics exists.
+%System $F_C$~\cite{cite:systemfc} (Section~\ref{sec:core}) does not
+%account for linearity in its original design, and, to the best of our
+%knowledge, no extension to System $F_C$ with linearity and non-strict
+%semantics exists.
 %
 As such, there exists no formal definition of Core that
 accounts for linearity. In this context, we intend to introduce a linearly typed
@@ -36,7 +36,7 @@ light of Core-to-Core optimizing transformations.
 % 
 % Rules?
 
-\parawith{Linear Haskell\label{sec:related-work-linear-haskell}}
+\subsection{Linear Haskell\label{sec:related-work-linear-haskell}}
 
 Haskell, contrary to most programming languages with linear types, has existed
 for 31 years of its life \emph{without} linear types. As such, the introduction
@@ -73,6 +73,9 @@ they exist in Core, i.e. integrating call-by-need semantics and validating the
 Core-to-Core passes, ultimately doubling as a validation of the implementation
 of Linear Haskell.
 
+\subsection{Linear Mini-Core\label{sec:linear-mini-core}}
+
+Linear Mini core is the precursor to our work
 
 % \subsection{OutsideIn(X)\label{related-work-gadts}}
 % 
@@ -88,7 +91,7 @@ of Linear Haskell.
 % How do they handle linearity plus optimizations
 % They probabluy don't typecheck linearity in Core
 
-\parawith{Linearity-influenced optimizations}
+\subsection{Linearity-influenced optimizations}
 
 Core-to-Core transformations appear in many works across the research
 literature~\cite{cite:let-floating,peytonjones1997a,santos1995compilation,peytonjones2002secrets,baker-finch2004constructed,maurer2017compiling,Breitner2016_1000054251,sergey_vytiniotis_jones_breitner_2017},
