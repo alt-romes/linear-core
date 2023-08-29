@@ -923,10 +923,6 @@ more contrived examples, the following two of which the first doesn't typecheck
 because the same linear field is used twice, but the second one does since it
 uses each linear field exactly once (despite pattern matching on the same
 components twice)
-
-\todo[inline]{We know the case binder to ALWAYS be in WHNF, perhaps there could
-be some annotation on the case binder s.t. we know nothing happens when we
-scrutinize it as a single variable}
 \begin{noway}
 \begin{code}
 f w = case w of z
@@ -988,10 +984,10 @@ unrestrictedly, and therefore the case binder may also be used unrestrictedly.
 
 %% The harder harder things
 
-\todo[inline]{Should we discuss this? It would be fine, but we're not able to see this because of call-by-name substitution}
-\begin{code}
-f x = case x of z { _ -> x }
-\end{code}
+%\todo[inline]{Should we discuss this? It would be fine, but we're not able to see this because of call-by-name substitution}
+%\begin{code}
+%f x = case x of z { _ -> x }
+%\end{code}
 
 %\todo[inline]{the harder ones regarding reverse binder swap. these give some
 %intuition, but this is an unsound optimisation in some contexts}
@@ -1027,39 +1023,30 @@ between \emph{evaluation} and \emph{consuming resources}.
 Definition X.Y: A linear resource is consumed when it is either fully evaluated
 (NF) to a value, or when it is returned s.t. an application of that function
 being fully evaluated would fully evaluate the resource to a value. Or something like that.
-
+%
 Note how this generalizes Linear Haskell's definition of consuming a resource: $\dots$
 
-(We note the rare exception of pure aliasing in call-by-value languages not captured by this def.)
-
-\todo[inline]{We could almost say that eventually everything all linear
+\begin{itemize}
+\item We could almost say that eventually everything all linear
 resources must be evaluated to NF to be consumed, or returned by a function
-s.t. a continuation of that function has to evaluate the result to NF., or something.}
+s.t. a continuation of that function has to evaluate the result to NF., or something.
 
-\todo[inline]{Discuss definition of consuming resources of linear haskell}
-\todo[inline]{Discuss our own generalized (call-by-value, call-by-name, etc)
+\item Discuss our own generalized (call-by-value, call-by-name, etc)
 definition of consuming resources by evaluation. Something like, if an
 expression is fully evaluated, all linear resources that expression depends on
-to compute a result are consumed, or something...}
+to compute a result are consumed, or something...
+
+\item How does this relate to strictness? Reference the section of Linear
+Haskell about linearity and strictness, and basically revisit what they say.
+
+\end{itemize}
   
-\todo[inline]{Quanto é que eu devia falar de call-by-need lambda calculus sem
-cases? não é mt interessante, pq as exps avaliadas sao sempre avaliadas pra
-funcções (e arg) -> (e' arg), e por isso os recursos são todos completamente
-consumidos. A questão de WHNF e assim só aparece mais à frente; mas se calhar serve de começo?}
-
-\subsection{Linearity and strictness}
-
-maybe. see also section of the same name in Linear Haskell
-\todo[inline]{Re-read little section about linearity and strictness in Linear Haskell}
 
 % }}}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % {{{ Linear Core
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Linear Core}
-
-\todo[inline]{We kind of ignore the multiplicity semiring. We should discuss
-how we don't do ring operations ... but that's kind of wrong.}
 
 In this section, we develop a linear calculus $\lambda_\Delta^\pi$, dubbed \emph{Linear Core}, that 
 combines the linearity-in-the-arrow and multiplicity polymorphism introduced by
@@ -1072,7 +1059,7 @@ algebraic datatypes, case expressions, recursive let bindings, and multiplicity
 polymorphism.
 
 Linear Core makes much more precise the various insights discussed in the
-previous section by putting them together in a linear type system for which we
+previous section by crystalizin them together in a linear type system for which we
 prove soundness via the usual preservation and progress theorems. Crucially,
 the Linear Core type system accepts all the \emph{semantically linear} example
 programs (highlighted with \colorbox{notyet}{\notyetcolorname})
@@ -1084,7 +1071,7 @@ rejects.
 
 We also note that despite the focus on GHC Core, the fundamental ideas for
 understanding linearity in a call-by-need calculus can be readily applied to
-other call-by-need languages.\todo{make better sentence?}
+other call-by-need languages.
 
 \todo[inline]{Explicar algumas das ideias fundamentais, e apresentar as regras
 iterativamente. Podemos começar com as triviais e avançar para os dois pontos
@@ -1359,5 +1346,24 @@ turn entails using $\lctag{\lctag{x}{K_1}}{Pair_1}$, which has two tags. In this
 
 % }}}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\chapter{More ToDos}
+
+\begin{itemize}
+\item We know the case binder to ALWAYS be in WHNF, perhaps there could
+be some annotation on the case binder s.t. we know nothing happens when we
+scrutinize it as a single variable
+
+\item Should we discuss this? It would be fine, but we're not able to see this because of call-by-name substitution
+\begin{code}
+f x = case x of z { _ -> x }
+\end{code}
+
+\item Generalizing linearity section...
+
+\item We kind of ignore the multiplicity semiring. We should discuss
+how we don't do ring operations ... but that's kind of wrong.
+\end{itemize}
+
 
 % vim: fdm=marker foldenable
