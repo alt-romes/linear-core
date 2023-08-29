@@ -671,7 +671,7 @@ f9 bool x =
 \end{noway}
 Note that if returned |x| instead of |go bool| in the let body, then, despite
 the binding using |x| more than once, we would still consume |x| exactly once,
-since recursive bindings are still lazy.\footnote{broken sentence}
+since recursive bindings are still lazy.
 
 Lastly, we extend our single-binding running example to use two mutually recursive bindings that
 depend a linear resource:
@@ -898,6 +898,9 @@ f :: a ⊸ a
 f x = case K1 x of z { K2 -> x; K1 a -> x }
 \end{code}
 \end{noway}
+\todo[inline]{Actually, this example is fine; in practice, it only matters that
+resources are consumed to be able to use the case binder unrestrictedly. This
+one doesn't typecheck, but is still semantically linear}
 This particular example has a known constructor being scrutinized which might
 seem like an unrealistic example, but we recall that during the transformations
 programs undergo in an optimizing compiler, many programs such as this
@@ -905,7 +908,7 @@ naturally occur (e.g. if the definition of a function were inlined in the scruti
 
 Moreover, in a branch of a constructor without linear fields we also know the
 result of evaluating the scrutinee to be unrestricted, so we can also use the
-case binder unrestrictedly to refer to it zero or more times. For example, this
+case binder unrestrictedly and refer to it zero or more times. For example, this
 program is also linear:
 \begin{notyet}
 \begin{code}
@@ -914,8 +917,55 @@ f16 x = case x of z { () -> z <> z }
 \end{code}
 \end{notyet}
 
+Further exploring that each linear field must be consumed exactly once, and
+that resources in WHNF scrutinees aren't consumed, we are able to construct
+more contrived examples, the following two of which the first doesn't typecheck
+because the same linear field is used twice, but the second one does since it
+uses each linear field exactly once (despite pattern matching on the same
+components twice)
 
-% TODO wildcards briefly
+\todo[inline]{We know the case binder to ALWAYS be in WHNF, perhaps there could
+be some annotation on the case binder s.t. we know nothing happens when we
+scrutinize it as a single variable}
+\begin{noway}
+\begin{code}
+f w = case w of z
+        (a,b) ->
+          case (a,b) of z'
+            (c,d) ->
+               (a,c)
+\end{code}
+\end{noway}
+\begin{notyet}
+\begin{code}
+f w = case w of z
+        (a,b) ->
+          case (a,b) of z'
+            (c,d) ->
+               (a,d)
+\end{code}
+\end{notyet}
+
+Finally, we consider the default case alternatives, also known as wildcards
+(written $\_$), in the presence of linearity: Matching against the wildcard
+doesn't provide new information, so we linearity is seen as before but without
+fully consuming linear resources (in non-linear patterns) nor binding new
+linear resources (in linear patterns). If the scrutinee is in WHNF, we can
+either use the resources from the scrutinee or the case binder in that
+alternative, if the scrutinee is not in WHNF, we \emph{must} use the case
+binder, as it's the only way to linearly consume the result of evaluating the
+scrutinee to WHNF.
+
+\parawith{Summary} Case expressions evaluate their scrutinees to WHNF,
+introduce a case binder, and bind pattern variables. If the scrutinee is
+already in WHNF, all resources occurring in it are still available in the case
+alternative, alongside the case binder and the pattern-bound variables. In the
+case alternative, either the resources of the scrutinee, the case binder, or
+the linearly bound pattern variables must be used exactly once, but mutually
+exclusively. For scrutinees not in WHNF, in the case alternative, either the
+case binder or the linear pattern variables must be used mutually exclusively.
+If the pattern doesn't bind any linear resources, then it may be consumed
+unrestrictedly, and therefore the case binder may also be used unrestrictedly.
 
 % This is fine, because |x| in the case alternative is known to be K...
 % Variables really are weird case...
@@ -927,75 +977,47 @@ f16 x = case x of z { () -> z <> z }
 % \end{code}
 % \end{noway}
 
-\begin{notyet}
-\begin{code}
-f17 :: a ⊸ b ⊸ (a ⊸ b ⊸ c) -> c
-f17 x y use = case let w = something x y in () of z { () -> ... }
-\end{code}
-\end{notyet}
+%We used to call NOT IN WHNF "negative" hah
+%\begin{code}
+%-- This is NOT OK since (g x y) is negative (eliminates g)
+%f x y = case g x y of z
+%          K1 a b -> (x,y)
+%          K2 w   -> (x,y)
+%\end{code}
 
-This would be fine, but we're not able to see this because of call-by-name substitution
+
+%% The harder harder things
+
+\todo[inline]{Should we discuss this? It would be fine, but we're not able to see this because of call-by-name substitution}
 \begin{code}
 f x = case x of z { _ -> x }
 \end{code}
 
-We used to call NOT IN WHNF "negative" hah
-\begin{code}
--- This is NOT OK since (g x y) is negative (eliminates g)
-f x y = case g x y of z
-          K1 a b -> (x,y)
-          K2 w   -> (x,y)
-\end{code}
-
-Getting harder ...
-
-This is not semantically linear!
-\begin{noway}
-\begin{code}
-f w = case w of z
-        (a,b) ->
-          case z of z'
-            (c,d) ->
-               (a,c)
-\end{code}
-\end{noway}
-
-But this is!
-\begin{notyet}
-\begin{code}
-f w = case w of z
-        (a,b) ->
-          case z of z'
-            (c,d) ->
-               (a,d)
-\end{code}
-\end{notyet}
-
-the harder ones regarding reverse binder swap. these give some intuition, but this is an unsound optimisation it seems
-
-\begin{code}
-f y = let x = use y
-       in case x of z { K a b -> expensive x; K2 w -> w }
-\end{code}
-
-\begin{code}
-f y = let x = use y
-      let t = expensive x
-       in case x of z { K a b -> t; K2 w -> w }
-\end{code}
-
-\begin{code}
-f x = case x of z { K a b -> expensive x; K2 w -> w }
-
-
-f y = let x = use y
-       in case x of z { K a b -> expensive x; K2 w -> w }
-
-
-f y = let x = use y
-      let t = expensive x
-       in case x of z { K a b -> t; K2 w -> w }
-\end{code}
+%\todo[inline]{the harder ones regarding reverse binder swap. these give some
+%intuition, but this is an unsound optimisation in some contexts}
+%\begin{code}
+%f y = let x = use y
+%       in case x of z { K a b -> expensive x; K2 w -> w }
+%\end{code}
+%
+%\begin{code}
+%f y = let x = use y
+%      let t = expensive x
+%       in case x of z { K a b -> t; K2 w -> w }
+%\end{code}
+%
+%\begin{code}
+%f x = case x of z { K a b -> expensive x; K2 w -> w }
+%
+%
+%f y = let x = use y
+%       in case x of z { K a b -> expensive x; K2 w -> w }
+%
+%
+%f y = let x = use y
+%      let t = expensive x
+%       in case x of z { K a b -> t; K2 w -> w }
+%\end{code}
 
 \subsection{Generalizing linearity in function of evaluation\label{sec:generalizing-evaluation-consuming}}
 
