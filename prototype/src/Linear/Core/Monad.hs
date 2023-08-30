@@ -78,8 +78,9 @@ instance Monad m => MonadFail (LinearCoreT m) where
 
 runLinearCoreT :: Monad m => M.Map Var IdBinding -> LinearCoreT m a -> m (Either String a)
 runLinearCoreT s comp = runExceptT $ do
-  (a, renv, _unrestrictedUsed) <- runRWST (unLC comp) False (M.map (:| []) s)
-  if M.null $ M.filter (all isBindingLinear) renv
+  (a, renv, _unrestrictedUsed) <- runRWST (unLC comp) False (M.map Left s)
+  -- All linear IdBindings must be consumed, and no fragments may remain
+  if M.null $ M.filter (either isBindingLinear (const True)) renv
     then return a
     else throwError "Not all linear resources in a computation were consumed"
 
@@ -121,7 +122,9 @@ use = flip use' [] where
             -- as necessary according to the tag stack until we can consume the
             -- given tag (in the form of a tagstack)
             tags -> let splits = splitAsNeededThenConsume tags mult
-                     in modify (M.insert key (Right splits))
+                     in case NE.nonEmpty splits of
+                          Nothing      -> modify (M.delete key) -- we split the fragment and consumed the only one
+                          Just splits' -> modify (M.insert key (Right splits')) -- we keep the remaining fragments
 
         -- Resource is unrestricted
         | otherwise -> do
@@ -142,7 +145,19 @@ use = flip use' [] where
 
       -- Resource was LambdaBound but has been split into a set of tagged resources which haven't yet been consumed
       Just (Right mults) -> do
-        return error
+        case mtags of
+          -- We have no tags but trying to use a fragmented resource. Nope.
+          [] -> throwError "Trying to consume a resource that has been fragmented as a whole resource"
+
+          -- We have a tagstack, so we split and consume as needed all the mults,
+          -- In practice, this will consume (or further fragment as need) just
+          -- the one resource from the group of fragmented multiplicities, and
+          -- non-matching tagged fragments untouched.
+          tags -> let splits = concatMap (splitAsNeededThenConsume tags) (NE.toList mults)
+                   in case NE.nonEmpty splits of
+                        Nothing      -> modify (M.delete key) -- OK, we only had one fragment left and consumed it
+                        Just splits' -> modify (M.insert key (Right splits'))   -- we keep the remaining fragments
+
 
 -- | Extend a computation that threads linear resources with a resource that
 -- must definitely not escape its scope (i.e. the given computation must
@@ -151,18 +166,18 @@ use = flip use' [] where
 -- If the resource escapes the given computation, the resulting computation fails.
 --
 -- If the resource was already in the context it also fails.
-extend :: Monad m
+extend :: forall m a. Monad m
        => Var -> IdBinding -> LinearCoreT m a -> LinearCoreT m a
 extend key value computation = LinearCoreT do
   gets (M.lookup key) >>= \case
     Just _ -> throwError $ fromString $ "Tried to extend a computation with a resource that was already in the environment: " ++ showPprUnsafe key ++ "."
     Nothing -> do
-      modify (M.insert key (value :| []))
+      modify (M.insert key (Left value))
       result <- unLC computation
       wasConsumed key >>= \case
         Nothing -> return result
         Just ms
-          | any isBindingLinear ms
+          | either isBindingLinear (const True) ms
           -> throwError $ fromString $
                "The linear resource " ++ showPprUnsafe key ++ " wasn't fully consumed in the computation extended with it. [" ++ showPprUnsafe ms ++ "]"
           | otherwise
@@ -172,6 +187,7 @@ extend key value computation = LinearCoreT do
             return result
   where
     -- Returns 'Nothing' if it was consumed, and Just m otherwise
+    wasConsumed :: forall m'. MonadState LCState m' => Var -> m' (Maybe (Either IdBinding (NonEmpty Mult)))
     wasConsumed x = gets $ (M.lookup x)
 
 -- | 'extend' multiple variables
@@ -212,15 +228,19 @@ unrestricted computation = LinearCoreT do
 -- environments for a group of recursive lets
 record :: Monad m => LinearCoreT m a -> LinearCoreT m (a, UsageEnv)
 record computation = LinearCoreT do
-  prev :: M.Map Var (NonEmpty IdBinding) <- get
+  prev :: LCState <- get
   result <- unLC computation
   after <- get
   let diff = prev M.\\ after
-  diffMults <- traverse (traverse (\case LambdaBound m -> pure m; DeltaBound _ -> throwError "record: Non linear things disappeared from the context?")) diff
-  return (result, UsageEnv (joinMs $ M.toList diffMults))
+  diffMults <- extractDiffMults diff
+  return (result, UsageEnv diffMults)
     where
-      joinMs :: [(Var, NonEmpty Mult)] -> [(Var, Mult)]
-      joinMs = foldr (\(v,ms) -> (map (v,) (NE.toList ms) ++)) []
+      extractDiffMults :: forall m. MonadError String m => M.Map Var (Either IdBinding (NonEmpty Mult)) -> m [(Var, Mult)]
+      extractDiffMults diffs = concat <$>
+        traverse (\case (_, Left (DeltaBound _)) -> throwError "record: Non linear things disappeared from the context?"
+                        (v, Left (LambdaBound m)) -> pure [(v, m)]
+                        (v, Right mults) -> pure $ map (v,) $ NE.toList mults
+                ) (M.toList diffs)
 
 -- | Count the number of times linear, unrestricted, and delta-bound variables in a computation are used.
 recordAll :: Monad m => LinearCoreT m a -> LinearCoreT m (a, M.Map Var Int)

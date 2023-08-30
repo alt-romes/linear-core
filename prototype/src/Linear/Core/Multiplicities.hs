@@ -9,7 +9,6 @@ import qualified GHC.Core.Type as C
 import GHC.Core.Map.Type (deBruijnize)
 import qualified Data.List as L
 import qualified GHC.Plugins
-import Control.Exception (assert)
 import GHC.Core.Multiplicity (scaledMult)
 
 --------------------------------------------------------------------------------
