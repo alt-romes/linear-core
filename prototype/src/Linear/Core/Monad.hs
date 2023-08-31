@@ -84,6 +84,7 @@ runLinearCoreT s comp = runExceptT $ do
     then return a
     else throwError "Not all linear resources in a computation were consumed"
 
+-- All this state management is a bit complex, i wonder if it would be simpler if defined in terms of e.g. finite automata
 
 -- | Uses a resource from the environment, making it unavailable in subsequent computations if it was/consumed a linear resource.
 -- If the key doesn't exist, no resources are consumed

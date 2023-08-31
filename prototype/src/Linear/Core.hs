@@ -14,7 +14,6 @@ module Linear.Core
 
 import GHC.Utils.Outputable
 import Control.Monad.State
-import Control.Monad.Except
 import GHC.Driver.Config.Core.Lint
 import GHC.Plugins hiding (Mult, count, unrestricted)
 import GHC.Utils.Trace
@@ -65,7 +64,7 @@ runLinearCore pgr = do
     -- The local top-level bindings have empty usage environments, and GlobalIds are treated as constants so we don't need to include them here
     -- See also Note [GlobalId/LocalId]
     bindingsMap = M.fromList $ L.map (,DeltaBound emptyUE) localTopBindings
-    defcfg = initLintConfig dflags localTopBindings
+    -- defcfg = initLintConfig dflags localTopBindings
 
     lcprg = runIdentity (convertProgram pgr)
 

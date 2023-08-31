@@ -7,6 +7,7 @@
 \input{language-v3/proof}
 \input{language-v4/proof}
 \input{language-v4/Syntax}
+\input{language-v4/TypingRules}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % {{{ Chapter: A Type System for Semantic Linearity in Core; Introduction
@@ -1073,15 +1074,34 @@ don't preserve linearity under Core's current type system. As far as we know,
 we are the first to prove optimisations preserve types in a non-strict linear
 language?
 
-The key idea to typing linearity semantically is to delay considering a
-resource to be used to when a computation that depends on that resource is
-effectively evaluated or returned, which is possible by annotating relevant
-binders with \emph{usage environments} and having two distinct rules for case
-expressions, branching on whether the scrutinee is in Weak Head Normal Form.
+The first key idea for typing linearity semantically is to delay \emph{consuming a
+resource} to when a computation that depends on that resource is effectively
+evaluated or returned, by annotating relevant binders with \emph{usage
+environments} (\S~\ref{sec:usage-environments}).
+%
+The second key idea is to have two distinct rules for
+case expressions, branching on whether the scrutinee is in Weak Head Normal
+Form, and using ``proof irrelevance'' to track resources that are no
+longer available but haven't yet been fully consumed (\S~\ref{sec:lc-case-exps}). Additionally, we introduce
+tagged resources to split the resources between the pattern-bound variables as
+usage environments, encoding that pattern variables jointly ``finish
+consuming'' the scrutinee resources.
 % 
 We also note that despite the focus on GHC Core, the fundamental ideas for
 understanding linearity in a call-by-need calculus can be readily applied to
 other call-by-need languages.
+
+We present Linear Core's syntax and type system iteratively, starting with the
+judgements and base linear calculi rules for multiplicity and term lambdas plus
+the variable rules ($\S~\ref{sec:base-calculi}$).
+%
+Then usage environments, the rule for $\Delta$-bound variables, and rules for
+(recursive) let bindings ($\S~\ref{sec:usage-environments}$).
+%
+Finally, we introduce the rules to typecheck case expressions and alternatives,
+along with the key insights to do so, namely branching on WHNF-ness of
+scrutinee, proof irrelevant resources, and tagged variables
+($\S~\ref{sec:lc-case-exps}$).
 
 % We start by introducing the Core-like language, $\dots$ usage environments as a
 % way to encode choice between the way a resource is used $\dots$\todo{$\dots$}
@@ -1091,7 +1111,7 @@ other call-by-need languages.
 %iterativamente. Podemos começar com as triviais e avançar para os dois pontos
 %mais difíceis : Lets e Cases}
 
-\subsection{Typing and Language Syntax}
+\subsection{Language Syntax}
 
 The complete syntax of Linear Core is given by Figure~\ref{fig:full-linear-core-syntax}.
 % Figure~\ref{fig:linear-core-types} and Figure~\ref{fig:linear-core-terms}.
@@ -1130,28 +1150,24 @@ associated multiplicity denoting whether the pattern-bound variables must
 consumed linearly (ultimately, in order to consume the scrutinee linearly).
 Additionally, the set of patterns in a case expression is guaranteed to be exhaustive,
 i.e. there is always at least one pattern which matches the scrutinized expression.
-%
 \[
 \SyntaxTerms
 \]
-%
+Linear Core takes the idea of annotating lets with usage environments from the
+unpublished Linear Mini-Core document by Arnaud Spiwack et.
+all~\cite{cite:linear-mini-core}, which first tentatively tackled Core's
+linearity issues. We discuss this work in more detail in
+Section~\ref{sec:linear-mini-core}.
 
-
-% \begin{figure}[h]
-% \[
-% \SyntaxTypes
-% \]
-% \caption{$\lambda_\Delta^\pi$ Types}
-% \label{fig:linear-core-types}
-% \end{figure}
-
-% \begin{figure}[h]
-% \[
-% \SyntaxTerms
-% \]
-% \caption{$\lambda_\Delta^\pi$ Terms}
-% \label{fig:linear-core-terms}
-% \end{figure}
+Datatype declarations $\datatype{T~\overline{p}}{\overline{K:\overline{\sigma
+\to_\pi}~T~\overline{p} }}$ involve the name of the type being declared $T$
+parametrized over multiplicity variables $\ov{p}$, and a set of the data
+constructors $K$ with signatures indicating the type and multiplicity of the
+constructor arguments. Note that a linear resource is used many times when a
+constructor with an unrestricted field is applied to it, since, dually, pattern
+matching on the same constructor with an unrestricted field allows it to be
+used unrestrictedly. Programs are a set of declarations and a top-level
+expression.
 
 \SyntaxFull
 
@@ -1165,11 +1181,13 @@ i.e. there is always at least one pattern which matches the scrutinized expressi
 %a linear lambda calculus with algebraic datatypes, case
 %expressions, recursive let bindings, and multiplicity abstractions. The 
 
-Linear Core takes from the unpublished Linear Mini-Core document by Arnaud
-Spiwack et. all~\cite{cite:linear-mini-core}, which first tentatively tackled
-Core's linearity issues, its base syntax, and annotating lets and letrecs with
-so-called usage environments. We discuss this work in more detail in
-Section~\ref{sec:linear-mini-core}.
+\subsection{Foundations}
+
+The typing rules of Linear Core are exposed iteratively and the complete type
+system putting them together is given by Figure~\ref{fig:linear-core-typing-rules}
+
+\TypingRules
+
 
 \subsection{Usage environments\label{sec:usage-environments}}
 
@@ -1180,7 +1198,9 @@ bit more complicated for cases i.e. "which resources are we using when using
 the case-binder? effectively, the scrutinee. what about case pat vars?..." and
 so on}
 
-\subsection{Lazy let bindings}
+\subsubsection{Delta-bound variables}
+
+\subsubsection{Lazy let bindings}
 
 \todo[inline]{Let bindings are hard, if they are used then we use resources. If
 they don't get used then we use no resources! In practice, resources that show
@@ -1194,9 +1214,10 @@ that evaluation to WHNF doesn't necessarily consume all resources}
 
 \todo[inline]{Assign usage environments to let-bound variables, trivial usage
 of usage environments (in contrast with case expressions)}
+
 \subsubsection{Recursive let bindings}
 
-\subsection{Case expressions evaluate to WHNF}
+\subsection{Case Expressions\label{sec:lc-case-exps}}
 
 \todo[inline]{Case expressions are the means by which we do evaluation and
 pattern matching -- when things are scrutinized, we evaluate them (if they
@@ -1231,12 +1252,14 @@ rules, one that fires when the scrutinee is in WHNF, the other when it isn't.}
 \todo[inline]{The case binder and pattern variables will consume the scrutinee
 resources, be those irrelevant or relevant resources}
 
-\subsubsection{Splitting}
+\subsubsection{Branching on WHNF-ness}
+\subsubsection{Proof irrelevant resources}
+\subsubsection{Splitting and tagging fragments}
 
-\section{Linear Examples}
+\subsection{Linear Core Examples}
 
-\todo[inline]{The ones in the last section, but also the ones in 2.2 e.g.}
-\todo[inline]{Copy over examples from Linear Mini-Core}
+\todo[inline]{Copy over examples from Linear Mini-Core. The ones in the last
+section, but also the ones in 2.2 e.g.}
 
 % }}}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
