@@ -267,7 +267,7 @@ definition of consuming a resource from Linear Haskell).
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % {{{ Linearity, Semantically
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Linearity, Semantically}
+\section{Linearity, Semantically\label{sec:linearity-semantically}}
 
 A linear type system statically guarantees that linear resources are
 \emph{consumed} exactly once. Consequently, whether a program is well-typed
@@ -1181,10 +1181,23 @@ expression.
 %a linear lambda calculus with algebraic datatypes, case
 %expressions, recursive let bindings, and multiplicity abstractions. The 
 
-\subsection{Foundations}
+\subsection{Typing Foundations\label{sec:base-calculi}}
 
-The typing rules of Linear Core are exposed iteratively and the complete type
-system putting them together is given by Figure~\ref{fig:linear-core-typing-rules}
+Linear Core ($\lambda^\pi_\Delta$) is a linear lambda calculus akin to Linear Haskell's
+$\lambda^q_\to$ in that both have multiplicity polymorphism, (recursive) let
+bindings, case expressions and algebraic data types. $\lambda^\pi_\Delta$
+diverges from $\lambda^q_\to$ primarily when typing lets and case expressions
+and alternatives, in its purpose to typecheck semantic linearity.
+%, and secondarily in only treating multiplicity polymorphism superficially.
+%
+\todo{And our treatment of multiplicity
+polymorphism completely ignores algebraic treatment of multiplicities with
+semiring operations!!! Would it be sufficient to add a rule for application of variable multiplicity functions?}
+%
+Otherwise, the base rules of the calculus for multiplicity and term abstraction
+and application are quite similar. In this section we present the linear
+calculi rules that share much in common with $\lambda^p_\to$, and in the
+subsequent ones the rules encoding the novel insights from Linear Core explored by example in Section~\ref{sec:linearity-semantically}.
 
 \TypingRules
 
