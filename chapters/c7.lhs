@@ -1194,13 +1194,115 @@ and alternatives, in its purpose to typecheck semantic linearity.
 polymorphism completely ignores algebraic treatment of multiplicities with
 semiring operations!!! Would it be sufficient to add a rule for application of variable multiplicity functions?}
 %
-Otherwise, the base rules of the calculus for multiplicity and term abstraction
-and application are quite similar. In this section we present the linear
-calculi rules that share much in common with $\lambda^p_\to$, and in the
-subsequent ones the rules encoding the novel insights from Linear Core explored by example in Section~\ref{sec:linearity-semantically}.
+Otherwise, the base rules of the calculus for, multiplicity and term,
+abstraction and application are quite similar. In this section we present the
+linear calculi with rules that share much in common with $\lambda^p_\to$, and
+in the subsequent ones the rules encoding the novel insights from Linear Core
+explored by example in Section~\ref{sec:linearity-semantically}.
 
-\TypingRules
+We start with the main typing judgement. As is customary for linear type
+systems, we use two typing environments, an \emph{unrestricted} $\G$ and
+a \emph{linear} $\D$ environment.
+%
+Variables in $\G$ can be freely discarded (\emph{weakened}) and duplicated
+(\emph{contracted}), while resources in $\D$ must be used exactly once (hence
+can't be discarded nor duplicated). Despite not having explicit weakening and
+contraction rules in our system, they are available as admissible rules for
+$\G$ (but not for $\D$), since, equivalently (via
+\cite{91621fae-5e53-3497-8291-32b2fab5a743}), resources from $\G$ are
+duplicated for sub-derivations and may unrestrictedly exist in the variable
+rules.
+% TODO: Likely rewrite that
+%
+The judgement reads ``expression $e$ has type
+$\s \to \vp$ under the unrestricted environment $\G$ and linear environment $\D$'':
+\[
+\G;\D \vdash e : \s \to \vp
+\]
+Occurrences of unrestricted variables from $\G$ are well-typed if the linear
+environment is empty, while occurrences of linear variables are only well-typed
+when they're the only resource available in the linear context.
+\[
+\begin{array}{cc}
+\TypeVarOmega & \TypeLinearVar
+\end{array}
+\]
+In both cases, the linear context must contain exactly what is required to
+prove the terminal case, whereas the unrestricted context may contain arbitrary
+variables.
+%
+Variables in contexts are annotated with their type and multiplicity, so
+$\x[\pi]$ is a variable named $x$ of type $\s$ and multiplicity $\pi$.
 
+Linear functions are introduced via the function type ($\s \to_\pi \vp$) with
+$\pi = 1$, i.e. a function of type $\s \to_1 \vp$ (or $\s \lolli \vp$)
+introduces a linear resource in the linear environment $\D$.
+%
+Unrestricted functions are introduced via the same function type with $\pi =
+\omega$, and the $\lambda$-bound variable is added to $\G$:
+\[
+\begin{array}{cc}
+\TypeLamIntroL & \TypeLamIntroW
+\end{array}
+\]
+A linear function application is well-typed if there exists a disjoint split of the
+linear resources into $\D,\D'$ s.t. the function and argument, each under a
+distinct split, are both well-typed and the argument type matches the
+function's expected argument type. Conversely, unrestricted resources are
+duplicated and available whole to both sub-derivations.
+\[
+\TypeLamElimL
+\]
+An unrestricted function, unlike a linear one, consumes its argument
+unrestrictedly (zero or more times). Therefore, in an unrestricted function
+application, allowing any linear resources to occur in the argument expression
+would entail possibly consuming those resources not linearly, since the
+variable binding the argument expression could be discarded or used more than
+once in the function body. Thus, arguments to unrestricted functions must also
+be unrestricted, i.e. no linear variables can be used to type them.
+\[
+\TypeLamElimW
+\]
+Typing linear and unrestricted function applications separately is less general
+than a typing rule for any multiplicity $\pi$ that scales per the multiplicity
+ring the resources used by the argument, however, since our goal of semantic
+linearity not benefiting much from it, keeping the simple approach allows us to have
+the linear and unrestricted environments separate.\todo{We might only need multiplicities for the
+case-of-case, even then couldn't we do semiring scaling without variables? Dislike sentence}
+
+Multiplicity abstractions ($\Lambda p.~e$) introduce a multiplicity variable
+$p$ to the unrestricted context as well, since we don't impose usage
+restrictions on multiplicity variables, and introduce expressions of type
+$\forall p.~\dots$, i.e. terms universally quantified over a multiplicity
+variable. We note that, in the body of the abstraction, function types annotated
+with a $p$ variable and data type fields with multiplicity $p$ are equivalent
+to linear functions and linear fields -- if $p$ can be instantiated at both
+$\omega$ and $1$, it must be well-typed for both instantiations, which is only
+true if multiplicity-polymorphic functions and fields are treated as linear
+functions and fields.
+\[
+\TypeMultLamIntro
+\]
+A multiplicity application instantiates a multiplicity-polymorphic type
+$\forall p.~\s$ at a particular (argument) multiplicity $\pi$, resulting in an
+expression of type $\s$ where occurrences of $p$ are substituted by $\pi$, i.e.
+$\s[\pi/p]$.
+\[
+\TypeMultLamElim
+\]
+The rule additionally requires that $\pi$ must be \emph{well-formed} in order
+for the expression to be well-typed, using the judgement $\G \vdash_{mult}
+\pi$, where well-formedness is given by $\pi$ either being $1$, $\omega$, or an
+in-scope  multiplicity variable in $\G$.
+\[
+\TypeWellFormedMult
+\]
+
+These rules conclude the foundations of our linear calculi. In subsequent
+sections we type-check (recursive) let bindings and case expressions,
+accounting for semantic linearity as per the insights construed in
+Section~\ref{sec:linearity-semantically}, effectively distilling them into the
+key ideas of our work, encoded as rules.
 
 \subsection{Usage environments\label{sec:usage-environments}}
 
@@ -1273,6 +1375,13 @@ resources, be those irrelevant or relevant resources}
 
 \todo[inline]{Copy over examples from Linear Mini-Core. The ones in the last
 section, but also the ones in 2.2 e.g.}
+
+\subsection{Conclusion}
+
+Concluding, $\dots$
+
+\TypingRules
+
 
 % }}}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

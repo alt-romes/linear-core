@@ -163,6 +163,20 @@ at the same time with some symbol (e.g. for Split)}
     {\judg{\_ \to e}{\s \Longrightarrow \vp}[alt][\D_s][z]}
 }
 
+\newcommand{\TypeWellFormedMult}{
+    \infer*[right=$(1)$]
+    { }
+    {\Gamma \vdash 1}
+\qquad
+    \infer*[right=$(\omega)$]
+    { }
+    {\Gamma \vdash \omega}
+\qquad
+    \infer*[right=$(\rho)$]
+    { }
+    {\Gamma, \rho \vdash \rho}
+}
+
 \newcommand{\TypingRules}{
 \begin{figure}[ht]
 \begin{framed}
@@ -213,17 +227,7 @@ at the same time with some symbol (e.g. for Split)}
 \\[1em]
     \judgment{\Gamma \vdash_{mult} \pi}
 \\[1em]
-    \infer*[right=$(1)$]
-    { }
-    {\Gamma \vdash 1}
-\qquad
-    \infer*[right=$(\omega)$]
-    { }
-    {\Gamma \vdash \omega}
-\qquad
-    \infer*[right=$(\rho)$]
-    { }
-    {\Gamma, \rho \vdash \rho}
+    \TypeWellFormedMult
 \\[1em]
 \begin{array}{cc}
 \judgment{\Gamma \vdash decl : \Gamma'} & \judgment{\Gamma \vdash pgm : \sigma}\\
