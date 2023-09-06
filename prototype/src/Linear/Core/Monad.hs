@@ -14,7 +14,11 @@ module Linear.Core.Monad
   , drop
   , unrestricted
   , record
-  , recordAll
+  , dryRun
+  , makeEnvResourcesIrrelevant
+
+  -- * Utils
+  , LCState
   )
   where
 
@@ -64,7 +68,7 @@ import qualified Data.Map as M
 -- * The Reader, Bool, determines whether to record all variables used in the writer env.
 --    * This bool will only be true when recordNonLinear sets in order to record variables.
 --    * This ensures we only collect variables within recordNonLinear, after which we wipe the writer
-newtype LinearCoreT m a = LinearCoreT { unLC :: RWST Bool [Var] LCState (ExceptT String m) a }
+newtype LinearCoreT m a = LinearCoreT { unLC :: RWST (IsDryRun,AllowIrrelevant) [Var] LCState (ExceptT String m) a }
   deriving (Functor, Applicative, Monad, MonadState LCState, MonadError String)
 
 -- | The linear core state represents the resources available in a computation.
@@ -73,12 +77,20 @@ newtype LinearCoreT m a = LinearCoreT { unLC :: RWST Bool [Var] LCState (ExceptT
 -- into a set of tagged resources, represented by a non-empty list of (tagged) multiplicities
 type LCState = M.Map Var (Either IdBinding (NonEmpty Mult))
 
+-- | If we're doing a dry run we do two things:
+-- * Record the amount of times a linear variable is used
+-- * Don't fail if the linear variable is used twice
+-- Thus they are never removed from the context, and just used to check how many
+-- times they would be consumed were we to typecheck for real. This is used when
+-- inferring usage environments for recursive bindings.
+type IsDryRun = Bool
+
 instance Monad m => MonadFail (LinearCoreT m) where
   fail = throwError
 
 runLinearCoreT :: Monad m => M.Map Var IdBinding -> LinearCoreT m a -> m (Either String a)
 runLinearCoreT s comp = runExceptT $ do
-  (a, renv, _unrestrictedUsed) <- runRWST (unLC comp) False (M.map Left s)
+  (a, renv, _unrestrictedUsed) <- runRWST (unLC comp) (False, DisallowIrrelevant) (M.map Left s)
   -- All linear IdBindings must be consumed, and no fragments may remain
   if M.null $ M.filter (either isBindingLinear (const True)) renv
     then return a
@@ -96,9 +108,10 @@ use = flip use' [] where
   use' key _    | isGlobalId key = pure () -- See Note [GlobalId/LocalId]; Global ids are top-level imported Ids, which are unrestricted
   use' key mtags = LinearCoreT do
 
-    -- When recording, we eagerly write the variable used
-    shouldRecord <- ask
-    when shouldRecord $ tell [key]
+    -- When recording, we count when linear resources are used, and allow them
+    -- to be consumed more than once (despite that not being possible if we were
+    -- typechecking).
+    (isDryRun, allowsIrrelevant) <- ask
 
     -- Lookup the variable in the environment
     mv <- gets (M.lookup key)
@@ -114,18 +127,27 @@ use = flip use' [] where
         -- Resource is linear
         | isLinear mult -- isLinear looks through tags, but top level lambda-bound should never have tags anyway
         -> do
+          when (allowsIrrelevant == DisallowIrrelevant && isIrrelevant mult) $
+             throwError $ fromString $ "Tried to use an irrelevant linear resource " <> showPprUnsafe key <> " directly!"
+
           case mtags of
             -- We aren't trying to use a fragment of this resource,
             -- so it is simply consumed
-            [] -> modify (M.delete key)
+            [] ->
+              if isDryRun
+                 then tell [key]
+                 else modify (M.delete key)
 
             -- We are trying to use a fragment of this resource, so we split it
             -- as necessary according to the tag stack until we can consume the
             -- given tag (in the form of a tagstack)
-            tags -> let splits = splitAsNeededThenConsume tags mult
-                     in case NE.nonEmpty splits of
-                          Nothing      -> modify (M.delete key) -- we split the fragment and consumed the only one
-                          Just splits' -> modify (M.insert key (Right splits')) -- we keep the remaining fragments
+            tags -> do
+              splits <- splitAsNeededThenConsume allowsIrrelevant tags mult
+              case NE.nonEmpty splits of
+                    Nothing
+                      | isDryRun  -> tell [key]
+                      | otherwise -> modify (M.delete key) -- we split the fragment and consumed the only one
+                    Just splits'  -> modify (M.insert key (Right splits')) -- we keep the remaining fragments
 
         -- Resource is unrestricted
         | otherwise -> do
@@ -137,13 +159,16 @@ use = flip use' [] where
 
       -- Resource is DeltaBound
       Just (Left (DeltaBound (UsageEnv env))) -> do
-        -- Record the usage of the delta bound var, but not the usages of the
-        -- underlying vars, i.e. disable recording
-        local (const False) $
+
+        -- Simply recurse to use all variables from the usage environment, but
+        -- allow irrelevant resources to occur, since we're using resources from
+        -- within a usage environment
+        local (\(idr,_) -> (idr, AllowIrrelevant)) $
           mapM_ (unLC . go) env
             where
               go (v, m) = use' v (extractTags m)
 
+      -- ROMES:TODO: We can't allow consuming irrelevant tagged resources directly
       -- Resource was LambdaBound but has been split into a set of tagged resources which haven't yet been consumed
       Just (Right mults) -> do
         case mtags of
@@ -154,10 +179,14 @@ use = flip use' [] where
           -- In practice, this will consume (or further fragment as need) just
           -- the one resource from the group of fragmented multiplicities, and
           -- non-matching tagged fragments untouched.
-          tags -> let splits = concatMap (splitAsNeededThenConsume tags) (NE.toList mults)
-                   in case NE.nonEmpty splits of
-                        Nothing      -> modify (M.delete key) -- OK, we only had one fragment left and consumed it
-                        Just splits' -> modify (M.insert key (Right splits'))   -- we keep the remaining fragments
+          tags -> do
+
+            splits <- join <$> mapM (splitAsNeededThenConsume allowsIrrelevant tags) (NE.toList mults)
+            case NE.nonEmpty splits of
+                Nothing
+                  | isDryRun  -> tell [key] -- Again, we don't consume things when dry run
+                  | otherwise -> modify (M.delete key) -- OK, we only had one fragment left and consumed it
+                Just splits'  -> modify (M.insert key (Right splits'))   -- we keep the remaining fragments
 
 
 -- | Extend a computation that threads linear resources with a resource that
@@ -189,7 +218,7 @@ extend key value computation = LinearCoreT do
   where
     -- Returns 'Nothing' if it was consumed, and Just m otherwise
     wasConsumed :: forall m'. MonadState LCState m' => Var -> m' (Maybe (Either IdBinding (NonEmpty Mult)))
-    wasConsumed x = gets $ (M.lookup x)
+    wasConsumed x = gets (M.lookup x)
 
 -- | 'extend' multiple variables
 extends :: Monad m => [(Var, IdBinding)] -> LinearCoreT m a -> LinearCoreT m a
@@ -201,7 +230,7 @@ drop :: Monad m => UsageEnv -> LinearCoreT m a -> LinearCoreT m a
 drop (UsageEnv env) comp = do
   prev <- LinearCoreT get
   -- Remove (don't consume!) resources ocurring in the given usage env from the available resources, then run the computation
-  _ <- modify (M.\\ (M.fromList env))
+  _ <- modify (M.\\ M.fromList env)
   a <- comp
   -- Restore resources
   LinearCoreT (put prev)
@@ -224,9 +253,9 @@ unrestricted computation = LinearCoreT do
 
 -- | Run a computation and record the linear resources used in that computation
 --
--- In practice, however, we record all resources that were used together with
--- their multiplicity. This is needed if we want to compute the recursive usage
--- environments for a group of recursive lets
+-- Linear resources must be used linearly or otherwise the computation
+-- will fail; if you're trying to count how many times a linear resource is used
+-- without failing, see 'dryRun'
 record :: Monad m => LinearCoreT m a -> LinearCoreT m (a, UsageEnv)
 record computation = LinearCoreT do
   prev :: LCState <- get
@@ -243,18 +272,35 @@ record computation = LinearCoreT do
                         (v, Right mults) -> pure $ map (v,) $ NE.toList mults
                 ) (M.toList diffs)
 
--- | Count the number of times linear, unrestricted, and delta-bound variables in a computation are used.
-recordAll :: Monad m => LinearCoreT m a -> LinearCoreT m (a, M.Map Var Int)
-recordAll comp = LinearCoreT do
+-- | Count the number of times linear variables in a computation are consumed.
+-- This doesn't ever make the computation fail because of linearity because we
+-- disable checking. It's a dry run, only useful to determine if certain things
+-- are going to be used more than once (in particular for the recursive usage
+-- environment inference algorithm)
+dryRun :: Monad m => LinearCoreT m a -> LinearCoreT m (a, M.Map Var Int)
+dryRun comp = LinearCoreT do
   -- We listen to a local computation in which recording flag is true
-  (a, w) <- listen $ local (const True) (unLC comp)
+  (a, w) <- listen $ local (\(_,irr) -> (True,irr)) (unLC comp)
 
   -- Make a usage environment from the number of times some variable is used.
   let w' = M.fromListWith (+) (map (,1) w)
-  isRecording <- ask
+  (isRecording, _) <- ask
   if isRecording
      -- We're recording, so we keep everything written so far
      then return (a, w')
      -- We weren't recording when we called this action, which means we're done recording -- erase the writer state
      else pass $ return ((a,w'), \_ -> [])
+
+makeEnvResourcesIrrelevant :: Monad m => UsageEnv -> LinearCoreT m ()
+makeEnvResourcesIrrelevant (UsageEnv vs) = do
+  lcstate0 <- get
+  lcstate1 <- forM vs $ \(var,mult) -> do
+    case M.lookup var lcstate0 of
+      Nothing -> error "This shouldn't be possible! How does the usage env refer to variables out of scope?"
+      Just (Left (LambdaBound m))
+        | mult == m -> pure (var, Left (LambdaBound (makeMultIrrelevant m)))
+        | otherwise -> error "makeEnvResourcesIrrelevant: how can this be!?"
+      Just (Left (DeltaBound env')) -> pure (var, Left (DeltaBound $ makeIrrelevant env'))
+      Just (Right mults) -> pure (var, Right $ NE.map (\x -> if x == mult then makeMultIrrelevant x else x) mults)
+  put (M.fromList lcstate1)
 

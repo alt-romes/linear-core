@@ -87,8 +87,6 @@ our type system
 
 \end{itemize}
 
-\todo[inline]{This is the Introduction. We should start elsewhere}
-
 \todo[inline]{The introduction needs a lot of motivation!}
 
 \todo[inline]{
@@ -96,8 +94,6 @@ our type system
     linearidade sintatica em Haskell (vs semantica), e a interação disso com o
     call-by-need/lazy evaluation. Quase como se fosse um paper.
 }
-
-\todo[inline]{Interação de linearity com a call-by-need/laziness}
 
 \todo[inline]{Compiler optimizations put programs in a state where linearity
 mixed with call-by-need is pushed to the limits. That is, the compiler
@@ -112,8 +108,6 @@ implemented Core type system they don't preserve linearity.}
 let binders are unused, or where we pattern match on a known constructor -- but
 these situations happen all the time in the intermediate representation of an
 optimising compiler $\dots$}
-
-\todo[inline]{This was the old introduction to chapter 3. I think we can do better}
 
 % ROMES:TODO:
 %Since the publication of Linear Haskell~\cite{cite:linearhaskell} and its
@@ -1061,7 +1055,7 @@ algebraic datatypes, case expressions, recursive let bindings, and multiplicity
 polymorphism.
 
 Linear Core makes much more precise the various insights discussed in the
-previous section by crystalizing them together in a linear type system for which we
+previous section by crystallizing them together in a linear type system for which we
 prove soundness via the usual preservation and progress theorems. Crucially,
 the Linear Core type system accepts all the \emph{semantically linear} example
 programs (highlighted with \colorbox{notyet}{\notyetcolorname})
@@ -1246,7 +1240,7 @@ Unrestricted functions are introduced via the same function type with $\pi =
 \end{array}
 \]
 A linear function application is well-typed if there exists a disjoint split of the
-linear resources into $\D,\D'$ s.t. the function and argument, each under a
+linear resources into $\D,\D'$ set. the function and argument, each under a
 distinct split, are both well-typed and the argument type matches the
 function's expected argument type. Conversely, unrestricted resources are
 duplicated and available whole to both sub-derivations.
@@ -1268,7 +1262,7 @@ than a typing rule for any multiplicity $\pi$ that scales per the multiplicity
 ring the resources used by the argument, however, since our goal of semantic
 linearity not benefiting much from it, keeping the simple approach allows us to have
 the linear and unrestricted environments separate.\todo{We might only need multiplicities for the
-case-of-case, even then couldn't we do semiring scaling without variables? Dislike sentence}
+case-of-case definition as it exists in ghc?, even then couldn't we do semiring scaling without variables? Also, dislike sentence}
 
 Multiplicity abstractions ($\Lambda p.~e$) introduce a multiplicity variable
 $p$ to the unrestricted context as well, since we don't impose usage
@@ -1306,16 +1300,97 @@ key ideas of our work, encoded as rules.
 
 \subsection{Usage environments\label{sec:usage-environments}}
 
-\todo[inline]{Usage environments as a way to encode mutual exclusivity between
-using a variable and the resources it is comprised of. Explain definition, it
-is literally the variables used to type the binder in the case of the let. A
-bit more complicated for cases i.e. "which resources are we using when using
-the case-binder? effectively, the scrutinee. what about case pat vars?..." and
-so on}
+A \emph{usage environment} $\Delta$ is the means to encode the powerful idea
+that lazy bindings don't consume the resources required by the bound expression
+when defined, but rather when themselves are fully consumed. Specifically, we
+annotate so-called $\Delta$-bound variables with a \emph{usage environment} to
+denote that consuming these variables equates to consuming the resources in the
+usage environment they are annotated with, where a usage environment is
+essentially a multiset of linear resources. $\Delta$-bound variables are
+introduced by a handful of constructs, namely (recursive) let binders, case
+binders, and case pattern variables. For example, as per the insights into
+semantic linearity developed in Section~\ref{sec:semantic-linearity-examples},
+only were we to evaluate and consume $u$ in $e$ would we use the resources
+consumed in its body, $x$ and $y$. Accordingly, the usage environment of $u$
+would be $\{x,y\}$:
+\[
+f = \lambda \xl.~\lambda \y[1].~\llet{u = (x,y)}{e}
+\]
+Furthermore, usage environments guarantee that using a $\Delta$-bound variable
+is mutually exclusive with directly using the resources it is annotated with.
+In practice, using the $\Delta$-bound variable consumes all linear resources
+listed in its usage environment, meaning they are no longer available for
+direct usage. Dually, using the linear resources directly means they are no
+longer available to consume through the usage environment of the $\Delta$-bound
+variable.
+
+Finally, we note how usage environments bear a strong resemblance to the linear
+typing environments to the right of the semicolon in the main typing judgement,
+i.e. the environment with the linear resources required to type an expression.
+%
+In fact, usage environments and linear typing contexts differ only in that the
+former are used to annotate variables, while the latter used to type
+expressions. Yet, this distinction is slightly blurred when introducing how
+typing environments are moved to usage environments, or otherwise used in rules
+relating the two.
 
 \subsubsection{Delta-bound variables}
 
+A $\Delta$-bound variable $u$ is a variable annotated with a usage environment $\Delta$. Crucially, for any $\Delta$-bound variable $u$,
+%
+\begin{enumerate}
+\item Using $u$ is equivalent to using all the linear resources in $\Delta$
+\item $u$ can only be used once
+\item Using $u$ is mutually exclusive with using the $\Delta$ resources it depends on elsehow
+\item $u$ can be safely discarded as long as the resources in $\Delta$ are consumed elsehow
+\end{enumerate}
+%
+Fortunately, since linear resources must be linearly split across
+sub-derivations, (2) and (3) follow from (1), since consuming the linear resources
+in $\Delta$ to type $u$ makes them unavailable in the context of any other
+derivation. Therefore, also using them directly, or indirectly through the same
+(or other) usage environment, is impossible to type-check as the resources were
+already allocated to the derivation of $u$. Similarly, (4) also follows from
+(1), because if the linear resources aren't consumed in the $\Delta$-var
+derivation, they must be consumed in an alternative derivation (or otherwise
+the expression does not typecheck).
+
+These observations all boil down to one typing rule for $\Delta$-bound
+variables, which fundamentally encodes (1), implying the other three bullets:
+\[
+\TypeVarDelta
+\]
+The rule reads that an occurrence of a $\Delta$-bound variable is well-typed if
+the linear environment is exactly the resources in the usage environment of
+that variable.
+
+$\D$-variables are always introduced in $\Gamma$ since they can be discarded and
+duplicated, despite multiple occurrences of the same $\Delta$-variable not possibly
+being well-typed since, ultimately, those occurrences imply usage of resources
+that must be used linearly.
+
+
 \subsubsection{Lazy let bindings}
+
+In Section~\ref{sec:semantic-linearity-examples}, we discussed how,
+semantically, lazy let bindings consume the resources used in their bodies
+lazily, just how the expressions are also evaluated lazily.
+%
+Resources in let-bound expressions are only consumed when the binder of that
+expression is fully consumed and must occur in mutual exclusion with the
+resources used in that expression.
+%
+Indeed, this is exactly what usage environments encode -- let-bound variables
+are the canonical example of a $\Delta$-bound variable, a variable bound to an
+expression in which the resources required to type it are consumed lazily (when
+evaluated) rather than eagerly, effectively \emph{delaying} the consumption of
+resources to when they're really needed.
+
+Summarily, let-bindings introduce $\Delta$-variables whose usage environment
+are the linear typing environments of the bindings' bodies.
+\[
+\TypeLet
+\]
 
 \todo[inline]{Let bindings are hard, if they are used then we use resources. If
 they don't get used then we use no resources! In practice, resources that show

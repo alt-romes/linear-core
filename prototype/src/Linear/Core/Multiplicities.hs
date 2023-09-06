@@ -1,15 +1,18 @@
 {-# LANGUAGE GHC2021, ViewPatterns, DerivingVia, GeneralizedNewtypeDeriving, OverloadedRecordDot, LambdaCase, MultiWayIf #-}
 module Linear.Core.Multiplicities where
 
+import Control.Monad.Except
 import Data.Function
-import GHC.Utils.Outputable
-import qualified GHC.Core.Multiplicity as C
-import GHC.Types.Var
-import qualified GHC.Core.Type as C
 import GHC.Core.Map.Type (deBruijnize)
-import qualified Data.List as L
-import qualified GHC.Plugins
 import GHC.Core.Multiplicity (scaledMult)
+import GHC.Types.Var
+import GHC.Utils.Outputable
+import qualified Data.List as L
+import qualified GHC.Core.Multiplicity as C
+import qualified GHC.Core.Type as C
+import qualified GHC.Plugins
+import Control.Monad
+import Data.Bifunctor
 
 --------------------------------------------------------------------------------
 ----- Id Binding ---------------------------------------------------------------
@@ -33,6 +36,17 @@ data Mult = Relevant C.Mult
 
 data Tag = Tag GHC.Plugins.DataCon Int
 
+-- | When using a linear resource, we must check whether the resource is
+-- irrelevant or relevant. We can't consume irrelevant resources directly (as
+-- though they existed), we can only consume irrelevant resources by consuming a
+-- usage environment that mentions the irrelevant resource.
+--
+-- In this sense, this hidden option is always "DisallowIrrelevant" except for
+-- when we're 'use'ing a $\Delta$-bound variable, in which case we internally
+-- switch to "AllowIrrelevant" since we know the variable being used is coming
+-- from a usage environment.
+data AllowIrrelevant = DisallowIrrelevant | AllowIrrelevant deriving Eq
+
 -- ROMES:TODO: This is an incorrect instance of equality for mults because of mult. vars.
 instance Eq Mult where
   Relevant m1 == Relevant m2 = deBruijnize m1 == deBruijnize m2
@@ -49,7 +63,12 @@ isLinear = not . isUnrestricted
 isUnrestricted :: Mult -> Bool
 isUnrestricted (Relevant m)   = C.isManyTy m
 isUnrestricted (Irrelevant m) = C.isManyTy m
-isUnrestricted (Tagged _ m) = isUnrestricted m
+isUnrestricted (Tagged _ m)   = isUnrestricted m
+
+isIrrelevant :: Mult -> Bool
+isIrrelevant (Relevant _)   = False
+isIrrelevant (Irrelevant _) = True
+isIrrelevant (Tagged _ m)   = isIrrelevant m
 
 data Usage = Zero | LCM Mult
 
@@ -60,29 +79,41 @@ extractTags :: Mult -> [Tag]
 extractTags = reverse . go where go (Tagged t m) = t:go m
                                  go _ = []
 
+removeTag :: Mult -> Mult
+removeTag (Tagged _ m) = removeTag m
+removeTag m = m
+
 -- | Split a resource as needed given a tagstack then consume the resource
 -- specified by the tag.
 --
 -- Returns the resource fragments that were split as needed, except for the
--- fragment that was consumed
-splitAsNeededThenConsume :: [Tag] -> Mult -> [Mult]
-splitAsNeededThenConsume (Tag con i:ts) m
-  = concatMap (\case
+-- fragment that was consumed. (Returns [] if the last resource was consumed)
+--
+-- Irrelevant-ness of the multiplicities (both input and output) must be
+-- handled outside of this function, here they are split just like relevant ones
+splitAsNeededThenConsume :: MonadError String m
+                         => AllowIrrelevant -> [Tag] -> Mult -> m [Mult]
+splitAsNeededThenConsume allowsIrrelevant (Tag con i:ts) m
+  = join <$> traverse (\case
                  m'@(Tagged (Tag _ i') _)
                     -- From the resources we split, this has the index we are
                     -- looking for, so we keep splitting inside
-                    | i' == i -> splitAsNeededThenConsume ts m'
+                    | i' == i -> splitAsNeededThenConsume allowsIrrelevant ts m'
 
                     -- Otherwise, the resource we need isn't down this path, so
                     -- we can stop splitting here
-                    | otherwise -> [m']
-                 _ -> error "impossible, splitResourceAt only returns tagged resources")
+                    | otherwise -> pure [m']
+                 _ -> error "impossible, splitResourceAt guarantees returned resource is tagged"
+              )
               (splitResourceAt con m)
 -- If there is no tag left then this is the resource we are looking for, so we
 -- consume it. We know this is the resource we need because we only recurse
 -- after splitting on the index we're looking for. If it's the last tag we're
 -- done, otherwise we keep splitting.
-splitAsNeededThenConsume [] _m = []
+splitAsNeededThenConsume allowsIrrelevant [] m
+  | DisallowIrrelevant <- allowsIrrelevant
+  , isIrrelevant m = throwError "Tried to use an irrelevant result when not allowed"
+  | otherwise = pure []
 
 -- | Splits a resource according to a constructor's number of linear fields
 splitResourceAt :: GHC.Plugins.DataCon -> Mult -> [Mult]
@@ -103,16 +134,15 @@ newtype UsageEnv = UsageEnv [(Var,Mult)]
   deriving Eq
 
 makeIrrelevant :: UsageEnv -> UsageEnv
-makeIrrelevant (UsageEnv ue) = UsageEnv $ L.map (\(x,m) -> (x,go m)) ue
-  where
-    go (Relevant m)   = Irrelevant m
-    go (Irrelevant m) = Irrelevant m
-    go (Tagged t m) = Tagged t (go m)
+makeIrrelevant (UsageEnv ue) = UsageEnv $ L.map (second makeMultIrrelevant) ue
+
+makeMultIrrelevant :: Mult -> Mult
+makeMultIrrelevant (Relevant m)   = Irrelevant m
+makeMultIrrelevant (Irrelevant m) = Irrelevant m
+makeMultIrrelevant (Tagged t m) = Tagged t (makeMultIrrelevant m)
 
 lookupUE :: Var -> UsageEnv -> Usage
-lookupUE v (UsageEnv m) = case lookup v m of
-                            Nothing   -> Zero
-                            Just mult -> LCM mult
+lookupUE v (UsageEnv m) = maybe Zero LCM (lookup v m)
 
 -- | Delete all occurrences of a Variable
 deleteUE :: Var -> UsageEnv -> UsageEnv

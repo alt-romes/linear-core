@@ -140,6 +140,10 @@ handling of resources imposes less burden on the programmer
 of the interaction with other source features, but seems feasible and an
 improvement to the usability of linear types. It allows more lazy functional
 programming idioms with linear types (also because laziness and strictness is less well defined as in Core, bc opts)
+
+\item Beautiful inference algorithm for recursive usage environments -- insight
+that looks like inference for recursive function principle types, but haven't
+figured it out
 \end{itemize}
 
 \section{Conclusions}

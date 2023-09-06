@@ -12,21 +12,23 @@ module Linear.Core
   ( runLinearCore
   ) where
 
-import GHC.Utils.Outputable
+-- import GHC.Driver.Config.Core.Lint
 import Control.Monad.State
-import GHC.Driver.Config.Core.Lint
-import GHC.Plugins hiding (Mult, count, unrestricted)
-import GHC.Utils.Trace
-import Data.Map.Internal as M
-import Data.List.NonEmpty (NonEmpty(..))
 import Data.List as L
+import Data.List.NonEmpty (NonEmpty(..))
+import Data.Map.Internal as M
 import Data.Maybe
 import GHC.Core.TyCo.Rep (Type(..))
+import GHC.Plugins hiding (Mult, count, unrestricted)
+import GHC.Utils.Outputable
+import GHC.Utils.Trace
 
 import Linear.Core.Multiplicities
 import Linear.Core.Monad
 import GHC.Core.Multiplicity (scaledMult)
 import GHC.Core.Multiplicity (scaledThing)
+import Data.Bifunctor
+import qualified Data.List.NonEmpty as NE
 
 type LCProgram = [LCBind]
 type LCBind = Bind LCVar
@@ -58,7 +60,7 @@ data LCVar = LCVar
 
 runLinearCore :: CoreProgram -> CoreM [SDoc]
 runLinearCore pgr = do
-  dflags <- getDynFlags 
+  _dflags <- getDynFlags 
   let
     localTopBindings = bindersOfBinds pgr
     -- The local top-level bindings have empty usage environments, and GlobalIds are treated as constants so we don't need to include them here
@@ -93,16 +95,14 @@ checkBind (NonRec b e)
 
 checkBind (Rec bs) = do
   let (ids,rhss) = unzip bs
-  inScope <- get
-  -- The extended expressions will use the empty usage environment for the delta variables.
-  -- ROMES:TODO: This will fail because some linear resources will occur in one
-  -- branch and the recursive call in the others instead of the linear
-  -- resources, but currently we typecheck the recursive calls using an empty
-  -- delta environment, meaning the computations will fail to be linear
-  --
-  -- ROMES:TODO:IMPORTANT:TODO: Perhaps we should really have a separate inferrence pass? We could have a dummy value and record how many times it is consumed; or have a different mode of recording that doesn't crash when two resources are consumed, rather, it ups the multiplicity to many! (maybe that's it)
-  (rhss', naiveUsages) <- unzip <$> extends (L.map (\(LCVar b (Just d)) -> (b,d)) ids)
-                                            (traverse (recordAll . checkExpr) rhss)
+  inScope :: LCState <- get
+  -- We extend the rhss typechecking with the recursive bindings as if they
+  -- were linear variables. This way, we record if they are used more than once.
+  -- Because we do a dryRun, we won't crash if they are.
+  -- Then we use the naiveUsageEnv (the ones computed with the recursive
+  -- bindings as linear variables) and compute the real usage environment.
+  (rhss', naiveUsages) <- unzip <$> extends (L.map (\(LCVar b (Just _d)) -> (b,LambdaBound (Relevant OneTy))) ids)
+                                            (traverse (dryRun . checkExpr) rhss)
   let recUsages = computeRecUsageEnvs (zip (L.map (.id) ids) naiveUsages)
       -- Repeated ocurrences of linear variables will be represented as many
       -- times as they occur in the recursive bindings in the usage
@@ -128,31 +128,33 @@ checkExpr expr = case expr of
     -> Lam b <$> extend b.id (fromMaybe (LambdaBound (Relevant ManyTy)) (multBinding b.id)) (checkExpr e)
   Let bind@(NonRec _b _) body
     -> do
-      bind'@(NonRec (LCVar b (Just delta)) _) <- checkBind bind
-      Let <$> pure bind'
-          <*> extend b delta (checkExpr body)
+      bind'@(NonRec (LCVar b (Just delta')) _) <- checkBind bind
+      Let bind'
+          <$> extend b delta' (checkExpr body)
   Let bind@(Rec _bs) body
     -> do
       bind'@(Rec (unzip -> (bs, _))) <- checkBind bind
-      Let <$> pure bind'
-          <*> extends (L.map (\(LCVar b (Just d)) -> (b,d)) bs) (checkExpr body)
+      Let bind'
+          <$> extends (L.map (\(LCVar b (Just d)) -> (b,d)) bs) (checkExpr body)
   Case e b ty alts
     -- Expression is in WHNF (See Note [exprIsHNF] and #23771, function is really "exprIsWHNF")
     | exprIsHNF (unconvertExpr e)
     -> do
       (e', ue) <- record $ checkExpr e
-      Case <$> pure e'
-           <*> pure (LCVar b.id (deltaBinding ue))
-           <*> pure ty
-           <*> extend (b.id) (DeltaBound ue) (mapM (checkAlt ue) alts)
+      Case e'
+           (LCVar b.id (deltaBinding ue))
+           ty
+       <$> extend b.id (DeltaBound ue) (mapM (checkAlt ue) alts)
     | otherwise
     -- Expression is definitely not in WHNF (or do we really mean HNF?)
     -> do
       (e', makeIrrelevant -> ue) <- record $ checkExpr e
-      Case <$> pure e'
-           <*> pure (LCVar b.id (deltaBinding ue))
-           <*> pure ty
-           <*> extend (b.id) (DeltaBound ue) (mapM (checkAlt ue) alts)
+      -- ROMES:TODO: Make the resources irrelevant in the actual context, not only in the usage environment
+      makeEnvResourcesIrrelevant ue
+      Case e'
+           (LCVar b.id (deltaBinding ue))
+           ty
+       <$> extend b.id (DeltaBound ue) (mapM (checkAlt ue) alts)
 
   Tick t e  -> Tick t <$> checkExpr e
   Cast e co -> Cast <$> checkExpr e <*> pure co
@@ -176,6 +178,7 @@ checkAlt _ (Alt (LitAlt _) _ _) = error "impossible"
 
 --- * ALT0
 checkAlt ue (Alt (DataAlt con) args rhs)
+-- ROMES:Isto é fixe para mostrar o HLS
   | L.null $ L.filter (not . isManyTy . scaledMult) (dataConOrigArgTys con)
   = do
           -- Add unrestricted binders
@@ -195,16 +198,17 @@ checkAlt ue (Alt (DataAlt con) args rhs)
 -- TODO: Do the simple thing
 checkAlt ue (Alt (DataAlt con) args rhs) = do
 
-  let (unrestricted_args, linear_args) = L.partition (isManyTy . scaledMult) (dataConOrigArgTys con)
+  let (unrestricted_args, linear_args) = bimap (L.map snd) (L.map snd) $
+                                          L.partition (isManyTy . scaledMult . fst) (zip (dataConOrigArgTys con) args)
   -- TODO: We need to figure out how to typecheck alternatives (in the syntax directed form too) before we do this right.
 
   -- First, extend computation with unrestricted resources
-  rhs' <- extends (L.map (\arg -> (scaledThing arg, LambdaBound (Relevant ManyTy))) unrestricted_args)
+  rhs' <- extends (L.map ((, LambdaBound (Relevant ManyTy)) . (.id)) unrestricted_args)
           $ checkExpr rhs
 
   -- Then add the tag the usage environment with the linear resources with this constructor and an index for each
   -- It will ensure that when we consume the resources by using this environment, we'll just split the resource according to the tag.
-  let args' = L.zipWith (\a i -> LCVar a.id (deltaBindingTagged con i ue)) args [1..]
+  let args' = L.zipWith (\a i -> LCVar a.id (deltaBindingTagged con i ue)) linear_args [1..]
   
   -- this is all wrong!
 
@@ -218,7 +222,7 @@ checkAlt ue (Alt (DataAlt con) args rhs) = do
 -- | Reconstruct the usage environment for a given variable with
 --  1. The counts of usages in a group of recursive bindings
 --  2. The In Scope Variables and their corresponding bindings
-reconstructUe :: MonadFail m => Var -> [(Var, M.Map Var Int)] -> M.Map Var (NonEmpty IdBinding) -> m UsageEnv
+reconstructUe :: MonadFail m => Var -> [(Var, M.Map Var Int)] -> LCState -> m UsageEnv
 reconstructUe v usageMap inscope = do
   Just usages <- pure $ L.lookup v usageMap
   return $ M.foldlWithKey go (UsageEnv []) usages
@@ -226,11 +230,14 @@ reconstructUe v usageMap inscope = do
     go :: UsageEnv -> Var -> Int -> UsageEnv
     go (UsageEnv acc) var count = case M.lookup var inscope of
       Nothing -> error "Var not in scope??"
-      Just bindings -> UsageEnv $ concatMap (go' var count) bindings ++ acc
+      Just binding -> UsageEnv $ go' var count binding ++ acc
 
-    go' :: Var -> Int -> IdBinding -> [(Var, Mult)]
-    go' var count (LambdaBound mult)          = replicate count (var,mult)
-    go' _   count (DeltaBound (UsageEnv env)) = concat $ L.take count $ repeat env
+    go' :: Var -> Int -> Either IdBinding (NonEmpty Mult) -> [(Var, Mult)]
+    go' var count (Left (LambdaBound mult)         ) = replicate count (var,mult)
+    go' _   count (Left (DeltaBound (UsageEnv env))) = concat $ replicate count env
+    go' var count (Right mults) -- kind of dreadful, but we don't delete the last tagged multiplicity, simply record it; if otherwise this isn't the last, then it wasn't fully consumed ? In that case, how did we get hold of the var? maybe it's impossible
+      | mult:|[] <- mults = replicate count (var, removeTag mult)
+      | otherwise = error "How did we get hold of this variable?"
 
 -- | Implements the algorithm to compute the recursive usage environments of a
 -- not-necessarily-strongly-connected group of recursive let bindings
@@ -247,7 +254,7 @@ computeRecUsageEnvs :: [(Var, M.Map Var Int)] -- ^ Recursive usage environments 
                     -> [(Var, M.Map Var Int)] -- ^ Non-recursive usage environments
 computeRecUsageEnvs l =
   L.foldl (flip $ \(v,vEnv) -> L.map $ \(n, nEnv) ->
-      (n, ((fromMaybe 0 $ v `M.lookup` nEnv) `scale` (M.delete v vEnv)) `sup` (M.delete v nEnv))) l l
+      (n, (fromMaybe 0 (v `M.lookup` nEnv) `scale` M.delete v vEnv) `sup` M.delete v nEnv)) l l
   where
     sup :: M.Map Var Int -> M.Map Var Int -> M.Map Var Int
     sup = M.merge M.preserveMissing M.preserveMissing (M.zipWithMatched $ \_ x y -> max x y)
@@ -307,7 +314,7 @@ convertExpr expr = case expr of
     Case <$> convertExpr e
          <*> pure (LCVar b (deltaBinding emptyUE))
          <*> pure ty
-         <*> mapM (convertAlt) alts
+         <*> mapM convertAlt alts
 
   Tick t e  -> Tick t <$> convertExpr e
   Cast e co -> Cast <$> convertExpr e <*> pure co
@@ -325,12 +332,13 @@ convertAlt (Alt con args rhs) = do
 -- {{{ Utilities ---------------------------------------------------------------
 --------------------------------------------------------------------------------
 
+-- | Alias for @Just . DeltaBound@
 deltaBinding :: UsageEnv -> Maybe IdBinding
 deltaBinding = Just . DeltaBound
 
 deltaBindingTagged :: DataCon -> Int -- index
-                   -> UsageEnv -> Maybe IdBinding
-deltaBindingTagged = _
+                   -> UsageEnv -> Maybe IdBinding -- ^ Always 'Just $ DeltaBound ...'
+deltaBindingTagged con i (UsageEnv vs) = Just $ DeltaBound $ UsageEnv $ L.map (second (Tagged (Tag con i))) vs
 
 multBinding :: Var -> Maybe IdBinding
 multBinding v
