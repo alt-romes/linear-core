@@ -20,7 +20,7 @@ import Data.Map.Internal as M
 import Data.Maybe
 import GHC.Core.TyCo.Rep (Type(..))
 import GHC.Plugins hiding (Mult, count, unrestricted)
-import GHC.Utils.Outputable
+import GHC.Utils.Outputable as Ppr
 import GHC.Utils.Trace
 
 import Linear.Core.Multiplicities
@@ -58,6 +58,8 @@ data LCVar = LCVar
   }
 
 
+-- | Returns an empty list if the program typechecks, and the list of captured
+-- errors otherwise
 runLinearCore :: CoreProgram -> CoreM [SDoc]
 runLinearCore pgr = do
   _dflags <- getDynFlags 
@@ -71,8 +73,12 @@ runLinearCore pgr = do
     lcprg = runIdentity (convertProgram pgr)
 
   case runIdentity $ runLinearCoreT bindingsMap (checkProgram lcprg) of
-    Left e -> pprTraceM "Failed to typecheck linearity!" (ppr lcprg) >> return [text e]
-    Right x -> pprTraceM "Safe prog!" (ppr x) >> return []
+    Left e -> do
+      pprTraceM "Failed to typecheck linearity!" (ppr lcprg)
+      return [text e]
+    Right x -> do
+      pprTraceM "Safe prog!" (ppr x)
+      return []
 
 --------------------------------------------------------------------------------
 -- {{{ Typechecking Linear Core (mostly ignoring types) ------------------------
@@ -83,6 +89,8 @@ type LinearCoreM = LinearCoreT Identity
 checkProgram :: LCProgram -> LinearCoreM LCProgram
 checkProgram = traverse checkBind
 
+-- ROMES:TODO: use isGlobalId and setTopLevelBindingName to set the binding
+-- name, s.t. functions started with "fail" don't crash the plugin
 checkBind :: LCBind -> LinearCoreM LCBind
 checkBind (NonRec b e)
   | isId b.id
@@ -136,7 +144,7 @@ checkExpr expr = case expr of
       bind'@(Rec (unzip -> (bs, _))) <- checkBind bind
       Let bind'
           <$> extends (L.map (\(LCVar b (Just d)) -> (b,d)) bs) (checkExpr body)
-  Case e b ty alts
+  casee@(Case e b ty alts)
     -- Expression is in WHNF (See Note [exprIsHNF] and #23771, function is really "exprIsWHNF")
     | exprIsHNF (unconvertExpr e)
     -> do
@@ -144,17 +152,19 @@ checkExpr expr = case expr of
       Case e'
            (LCVar b.id (deltaBinding ue))
            ty
-       <$> extend b.id (DeltaBound ue) (mapM (checkAlt ue) alts)
+       <$> withSameEnvMap (extend b.id (DeltaBound ue) . checkAlt ue) alts
     | otherwise
     -- Expression is definitely not in WHNF (or do we really mean HNF?)
-    -> do
+    -> pprTrace "Case expression" (ppr casee) $ do
+
       (e', makeIrrelevant -> ue) <- record $ checkExpr e
+      pprTraceM "Made irrelevant usage environment" (ppr ue)
       -- ROMES:TODO: Make the resources irrelevant in the actual context, not only in the usage environment
       makeEnvResourcesIrrelevant ue
       Case e'
            (LCVar b.id (deltaBinding ue))
            ty
-       <$> extend b.id (DeltaBound ue) (mapM (checkAlt ue) alts)
+       <$> withSameEnvMap (extend b.id (DeltaBound ue) . checkAlt ue) alts
 
   Tick t e  -> Tick t <$> checkExpr e
   Cast e co -> Cast <$> checkExpr e <*> pure co
@@ -177,10 +187,10 @@ checkAlt ue (Alt (LitAlt l) [] rhs) = do
 checkAlt _ (Alt (LitAlt _) _ _) = error "impossible"
 
 --- * ALT0
-checkAlt ue (Alt (DataAlt con) args rhs)
+checkAlt ue a@(Alt (DataAlt con) args rhs)
 -- ROMES:Isto é fixe para mostrar o HLS
   | L.null $ L.filter (not . isManyTy . scaledMult) (dataConOrigArgTys con)
-  = do
+  = pprTrace "ALT0 con" (ppr a Ppr.<> Ppr.text ". (UE):" Ppr.<> ppr ue) $ do
           -- Add unrestricted binders
   rhs' <- extends (L.map (\arg -> (arg.id, LambdaBound (Relevant ManyTy))) args)
           -- Drop from the environment the fully used resources
@@ -196,23 +206,24 @@ checkAlt ue (Alt (DataAlt con) args rhs)
 -- We do lose the ability to make a linear pattern variable unrestricted if no resources were assigned to it, but that's probably never going to happen in the transformations.
 -- It's probably not worth it trying to be that smart, and we don't do substitution here (only checking). Even if we did substituttion things would likely work since all linear variables are used once, despite the theory not working
 -- TODO: Do the simple thing
-checkAlt ue (Alt (DataAlt con) args rhs) = do
+checkAlt ue alt@(Alt (DataAlt con) args rhs) = pprTrace "ALTN con" (ppr alt) $ do
 
   let (unrestricted_args, linear_args) = bimap (L.map snd) (L.map snd) $
                                           L.partition (isManyTy . scaledMult . fst) (zip (dataConOrigArgTys con) args)
   -- TODO: We need to figure out how to typecheck alternatives (in the syntax directed form too) before we do this right.
 
-  -- First, extend computation with unrestricted resources
+
+  -- Add the tag the usage environment with the linear resources with this constructor and an index for each
+  -- It will ensure that when we consume the resources by using this environment, we'll just split the resource according to the tag.
+  let linear_args' = L.zipWith (\a i -> (a.id, deltaBindingTagged con i ue)) linear_args [1..]
+
+          -- First, extend computation with unrestricted resources
   rhs' <- extends (L.map ((, LambdaBound (Relevant ManyTy)) . (.id)) unrestricted_args)
+          -- Then, with linear resources
+          $ extends linear_args'
           $ checkExpr rhs
 
-  -- Then add the tag the usage environment with the linear resources with this constructor and an index for each
-  -- It will ensure that when we consume the resources by using this environment, we'll just split the resource according to the tag.
-  let args' = L.zipWith (\a i -> LCVar a.id (deltaBindingTagged con i ue)) linear_args [1..]
-  
-  -- this is all wrong!
-
-  return (Alt (DataAlt con) args' rhs')
+  return (Alt (DataAlt con) (unrestricted_args ++ L.map (uncurry LCVar . second Just) linear_args') rhs')
 
 -- }}}
 --------------------------------------------------------------------------------
@@ -337,8 +348,8 @@ deltaBinding :: UsageEnv -> Maybe IdBinding
 deltaBinding = Just . DeltaBound
 
 deltaBindingTagged :: DataCon -> Int -- index
-                   -> UsageEnv -> Maybe IdBinding -- ^ Always 'Just $ DeltaBound ...'
-deltaBindingTagged con i (UsageEnv vs) = Just $ DeltaBound $ UsageEnv $ L.map (second (Tagged (Tag con i))) vs
+                   -> UsageEnv -> IdBinding
+deltaBindingTagged con i (UsageEnv vs) = DeltaBound $ UsageEnv $ L.map (second (Tagged (Tag con i))) vs
 
 multBinding :: Var -> Maybe IdBinding
 multBinding v

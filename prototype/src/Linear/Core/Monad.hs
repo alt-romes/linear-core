@@ -15,9 +15,13 @@ module Linear.Core.Monad
   , unrestricted
   , record
   , dryRun
+
   , makeEnvResourcesIrrelevant
+  , withSameEnvMap
+  , setTopLevelBindingName
 
   -- * Utils
+  , pprDebugState
   , LCState
   )
   where
@@ -26,6 +30,8 @@ import Prelude hiding (drop)
 import Control.Monad
 import Data.String
 import Control.Monad.State
+import GHC.Prelude (pprTraceM)
+import qualified GHC.Utils.Outputable as Ppr
 import Control.Monad.RWS.CPS
 import Control.Monad.Except
 import GHC.Types.Var
@@ -68,8 +74,11 @@ import qualified Data.Map as M
 -- * The Reader, Bool, determines whether to record all variables used in the writer env.
 --    * This bool will only be true when recordNonLinear sets in order to record variables.
 --    * This ensures we only collect variables within recordNonLinear, after which we wipe the writer
-newtype LinearCoreT m a = LinearCoreT { unLC :: RWST (IsDryRun,AllowIrrelevant) [Var] LCState (ExceptT String m) a }
-  deriving (Functor, Applicative, Monad, MonadState LCState, MonadError String)
+newtype LinearCoreT m a = LinearCoreT { unLC :: RWST (IsDryRun, AllowIrrelevant, BindingName) [Var] LCState (ExceptT String m) a }
+  deriving (Functor, Applicative, Monad, MonadState LCState, MonadReader (IsDryRun,AllowIrrelevant,BindingName))
+
+-- | We track the name of the top-level binding to use in Error Messages
+type BindingName = String
 
 -- | The linear core state represents the resources available in a computation.
 -- Each resource might be either LambdaBound, DeltaBound, or be partially
@@ -85,12 +94,17 @@ type LCState = M.Map Var (Either IdBinding (NonEmpty Mult))
 -- inferring usage environments for recursive bindings.
 type IsDryRun = Bool
 
+instance Monad m => MonadError String (LinearCoreT m) where
+  throwError str = LinearCoreT do
+    (_,_,name) <- ask
+    lift $ throwError (name <> ": " <> str)
+
 instance Monad m => MonadFail (LinearCoreT m) where
   fail = throwError
 
 runLinearCoreT :: Monad m => M.Map Var IdBinding -> LinearCoreT m a -> m (Either String a)
 runLinearCoreT s comp = runExceptT $ do
-  (a, renv, _unrestrictedUsed) <- runRWST (unLC comp) (False, DisallowIrrelevant) (M.map Left s)
+  (a, renv, _unrestrictedUsed) <- runRWST (unLC comp) (False, DisallowIrrelevant,"Please set the toplevel binding name when checking") (M.map Left s)
   -- All linear IdBindings must be consumed, and no fragments may remain
   if M.null $ M.filter (either isBindingLinear (const True)) renv
     then return a
@@ -111,14 +125,21 @@ use = flip use' [] where
     -- When recording, we count when linear resources are used, and allow them
     -- to be consumed more than once (despite that not being possible if we were
     -- typechecking).
-    (isDryRun, allowsIrrelevant) <- ask
+    (isDryRun, allowsIrrelevant, _) <- ask
 
     -- Lookup the variable in the environment
     mv <- gets (M.lookup key)
     case mv of
 
       -- Variable has already been consumed (it should be guaranteed to be in scope since Core programs are well-typed)
-      Nothing -> throwError $ fromString $ "Tried to use a linear resource " <> showPprUnsafe key <> " a second time! (Or is it a variable not in scope?)"
+      Nothing -> do
+        lcstate <- get
+        throwError $
+          "Tried to use a linear resource "
+            <> showPprUnsafe key
+            <> " a second time! (Or is it a variable not in scope?)"
+            <> "\nLC State:\n"
+            <> showPprUnsafe lcstate
 
 
       -- Resource is LambdaBound and hasn't been neither consumed nor split
@@ -136,7 +157,9 @@ use = flip use' [] where
             [] ->
               if isDryRun
                  then tell [key]
-                 else modify (M.delete key)
+                 else do
+                   pprTraceM "Using lambda bound" (Ppr.ppr key Ppr.<> Ppr.ppr mult)
+                   modify (M.delete key)
 
             -- We are trying to use a fragment of this resource, so we split it
             -- as necessary according to the tag stack until we can consume the
@@ -146,7 +169,9 @@ use = flip use' [] where
               case NE.nonEmpty splits of
                     Nothing
                       | isDryRun  -> tell [key]
-                      | otherwise -> modify (M.delete key) -- we split the fragment and consumed the only one
+                      | otherwise -> do
+                        pprTraceM "Using lambda bound split" (Ppr.ppr key)
+                        modify (M.delete key) -- we split the fragment and consumed the only one
                     Just splits'  -> modify (M.insert key (Right splits')) -- we keep the remaining fragments
 
         -- Resource is unrestricted
@@ -163,12 +188,12 @@ use = flip use' [] where
         -- Simply recurse to use all variables from the usage environment, but
         -- allow irrelevant resources to occur, since we're using resources from
         -- within a usage environment
-        local (\(idr,_) -> (idr, AllowIrrelevant)) $
+        local (\(idr,_,n) -> (idr, AllowIrrelevant,n)) $
           mapM_ (unLC . go) env
             where
               go (v, m) = use' v (extractTags m)
 
-      -- ROMES:TODO: We can't allow consuming irrelevant tagged resources directly
+      -- We can't allow consuming irrelevant tagged resources directly
       -- Resource was LambdaBound but has been split into a set of tagged resources which haven't yet been consumed
       Just (Right mults) -> do
         case mtags of
@@ -185,7 +210,9 @@ use = flip use' [] where
             case NE.nonEmpty splits of
                 Nothing
                   | isDryRun  -> tell [key] -- Again, we don't consume things when dry run
-                  | otherwise -> modify (M.delete key) -- OK, we only had one fragment left and consumed it
+                  | otherwise -> do
+                    pprTraceM "Using last lambda bound split" (Ppr.ppr key)
+                    modify (M.delete key) -- OK, we only had one fragment left and consumed it
                 Just splits'  -> modify (M.insert key (Right splits'))   -- we keep the remaining fragments
 
 
@@ -280,11 +307,11 @@ record computation = LinearCoreT do
 dryRun :: Monad m => LinearCoreT m a -> LinearCoreT m (a, M.Map Var Int)
 dryRun comp = LinearCoreT do
   -- We listen to a local computation in which recording flag is true
-  (a, w) <- listen $ local (\(_,irr) -> (True,irr)) (unLC comp)
+  (a, w) <- listen $ local (\(_,irr,n) -> (True,irr,n)) (unLC comp)
 
   -- Make a usage environment from the number of times some variable is used.
   let w' = M.fromListWith (+) (map (,1) w)
-  (isRecording, _) <- ask
+  (isRecording, _, _) <- ask
   if isRecording
      -- We're recording, so we keep everything written so far
      then return (a, w')
@@ -302,5 +329,28 @@ makeEnvResourcesIrrelevant (UsageEnv vs) = do
         | otherwise -> error "makeEnvResourcesIrrelevant: how can this be!?"
       Just (Left (DeltaBound env')) -> pure (var, Left (DeltaBound $ makeIrrelevant env'))
       Just (Right mults) -> pure (var, Right $ NE.map (\x -> if x == mult then makeMultIrrelevant x else x) mults)
-  put (M.fromList lcstate1)
+  put (lcstate0 <> M.fromList lcstate1)
+
+-- | Run a list of monadic computation ala 'mapM' but restoring the typing environment
+-- for each individual action
+withSameEnvMap :: Monad m => (a -> LinearCoreT m b) -> [a] -> LinearCoreT m [b]
+withSameEnvMap f ls = do
+  lcstate <- get
+  (ls', states) <- mapAndUnzipM (\x -> put lcstate >> f x >>= \y -> gets (y,)) ls
+  unless (allEq states) $
+    throwError "withSameEnvMap: Not all eq!"
+  return ls'
+
+
+setTopLevelBindingName :: Monad m => BindingName -> LinearCoreT m a -> LinearCoreT m a
+setTopLevelBindingName bn = local (\(a,b,_) -> (a,b,bn))
+
+allEq :: Eq a => [a] -> Bool
+allEq = allEq' Nothing where
+  allEq' _        []     = True
+  allEq' Nothing  (x:xs) = allEq' (Just x) xs
+  allEq' (Just y) (x:xs) = x == y && allEq' (Just y) xs
+  
+pprDebugState :: Monad m => LinearCoreT m ()
+pprDebugState = get >>= pprTraceM "Debug State" . Ppr.ppr
 

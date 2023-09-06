@@ -55,9 +55,11 @@ executable linear-core-prototype
 
 test-suite linear-core-test
   import: common
+  build-depends: linear-core-prototype, tasty < 1.5, tasty-hunit < 0.11
+  ghc-options: -dno-typeable-binds -fplugin=Linear.Core.Plugin
   type: exitcode-stdio-1.0
+  other-modules: Translate.Test
   hs-source-dirs: test
   main-is: Test.hs
-  build-depends: linear-core-prototype, tasty < 1.5, tasty-hunit < 0.11
 
 

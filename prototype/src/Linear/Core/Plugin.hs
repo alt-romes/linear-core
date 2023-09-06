@@ -42,6 +42,7 @@ import GHC.Core.Map.Type
 import Data.Maybe
 
 import Linear.Core
+import qualified Data.List as L
 
 type CoreCheck = ReaderT CoreProgram (ExceptT (Doc Void) CoreM)
 type CoreConv  = ReaderT (VarEnv LC.Var) CoreCheck
@@ -64,7 +65,10 @@ linearCorePass guts = do
   msgs <- Linear.Core.runLinearCore prog
   case msgs of
     [] -> pure ()
-    errs -> fatalErrorMsg (ppr errs)
+    errs ->
+      if all (L.isPrefixOf "fail_" . showSDocUnsafe) errs
+       then fatalErrorMsg (ppr errs)
+       else pprPanic "Linear typechecking failed when it shouldn't!" (ppr errs)
 
   return guts -- unchanged guts, after validating them.
 
