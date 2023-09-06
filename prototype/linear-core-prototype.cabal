@@ -12,7 +12,7 @@ category:           Language
 build-type:         Simple
 extra-doc-files:    CHANGELOG.md
 -- extra-source-files:
-tested-with:        GHC == 9.4.4
+tested-with:        GHC == 9.6.1
 
 common common
     ghc-options: -Wall
