@@ -118,36 +118,35 @@ A linear function ($\lolli$) consumes its argument \emph{exactly once}
 \pause
 \begin{minipage}{0.45\textwidth}
 \begin{code}
-dup :: a %-> (a,a)
-dup x = (x,x)
+add1 :: Int %-> Int
+add1 x = x + 1
 \end{code}
 \end{minipage}
 \pause
 \begin{minipage}{0.45\textwidth}
 \begin{code}
-fst :: (Int,Int) %-> Int
-fst (x,y) = x
+dup :: Int %-> (Int,Int)
+dup x = (x,x)
 \end{code}
 \end{minipage}
 % Dizer como isto são exemplos pouco interessantes, mas linear types permitem
 % escrever resource-safe abstractions (resources like pointers or file handles)
 \end{frame}
 
-\begin{frame}{And Linear Types}
-% Who is familiar with Haskell / OCaml?
-\begin{code}
-add1 :: Int %-> Int
-add1 x = x + 1
-\end{code}
-\pause
-\begin{code}
-madd1 :: Bool -> Int %-> Int
-madd1 condition x =
-  if condition
-    then add1 x
-    else x
-\end{code}
-\end{frame}
+% \begin{frame}{And Linear Types}
+% \begin{code}
+% add1 :: Int %-> Int
+% add1 x = x + 1
+% \end{code}
+% \pause
+% \begin{code}
+% madd1 :: Bool -> Int %-> Int
+% madd1 condition x =
+%   if condition
+%     then add1 x
+%     else x
+% \end{code}
+% \end{frame}
 
 \begin{frame}{Which is aggressively optimized}
 
@@ -191,9 +190,7 @@ madd1 condition x =
 \begin{frame}{Hwvr, optimizations push linearity x laziness too far}
 \begin{itemize}
 \item Optimizations move things around\pause
-\item In a lazy linear Core\pause
-\item And programs stop \emph{looking} linear\pause
-\item In spite of the laziness
+\item And programs stop \emph{looking} linear
 \end{itemize}
 \end{frame}
 
@@ -210,8 +207,8 @@ madd1 condition x =
 
 \begin{frame}{Motivation: The short story}
 \begin{itemize}
-\item Core's current linearity is violated after optimizations\pause
-\item But the compiler doesn't duplicate/forget linear resources\pause
+% \item Core's current linearity is violated after optimizations\pause
+% \item The compiler doesn't duplicate/forget linear resources\pause
 \item Core's \emph{type system} does not understand linearity x laziness\pause
 \item So it cannot use linearity for optimizations\pause
 \item Neither validate linearity internally
@@ -221,8 +218,8 @@ madd1 condition x =
 \begin{frame}{Our contributions}
 \begin{itemize}
 \item We developed a \emph{type system} that understands linearity x laziness\pause
-\item Wrote proofs about its safety\pause
-\item And implemented this system as a GHC plugin
+\item Validating that optimisations preserve linearity\pause
+\item And implemented it as a GHC plugin
 \end{itemize}
 \end{frame}
 

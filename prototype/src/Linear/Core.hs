@@ -188,8 +188,7 @@ checkAlt _ (Alt (LitAlt _) _ _) = error "impossible"
 
 --- * ALT0
 checkAlt ue a@(Alt (DataAlt con) args rhs)
--- ROMES:Isto é fixe para mostrar o HLS
-  | L.null $ L.filter (not . isManyTy . scaledMult) (dataConOrigArgTys con)
+  | all (isManyTy . scaledMult) (dataConOrigArgTys con)
   = pprTrace "ALT0 con" (ppr a Ppr.<> Ppr.text ". (UE):" Ppr.<> ppr ue) $ do
           -- Add unrestricted binders
   rhs' <- extends (L.map (\arg -> (arg.id, LambdaBound (Relevant ManyTy))) args)

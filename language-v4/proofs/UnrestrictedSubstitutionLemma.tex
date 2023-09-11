@@ -2,9 +2,7 @@
 % ROMES: This one is pretty much complete, there are no pending todos. If you
 % spot a mistake let me know.
 
-\begin{lemma}[Substitution of unrestricted variables preserves typing]
-\emph{If $\Gamma, x{:}_\omega\sigma; \Delta \vdash e : \varphi$ and $\Gamma; \cdot \vdash e' : \sigma$ then $\G,\D \vdash e[e'/x] : \varphi$.}
-\end{lemma}
+\UnrestrictedSubstitutionLemma
 
 \begin{proof}
 By structural induction on the first derivation.
@@ -173,13 +171,24 @@ If $\G, \xo; \D \vdash_{alt} \rho \to e :^z_{\Delta_s} \s' \Rightarrow \vp$ and 
 By structural induction on the $alt$ judgment.
 
 \begin{description}
-\item[Case:] $AltN$ (trivial induction)
+
+\item[Case:] $AltN_{WHNF}$ (trivial induction)
 \begin{tabbing}
     (1) $\G; \cdot \vdash e : \s$\\
-    (2) $\G,\xo;\D \vdash_{alt} \konstructor~\to e :^z_{\D_s} \s' \Rightarrow \vp$\\
+    (2) $\G,\xo;\D \vdash_{alt} \konstructor~\to e \prescript{\dag}{}{:^z_{\ov{\D_i}^n}} \s' \Rightarrow \vp$\\
     (3) $\G,\xo,\ov{\xo},\ov{y_i{:}_{\D_i}\s_i}; \D \vdash e : \vp $\\
     (4) $\G,\ov{\xo},\ov{y_i{:}_{\D_i}\s_i}; \D \vdash e[e'/x] : \vp $\` by i.h.\\
-    (5) $\G;\D \vdash_{alt} \konstructor~\to e[e'/x] :^z_{\D_s} \s' \Rightarrow \vp$\` by $AltN$\\
+    (5) $\G;\D \vdash_{alt} \konstructor~\to e[e'/x] \prescript{\dag}{}{:^z_{\ov{\D_i}^n}} \s' \Rightarrow \vp$\` by $AltN$\\
+\end{tabbing}
+
+\item[Case:] $AltN_{Not WHNF}$ (trivial induction)
+\begin{tabbing}
+    (1) $\G; \cdot \vdash e : \s$\\
+    (2) $\G,\xo;\D \vdash_{alt} \konstructor~\to e \prescript{\ddag}{}{:^z_{\D_s}} \s' \Rightarrow \vp$\\
+    (3) $\ov{\D_i} = \ov{\lctag{\D_s}{K_j}}^n$\\
+    (4) $\G,\xo,\ov{\xo},\ov{y_i{:}_{\D_i}\s_i}; \D \vdash e : \vp $\` by inv.\\
+    (5) $\G,\ov{\xo},\ov{y_i{:}_{\D_i}\s_i}; \D \vdash e[e'/x] : \vp $\` by i.h.\\
+    (6) $\G;\D \vdash_{alt} \konstructor~\to e[e'/x] \prescript{\ddag}{}{:^z_{\D_s}} \s' \Rightarrow \vp$\` by $AltN$\\
 \end{tabbing}
 
 \item[Case:] $Alt0$

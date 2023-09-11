@@ -1,10 +1,4 @@
-\begin{lemma}[Substitution of linear variables preserves typing]
-  If $\judg[\G][\D,\xl]{e}{\vp}$ and $\judg[\G][\D']{e}{\s}$
-  then $\judg[\subst{\G}{\D'}{x}][\D,\D']{e[e'/x]}{\vp}$,
-  where $\G[\D'/x]$ substitutes all occurrences of $x$ in the usage
-  environments of variables in $\G$ by the linear variables in $\D'$.
-  (really, $x$ couldn't appear anywhere else since $x$ is linear).
-\end{lemma}
+\LinearSubstitutionLemma
 
 % TODO: Short paragraph about the proof for case alternatives sublemma for
 % Alt_0: It's hard because one must consider two different subcases, one in
@@ -236,17 +230,26 @@ By structural induction on the first derivation.
 By structural induction on the $alt$ judgment.
 
 \begin{description}
-\item[Case:] $AltN$
+\item[Case:] $AltN_{WHNF}$
 \begin{tabbing}
     (1) $\judg[\G][\D']{e'}{\s}$\\
-    (2) $\judg[\G][\D,\xl]{\konstructor~\to e}{\s' \Longrightarrow \vp}[alt][\D_s][z]$\\
-    (3) $n > 0$\`by inv.\\
-    (4) $\ov{\D_i}=\ov{\lctag{\D_s}{K_j}}^n$\`by inv.\\
-    (5) $\ov{\D_i\neq\cdot}$\\
-    (6) $\judg[\G,\ov{\xo},\ov{y_i{:}_{\D_i}\s_i}][\D,\xl]{e}{\vp}$\`by inv.\\
-    (7) $\judg[\subst{\G}{\D'}{x},\ov{\xo},\ov{y_i{:}_{\subst{\D_i}{\D'}{x}}\s_i}][\D,\D']{e[e'/x]}{\vp}$\` by i.h.\\
-    (8) $\ov{\D_i[\D'/x]}=\ov{\lctag{\D_s[\D'/x]}{K_j}}^n$\`by (4) and cong.\\
-    (8) $\judg[\subst{\G}{\D'}{x}][\D,\D']{\rho \to e[e'/x]}{\s' \Longrightarrow \vp}[alt][\subst{\D_s}{\D'}{x}][z]$\\
+    (2) $\judg[\G][\D,\xl]{\konstructor~\to e}{\s' \Longrightarrow \vp}[alt][\D_s][z][\dag]$\\
+    (3) $\judg[\G,\ov{\xo},\ov{y_i{:}_{\D_i}\s_i}][\D,\xl]{e}{\vp}$\`by inv.\\
+    (4) $\judg[\subst{\G}{\D'}{x},\ov{\xo},\ov{y_i{:}_{\subst{\D_i}{\D'}{x}}\s_i}][\D,\D']{e[e'/x]}{\vp}$\` by i.h.\\
+    (5) $\judg[\subst{\G}{\D'}{x}][\D,\D']{\rho \to e[e'/x]}{\s' \Longrightarrow \vp}[alt][\subst{\D_s}{\D'}{x}][z][\dag]$\` by (4)\\
+\end{tabbing}
+
+\item[Case:] $AltN_{Not WHNF}$
+\begin{tabbing}
+    (1) $\judg[\G][\D']{e'}{\s}$\\
+    (2) $\judg[\G][\D,\xl]{\konstructor~\to e}{\s' \Longrightarrow \vp}[alt][\D_s][z][\ddag]$\\
+    % (3) $n > 0$\`by inv.\\
+    (3) $\ov{\D_i}=\ov{\lctag{\D_s}{K_j}}^n$\`by inv.\\
+    % (5) $\ov{\D_i\neq\cdot}$\\
+    (4) $\judg[\G,\ov{\xo},\ov{y_i{:}_{\D_i}\s_i}][\D,\xl]{e}{\vp}$\`by inv.\\
+    (5) $\judg[\subst{\G}{\D'}{x},\ov{\xo},\ov{y_i{:}_{\subst{\D_i}{\D'}{x}}\s_i}][\D,\D']{e[e'/x]}{\vp}$\` by i.h.\\
+    (6) $\ov{\D_i[\D'/x]}=\ov{\lctag{\D_s[\D'/x]}{K_j}}^n$\`by (3) and cong.\\
+    (7) $\judg[\subst{\G}{\D'}{x}][\D,\D']{\rho \to e[e'/x]}{\s' \Longrightarrow \vp}[alt][\subst{\D_s}{\D'}{x}][z][\ddag]$\` by (5,6)\\
 \end{tabbing}
 
 \item[Case:] $Alt0$

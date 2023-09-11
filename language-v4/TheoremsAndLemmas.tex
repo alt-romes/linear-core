@@ -1,0 +1,54 @@
+\newcommand{\TypePreservationTheorem}{
+\begin{theorem}[Type preservation]
+\emph{If $\Gamma; \Delta \vdash e : \sigma$ and $e \longrightarrow e'$ then $\Gamma; \Delta \vdash e' : \sigma$}
+\end{theorem}
+}
+
+\newcommand{\ProgressTheorem}{
+\begin{theorem}[Progress]
+\emph{Evaluation of a well-typed term does not block. If $\cdot; \cdot \vdash e :
+  \sigma$ then $e$ is a value or there exists $e'$ such that $e \longrightarrow e'$.}
+\end{theorem}
+}
+
+\newcommand{\DeltaLinearRelationLemma}{
+\begin{lemma}[Delta-Linear Something]
+... If $\G,\xD; \D,\D' \vdash e : \s$ and $\D$ is consumed through $\xD$ in $e$
+    then $\G; \D',\xl \vdash e :\s$.
+\end{lemma}
+
+\begin{lemma}[Reverse Delta-Linear Something]
+... If $\G; \D',\xl \vdash e :\s$\\
+    then $\G,\xD; \D,\D' \vdash e : \s$.
+    and $\D$ is consumed through $\xD$ in $e$
+\end{lemma}
+}
+
+\newcommand{\LinearSubstitutionLemma}{
+\begin{lemma}[Substitution of linear variables preserves typing]
+  If $\judg[\G][\D,\xl]{e}{\vp}$ and $\judg[\G][\D']{e}{\s}$
+  then $\judg[\subst{\G}{\D'}{x}][\D,\D']{e[e'/x]}{\vp}$,
+  where $\G[\D'/x]$ substitutes all occurrences of $x$ in the usage
+  environments of variables in $\G$ by the linear variables in $\D'$.
+  (really, $x$ couldn't appear anywhere else since $x$ is linear).
+\end{lemma}
+}
+
+\newcommand{\UnrestrictedSubstitutionLemma}{
+\begin{lemma}[Substitution of unrestricted variables preserves typing]
+\emph{If $\Gamma, x{:}_\omega\sigma; \Delta \vdash e : \varphi$ and $\Gamma; \cdot \vdash e' : \sigma$ then $\G,\D \vdash e[e'/x] : \varphi$.}
+\end{lemma}
+}
+
+\newcommand{\DeltaSubstitutionLemma}{
+% usage environments only record linear variables.
+\begin{lemma}[Substitution of $\Delta$-variables (with usage environments) preserves typing]
+If \\ $\G,\xD; \D, \D' \vdash e : \varphi$ and $\G; \D \vdash e' : \sigma$ then $\G; \D, \D' \vdash e[e'/x] : \varphi$
+% TODO: Write a paragraph about why this lemma has to have the same delta in the subst.
+% Do we still need the $Delta = empty$ restriction?
+% I think yes, and if we have $Delta = empty$ we never call delta substitution, but rather move the variable to be unrestricted and then call unr. subst. lemma
+% Nevermind, I don't think there needs to be a distinction between unrestricted and empty-envs. Empty-envs can be simply trivially instantiated by Delta-var rule.
+% And we needed it because the case-binder was handled differently, and its substitution when it was empty was ill-defined.
+% That is no longer the case.
+\end{lemma}
+}

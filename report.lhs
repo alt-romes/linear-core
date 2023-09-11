@@ -1,4 +1,5 @@
 \documentclass{lwnovathesis}
+\usepackage{mathtools}
 \usepackage{boldline}
 \usepackage{xargs}
 \usepackage{soul}
@@ -95,6 +96,9 @@
 \todo[blue, inline]{We need to handle EmptyCase}
 \todo[blue, inline]{And discuss how we didn't handle multiplicity coercions}
 \todo[blue, inline]{Consider dropping some bits about GADTs?}
+\todo[inline, inline]{Symbol to stand for both $1$ and $p$, and notation to make proof
+irrelevant stuff in the types so we can also refer to relevant and irrelevant
+at the same time with some symbol (e.g. for Split)}
 
 %%%%%%%%%% End TODOs %%%%%%%%%%%%%
 
@@ -521,6 +525,20 @@ non-linear programs are deemed linear); DONE (modulo 1)
 \bibliographystyle{abbrv}
 \bibliography{references}
 \end{SingleSpace}
+
+\appendix
+
+\input{language-v4/proofs/TypePreservationTheorem}
+
+\input{language-v4/proofs/ProgressTheorem}
+
+\input{language-v4/proofs/DeltaLinearLemma}
+
+\input{language-v4/proofs/LinearSubstitutionLemma}
+
+\input{language-v4/proofs/UnrestrictedSubstitutionLemma}
+
+\input{language-v4/proofs/DeltaSubstitutionLemma}
 
 \end{document}
 

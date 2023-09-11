@@ -1,7 +1,3 @@
-\todo[inline]{Symbol to stand for both $1$ and $p$, and notation to make proof
-irrelevant stuff in the types so we can also refer to relevant and irrelevant
-at the same time with some symbol (e.g. for Split)}
-
 % We don't need explicit weaking and contract: contexts without context are always split, contexts without weaking must be empty in the var rule.
 \newcommand{\TypeVarOmega}{
     \infer*[right=($Var_\omega$)]
@@ -85,9 +81,9 @@ at the same time with some symbol (e.g. for Split)}
 \newcommand{\TypeCaseWHNF}{
     \mprset{flushleft}
     \infer[(CaseWHNF)]
-    {\textrm{e is in \emph{WHNF}} \\ \judg{e}{\s}
-    \\ \ov{\judg[\G,\zD][\D,\D']{\rho\to e'}{\s \Longrightarrow \vp}[alt][\D][z]}}
-    {\judg[\G][\D,\D']{\ccase{e}{\zD~\{\ov{\rho \to e'}\}}}{\vp}}
+    {\textrm{e is in \emph{WHNF}} \\ \judg[\G][\ov{\D_i}]{e}{\s}
+    \\ \ov{\G,\var[z][\ov{\D_i}];\ov{\D_i},\D' \vdash_{alt} \rho\to e' \s \Longrightarrow \vp \prescript{\dag}{}{:^z_{\ov{\D_i}}}}}
+    {\judg[\G][\ov{\D_i},\D']{\ccase{e}{\var[z][\ov{\D_i}]~\{\ov{\rho \to e'}\}}}{\vp}}
 }
 
 \newcommand{\TypeCaseNotWHNFIncorrect}{
@@ -105,7 +101,7 @@ at the same time with some symbol (e.g. for Split)}
     \infer[(CaseNotWHNF)]
     {\textrm{e is definitely not in \emph{WHNF}} \\
     \judg{e}{\s}
-    \\ \ov{\judg[\G,z{:}_{\irr{\D}}\s][\irr{\D},\D']{\rho\to e'}{\s \Longrightarrow \vp}[alt][\irr{\D}][z]}}
+    \\ \ov{\judg[\G,z{:}_{\irr{\D}}\s][\irr{\D},\D']{\rho\to e'}{\s \Longrightarrow \vp}[alt][\irr{\D}][z][\ddag]}}
     {\splitjudg{\ccase{e}{\z[\irr{\D}]~\{\ov{\rho \to e'}\}}}{\vp}}
     % TODO: Add that [d1] entails moving all delta usages to [delta] usages in all vars i d1
 }
@@ -136,15 +132,36 @@ at the same time with some symbol (e.g. for Split)}
     {\judg{K~\ov{\xo},\ov{y_i{:}_1\s_i}^n\to e}{\s \Longrightarrow \vp}[alt][\D_s][z]}
 }
 
-\newcommand{\TypeAltN}{
+\newcommand{\TypeAltNSecondIncorrect}{
     \mprset{flushleft}
     \infer[(AltN)]
     { \judg[\G,\ov{\xo},\ov{y_i{:}_{\D_i}\s_i}][\D]{e}{\vp}
-    \\ \ov{\D_i} = \ov{\lctag{\D_s}{K_j}}^n\\ \ov{\D_i \neq \cdot}
+    \\ \ov{\D_i} = \ov{\lctag{\D_s}{K_i}}^n\\ \ov{\D_i \neq \cdot}
     \\ n > 0
     \\ K:\ov{\s_i \to_\pi} \s \in \G
     }
     {\judg{K~\ov{\xo},\ov{y_i{:}_1\s_i}^n\to e}{\s \Longrightarrow \vp}[alt][\D_s][z]}
+}
+
+\newcommand{\TypeAltNNotWHNF}{
+    \mprset{flushleft}
+    \infer[($AltN_{NotWHNF}$)]
+    { \judg[\G,\ov{\xo},\ov{y_i{:}_{\D_i}\s_i}][\D]{e}{\vp}
+    \\ \ov{\D_i} = \ov{\lctag{\D_s}{K_j}}^n
+    % \\ n > 0
+    % \\ K:\ov{\s \to_\pi} \s \in \G
+    }
+    {\judg{K~\ov{\xo},\ov{y_i{:}_1\s_i}^n\to e}{\s \Longrightarrow \vp}[alt][\D_s][z][\ddag]}
+}
+
+\newcommand{\TypeAltNWHNF}{
+    \mprset{flushleft}
+    \infer[($AltN_{WHNF}$)]
+    { \judg[\G,\ov{\xo},\ov{y_i{:}_{\D_i}\s_i}^n][\D]{e}{\vp}
+    % \\ n > 0
+    % \\ K:\ov{\s \to_\pi} \s \in \G
+    }
+    {\judg{K~\ov{\xo},\ov{y_i{:}_1\s_i}^n\to e}{\s \Longrightarrow \vp}[alt][\ov{\D_i}^n][z][\dag]}
 }
 
 \newcommand{\TypeAltZero}{
@@ -219,7 +236,9 @@ at the same time with some symbol (e.g. for Split)}
 \\[2em]
     \judgment{\judg{\rho \to e}{\sigma \Rightarrow \varphi}[alt][\Delta_s][z]}
 \\[1em]
-    \TypeAltN
+    \TypeAltNWHNF
+\quad
+    \TypeAltNNotWHNF
 \\[1em]
     \TypeAltZero
 \qquad
@@ -232,8 +251,8 @@ at the same time with some symbol (e.g. for Split)}
 \begin{array}{cc}
 \judgment{\Gamma \vdash decl : \Gamma'} & \judgment{\Gamma \vdash pgm : \sigma}\\
 \\[0.05em]
-\infer*[right=$(Data)$]{ }{\Gamma \vdash (\datatype{T~\overline{p}}{\overline{K:\sigma}}) : (\overline{K:\sigma}) } &
-\infer*[right=$(Pgm)$]{\overline{\Gamma \vdash decl:\Gamma_d} \and \Gamma = \Gamma_0,\overline{\Gamma_d}\\\\ \Gamma~\mathsf{is~consistent?} \and \Gamma \vdash e : \sigma}{\Gamma_0 \vdash \overline{decl}; e : \sigma}
+\infer{ }{\Gamma \vdash (\datatype{T~\overline{p}}{\overline{K:\sigma}}) : (\overline{K:\sigma}) } &
+\infer{\overline{\Gamma \vdash decl:\Gamma_d} \and \Gamma = \Gamma_0,\overline{\Gamma_d}\\ \Gamma \vdash e : \sigma}{\Gamma_0 \vdash \overline{decl}; e : \sigma}
 \end{array}
 \end{array}
 \]

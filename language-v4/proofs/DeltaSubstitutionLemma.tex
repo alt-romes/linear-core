@@ -1,14 +1,6 @@
 
-% usage environments only record linear variables.
-\begin{lemma}[Substitution of variables with usage environments preserves typing]
-If $\G,\xD; \D, \D' \vdash e : \varphi$ and $\G; \D \vdash e' : \sigma$ then $\G; \D, \D' \vdash e[e'/x] : \varphi$
-% TODO: Write a paragraph about why this lemma has to have the same delta in the subst.
-% Do we still need the $Delta = empty$ restriction?
-% I think yes, and if we have $Delta = empty$ we never call delta substitution, but rather move the variable to be unrestricted and then call unr. subst. lemma
-% Nevermind, I don't think there needs to be a distinction between unrestricted and empty-envs. Empty-envs can be simply trivially instantiated by Delta-var rule.
-% And we needed it because the case-binder was handled differently, and its substitution when it was empty was ill-defined.
-% That is no longer the case.
-\end{lemma}
+\DeltaSubstitutionLemma
+
 \begin{proof}
 By structural induction on the first derivation.
 
@@ -256,15 +248,23 @@ If $\G,\xD; \D,\D' \vdash_{alt} \rho \to e :^z_{\Delta_s} \s' \Rightarrow \vp$ a
 By structural induction on the $alt$ judgment.
 
 \begin{description}
-\item[Case:] $AltN$ (trivial induction)
+\item[Case:] $AltN_{WHNF}$ (trivial induction)
 \begin{tabbing}
   (1) $\G; \D \vdash e' : \s$\\
-  (2) $\G,\xD; \D,\D' \vdash_{alt} \konstructor~\to e :^z_{\D_s} \s' \Rightarrow \vp$\\
-  (3) $n > 0$ \` by inv.\\
-  (4) $\ov{\D_i} = \ov{\lctag{\D_s}{K_j}}$\`by inv.\\
-  (5) $\G,\xD,\ov{\xo},\ov{y_i{:}_{\D_i}\s_i}; \D, \D' \vdash e : \vp$\` by inv.\\
-  (6) $\G,\ov{\xo},\ov{y_i{:}_{\D_i}\s_i}; \D, \D' \vdash e[e'/x] : \vp$\` by i.h.\\
-  (7) $\G; \D,\D' \vdash_{alt} \konstructor~\to e[e'/x] :^z_{\D_s} \s' \Rightarrow \vp$\` by $AltN$\\
+  (2) $\G,\xD; \D,\D' \vdash_{alt} \konstructor~\to e \prescript{\dag}{}{:^z_{\ov{\D_i}^n}} \s' \Rightarrow \vp$\\
+  (3) $\G,\xD,\ov{\xo},\ov{y_i{:}_{\D_i}\s_i}; \D, \D' \vdash e : \vp$\` by inv.\\
+  (4) $\G,\ov{\xo},\ov{y_i{:}_{\D_i}\s_i}; \D, \D' \vdash e[e'/x] : \vp$\` by i.h.\\
+  (5) $\G; \D,\D' \vdash_{alt} \konstructor~\to e[e'/x] \prescript{\dag}{}{:^z_{\ov{\D_i}^n}} \s' \Rightarrow \vp$\` by $AltN$\\
+\end{tabbing}
+
+\item[Case:] $AltN_{Not WHNF}$ (trivial induction)
+\begin{tabbing}
+  (1) $\G; \D \vdash e' : \s$\\
+  (2) $\G,\xD; \D,\D' \vdash_{alt} \konstructor~\to e \prescript{\ddag}{}{:^z_{\D_s}} \s' \Rightarrow \vp$\\
+  (3) $\ov{\D_i} = \ov{\lctag{\D_s}{K_j}}$\`by inv.\\
+  (4) $\G,\xD,\ov{\xo},\ov{y_i{:}_{\D_i}\s_i}; \D, \D' \vdash e : \vp$\` by inv.\\
+  (5) $\G,\ov{\xo},\ov{y_i{:}_{\D_i}\s_i}; \D, \D' \vdash e[e'/x] : \vp$\` by i.h.\\
+  (6) $\G; \D,\D' \vdash_{alt} \konstructor~\to e[e'/x] \prescript{\ddag}{}{:^z_{\D_s}} \s' \Rightarrow \vp$\` by $AltN$\\
 \end{tabbing}
 
 \item[Case:] $Alt0$

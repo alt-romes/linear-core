@@ -1,9 +1,6 @@
 % Rules that have variables in the context aren't considered!
 
-\begin{theorem}[Progress]
-\emph{Evaluation of a well-typed term does not block. If $\cdot; \cdot \vdash e :
-  \sigma$ then $e$ is a value or there exists $e'$ such that $e \longrightarrow e'$.}
-\end{theorem}
+\ProgressTheorem
 
 \begin{proof}
 By structural induction on the (only) typing derivation

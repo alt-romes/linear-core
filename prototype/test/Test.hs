@@ -12,6 +12,8 @@ import GHC.Plugins
 import Linear.Core.Plugin
 
 
+test :: a -> a
+test x = x
 
 main :: IO ()
 main = pure ()

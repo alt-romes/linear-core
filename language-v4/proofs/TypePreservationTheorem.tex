@@ -1,7 +1,5 @@
 
-\begin{theorem}[Type preservation]
-\emph{If $\Gamma; \Delta \vdash e : \sigma$ and $e \longrightarrow e'$ then $\Gamma; \Delta \vdash e' : \sigma$}
-\end{theorem}
+\TypePreservationTheorem
 
 \begin{proof}
 By structural induction on the small-step reduction.
@@ -150,17 +148,15 @@ is proof irrelevant, rearrange the usage environments of the case pattern altern
 \begin{tabbing}
     (1) $e \longrightarrow e'$ \` by inversion on case reduction \\
     (2) $\Gamma; \D, \D' \vdash \ccase{e}{z{:}_{\Delta}\sigma~\{\rho_i\to e'_i\}} : \varphi$\\
-    (3) $e$ is not in WHNF \` since it can evaluate further by (1)\\
-    \` TODO: that's not quite the definition of WHNF!\\
-    (4) $\G;\D \vdash e : \s$\` by inv.\\
-    (5) $\ov{\G,\z[\irr{\D}][\s]; \irr{\D},\D' \vdash_{alt} \rho \to e'' :^z_{\irr{\D}} \s \Rightarrow \vp}$\\
+    (3) $e$ is not in WHNF \` since it evaluates further by (1)\\ \` instead of a case alternative being evaluated\\
+    (4) $\G;\D \vdash e : \s$\\
+    (5) $\ov{\G,\z[\irr{\D}][\s]; \irr{\D},\D' \vdash_{alt} \rho \to e'' :^z_{\irr{\D}} \s \Rightarrow \vp}$\` by inv. on CaseNotWHNF\\
     (6) $\G;\D \vdash e' : \s'$\` by i.h. (1,4)\\
+    Subcase $e'$ is not in WHNF\\
     (7) $\Gamma; \D, \D' \vdash \ccase{e'}{z{:}_{\Delta}\sigma~\{\rho_i\to e'_i\}} : \varphi$\` by $CaseNotWHNF$\\
-% (3) $\Gamma \vdash e : \sigma$ \` by inversion on case \\
-% % TODO: HOW i?
-% (4) $\overline{\Gamma', z{:}_{\Delta_i}\sigma \vdash_{alt} \rho_i \to e'_i : \varphi}$ \` by inversion on case \\
-% (5) $\Gamma \vdash e' : \sigma$ \` by induction hypothesis (3,1) \\
-% (6) $\Gamma, \Gamma' \vdash \ccase{e'}{z{:}_{\overline{\Delta}}\sigma~\{\rho_i\to e'_i\}} : \varphi$ \` by case (4,3) \\
+    Subcase $e'$ is in WHNF\\
+    \` this subcase witnesses the soundness of $AltN_{Not WHNF}$ wrt $AltN_{WHNF}$\\
+    TODO FAZER NO PAPEL
 \end{tabbing}
 
 \end{description}

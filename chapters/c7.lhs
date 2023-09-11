@@ -8,6 +8,7 @@
 \input{language-v4/proof}
 \input{language-v4/Syntax}
 \input{language-v4/TypingRules}
+\input{language-v4/TheoremsAndLemmas}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % {{{ Chapter: A Type System for Semantic Linearity in Core; Introduction
@@ -1311,8 +1312,8 @@ introduced by a handful of constructs, namely (recursive) let binders, case
 binders, and case pattern variables. For example, as per the insights into
 semantic linearity developed in Section~\ref{sec:semantic-linearity-examples},
 only were we to evaluate and consume $u$ in $e$ would we use the resources
-consumed in its body, $x$ and $y$. Accordingly, the usage environment of $u$
-would be $\{x,y\}$:
+consumed in its body, $x$ and $y$, in the following program. Accordingly, the
+usage environment of $u$ would be $\{x,y\}$:
 \[
 f = \lambda \xl.~\lambda \y[1].~\llet{u = (x,y)}{e}
 \]
@@ -1472,15 +1473,24 @@ own, so we can have a reverse-binder-swap subsection}
 \todo[inline]{We proved soundness of our system...}
 \todo[inline]{The harder cases are for the interesting ones - lets, cases, and case alternatives}
 
-\input{language-v4/proofs/TypePreservationTheorem}
+\TypePreservationTheorem
+\ProgressTheorem
+\DeltaLinearRelationLemma
+\LinearSubstitutionLemma
+\UnrestrictedSubstitutionLemma
+\DeltaSubstitutionLemma
 
-\input{language-v4/proofs/ProgressTheorem}
-
-\input{language-v4/proofs/LinearSubstitutionLemma}
-
-\input{language-v4/proofs/UnrestrictedSubstitutionLemma}
-
-\input{language-v4/proofs/DeltaSubstitutionLemma}
+%\input{language-v4/proofs/TypePreservationTheorem}
+%
+%\input{language-v4/proofs/ProgressTheorem}
+%
+%\input{language-v4/proofs/DeltaLinearLemma}
+%
+%\input{language-v4/proofs/LinearSubstitutionLemma}
+%
+%\input{language-v4/proofs/UnrestrictedSubstitutionLemma}
+%
+%\input{language-v4/proofs/DeltaSubstitutionLemma}
  
 TODO! Substitution of proof-irrelevant linear variables preserves typing. The
 term always remains the same because $x$ cannot occur in any term, however, all
