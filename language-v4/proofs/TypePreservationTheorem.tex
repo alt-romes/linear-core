@@ -78,17 +78,26 @@ case binder is used and isn't, use CaseWHNF and realize that if it were
 an expression reduced first with CaseNotWHNF then the usage environment
 is proof irrelevant, rearrange the usage environments of the case pattern alternatives, etc...
 \begin{tabbing}
-    (1) $\G;\D,\D'\vdash \ccase{K~\ov{e_i}}{\zD~\{\dots,K~\var[w][\pi][\s]\to e'\}} : \vp$\\
-    (2) $K~\ov{e_i}$ is in WHNF\` by def. of WHNF\\
-    (3) $\G;\D \vdash K~\ov{e_i} : \s$\` by inv. on $CaseWHNF$\\
-    (4) $\G,\zD;\D,\D' \vdash_{alt} K~\ov{\var[w][\pi][\s]} \to e' :^z_\D \s \Rightarrow \vp$\` by inv. on $CaseWHNF$\\
-    % Good, if ^ this evaluated through case e of -> case e' of, then $\D$ will contain lots of proof-irrelevant stuff gotten from CaseNotWHNF evaluation.
-    Subcase $K~\ov{\var[w][\pi][\s]} = \konstructor, n>0$\\
-    (5) $K:\ov{\s_i\to_\pi}\s \in \G$\`by inv. on $AltN$\\
-    (6) $\ov{\G; \cdot \vdash e_i : \s},\ov{\G;\D_i \vdash e_i : \s},\ov{\D_i}=\D$\` by constructor application lemma (3,5)\\
-    (7) $\G,\zD,\ov{\xo},\ov{y_i{:}_{\D_i}\s_i}; \D,\D' \vdash e' : \vp$\`by inv. on $AltN$\\
-    (8) $\G,\zD,\ov{y_i{:}_{\D_i}\s_i}; \D,\D' \vdash e' : \vp$\`by inv. on $AltN$\\
-    TODO: $\D_i$ must be empty in order to type AltN/invoke substitution
+    (1) $\G;\D,\D'\vdash \ccase{K~\ov{e_\omega e_i}}{\zD~\{\dots,K~\ov{\var[w][\pi][\s]}\to e'\}} : \vp$\\
+    (2) $K~\ov{e_\omega e_i}$ is in WHNF\` by def. of WHNF\\
+    (3) $\G;\D \Vdash K~\ov{e_\omega e_i} : \s \gtrdot \ov{\D_i} $\` by inv. on $CaseWHNF$\\
+    (4) $\ov{\G; \D_i \vdash e_i : \s'}$\`by inv. on $WHNF_K$\\
+    (5) $\ov{\G; \cdot \vdash e_\omega : \s'}$\`by inv. on $WHNF_K$\\
+    (6) $\D = \ov{\D_i}$\` by inv. on $WHNF_K$\\
+    (7) $\G, z{:}_{\ov{\D_i}}\s; \ov{\D_i}, \D' \vdash_{alt} K~\ov{w{:}_\pi\s} \to e' :_{\ov{\D_i}}^z \s \Mapsto \vp$\` by inv. on $CaseWHNF$\\
+    Subcase $K~\ov{\var[w][\pi][\s]} = K~\ov{\xo},\ov{y_i{:}_1\s_i}$\\
+    (8) $\G,z{:}_{\ov{\D_i}}\s,\ov{\xo},\ov{y_i{:}_{\D_i}\s_i}; \ov{\D_i}, \D' \vdash e' : \vp$\`by inv. on $AltN_{WHNF}$\\
+    (9) $\G,z{:}_{\ov{\D_i}}\s,\ov{y_i{:}_{\D_i}\s_i}; \ov{\D_i}, \D' \vdash e'\ov{[e_\omega/x]} : \vp$\`by unr. subst (5,8)\\
+    (10) $\G,z{:}_{\ov{\D_i}}\s; \ov{\D_i}, \D' \vdash e'\ov{[e_\omega/x]}\ov{[e_i/y_i]} : \vp$\`by $\D$-subst (4,9)\\
+    (11) $\G; \ov{\D_i}, \D' \vdash e'\ov{[e_\omega/x]}\ov{[e_i/y_i]}[K~\ov{e_\omega e_i}/z] : \vp$\`by $\D$-subst (3,10)\\
+    (12) $\G; \D, \D'\vdash e'\ov{[e_\omega/x]}\ov{[e_i/y_i]}[K~\ov{e_\omega e_i}/z] : \vp$\`by (6)\\
+    Subcase $K~\ov{\var[w][\pi][\s]} = K~\ov{\xo}$\\
+    (8) $\D = \cdot$\`by $\ov{e_i}=\cdot \Rightarrow \ov{\D_i}=\cdot$ and 6\\
+    (9) $\G, \z[\cdot], \xo; \D' \vdash e' : \vp$\`by inv. on $Alt0$ and def. of empty subst.\\
+    (10) $\G, \z[\cdot]; \D' \vdash e'\ov{[e_\omega/x]} : \vp$\`by unr. subst. (5,9)\\
+    (11) $\G; \D' \vdash e'\ov{[e_\omega/x]}[K~\ov{e_\omega}/z] : \vp$ \` by $\D$-subst (8,3,10)\\
+    (12) $\G; \D, \D' \vdash e'\ov{[e_\omega/x]}[K~\ov{e_\omega}/z] : \vp$ \`by 8\\
+
 %(1) $\Gamma,\Gamma',\Delta \vdash \ccase{K~\overline{e}}{z{:}_{\overline{\Delta}}\sigma~\{\dots,K~\overline{x{:}_\pi\sigma}\to e'\}} : \varphi$ \` by assumption \\
 %(2) $\hasnolinearvars{\Gamma}$\\
 %(3) $\Gamma, \Delta \vdash K~\overline{e} : \sigma$ \` by inversion on (case) \\

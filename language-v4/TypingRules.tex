@@ -80,9 +80,9 @@
 
 \newcommand{\TypeCaseWHNF}{
     \mprset{flushleft}
-    \infer[(CaseWHNF)]
-    {\textrm{e is in \emph{WHNF}} \\ \judg[\G][\ov{\D_i}]{e}{\s}
-    \\ \ov{\G,\var[z][\ov{\D_i}];\ov{\D_i},\D' \vdash_{alt} \rho\to e' \s \Longrightarrow \vp \prescript{\dag}{}{:^z_{\ov{\D_i}}}}}
+    \infer[($\textrm{Case}_\textrm{WHNF}$)]
+    {\textrm{e is in \emph{WHNF}} \\ \G;\D \Vdash e:\s \gtrdot \ov{\D_i}
+    \\ \ov{\G,\var[z][\ov{\D_i}];\ov{\D_i},\D' \vdash_{alt} \rho\to e' :^z_{\ov{\D_i}} \s \Mapsto \vp}}
     {\judg[\G][\ov{\D_i},\D']{\ccase{e}{\var[z][\ov{\D_i}]~\{\ov{\rho \to e'}\}}}{\vp}}
 }
 
@@ -98,10 +98,10 @@
 
 \newcommand{\TypeCaseNotWHNF}{
     \mprset{flushleft}
-    \infer[(CaseNotWHNF)]
-    {\textrm{e is definitely not in \emph{WHNF}} \\
+    \infer[($\textrm{Case}_\textrm{Not WHNF}$)]
+    {\textrm{e is not in \emph{WHNF}} \\
     \judg{e}{\s}
-    \\ \ov{\judg[\G,z{:}_{\irr{\D}}\s][\irr{\D},\D']{\rho\to e'}{\s \Longrightarrow \vp}[alt][\irr{\D}][z][\ddag]}}
+    \\ \ov{\judg[\G,z{:}_{\irr{\D}}\s][\irr{\D},\D']{\rho\to e'}{\s \Rrightarrow \vp}[alt][\irr{\D}][z]}}
     {\splitjudg{\ccase{e}{\z[\irr{\D}]~\{\ov{\rho \to e'}\}}}{\vp}}
     % TODO: Add that [d1] entails moving all delta usages to [delta] usages in all vars i d1
 }
@@ -145,39 +145,51 @@
 
 \newcommand{\TypeAltNNotWHNF}{
     \mprset{flushleft}
-    \infer[($AltN_{NotWHNF}$)]
+    \infer[($\textrm{AltN}_{\textrm{Not WHNF}}$)]
     { \judg[\G,\ov{\xo},\ov{y_i{:}_{\D_i}\s_i}][\D]{e}{\vp}
     \\ \ov{\D_i} = \ov{\lctag{\D_s}{K_j}}^n
     % \\ n > 0
     % \\ K:\ov{\s \to_\pi} \s \in \G
     }
-    {\judg{K~\ov{\xo},\ov{y_i{:}_1\s_i}^n\to e}{\s \Longrightarrow \vp}[alt][\D_s][z][\ddag]}
+    {\judg{K~\ov{\xo},\ov{y_i{:}_1\s_i}^n\to e}{\s \Rrightarrow \vp}[alt][\D_s][z]}
 }
 
 \newcommand{\TypeAltNWHNF}{
     \mprset{flushleft}
-    \infer[($AltN_{WHNF}$)]
+    \infer[($\textrm{AltN}_{\textrm{WHNF}}$)]
     { \judg[\G,\ov{\xo},\ov{y_i{:}_{\D_i}\s_i}^n][\D]{e}{\vp}
     % \\ n > 0
-    % \\ K:\ov{\s \to_\pi} \s \in \G
+    % \\ K:\of{\s \to_\pi} \s \in \G
     }
-    {\judg{K~\ov{\xo},\ov{y_i{:}_1\s_i}^n\to e}{\s \Longrightarrow \vp}[alt][\ov{\D_i}^n][z][\dag]}
+    {\judg{K~\ov{\xo},\ov{y_i{:}_1\s_i}^n\to e}{\s \Mapsto \vp}[alt][\ov{\D_i}^n][z]}
 }
 
 \newcommand{\TypeAltZero}{
     \mprset{flushleft}
     \infer[(Alt0)]
     { \judg[\subst{\G}{\cdot}{\D_s}_z,\ov{\xo}][\subst{\D}{\cdot}{\D_s}]{e}{\vp}
-    \\ K:\ov{\s_i \to_\omega} \s \in \G
+    % \\ K:\ov{\s_i \to_\omega} \s \in \G
     }
-    {\judg{K~\ov{\xo}\to e}{\s \Longrightarrow \vp}[alt][\D_s][z]}
+    {\judg{K~\ov{\xo}\to e}{\s \Rightarrow \vp}[alt][\D_s][z]}
 }
 
 \newcommand{\TypeAltWild}{
     \mprset{flushleft}
     \infer[(Alt\_)]
     { \judg{e}{\vp} }
-    {\judg{\_ \to e}{\s \Longrightarrow \vp}[alt][\D_s][z]}
+    {\judg{\_ \to e}{\s \Rightarrow \vp}[alt][\D_s][z]}
+}
+
+\newcommand{\TypeWHNFCons}{
+    \infer[($\textrm{WHNF}_K$)]
+    { \ov{\G; \cdot \vdash e_\omega : \s} \\ \ov{\G; \D_i \vdash e_i : \s} \\ \ov{\D_i} = \D}
+    { \G; \D \Vdash K~\ov{e_\omega}\ov{e_i} : \s \gtrdot \ov{\D_i} }
+}
+
+\newcommand{\TypeWHNFLam}{
+    \infer[($\textrm{WHNF}_\lambda$)]
+    { \judg{\lambda x.~e}{\s} }
+    { \G; \D \Vdash \lambda x.~e : \s \gtrdot \D}
 }
 
 \newcommand{\TypeWellFormedMult}{
@@ -201,49 +213,66 @@
 \[
 \begin{array}{c}
     \judgment{\judg{e}{\s}}
-\\[1em]
+\\[0.5cm]
     \TypeMultLamIntro
 \qquad
     \TypeMultLamElim
-\\[1em]
+\\
     \TypeLamIntroL
 \qquad
     \TypeLamIntroW
-\\[1em]
+\\
     \TypeVarDelta
 \qquad
     \TypeVarSplit
-% TODO: Somewhere here we need at least the split
-\\[1em]
+\\
     \TypeVarOmega
 \qquad
     \TypeLamElimL
-\\[1em]
+\\
     \TypeLinearVar
 \qquad
     \TypeLamElimW
-\\[1em]
+\\
     \TypeLet
 \qquad
     \TypeLetRec
-\\[1em]
+\\
     \TypeCaseWHNF
-\\[1em]
+\\
     \TypeCaseNotWHNF
-% Ouch, nope.
-% \\[1em]
-%     \TypeCaseVar
-\\[2em]
+% Ouch, nope, not the case var
+%    \TypeCaseVar
+\\[0.75cm]
     \judgment{\judg{\rho \to e}{\sigma \Rightarrow \varphi}[alt][\Delta_s][z]}
-\\[1em]
+\\[0.5cm]
     \TypeAltNWHNF
 \quad
     \TypeAltNNotWHNF
-\\[1em]
+\\
     \TypeAltZero
 \qquad
     \TypeAltWild
-\\[1em]
+\\[0.75cm]
+    \judgment{\G; \D \Vdash e : \s \gtrdot \ov{\D_i}}
+\\[0.5cm]
+    \TypeWHNFCons
+\qquad
+    \TypeWHNFLam
+\end{array}
+\]
+\end{framed}
+\caption{Linear Core Type System}
+\label{fig:linear-core-typing-rules}
+\end{figure}
+}
+
+\newcommand{\TypingRulesOther}{
+\begin{figure}[ht]
+\begin{framed}
+\small
+\[
+\begin{array}{c}
     \judgment{\Gamma \vdash_{mult} \pi}
 \\[1em]
     \TypeWellFormedMult
@@ -257,8 +286,8 @@
 \end{array}
 \]
 \end{framed}
-\caption{Linear Core Type System}
-\label{fig:linear-core-typing-rules}
+\caption{Linear Core Other Judgements}
+\label{fig:linear-core-other-judgements}
 \end{figure}
 }
 

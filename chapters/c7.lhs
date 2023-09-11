@@ -1447,6 +1447,9 @@ resources, be those irrelevant or relevant resources}
 \subsubsection{Proof irrelevant resources}
 \subsubsection{Splitting and tagging fragments}
 
+\TypingRules
+\TypingRulesOther
+
 \subsection{Linear Core Examples}
 
 \todo[inline]{Copy over examples from Linear Mini-Core. The ones in the last
@@ -1455,8 +1458,6 @@ section, but also the ones in 2.2 e.g.}
 \subsection{Conclusion}
 
 Concluding, $\dots$
-
-\TypingRules
 
 
 % }}}

@@ -20,6 +20,7 @@
 \newtheorem{theorem}{Theorem}
 \newtheorem{lemma}{Lemma}%[theorem]
 \newtheorem{sublemma}{Lemma}[lemma]
+\newtheorem{assumption}{Assumption}
 
 % Glossary
 \usepackage[toc]{glossaries}
@@ -528,17 +529,27 @@ non-linear programs are deemed linear); DONE (modulo 1)
 
 \appendix
 
+\chapter{Proofs}
+
+\section{Type Preservation}
+
 \input{language-v4/proofs/TypePreservationTheorem}
+
+\section{Progress}
 
 \input{language-v4/proofs/ProgressTheorem}
 
-\input{language-v4/proofs/DeltaLinearLemma}
+\section{Substitution Lemmas}
 
 \input{language-v4/proofs/LinearSubstitutionLemma}
 
 \input{language-v4/proofs/UnrestrictedSubstitutionLemma}
 
 \input{language-v4/proofs/DeltaSubstitutionLemma}
+
+\section{Assumptions}
+
+\input{language-v4/proofs/DeltaLinearLemma}
 
 \end{document}
 
