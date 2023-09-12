@@ -153,19 +153,21 @@ is proof irrelevant, rearrange the usage environments of the case pattern altern
 (6) $\G; \D \vdash e'~\pi : \sigma[\pi/p]$ \` by ($\Lambda E$) (5,4) \\
 \end{tabbing}
 
-\item[Case:] $\ccase{e}{z{:}_{\Delta}\sigma~\{\rho_i\to e'_i\}} \longrightarrow \ccase{e'}{z{:}_{\Delta}\sigma~\{\rho_i\to e'_i\}}$
+\item[Case:] $\ccase{e}{z{:}_{\Delta}\sigma~\{\rho_i\to e''_i\}} \longrightarrow \ccase{e'}{z{:}_{\Delta}\sigma~\{\rho_i\to e''_i\}}$
 \begin{tabbing}
     (1) $e \longrightarrow e'$ \` by inversion on case reduction \\
-    (2) $\Gamma; \D, \D' \vdash \ccase{e}{z{:}_{\Delta}\sigma~\{\rho_i\to e'_i\}} : \varphi$\\
+    (2) $\Gamma; \D, \D' \vdash \ccase{e}{z{:}_{\Delta}\sigma~\{\rho_i\to e''_i\}} : \varphi$\\
     (3) $e$ is not in WHNF \` since it evaluates further by (1)\\ \` instead of a case alternative being evaluated\\
     (4) $\G;\D \vdash e : \s$\\
-    (5) $\ov{\G,\z[\irr{\D}][\s]; \irr{\D},\D' \vdash_{alt} \rho \to e'' :^z_{\irr{\D}} \s \Rightarrow \vp}$\` by inv. on CaseNotWHNF\\
+    (5) $\ov{\G,\z[\irr{\D}][\s]; \irr{\D},\D' \vdash_{alt} \rho \to e'' :^z_{\irr{\D}} \s \Rrightarrow \vp}$\` by inv. on CaseNotWHNF\\
     (6) $\G;\D \vdash e' : \s'$\` by i.h. (1,4)\\
     Subcase $e'$ is not in WHNF\\
     (7) $\Gamma; \D, \D' \vdash \ccase{e'}{z{:}_{\Delta}\sigma~\{\rho_i\to e'_i\}} : \varphi$\` by $CaseNotWHNF$\\
     Subcase $e'$ is in WHNF\\
-    \` this subcase witnesses the soundness of $AltN_{Not WHNF}$ wrt $AltN_{WHNF}$\\
-    TODO FAZER NO PAPEL
+    (7) $\ov{\G,\z[\ov{\D_i}][\s]; \ov{\D_i},\D' \vdash_{alt} \rho \to e'' :^z_{\ov{\D_i}} \s \Mapsto \vp}$\` for any $\ov{\D_i}$ by (5) and by \\\` soundness of not whnf wrt whnf lemma\\
+    (8) $\D = \ov{\D_i}$\` by $\ov{\D_i}$ can be anything\\
+    (9) $\G; \D \Vdash e : \s \gtrdot \ov{\D_i}$ \`by (8) and rhs of $\gtrdot = \D$\\
+    (10) $\Gamma; \D, \D' \vdash \ccase{e'}{z{:}_{\Delta}\sigma~\{\rho_i\to e'_i\}} : \varphi$\` by $CaseWHNF$ (7,9)\\
 \end{tabbing}
 
 \end{description}
