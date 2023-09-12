@@ -2,13 +2,47 @@
 \WHNFConvSoundness
 
 \begin{proof}
-By structural induction on the typing derivation.
+By structural induction on the case alternative typing derivation.
 
 \begin{description}
 
-\item[Case:] $\Lambda I$
+\item[Case:] $Alt\_$
 \begin{tabbing}
-    (1)
+    (1) $\G,\z[\irr{\D}];\irr{\D}, \D' \vdash_{alt} \_ \to e :^z_{\irr{\D}} \s \Rightarrow \vp$\\
+    (2) $\G, \z[\irr{\D}];\irr{\D},\D' \vdash e : \vp$\\
+    (3) $\irr{\D}$ is used through $z$\`since $\irr{\D}$ can't otherwise be used\\\`and is introduced in this alternative uniquely \\\`(since we have multi-tier proof irrelevance, i.e. $\irr{\irr{\D}}\neq\irr{\D}$)\\
+    (4) $\G; \z[1], \D' \vdash e : \vp$\` by $\D \Rightarrow 1$ lemma (2,3)\\
+    (5) $\G, \z[\ov{\D_i}]; \ov{\D_i}, \D' \vdash e : \vp$\` by $1 \Rightarrow \D$ lemma (4)\\
+    (6) $\G, \z[\ov{\D_i}]; \ov{\D_i}, \D' \vdash_{alt} \_ \to e :^z_{\ov{\D_i}} \s \Rightarrow \vp$\` by $Alt\_$\\
+\end{tabbing}
+
+\item[Case:] $Alt0$
+\begin{tabbing}
+    (1) $\G, \z[\irr{\D}]; \irr{\D}, \D' \vdash_{alt} K~\ov{\xo}\to e :^z_{\irr{\D}} \s \Rightarrow \vp$\\
+    (2) $\G, \z[\cdot], \ov{\xo}; \D' \vdash e : \vp$\` by inv. on $Alt0$ and def. of empty subst.\\
+    (3) $\G, \z[\ov{\D_i}]; \ov{\D_i}, \D' \vdash_{alt} K~\ov{\xo}\to e :^z_{\ov{\D_i}} \s \Rightarrow \vp$\` by $Alt0$ (2)\\
+\end{tabbing}
+
+\item[Case:] $AltN_{\textrm{WHNF}}$
+\begin{tabbing}
+    Not applicable since $\Rrightarrow$ is only generalized by $\Rightarrow$, not $\Mapsto$.
+\end{tabbing}
+
+\item[Case:] $AltN_{\textrm{Not WHNF}}$
+\begin{tabbing}
+    (1) $\G, \z[\irr{\D}]; \irr{\D}, \D' \vdash_{alt} K~\ov{\xo},\ov{y_i{:}_{1}\s_i}^n\to e :^z_{\irr{\D}} \s \Rightarrow \vp$\\
+    (2) $\G,\z[\irr{\D}],\ov{\xo},\ov{y_j{:}_{\D_j}\s_j}^n; \irr{\D}, \D' \vdash e : \vp$\`by inv. on $AltN_{\textrm{Not WHNF}}$\\
+    (3) $\ov{\D_j} = \ov{\lctag{\irr{\D}}{K_j}}$\`by inv. on $AltN_{\textrm{Not WHNF}}$\\
+    Subcase $\irr{\D}$ is consumed through $z$\\
+    (4) $\G,\ov{\xo},\ov{y_j{:}_{\D_j}\s_j}^n; \z[1], \D' \vdash e : \vp$\`by $\D \Rightarrow 1$ lemma (2,subcase)\\
+    (5) $\G,\ov{\xo},\ov{y_j{:}_{\D_i}\s_j}^n; \z[1], \D' \vdash e : \vp$\`by $\ov{y}$ does not consume resources,\\\` and Weaken? (HELP move $\D_j$ to $\D_i$)\\
+    (6) $\G,\ov{\xo},\ov{y_j{:}_{\D_i}\s_j}^n, \z[\ov{\D_i}]; \ov{\D_i}, \D' \vdash e : \vp$\`by $1 \Rightarrow \D$ lemma (5)\\
+    (7) $\G, \z[\ov{\D_i}]; \ov{\D_i}, \D' \vdash_{alt} K~\ov{\xo},\ov{y_i{:}_{1}\s_i}^n \to e :^z_{\ov{\D_i}} \s \Mapsto \vp$\`by $AltN_{\textrm{WHNF}}$ (6)\\
+    Subcase $\irr{\D}$ is (fully) consumed by $\ov{y}$ (after splitting)\\
+    (4) $\G,\z[\irr{\D}],\ov{\xo};\ov{y_j{:}_{1}\s_j}^n, \D' \vdash e : \vp$\`by $\D \Rightarrow 1$ lemma (2, subcase)\\
+    (5) $\G,\z[\ov{\D_i}],\ov{\xo};\ov{y_j{:}_{1}\s_j}^n, \D' \vdash e : \vp$\`by Weaken and $z$ does not consume resources (HELP SAME KIND)\\
+    (6) $\G,\z[\ov{\D_i}],\ov{\xo},\ov{y_j{:}_{\D_i}\s_j}^n; \ov{\D_i}, \D' \vdash e : \vp$\`by $1 \Rightarrow \D$ lemma (5)\\
+    (7) $\G,\z[\ov{\D_i}]; \ov{\D_i}, \D' \vdash K~\ov{\xo},\ov{y_i{:}_{1}\s_i}^n\to e :^z_{\ov{\D_i}} \s \Mapsto \vp$\`by $AltN_{\textrm{WHNF}}$\\
 \end{tabbing}
 
 \end{description}

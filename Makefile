@@ -4,7 +4,7 @@ all: $(DOCNAME).pdf
 
 .PHONY: clean final
 
-DEPS=lwnovathesis.cls references.bib chapters/c2.tex chapters/c3.tex chapters/c4.tex chapters/c5.tex chapters/c6.tex chapters/c7.tex chapters/c8.tex proof.tex language/* language/proofs/* language-v2/* language-v3/* language-v4/*
+DEPS=lwnovathesis.cls references.bib chapters/c2.tex chapters/c3.tex chapters/c4.tex chapters/c5.tex chapters/c6.tex chapters/c7.tex chapters/c8.tex proof.tex language/* language/proofs/* language-v2/* language-v3/* language-v4/* language-v4/proofs/* language-v4/proofs/optimizations/*
 
 # and all_proofs.tex
 

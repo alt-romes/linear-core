@@ -66,20 +66,20 @@ If \\ $\G,\xD; \D, \D' \vdash e : \varphi$ and $\G; \D \vdash e' : \sigma$ then 
 
 \newcommand{\BetaReductionTheorem}{
 \begin{theorem}[$\beta$-reduction preserves types (and thus is sound)]~\\
-If $\G \vdash (\lambda \x[\pi][\s].~e)~e' : \vp$ then $\G \vdash e[e'/x] : \vp$
+If $\G; \D \vdash (\lambda \x[\pi][\s].~e)~e' : \vp$ then $\G; \D \vdash e[e'/x] : \vp$
 \end{theorem}
 }
 
 \newcommand{\BetaReductionSharingTheorem}{
 \begin{theorem}[Beta-reduction with sharing preserves types (and thus is sound)]~\\
-    If $\G \vdash (\lambda \xo.~e)~e' : \vp$ then $\G \vdash \llet{x = e'}{e} : \vp$
+    If $\G; \D \vdash (\lambda \xo.~e)~e' : \vp$ then $\G; \D \vdash \llet{x = e'}{e} : \vp$
     NB: We only apply this transformation when $x$ is unrestricted, otherwise beta-reduction without sharing is the optimization applied.
 \end{theorem}
 }
 
 \newcommand{\BetaReductionMultTheorem}{
 \begin{theorem}[Beta-reduction on multiplicity abstractions preserves types]~\\
-    If $\G \vdash (\Lambda p.~e)~\pi : \vp$ then $\G \vdash e[\pi/p] : \vp$
+    If $\G; \D \vdash (\Lambda p.~e)~\pi : \vp$ then $\G; \D \vdash e[\pi/p] : \vp$
 \end{theorem}
 }
 
@@ -91,8 +91,8 @@ If $\G \vdash \ccase{x}{\z[\ov{\D},x][\s]~\{\ov{\rho_i\to e_i}\}} : \vp$ then $\
 }
 
 \newcommand{\InliningTheorem}{
-\begin{theorem}[Inlining preserves types (and thus is sound)]~\\
-If $\G \vdash \llet{\xD = e}{e'} : \vp$ then $\G \vdash \llet{\xD = e}{e'[e'/x]} : \vp$
+\begin{theorem}[Inlining preserves types]~\\
+If $\G; \D,\D' \vdash \llet{\xD = e}{e'} : \vp$ then $\G; \D, \D' \vdash \llet{\xD = e}{e'[e'/x]} : \vp$
 \end{theorem}
 }
 
