@@ -4,7 +4,7 @@ all: $(DOCNAME).pdf
 
 .PHONY: clean final
 
-DEPS=lwnovathesis.cls chapters/c2.tex chapters/c3.tex chapters/c4.tex chapters/c5.tex chapters/c6.tex chapters/c7.tex chapters/c8.tex proof.tex language/* language/proofs/* language-v2/* language-v3/* language-v4/*
+DEPS=lwnovathesis.cls references.bib chapters/c2.tex chapters/c3.tex chapters/c4.tex chapters/c5.tex chapters/c6.tex chapters/c7.tex chapters/c8.tex proof.tex language/* language/proofs/* language-v2/* language-v3/* language-v4/*
 
 # and all_proofs.tex
 
@@ -20,6 +20,10 @@ final: $(DOCNAME).tex $(DEPS)
 	bibtex 	 $(DOCNAME).aux
 	pdflatex $(DOCNAME).tex
 	pdflatex $(DOCNAME).tex
+	@echo
+	@echo "-----WARNING-------------------------------------------------------"
+	@echo "Be sure to include the cover pdf and remove from draft mode, etc..."
+	@echo "-------------------------------------------------------------------"
 
 %.tex: %.lhs
 	lhs2TeX $< -o $@

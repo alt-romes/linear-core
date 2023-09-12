@@ -1,6 +1,4 @@
-\begin{lemma}[Float-in preserves types (and thus is sound)]
-    \emph{Not trivial to define. Perhaps best done by case analysis}
-\end{lemma}
+\FloatInTheorem
 
 \begin{proof}~
 
@@ -10,9 +8,7 @@
 \end{proof}
 
 
-\begin{lemma}[Full-laziness preserves types (and thus is sound)]
-    \emph{Not trivial to define. Perhaps best done by case analysis?}
-\end{lemma}
+\FullLazinessTheorem
 
 \begin{proof}~
 
@@ -22,17 +18,7 @@
 \end{proof}
 
 
-
-\begin{lemma}[Local-transformations preserve types]
-There are three lemmas for local transformations:
-  \[
-  \begin{array}{llcl}
-  1. & \G \vdash (\llet{v = e}{b})~a : \vp & \Longrightarrow & \G \vdash \llet{v = e}{b~a} : \vp\\
-  2. & \G \vdash \ccase{(\llet{v = e}{b})}{\dots} : \vp & \Longrightarrow & \G \vdash \llet{v = e}{\ccase{b}{\dots}} : \vp\\
-  3. & \G \vdash \llet{x = (\llet{v = e}{b})}{c} : \vp & \Longrightarrow & \G \vdash \llet{v = e}{\llet{x = b}{c}} : \vp\\
-  \end{array}
-  \]
-\end{lemma}
+\LocalTransformationsTheorem
 
 \begin{description}
 \item[1.] First local-transformation

@@ -1,6 +1,4 @@
-\begin{lemma}[Beta-reduction preserves types (and thus is sound)]
-    \emph{If $\G \vdash (\lambda \x[\pi][\s].~e)~e' : \vp$ then $\G \vdash e[e'/x] : \vp$}
-\end{lemma}
+\BetaReductionTheorem
 
 \begin{proof}~
 
@@ -23,10 +21,7 @@
 \end{tabbing}
 \end{proof}
 
-\begin{lemma}[Beta-reduction with sharing preserves types (and thus is sound)]
-    \emph{If $\G \vdash (\lambda \xo.~e)~e' : \vp$ then $\G \vdash \llet{x = e'}{e} : \vp$}
-    NB: We only apply this transformation when $x$ is unrestricted, otherwise beta-reduction without sharing is the optimization applied.
-\end{lemma}
+\BetaReductionSharingTheorem
 
 \begin{proof}~
 
@@ -41,10 +36,7 @@
 \end{tabbing}
 \end{proof}
 
-
-\begin{lemma}[Beta-reduction on multiplicity abstractions preserves types]
-    \emph{If $\G \vdash (\Lambda p.~e)~\pi : \vp$ then $\G \vdash e[\pi/p] : \vp$}
-\end{lemma}
+\BetaReductionMultTheorem
 
 \begin{proof}
     Trivial through the progress theorem

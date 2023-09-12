@@ -1,6 +1,4 @@
-\begin{lemma}[Binder-swap preserves types (and thus is sound)]
-    If $\G \vdash \ccase{x}{\z[\ov{\D},x][\s]~\{\ov{\rho_i\to e_i}\}} : \vp$ then $\G \vdash \ccase{x}{\z[\ov{\D},x][\s]~\{\ov{\rho_i\to e_i[z/x]}\}} : \vp$
-\end{lemma}
+\BinderSwapTheorem
 
 %
 % Here's an example:
@@ -41,9 +39,9 @@
 \end{proof}
 
 
-\begin{lemma}[Reverse binder-swap preserves types (and thus is sound)]
-    If $\G \vdash \ccase{x}{\z[\ov{\D},x][\s]~\{\ov{\rho_i\to e_i}\}} : \vp$ then $\G \vdash \ccase{x}{\z[\ov{\D},x][\s]~\{\ov{\rho_i\to e_i[x/z]}\}} : \vp$
-\end{lemma}
+% \begin{lemma}[Reverse binder-swap preserves types (and thus is sound)]
+%     If $\G \vdash \ccase{x}{\z[\ov{\D},x][\s]~\{\ov{\rho_i\to e_i}\}} : \vp$ then $\G \vdash \ccase{x}{\z[\ov{\D},x][\s]~\{\ov{\rho_i\to e_i[x/z]}\}} : \vp$
+% \end{lemma}
 
 %
 % case x of z { r -> e } =====> case x of z { r -> e[x/z] }
@@ -69,21 +67,21 @@
 % We can't reconstruct the alternative nor the case! :(
 %
 
-\begin{proof}~
-\begin{tabbing}
-    (1) $\G', \xl \vdash \ccase{x}{\z[\ov{\D},x][\s]~\{\ov{\rho_i\to e_i}\}} : \vp$\\
-    (2) $\xl \vdash x : \sigma$\\
-    (3) $\ov{\G',\z[\D_i|x][\s] \vdash_{alt} \rho_i \rightarrow e_i :_{\D_i | x} \s \Longrightarrow \vp}$\\
-    For every alternative\\
-    If $\rho_i$ is a constructor~($K$)\\
-    (3.1) $\G',\z[\D_i][\s] \vdash_{alt} K~\ov{\x[\pi][\tau]} \rightarrow e_i :_{\D_i} \s \Longrightarrow \vp$\\
-    (3.2) $K:\ov{\tau\to_\pi}~\s \in \G'$\`by inv.\\
-    (3.3) $\G', \z[\D_i][\s],\D_i \vdash e_i : \vp$\\
-    (3.4) $\D_i = \lin{\ov{\x[\pi][\tau]}}$
-    (3.5) $\G',\xl \vdash e_i[x/z] : \vp$\` by $\Delta$-subst\\
-    (3.6) Currently impossible. See the counter example in the source.
-\end{tabbing}
-\end{proof}
+%\begin{proof}~
+%\begin{tabbing}
+%    (1) $\G', \xl \vdash \ccase{x}{\z[\ov{\D},x][\s]~\{\ov{\rho_i\to e_i}\}} : \vp$\\
+%    (2) $\xl \vdash x : \sigma$\\
+%    (3) $\ov{\G',\z[\D_i|x][\s] \vdash_{alt} \rho_i \rightarrow e_i :_{\D_i | x} \s \Longrightarrow \vp}$\\
+%    For every alternative\\
+%    If $\rho_i$ is a constructor~($K$)\\
+%    (3.1) $\G',\z[\D_i][\s] \vdash_{alt} K~\ov{\x[\pi][\tau]} \rightarrow e_i :_{\D_i} \s \Longrightarrow \vp$\\
+%    (3.2) $K:\ov{\tau\to_\pi}~\s \in \G'$\`by inv.\\
+%    (3.3) $\G', \z[\D_i][\s],\D_i \vdash e_i : \vp$\\
+%    (3.4) $\D_i = \lin{\ov{\x[\pi][\tau]}}$
+%    (3.5) $\G',\xl \vdash e_i[x/z] : \vp$\` by $\Delta$-subst\\
+%    (3.6) Currently impossible. See the counter example in the source.
+%\end{tabbing}
+%\end{proof}
 
 
 

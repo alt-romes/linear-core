@@ -529,7 +529,7 @@ non-linear programs are deemed linear); DONE (modulo 1)
 
 \appendix
 
-\chapter{Proofs}
+\chapter{Type Safety Proofs}
 
 \section{Type Preservation}
 
@@ -554,6 +554,32 @@ non-linear programs are deemed linear); DONE (modulo 1)
 \section{Assumptions}
 
 \input{language-v4/proofs/DeltaLinearLemma}
+
+\chapter{Optimisations Preserve Types Proofs}
+
+\section{Inlining}
+
+\input{language-v4/proofs/optimizations/Inlining}
+
+\section{\texorpdfstring{$\beta$}{Beta}-reduction}
+
+\input{language-v4/proofs/optimizations/BetaReduction}
+
+\section{Binder-swap}
+
+\input{language-v4/proofs/optimizations/BinderSwap}
+
+\section{Let floating}
+
+\input{language-v4/proofs/optimizations/LetFloating}
+
+\section{Case of known constructor}
+
+\input{language-v4/proofs/optimizations/CaseOfKnownConstructor}
+
+\section{Case of Case}
+
+\input{language-v4/proofs/optimizations/CaseOfCase}
 
 \end{document}
 

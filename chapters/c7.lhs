@@ -1499,10 +1499,6 @@ term always remains the same because $x$ cannot occur in any term, however, all
 variables that refer to $x$ in their usage environment must now refer the usage env. of the substitee (e.g. $[x] => [\D]$).
 This seems trivial to see correct, since all occurrences are in environments, so we get some equivalence similar to the one we need for the proof of Alt0.
 
-\begin{lemma}[Substitution of proof-irrelevant linear variables preserves typing]
-If $\judg[\G][\D,\irr{\x}][\d]{e}{\vp}$ and $\judg[\G][\D'][\d']{e'}{\s}$ then $\judg[\G][\D,\irr{\D'}][\subst{\d}{\D'}{x},\d']{e}{\vp}$
-\end{lemma}
-
 TODO: Multiplicity substitution preserves typing lemma
 
 TODO: Canonical forms lemma
@@ -1515,12 +1511,26 @@ then $\ov{\Gamma, \Delta_i \vdash e_i : \sigma_i}$
 
 \subsection{Core-to-Core optimisations preserve linearity}
 
-\todo[inline]{We proved multiple optimizing transformations preserve linearity}
+We proved multiple optimizing transformations preserve linearity...
 
 \subsubsection{Inlining}
 
 To the best of our knowledge, there is no linear type system for which inlining
 preserves linearity\footnote{https://github.com/ghc-proposals/ghc-proposals/blob/master/proposals/0111-linear-types.rst\#id90}
+
+\InliningTheorem
+
+\subsubsection{\texorpdfstring{$\beta$}{Beta}-reduction}
+
+\BetaReductionTheorem
+
+\BetaReductionSharingTheorem
+
+\BetaReductionMultTheorem
+
+\subsubsection{Binder Swap}
+
+\BinderSwapTheorem
 
 \subsubsection{Reverse Binder Swap Considered Harmful}
 
@@ -1584,6 +1594,19 @@ Vs. call-by-need
         case x_v of _ -> x_v
 \end{code}
 
+\subsubsection{Let floating}
+
+\FloatInTheorem
+\FullLazinessTheorem
+\LocalTransformationsTheorem
+
+\subsubsection{Case of Known Constructor}
+
+\CaseOfKnownConstructorTheorem
+
+\subsubsection{Case of Case}
+
+\CaseOfCaseTheorem
 
 % }}}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

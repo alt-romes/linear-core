@@ -1,0 +1,8 @@
+The need for multi-level proof irrelevance
+Example:
+
+\x -> case close x of w _ -> case close w of z _ -> w
+
+In the body of the last case, |w| cannot occur! In essence, by using w={[x]} in
+a case expression we effectively get z={[[x]]} because in its body w must not occur again!
+
