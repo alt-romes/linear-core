@@ -1478,6 +1478,7 @@ own, so we can have a reverse-binder-swap subsection}
 \ProgressTheorem
 \WHNFConvSoundness
 \DeltaLinearRelationLemma
+\DeltaUnrestrictedRelationLemma
 \LinearSubstitutionLemma
 \UnrestrictedSubstitutionLemma
 \DeltaSubstitutionLemma

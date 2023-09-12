@@ -32,14 +32,12 @@
 \begin{proof}~
 
 \begin{tabbing}
-    TODO!!\\
-    (1) $\G,\G' \vdash (\lambda \xo.~e)~e' : \vp$\\
-    (2) $\G \vdash (\lambda \xo.~e) : \s \to_\omega \vp$\` by inv. on $\lambda E_\omega$\\
-    (3) $\G', \cdot \vdash e' : \s$ \` by inv. on $\lambda E_\omega$\\
-    (4) $\hasnolinearvars{\G'}$ \` by inv. on $\lambda E_\omega$\\
-    (5) $\G,\xo \vdash e : \vp$\` by inv. on $\lambda I$\\
-    (6) $\G, \cdot, \x[\cdot][\s] \vdash e : \vp$\` by $\xo = \x[\cdot][\s]$ lemma (TODO)\\
-    (7) $\G,\G' \vdash \llet{x = e'}{e} : \vp$\` by let (6,3,4)\\
+    (1) $\G;\D \vdash (\lambda \xo.~e)~e' : \vp$\\
+    (2) $\G; \D \vdash (\lambda \xo.~e) : \s \to_\omega \vp$\` by inv. on $\lambda E_\omega$\\
+    (3) $\G; \cdot \vdash e' : \s$ \` by inv. on $\lambda E_\omega$\\
+    (4) $\G,\xo; \D \vdash e : \vp$\` by inv. on $\lambda I$\\
+    (5) $\G, \x[\cdot][\s]; \D \vdash e : \vp$\` by $\xo = \x[\cdot][\s]$ lemma\\
+    (6) $\G,\G' \vdash \llet{x = e'}{e} : \vp$\` by let (5,3)\\
 \end{tabbing}
 \end{proof}
 

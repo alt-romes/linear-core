@@ -20,17 +20,27 @@ Soundness of Not WHNF alternative typing wrt WHNF alternative typing\\
 }
 
 \newcommand{\DeltaLinearRelationLemma}{
-\begin{assumption}[Delta-Linear Something]
-... If $\G,\xD; \D,\D' \vdash e : \s$ and $\D$ is consumed through $\xD$ in $e$
-    then $\G; \D',\xl \vdash e :\s$.
+\begin{assumption}[$\D \Rightarrow 1$]
+A $\Delta$-variable can replace its usage environment $\D$ as a linear variable if $\D$ is decidedly consumed \emph{through} it\\
+If $\G,\xD; \D,\D' \vdash e : \s$ and $\D$ is consumed through $\xD$ in $e$
+then $\G; \D',\xl \vdash e :\s$.
 \end{assumption}
 
-\begin{assumption}[Reverse Delta-Linear Something]
-... If $\G; \D',\xl \vdash e :\s$\\
+\begin{assumption}[$1 \Rightarrow \D$]
+A linear variable can be moved to the unrestricted context as a $\D$-var with usage environment $\D$ by introducing $\D$ in the linear resources\\
+    If $\G; \D',\xl \vdash e :\s$\\
     then $\G,\xD; \D,\D' \vdash e : \s$.
     and $\D$ is consumed through $\xD$ in $e$
 \end{assumption}
 }
+
+\newcommand{\DeltaUnrestrictedRelationLemma}{
+\begin{assumption}[$\xo = x{:}_{\cdot}\s$]
+An unrestricted variable is equivalent to a $\D$-var with an empty usage environment.\\
+$\xo = \x[\cdot]$ and $\G,\xo; \D \vdash e : \s \equiv \G,\x[\cdot]; \D \vdash e$
+\end{assumption}
+}
+
 
 \newcommand{\LinearSubstitutionLemma}{
 \begin{lemma}[Substitution of linear variables preserves typing]
