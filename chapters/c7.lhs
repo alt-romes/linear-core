@@ -1480,8 +1480,11 @@ own, so we can have a reverse-binder-swap subsection}
 \DeltaLinearRelationLemma
 \DeltaUnrestrictedRelationLemma
 \LinearSubstitutionLemma
+\LinearSubstitutionAltsLemma
 \UnrestrictedSubstitutionLemma
+\UnrestrictedSubstitutionAltsLemma
 \DeltaSubstitutionLemma
+\DeltaSubstitutionAltsLemma
 
 %\input{language-v4/proofs/TypePreservationTheorem}
 %

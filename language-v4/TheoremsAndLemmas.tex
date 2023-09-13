@@ -52,10 +52,27 @@ $\xo = \x[\cdot]$ and $\G,\xo; \D \vdash e : \s \equiv \G,\x[\cdot]; \D \vdash e
 \end{lemma}
 }
 
+\newcommand{\LinearSubstitutionAltsLemma}{
+\begin{sublemma}[Substitution of linear variables on case alternatives preserves typing]~\\
+    If $\judg[\G][\D,\xl]{\rho\to e}{\s \Longrightarrow \vp}[alt][\D_s][z]$ and
+    $\judg[\G][\D']{e'}{\s}$ and
+    $\D_s \subseteq \D,x$ then
+    $\judg[\subst{\G}{\D'}{x}][\D,\D']{\rho \to e[e'/x]}{\s \Longrightarrow \vp}[alt][\subst{\D_s}{\D'}{x}][z]$
+\end{sublemma}
+}
+
 \newcommand{\UnrestrictedSubstitutionLemma}{
 \begin{lemma}[Substitution of unrestricted variables preserves typing]
 \emph{If $\Gamma, x{:}_\omega\sigma; \Delta \vdash e : \varphi$ and $\Gamma; \cdot \vdash e' : \sigma$ then $\G,\D \vdash e[e'/x] : \varphi$.}
 \end{lemma}
+}
+
+\newcommand{\UnrestrictedSubstitutionAltsLemma}{
+\begin{sublemma}[Substitution of unrestricted variables on case alternatives
+    preserves typing]
+If $\G, \xo; \D \vdash_{alt} \rho \to e :^z_{\Delta_s} \s' \Rightarrow \vp$ and $\G; \D \vdash e' : \s$ and
+    then $\G; \D \vdash_{alt} \rho \to e[e'/x] :^z_{\Delta_s} \s' \Rightarrow \vp$
+\end{sublemma}
 }
 
 \newcommand{\DeltaSubstitutionLemma}{
@@ -71,6 +88,13 @@ If \\ $\G,\xD; \D, \D' \vdash e : \varphi$ and $\G; \D \vdash e' : \sigma$ then 
 \end{lemma}
 }
 
+\newcommand{\DeltaSubstitutionAltsLemma}{
+\begin{sublemma}[Substitution of $\Delta$-bound variables on case alternatives
+    preserves typing]
+If $\G,\xD; \D,\D' \vdash_{alt} \rho \to e :^z_{\Delta_s} \s' \Rightarrow \vp$ and
+    $\G; \D \vdash e' : \s$ and $\Delta_s \subseteq (\Delta,\Delta')$ then $\G; \D, \D' \vdash_{alt} \rho \to e[e'/x] :^z_{\Delta_s} \s' \Rightarrow \vp$
+\end{sublemma}
+}
 
 %%% OPTIMIZATIONS %%%
 

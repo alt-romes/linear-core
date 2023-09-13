@@ -161,11 +161,7 @@ By structural induction on the first derivation.
 
 \end{proof}
 
-\begin{sublemma}[Substitution of unrestricted variables on case alternatives
-    preserves typing]
-If $\G, \xo; \D \vdash_{alt} \rho \to e :^z_{\Delta_s} \s' \Rightarrow \vp$ and $\G; \D \vdash e' : \s$ and
-    then $\G; \D \vdash_{alt} \rho \to e[e'/x] :^z_{\Delta_s} \s' \Rightarrow \vp$
-\end{sublemma}
+\UnrestrictedSubstitutionAltsLemma
 
 \begin{proof}
 By structural induction on the $alt$ judgment.

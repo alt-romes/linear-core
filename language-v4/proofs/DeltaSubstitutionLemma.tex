@@ -238,12 +238,7 @@ By structural induction on the first derivation.
 \end{proof}
 
 
-\begin{sublemma}[Substitution of $\Delta$-bound variables on case alternatives
-    preserves typing]
-If $\G,\xD; \D,\D' \vdash_{alt} \rho \to e :^z_{\Delta_s} \s' \Rightarrow \vp$ and
-    $\G; \D \vdash e' : \s$ and $\Delta_s \subseteq (\Delta,\Delta')$ then $\G; \D, \D' \vdash_{alt} \rho \to e[e'/x] :^z_{\Delta_s} \s' \Rightarrow \vp$
-\end{sublemma}
-
+\DeltaSubstitutionAltsLemma
 \begin{proof}
 By structural induction on the $alt$ judgment.
 

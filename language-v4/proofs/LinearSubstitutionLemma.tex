@@ -218,13 +218,7 @@ By structural induction on the first derivation.
 \end{description}
 \end{proof}
 
-\begin{sublemma}[Substitution of linear variables on case alternatives
-    preserves typing]
-    If $\judg[\G][\D,\xl]{\rho\to e}{\s \Longrightarrow \vp}[alt][\D_s][z]$ and
-    $\judg[\G][\D']{e'}{\s}$ and
-    $\D_s \subseteq \D,x$ then
-    $\judg[\subst{\G}{\D'}{x}][\D,\D']{\rho \to e[e'/x]}{\s \Longrightarrow \vp}[alt][\subst{\D_s}{\D'}{x}][z]$
-\end{sublemma}
+\LinearSubstitutionAltsLemma
 
 \begin{proof}
 By structural induction on the $alt$ judgment.
