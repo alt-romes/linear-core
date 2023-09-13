@@ -1,0 +1,27 @@
+\EtaExpansionTheorem
+
+\begin{proof}~
+\begin{tabbing}
+    Subcase $f$ is linear\\
+    (1) $\G; \D \vdash f : \s \lolli \vp$\\
+    (2) $\G; \xl \vdash x : \s$\\
+    (3) $\G; \D, \xl \vdash f~x : \vp$\`by $\lambda E$\\
+    (4) $\G; \D \vdash (\lambda \xl.~f~x) : \s \lolli \vp$\`by $\lambda I$\\
+    Subcase $f$ is unrestricted\\
+    As above but $x$ is introduced in $\G$ and functions are unrestricted
+\end{tabbing}
+\end{proof}
+
+\EtaReductionTheorem
+
+\begin{proof}~
+\begin{tabbing}
+    (1) $\G; \D \vdash (\lambda \x[\pi].~f~x) : \s \to_\pi \vp$\\
+    Subcase $\pi = 1$\\
+    (2) $\G; \D, \xl \vdash f~x : \vp$\`by inv. on $\lambda I$\\
+    (3) $\G; \D \vdash f : \s \to_1 \vp$\`by inv. on $\lambda E$\\
+    Subcase $\pi = \omega$\\
+    As above but $x$ is introduced in $\G$
+\end{tabbing}
+\end{proof}
+

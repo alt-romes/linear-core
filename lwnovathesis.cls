@@ -104,5 +104,5 @@
 
 % Colored links
 \usepackage{hyperref}
-\hypersetup{colorlinks=true,linkcolor=magenta, citecolor=blue}
+\hypersetup{colorlinks=true,linkcolor=red, citecolor=magenta}
 

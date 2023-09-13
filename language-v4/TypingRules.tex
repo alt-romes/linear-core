@@ -83,7 +83,7 @@
     \infer[($\textrm{Case}_\textrm{WHNF}$)]
     {\textrm{e is in \emph{WHNF}} \\ \G;\D \Vdash e:\s \gtrdot \ov{\D_i}
     \\ \ov{\G,\var[z][\ov{\D_i}];\ov{\D_i},\D' \vdash_{alt} \rho\to e' :^z_{\ov{\D_i}} \s \Mapsto \vp}}
-    {\judg[\G][\ov{\D_i},\D']{\ccase{e}{\var[z][\ov{\D_i}]~\{\ov{\rho \to e'}\}}}{\vp}}
+    {\judg[\G][\D,\D']{\ccase{e}{\var[z][\ov{\D_i}]~\{\ov{\rho \to e'}\}}}{\vp}}
 }
 
 \newcommand{\TypeCaseNotWHNFIncorrect}{

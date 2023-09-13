@@ -13,7 +13,15 @@
 \begin{proof}~
 
 \begin{tabbing}
-
+    (1) $\G; \D,\D' \vdash \lambda \y[\pi].~\llet{\xD = e}{e'} : \s' \to \vp$\\
+    Subcase $\pi = 1$\\
+    (2) $\G; \D,\D',\y[1] \vdash \llet{\xD = e}{e'} : \vp$\`by inv. on $\lambda I$\\
+    (3) $\G; \D \vdash e : \s$\` by inv. on (let)\\
+    (4) $\G, \xD; \D, \D', \y[1] \vdash e' : \vp$\`by inv. on (let)\\
+    (5) $\G, \xD; \D, \D' \vdash \lambda \y[1].~e' : \s' \to \vp$\`by ($\lambda I$) (4)\\
+    (6) $\G; \D,\D' \vdash \llet{\xD = e}{\lambda \y[1].~e'} : \s' \to \vp$ by (let) $(3,5)$\\
+    Subcase $\pi = \omega$\\
+    As above but $x$ is put in the unrestricted context $\G$
 \end{tabbing}
 \end{proof}
 
@@ -23,25 +31,45 @@
 \begin{description}
 \item[1.] First local-transformation
 \begin{proof}~
-
 \begin{tabbing}
-
+    (1) $\G; \D, \D', \D'' \vdash (\llet{\xD = e_1}{e_2})~e_3 : \vp$\\
+    (2) $\G; \D, \D' \vdash \llet{\xD = e_1}{e_2} : \s' \to_\pi \vp$ \`by inv. on 1\\
+    (3) $\G; \D'' \vdash e_3 : \s'$\`by inv. on 1\\
+    (4) $\G; \D \vdash e_1 : \s$\`by inv. on 2\\
+    (5) $\G, \xD; \D, \D' \vdash e_2 : \s' \to_\pi \vp$\`by inv. on 2\\
+    (6) $\G, \xD; \D, \D', \D'' \vdash e_2~e_3 : \vp$\` by $\lambda_\pi E$\\
+    (7) $\G; \D, \D', \D'' \vdash \llet{\xD = e_1}{e_2~e_3} : \vp$\`by let (4,6)\\
 \end{tabbing}
 \end{proof}
 
 \item[2.] Second local-transformation
 \begin{proof}~
-
 \begin{tabbing}
-
+    (1) $\G; \D, \D', \D'' \vdash \ccase{\llet{\xD = e_1}{e_2}}{\z[\D,\D'][\s']~\{\ov{\rho \to e_3}\}} : \vp$\\
+    (2) $\G; \D, \D' \vdash \llet{\xD = e_1}{e_2} : \s'$\`by inv. on 1\\
+    (3) $\G; \D \vdash e_1 : \s$\`by inv. on 2\\
+    (4) $\G, \xD;\D,\D' \vdash e_2 : \s'$\`by inv. on 2\\
+    Subcase $e_2$ is in WHNF\\
+    (5) $\ov{\G,\z[\D,\D'][\s']; \D, \D', \D'' \vdash_{alt} \rho \to e_3 :^z_{\D,\D'} \s' \Mapsto \vp}$\`by inv. on 1\\
+    (6) $\G, \xD; \D, \D', \D'' \vdash \ccase{e_2}{\z[\D,\D'][\s']~\{\ov{\rho \to e_3}\}} : \vp$\`by CaseWHNF (4,5)\\
+    (7) $\G; \D, \D', \D'' \vdash \llet{\xD = e_1}{\ccase{e_2}{\z[\D,\D'][\s']~\{\ov{\rho \to e_3}\}}} : \vp$\`by Let (3,6)\\
+    Subcase $e_2$ is not in WHNF\\
+    (5) $\ov{\G,\z[\irr{\D,\D'}][\s']; \irr{\D, \D'}, \D'' \vdash_{alt} \rho \to e_3 :^z_{\irr{\D,\D'}} \s' \Rrightarrow \vp}$\`by inv. on 1\\
+    (6) $\G, \xD; \D, \D', \D'' \vdash \ccase{e_2}{\z[\D,\D'][\s']~\{\ov{\rho \to e_3}\}} : \vp$\`by CaseWHNF (4,5)\\
+    (7) $\G; \D, \D', \D'' \vdash \llet{\xD = e_1}{\ccase{e_2}{\z[\D,\D'][\s']~\{\ov{\rho \to e_3}\}}} : \vp$\`by Let (3,6)\\
 \end{tabbing}
 \end{proof}
 
 \item[3.] Third local-transformation
 \begin{proof}~
-
 \begin{tabbing}
-
+    (1) $\G, \D;\D',\D'' \vdash \llet{\x[\D,\D'][\s'] = (\llet{\yD = e_1}{e_2})}{e_3} : \vp$\\
+    (2) $\G; \D, \D' \vdash \llet{\yD = e_1}{e_2} : \s'$\`by inv. on 1\\
+    (3) $\G, \x[\D,\D'][\s'];\D,\D',\D'' \vdash e_3$\`by inv. on 1\\
+    (4) $\G; \D \vdash e_1 : \s$\`by inv. on 2\\
+    (5) $\G, \yD; \D,\D' \vdash e_2 : \s'$\`by inv. on 2\\
+    (6) $\G, \yD; \D,\D',\D'' \vdash \llet{\x[\D,\D'][\s'] = e_2}{e_3} : \vp$\`by Let (3,5) and Weaken\\
+    (7) $\G; \D,\D',\D'' \vdash \llet{\yD = e_1}{\llet{\x[\D,\D'][\s'] = e_2}{e_3}} : \vp$\`by Let (4,6)\\
 \end{tabbing}
 \end{proof}
 \end{description}

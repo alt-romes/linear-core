@@ -1301,6 +1301,15 @@ by~\cite{cite:let-floating}. We distinguish three let-floating transformations:
   pushed inwards. In such a situation, floating the let binding out of the
   enclosing lambda can make it readily available across applications of said
   lambda.
+  \[
+  \begin{array}{l}
+  \lambda y.~\llet{x = e}{e'}
+  \end{array}
+  \Longrightarrow
+  \begin{array}{l}
+  \llet{x = e}{\lambda y.~e'}
+  \end{array}
+  \]
 
   \item The \emph{local transformations} are the third type of let-floating
   optimizations. In this context, the local transformations are local rewrites

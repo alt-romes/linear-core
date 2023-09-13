@@ -1466,13 +1466,9 @@ Concluding, $\dots$
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Metatheory}
 
-\todo[inline]{Consider making type safety and optimizations a section of their
-own, so we can have a reverse-binder-swap subsection}
-
 \subsection{Type safety}
 
-\todo[inline]{We proved soundness of our system...}
-\todo[inline]{The harder cases are for the interesting ones - lets, cases, and case alternatives}
+We proved soundness of our system... The harder cases are for the interesting ones - lets, cases, and case alternatives...
 
 \TypePreservationTheorem
 \ProgressTheorem
@@ -1498,22 +1494,22 @@ own, so we can have a reverse-binder-swap subsection}
 %
 %\input{language-v4/proofs/DeltaSubstitutionLemma}
  
-TODO! Substitution of proof-irrelevant linear variables preserves typing. The
-term always remains the same because $x$ cannot occur in any term, however, all
-variables that refer to $x$ in their usage environment must now refer the usage env. of the substitee (e.g. $[x] => [\D]$).
-This seems trivial to see correct, since all occurrences are in environments, so we get some equivalence similar to the one we need for the proof of Alt0.
+%TODO! Substitution of proof-irrelevant linear variables preserves typing. The
+%term always remains the same because $x$ cannot occur in any term, however, all
+%variables that refer to $x$ in their usage environment must now refer the usage env. of the substitee (e.g. $[x] => [\D]$).
+%This seems trivial to see correct, since all occurrences are in environments, so we get some equivalence similar to the one we need for the proof of Alt0.
+%
+%TODO: Multiplicity substitution preserves typing lemma
+%
+%TODO: Canonical forms lemma
+%
+%TODO: Corollary of $\Delta$-var subst. for $\ov{\Delta}$
+%
+%TODO: Constructor app typing:
+%If $\Gamma, \Delta \vdash K~\ov{e}$ and $K{:}\ov{\sigma\to\pi}~T~\ov{p} \in \Gamma$ and $\hasnolinearvars{\Gamma}$
+%then $\ov{\Gamma, \Delta_i \vdash e_i : \sigma_i}$
 
-TODO: Multiplicity substitution preserves typing lemma
-
-TODO: Canonical forms lemma
-
-TODO: Corollary of $\Delta$-var subst. for $\ov{\Delta}$
-
-TODO: Constructor app typing:
-If $\Gamma, \Delta \vdash K~\ov{e}$ and $K{:}\ov{\sigma\to\pi}~T~\ov{p} \in \Gamma$ and $\hasnolinearvars{\Gamma}$
-then $\ov{\Gamma, \Delta_i \vdash e_i : \sigma_i}$
-
-\subsection{Core-to-Core optimisations preserve linearity}
+\subsection{Optimisations preserve linearity}
 
 We proved multiple optimizing transformations preserve linearity...
 
@@ -1522,15 +1518,33 @@ We proved multiple optimizing transformations preserve linearity...
 To the best of our knowledge, there is no linear type system for which inlining
 preserves linearity\footnote{https://github.com/ghc-proposals/ghc-proposals/blob/master/proposals/0111-linear-types.rst\#id90}
 
-\InliningTheorem
+% \InliningTheorem
+\input{language-v4/proofs/optimizations/Inlining}
 
 \subsubsection{\texorpdfstring{$\beta$}{Beta}-reduction}
 
-\BetaReductionTheorem
+% \BetaReductionTheorem
+% \BetaReductionSharingTheorem
+% \BetaReductionMultTheorem
 
-\BetaReductionSharingTheorem
+\input{language-v4/proofs/optimizations/BetaReduction}
 
-\BetaReductionMultTheorem
+\subsubsection{Case of known constructor}
+
+%\CaseOfKnownConstructorTheorem
+\input{language-v4/proofs/optimizations/CaseOfKnownConstructor}
+
+\subsubsection{Let floating}
+
+%\FloatInTheorem
+%\FullLazinessTheorem
+%\LocalTransformationsTheorem
+
+\input{language-v4/proofs/optimizations/LetFloating}
+
+\subsubsection{\texorpdfstring{$\eta$}{Eta}-conversions}
+
+\input{language-v4/proofs/optimizations/EtaConvs}
 
 \subsubsection{Binder Swap}
 
@@ -1597,16 +1611,6 @@ Vs. call-by-need
 ===>
         case x_v of _ -> x_v
 \end{code}
-
-\subsubsection{Let floating}
-
-\FloatInTheorem
-\FullLazinessTheorem
-\LocalTransformationsTheorem
-
-\subsubsection{Case of Known Constructor}
-
-\CaseOfKnownConstructorTheorem
 
 \subsubsection{Case of Case}
 
@@ -1712,6 +1716,9 @@ f x = case x of z { _ -> x }
 
 \item We kind of ignore the multiplicity semiring. We should discuss
 how we don't do ring operations ... but that's kind of wrong.
+
+
+\item See TODOs near metatheory in the source
 \end{itemize}
 
 

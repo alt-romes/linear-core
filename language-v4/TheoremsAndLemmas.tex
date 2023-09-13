@@ -56,7 +56,7 @@ $\xo = \x[\cdot]$ and $\G,\xo; \D \vdash e : \s \equiv \G,\x[\cdot]; \D \vdash e
 \begin{sublemma}[Substitution of linear variables on case alternatives preserves typing]~\\
     If $\judg[\G][\D,\xl]{\rho\to e}{\s \Longrightarrow \vp}[alt][\D_s][z]$ and
     $\judg[\G][\D']{e'}{\s}$ and
-    $\D_s \subseteq \D,x$ then
+    $\D_s \subseteq \D,x$ \\then
     $\judg[\subst{\G}{\D'}{x}][\D,\D']{\rho \to e[e'/x]}{\s \Longrightarrow \vp}[alt][\subst{\D_s}{\D'}{x}][z]$
 \end{sublemma}
 }
@@ -99,27 +99,27 @@ If $\G,\xD; \D,\D' \vdash_{alt} \rho \to e :^z_{\Delta_s} \s' \Rightarrow \vp$ a
 %%% OPTIMIZATIONS %%%
 
 \newcommand{\BetaReductionTheorem}{
-\begin{theorem}[$\beta$-reduction preserves types (and thus is sound)]~\\
+\begin{theorem}[$\beta$-reduction preserves types]~\\
 If $\G; \D \vdash (\lambda \x[\pi][\s].~e)~e' : \vp$ then $\G; \D \vdash e[e'/x] : \vp$
 \end{theorem}
 }
 
 \newcommand{\BetaReductionSharingTheorem}{
-\begin{theorem}[Beta-reduction with sharing preserves types (and thus is sound)]~\\
+\begin{theorem}[$\beta$-reduction with sharing preserves types]~\\
     If $\G; \D \vdash (\lambda \xo.~e)~e' : \vp$ then $\G; \D \vdash \llet{x = e'}{e} : \vp$
     NB: We only apply this transformation when $x$ is unrestricted, otherwise beta-reduction without sharing is the optimization applied.
 \end{theorem}
 }
 
 \newcommand{\BetaReductionMultTheorem}{
-\begin{theorem}[Beta-reduction on multiplicity abstractions preserves types]~\\
+\begin{theorem}[$\beta$-reduction on multiplicity abstractions preserves types]~\\
     If $\G; \D \vdash (\Lambda p.~e)~\pi : \vp$ then $\G; \D \vdash e[\pi/p] : \vp$
 \end{theorem}
 }
 
 
 \newcommand{\BinderSwapTheorem}{
-\begin{theorem}[Binder-swap preserves types (and thus is sound)]~\\
+\begin{theorem}[Binder-swap preserves types]~\\
 If $\G \vdash \ccase{x}{\z[\ov{\D},x][\s]~\{\ov{\rho_i\to e_i}\}} : \vp$ then $\G \vdash \ccase{x}{\z[\ov{\D},x][\s]~\{\ov{\rho_i\to e_i[z/x]}\}} : \vp$
 \end{theorem}
 }
@@ -132,14 +132,14 @@ If $\G; \D,\D' \vdash \llet{\xD = e}{e'} : \vp$ then $\G; \D, \D' \vdash \llet{\
 
 
 \newcommand{\FloatInTheorem}{
-\begin{theorem}[Float-in preserves types (and thus is sound)]~\\
-Not trivial to define. Perhaps best done by case analysis
+\begin{theorem}[Float-in preserves types]~\\
+HELP: How to define?
 \end{theorem}
 }
 
 \newcommand{\FullLazinessTheorem}{
-\begin{theorem}[Full-laziness preserves types (and thus is sound)]
-    \emph{Not trivial to define. Perhaps best done by case analysis?}
+\begin{theorem}[Full-laziness preserves types]~\\
+    If $\G; \D,\D' \vdash \lambda \y[\pi].~\llet{\xD = e}{e'} : \vp$ and $y$ does not occur in $e$ \\then $\G;\D,\D' \vdash \llet{\xD=e}{\lambda \y[\pi].~e'}$
 \end{theorem}
 }
 
@@ -148,21 +148,35 @@ Not trivial to define. Perhaps best done by case analysis
 There are three lemmas for local transformations:
   \[
   \begin{array}{llcl}
-  1. & \G \vdash (\llet{v = e}{b})~a : \vp & \Longrightarrow & \G \vdash \llet{v = e}{b~a} : \vp\\
-  2. & \G \vdash \ccase{(\llet{v = e}{b})}{\dots} : \vp & \Longrightarrow & \G \vdash \llet{v = e}{\ccase{b}{\dots}} : \vp\\
-  3. & \G \vdash \llet{x = (\llet{v = e}{b})}{c} : \vp & \Longrightarrow & \G \vdash \llet{v = e}{\llet{x = b}{c}} : \vp\\
+  1. & \G; \D \vdash (\llet{v = e}{b})~a : \vp & \Rightarrow & \G; \D \vdash \llet{v = e}{b~a} : \vp\\
+  2. & \G; \D \vdash \ccase{(\llet{v = e}{b})}{\dots} : \vp & \Rightarrow & \G; \D \vdash \llet{v = e}{\ccase{b}{\dots}} : \vp\\
+  3. & \G; \D \vdash \llet{x = (\llet{v = e}{b})}{c} : \vp & \Rightarrow & \G; \D \vdash \llet{v = e}{\llet{x = b}{c}} : \vp\\
   \end{array}
   \]
 \end{theorem}
 }
 
 \newcommand{\CaseOfKnownConstructorTheorem}{
-\begin{theorem}[Case-of-known-constructor preserves types (and thus is sound)]~\\
-If $\G \vdash \ccase{K~\ov{e}}{\z[\ov{\D},\D_s][\s]~\{..., K~\ov{x} \to e_i\}} : \vp$ then $\G \vdash e_i\ov{[e/x]}[K~\ov{e}/z] : \vp$
+\begin{theorem}[Case-of-known-constructor preserves types]~\\
+If $\G; \D, \D' \vdash \ccase{K~\ov{e}}{\z[\D][\s]~\{..., K~\ov{x} \to e_i\}} : \vp$ then $\G; \D,\D' \vdash e_i\ov{[e/x]}[K~\ov{e}/z] : \vp$
 \end{theorem}
 }
 
 \newcommand{\CaseOfCaseTheorem}{
-\begin{theorem}[Case-of-case preserves types (and thus is sound)]~\\
+\begin{theorem}[Case-of-case preserves types]~\\
+    If $\G; \D, \D',\D'' \vdash \ccase{\ccase{e_c}{\z[\D]~\{\ov{\rho_{c_i} \to e_{c_i}}\}}}{\var[w][\irr{\D,\D'}][\s']~\{\ov{\rho_i \to e_i}\}} : \vp$\\
+    then $\G; \D, \D',\D'' \vdash \ccase{e_c}{\z[\D]~\{\ov{\rho_{c_i} \to \ccase{e_{c_i}}{\var[w][\irr{\D,\D'}][\s']~\{\ov{\rho_i \to e_i}\}}}\}} : \vp$\\
+\end{theorem}
+}
+
+\newcommand{\EtaExpansionTheorem}{
+\begin{theorem}[$\eta$-expansion preserves types]~\\
+    If $\G; \D \vdash f : \s \to_\pi \vp$ then $\G; \D \vdash \lambda x.~f~x : \s \to_\pi \vp$
+\end{theorem}
+}
+
+\newcommand{\EtaReductionTheorem}{
+\begin{theorem}[$\eta$-reduction preserves types]~\\
+    If $\G; \D \vdash \lambda x.~f~x : \s \to_\pi \vp$ then $\G; \D \vdash f : \s \to_\pi \vp$
 \end{theorem}
 }
