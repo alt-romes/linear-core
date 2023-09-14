@@ -539,7 +539,7 @@ non-linear programs are deemed linear); DONE (modulo 1)
 
 \input{language-v4/proofs/ProgressTheorem}
 
-\section{Soundness of not-WHNF wrt WHNF}
+\section{Irrelevance}
 
 \input{language-v4/proofs/WHNFConvSoundness}
 

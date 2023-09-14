@@ -280,7 +280,7 @@ constructs available in GHC Core and how they're evaluated.
 % \emph{consuming resources semantically} rather than \emph{using resources
 % syntactically} can accept
 
-Consider the following program in a functional pseudo-language,
+Consider the following program in a functional Haskell-like language,
 where a computation that closes the given |handle| is bound to |x| before the
 |handle| is returned:
 %
@@ -295,7 +295,7 @@ computation is effectively run (i.e. evaluated).
 %
 The example illustrates that \emph{consuming} a resource is not necessarily
 synonymous with using it syntactically, as depending on the evaluation strategy
-of the pseudo-language, the computation that closes the handle might or not be
+of the language, the computation that closes the handle might or not be
 evaluated, and if it isn't, the |handle| in that unused computation
 is not consumed.
 %
@@ -304,14 +304,14 @@ evaluation strategies:
 %
 \begin{description}
 
-\item[Call-by-value] With \emph{eager} evaluation, the let bound expression |close
+\item[Call-by-value] With \emph{eager} evaluation semantics, the let bound expression |close
 handle| is eagerly evaluated, and the |handle| will be closed before being
 returned. It is clear that a linear type system should not accept such a
 program since the linear resource |handle| is duplicated -- it is used in a
 computation that closes it, while still being made available to the caller of
 the function.
 
-\item[Call-by-need] On the other hand, with \emph{lazy} evaluation, the let
+\item[Call-by-need] On the other hand, with \emph{lazy} evaluation semantics, the let
 bound expression will only be evaluated when the binding |x| is needed. We return
 the |handle| right away, and the let binding is forgotten as it cannot be
 used outside the scope of the function, so the handle is not closed by |f|.
@@ -340,7 +340,7 @@ language's evaluation strategy.
 %
 We turn our focus to \emph{linearity} under \emph{call-by-need}, not only
 because GHC Core is \emph{call-by-need}, but also because the distinction between
-semantically and syntactically consuming a resource is only exposed under non-strict semantics.
+semantically and syntactically consuming a resource is only exposed under non-strict (i.e.~lazy) semantics.
 %
 Indeed, under \emph{call-by-value}, syntactic occurrences of a linear resource
 directly correspond to semantically using that resource\footnote{With the minor exception
@@ -365,11 +365,18 @@ linear resources required by computations are \emph{eagerly consumed}.
 \subsection{Semantic Linearity by Example\label{sec:semantic-linearity-examples}}
 
 Aligned with our original motivation of typechecking linearity in GHC Core such
-that optimising transformations preserve linearity, and with the secondary goal
+that optimising transformations preserve linearity, and with the goal
 of understanding linearity in a non-strict context, this section helps the
 reader build an intuition for semantic linearity through examples of Core
 programs that are semantically linear but rejected by Core's linear type
 system.
+% BETTER?:
+%Aligned with our motivation of typechecking linearity in GHC Core such
+%that optimising transformations preserve linearity, and in order to explain
+%linearity in a non-strict context, we illustrate semantic linearity
+%through examples of Core programs that are semantically linear but rejected by
+%Core's linear type system -- building intuition towards semantic linearity in a
+%lazy language.
 %
 In the examples, a \colorbox{working}{\workingcolorname} background highlights programs that are
 syntactically linear and are accepted by Core's naive linear type system. A
@@ -428,7 +435,7 @@ program should typecheck in Linear Haskell, it is rejected by GHC.
 
 The next example exposes the case in which the let binder is ignored in the let
 body. Here, the linear resource |x| is used in |y|'s body and in the let
-body, however, the resource is still used linearly semantically because |y| isn't used at all, thus |x| is consumed just once in the let body:
+body, however, the resource is still used semantically linearly because |y| isn't used at all, thus |x| is consumed just once in the let body:
 %
 \begin{notyet}
 \begin{code}
@@ -631,7 +638,7 @@ mutually recursive binding scaled by the times each binding was used}
 arising from given binding $x$, such that:
 \begin{enumerate}
 \item Occurrences of $x$ in its own body are synonymous with using all resources in $\Delta$ exactly once,
-\item And if the binding $x$ is fully evaluated, then all resources in $\Delta$ are consumed exactly once
+\item And if the binding $x$ is fully evaluated, then all resources in $\Delta$ are consumed exactly once.
 \end{enumerate}
 Finding a solution to this equation is akin to finding a (principle) type for a
 recursive binding: the binding needs to be given a type such that occurrences of
@@ -1014,6 +1021,8 @@ unrestrictedly, and therefore the case binder may also be used unrestrictedly.
 
 \subsection{Generalizing linearity in function of evaluation\label{sec:generalizing-evaluation-consuming}}
 
+\todo[inline]{Deixar isto para último, dificil generalizar, se necessario cortar}
+
 Indeed, as hinted towards in the previous section, there's a deep connection
 between \emph{evaluation} and \emph{consuming resources}.
 
@@ -1241,7 +1250,7 @@ Unrestricted functions are introduced via the same function type with $\pi =
 \end{array}
 \]
 A linear function application is well-typed if there exists a disjoint split of the
-linear resources into $\D,\D'$ set. the function and argument, each under a
+linear resources into $\D,\D'$ s.t. the function and argument, each under a
 distinct split, are both well-typed and the argument type matches the
 function's expected argument type. Conversely, unrestricted resources are
 duplicated and available whole to both sub-derivations.
@@ -1620,22 +1629,25 @@ Vs. call-by-need
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % {{{ Syntax Directed System
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Syntax Directed System}
-
-\todo[inline]{In the other system we assume that the recursive lets are strongly connected, i.e. the expressions always}
-
-\input{language-v4/SyntaxDirectedSystem}
-
-\subsection{Inferring usage environments}
-
-\todo[inline]{The difference between this and the previous section is a bit blurry}
-
-\todo[inline]{There's one more concern: usage environments aren't readily
-available, especially in recursive lets. We must perform inference of usage
-environments before we can typecheck using them. This is how:}
-
-\todo[inline]{Rather, we define a syntax directed type system that infers usage environments while checking...}
-
+% We give up on this section and instead describe "syntax-directedness" in the implementation chapter
+%
+%
+% \section{Syntax Directed System}
+% 
+% \todo[inline]{In the other system we assume that the recursive lets are strongly connected, i.e. the expressions always}
+% 
+% \input{language-v4/SyntaxDirectedSystem}
+% 
+% \subsection{Inferring usage environments}
+% 
+% \todo[inline]{The difference between this and the previous section is a bit blurry}
+% 
+% \todo[inline]{There's one more concern: usage environments aren't readily
+% available, especially in recursive lets. We must perform inference of usage
+% environments before we can typecheck using them. This is how:}
+% 
+% \todo[inline]{Rather, we define a syntax directed type system that infers usage environments while checking...}
+% 
 % }}}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % {{{ Chapter: Linear Core as a GHC Plugin; Introduction
