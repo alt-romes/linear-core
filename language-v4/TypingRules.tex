@@ -74,8 +74,8 @@
 \newcommand{\TypeLetRec}{
     % \infer*[right=($LetRec$)]
   \infer[(LetRec)]
-    {\ov{\judg[\G,\ov{\xr{\D}{\s}}][\D]{e}{\s}} \\ \judg[\G,\ov{\xr{\D}{\s}}][\D,\D']{e'}{\vp}}
-    {\judg[\G][\D,\D']{\lletrec{\ov{\x[\D] = e}}{e'}}{\vp}}
+    {\ov{\judg[\G,\ov{x_i{:}_{\D}\s_i}][\D]{e_i}{\s}} \\ \judg[\G,\ov{x_i{:}_{\D}\s_i}][\D,\D']{e'}{\vp}}
+    {\judg[\G][\D,\D']{\lletrec{\ov{\var[x_i][\D][\s_i] = e_i}}{e'}}{\vp}}
 }
 
 \newcommand{\TypeCaseWHNF}{
@@ -235,7 +235,7 @@
     \TypeLamElimW
 \\
     \TypeLet
-\qquad
+\quad
     \TypeLetRec
 \\
     \TypeCaseWHNF

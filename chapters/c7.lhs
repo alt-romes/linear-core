@@ -546,7 +546,7 @@ do). We'll later see how we can encode this principle of mutual exclusivity
 between let bindings and their dependencies using so called \emph{usage
 environments}, in Section~\ref{sec:usage-environments}.
 
-\subsubsection{Recursive let bindings}
+\subsubsection{Recursive let bindings\label{sec:semantic-linearity-examples:recursive-lets}}
 Second, we look into recursive let bindings. For the most part,
 recursive let bindings behave as non-recursive let bindings, i.e. we must use them \emph{at
 most once} because, when evaluated, the linear resources used in the binders
@@ -1315,14 +1315,14 @@ that lazy bindings don't consume the resources required by the bound expression
 when defined, but rather when themselves are fully consumed. Specifically, we
 annotate so-called $\Delta$-bound variables with a \emph{usage environment} to
 denote that consuming these variables equates to consuming the resources in the
-usage environment they are annotated with, where a usage environment is
+usage environment $\D$ they are annotated with, where a usage environment is
 essentially a multiset of linear resources. $\Delta$-bound variables are
-introduced by a handful of constructs, namely (recursive) let binders, case
-binders, and case pattern variables. For example, as per the insights into
-semantic linearity developed in Section~\ref{sec:semantic-linearity-examples},
-only were we to evaluate and consume $u$ in $e$ would we use the resources
-consumed in its body, $x$ and $y$, in the following program. Accordingly, the
-usage environment of $u$ would be $\{x,y\}$:
+introduced by a handful of constructs, namely, (recursive) let binders, case
+binders, and case pattern variables. In the following example, (as per the insights into
+semantic linearity developed in Section~\ref{sec:semantic-linearity-examples}),
+only were we to evaluate and consume the let-bound variable $u$ in the let-body $e$ would we use the linear resources
+required to type-check its body, $x$ and $y$. Accordingly, the
+usage environment of let-bound $u$ would be $\{x,y\}$:
 \[
 f = \lambda \xl.~\lambda \y[1].~\llet{u = (x,y)}{e}
 \]
@@ -1340,82 +1340,160 @@ i.e. the environment with the linear resources required to type an expression.
 %
 In fact, usage environments and linear typing contexts differ only in that the
 former are used to annotate variables, while the latter used to type
-expressions. Yet, this distinction is slightly blurred when introducing how
-typing environments are moved to usage environments, or otherwise used in rules
-relating the two.
+expressions. Yet, this distinction is slightly blurred after introducing how
+typing environments can be moved to usage environments, or otherwise occurs in
+rules relating the two.
 
-\subsubsection{Delta-bound variables}
+\subsubsection{\texorpdfstring{$\D$}{Delta}-bound variables}
 
-A $\Delta$-bound variable $u$ is a variable annotated with a usage environment $\Delta$. Crucially, for any $\Delta$-bound variable $u$,
+A $\Delta$-bound variable $u$ is a variable annotated with a usage environment $\Delta$. Crucially, for any $\Delta$-bound variable $u$:
 %
 \begin{enumerate}
 \item Using $u$ is equivalent to using all the linear resources in $\Delta$
-\item $u$ can only be used once
+%\item $u$ can only be used once, since the $\D$ resources will not be available afterwards
 \item Using $u$ is mutually exclusive with using the $\Delta$ resources it depends on elsehow
 \item $u$ can be safely discarded as long as the resources in $\Delta$ are consumed elsehow
 \end{enumerate}
 %
 Fortunately, since linear resources must be linearly split across
-sub-derivations, (2) and (3) follow from (1), since consuming the linear resources
+sub-derivations, (2) follows from (1): consuming the linear resources
 in $\Delta$ to type $u$ makes them unavailable in the context of any other
-derivation. Therefore, also using them directly, or indirectly through the same
-(or other) usage environment, is impossible to type-check as the resources were
-already allocated to the derivation of $u$. Similarly, (4) also follows from
+derivation. Therefore, expressions using these resources a second time, directly, or indirectly through the same
+(or other) usage environment, is ill-typed, as the resources are
+already allocated to the derivation of $u$. Similarly, (3) also follows from
 (1), because if the linear resources aren't consumed in the $\Delta$-var
 derivation, they must be consumed in an alternative derivation (or otherwise
-the expression does not typecheck).
+the expression is ill-typed).
 
 These observations all boil down to one typing rule for $\Delta$-bound
-variables, which fundamentally encodes (1), implying the other three bullets:
+variables, which fundamentally encodes (1), implying the other two bullets:
 \[
 \TypeVarDelta
 \]
 The rule reads that an occurrence of a $\Delta$-bound variable is well-typed if
 the linear environment is exactly the resources in the usage environment of
 that variable.
+% ROMES:TODO: Dizer alguma coisa tipo (blurring the distinction between usage envs and typing envs)?
 
-$\D$-variables are always introduced in $\Gamma$ since they can be discarded and
-duplicated, despite multiple occurrences of the same $\Delta$-variable not possibly
-being well-typed since, ultimately, those occurrences imply usage of resources
-that must be used linearly.
+$\D$-variables are always introduced in $\Gamma$ since they can be discarded
+and duplicated, despite multiple occurrences of the same $\Delta$-variable not
+possibly being well-typed since, ultimately, said occurrences would imply
+non-linear usage of resources that must be used linearly.
 
 
 \subsubsection{Lazy let bindings}
 
-In Section~\ref{sec:semantic-linearity-examples}, we discussed how,
-semantically, lazy let bindings consume the resources used in their bodies
-lazily, just how the expressions are also evaluated lazily.
+In Section~\ref{sec:semantic-linearity-examples}, we discussed how linear
+resources used in let-bound expressions are only consumed when the same let-bound
+expressions are fully evaluated, i.e. linear resources required by let-bound
+expressions are consumed lazily.
 %
-Resources in let-bound expressions are only consumed when the binder of that
-expression is fully consumed and must occur in mutual exclusion with the
-resources used in that expression.
-%
-Indeed, this is exactly what usage environments encode -- let-bound variables
-are the canonical example of a $\Delta$-bound variable, a variable bound to an
-expression in which the resources required to type it are consumed lazily (when
-evaluated) rather than eagerly, effectively \emph{delaying} the consumption of
-resources to when they're really needed.
+Moreover, resources from a let-bound expression cannot be used \emph{together}
+with the variable binding, since said resources would end up being consumed
+more than once, violating (semantic) linearity -- the binder has to be used in
+mutual exclusion with the linear resources required to type the expression it
+binds, and either \emph{must} be used, or we'd be discarding resources.
 
-Summarily, let-bindings introduce $\Delta$-variables whose usage environment
-are the linear typing environments of the bindings' bodies.
+Indeed, usage environments exactly encode mutual exclusivity between
+alternative ways of consuming linear resources (between $\D$-vars and direct
+resource usage). Let-bound variables are the canonical example of a
+$\Delta$-bound variable, that is, variables that bind expressions in which
+the resources required to type them are consumed lazily rather than eagerly.
+%
+Effectively, annotating let-bound variables with a usage environment $\D$ \emph{delays} the consumption of resources to when the variables themselves are used.
+
+Summarily, let-bindings introduce $\Delta$-variables whose usage environments
+are the linear typing environments of the bindings' bodies:
 \[
 \TypeLet
 \]
+The rule for non-recursive let bindings splits the linear environment in $\D$
+and $\D'$. $\D$ is used to type the body $e$ of the let binding $x$. Perhaps
+surprisingly, the resources $\D$ used to type $e$ are still available in the
+environment to type the let body $e'$, alongside the unrestricted $x$ binding
+annotated with the usage environment $\D$. Ultimately, the resources being
+available in $e'$ reflects the fact that typing a lazily bound expression
+doesn't consume resources, and the binding $x$ being $\D$-bound reflects that
+its usage entails consuming the resources $\D$ the expression $e$ depends on.
+% \todo[inline]{Let bindings are hard, if they are used then we use resources. If
+% they don't get used then we use no resources! In practice, resources that show
+% up in the body of the let must be used, be it by using the let binder, or by
+% using them directly. This makes the let binder and the resources in its body
+% mutual exclusive.}
 
-\todo[inline]{Let bindings are hard, if they are used then we use resources. If
-they don't get used then we use no resources! In practice, resources that show
-up in the body of the let must be used, be it by using the let binder, or by
-using them directly. This makes the let binder and the resources in its body
-mutual exclusive.}
-
-\todo[inline]{Explain the idea of suspended computation, and how resources will
-be consumed to some extent when we force the computation -- also foreshadowing
-that evaluation to WHNF doesn't necessarily consume all resources}
-
-\todo[inline]{Assign usage environments to let-bound variables, trivial usage
-of usage environments (in contrast with case expressions)}
+% \todo[inline]{Explain the idea of suspended computation, and how resources will
+% be consumed to some extent when we force the computation -- also foreshadowing
+% that evaluation to WHNF doesn't necessarily consume all resources}
 
 \subsubsection{Recursive let bindings}
+
+Recursive let bindings are very similar to non-recursive ones, the main
+exception being that the recursive bindings may be defined in terms of
+themselves, and we may have more than one binding. In our system, groups of
+recursive let bindings are always assumed to be strongly connected, that is,
+all the bindings in a recursive let group are mutually recursive in the sense
+that they all (transitively) depend on one another.
+
+As before, recursive let bindings bind expressions \emph{lazily}, so they
+introduce a $\D$-variable for each binding, and the resources required to type the
+let-bindings are still available in the body of the let, to later be consumed
+via $\D$-variables, or directly if the let-bindings are unused.
+%
+However, as shown by example in Section
+\ref{sec:semantic-linearity-examples:recursive-lets}, we must consider that
+recursive uses of a binder in its definition consume all resources otherwise
+required to type the binder's body.
+%, i.e. a least upper bound.
+%
+Extrapolating to a strongly-connected group of recursive bindings, (mutually)
+recursive uses of other binders entail potentially consuming all resources
+required to type said other binders. By definition, other binders in turn
+use the original binder and thus all the resources otherwise required to type it.
+Therefore, we conclude the least upper bound of resources required to type a
+mutually recursive group of let bindings to be the same for any such group that
+is strongly-connected.
+
+The typing rule for recursive groups of bindings leverages our assumption that
+all recursive let bindings are strongly connected and exactly the observation
+that every binder in a strongly connected group of recursive bindings is typed
+with the same linear context. Consequently, all bindings of the recursive group
+are introduced as $\D$-vars with the same $\D$ environment -- using any one of
+the bindings in a recursive group entails consuming all resources required to
+type that same group (that's why we can use the same linear resources to type
+each binder):
+\[
+\TypeLetRec
+\]
+Unfortunately, this formulation is ill-suited for a syntax-directed system
+(from which an implementation is direct) because determining a particular $\D$
+to type and annotate all binders is difficult. We present our system and
+metatheory agnostically to the challenge of inferring this linear typing
+environment by assuming recursive let expressions are annotated with the
+correct typing environment.
+
+In practice, determining this typing environment $\D$ amounts to finding a
+least upper bound of the resources needed to type each mutually-recursive
+binding that (transitively) uses all binders in the recursive group.
+%
+We propose an algorithm for inferring usage environments of recursive bindings
+in Section~\ref{sec:impl:recursive-alg} orthogonally to the theory developed in
+this section.
+%
+The algorithm is a simple $O(n^2)$ traversal over the so-called \emph{naive usage
+environments} used to type each binding.
+
+Since inference of usage environments for recursive binding groups bears some
+resemblance to the inference of principle types for recursive bindings
+traditionally achieved through the Hindley–Milner inference
+algorithm~\cite{hindleymilner}, there might be an opportunity to develop a
+better algorithm leveraging existing inference techniques.
+%
+Despite seemingly being a useful observation, we leave exploring a potential
+connection with type inference algorithms as future work.
+
+% We present a naive algorithm for inferring usage environments of recursive bindings in
+% Section~\ref{sec:impl:recursive-alg} and leave exploring this potential
+% connection as future work.
 
 \subsection{Case Expressions\label{sec:lc-case-exps}}
 
@@ -1718,6 +1796,8 @@ turn entails using $\lctag{\lctag{x}{K_1}}{Pair_1}$, which has two tags. In this
 \item We know the case binder to ALWAYS be in WHNF, perhaps there could
 be some annotation on the case binder s.t. we know nothing happens when we
 scrutinize it as a single variable
+
+\item Operational semantics somewhere
 
 \item Should we discuss this? It would be fine, but we're not able to see this because of call-by-name substitution
 \begin{code}

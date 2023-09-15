@@ -144,6 +144,7 @@ programming idioms with linear types (also because laziness and strictness is le
 \item Beautiful inference algorithm for recursive usage environments -- insight
 that looks like inference for recursive function principle types, but haven't
 figured it out
+\item Beautiful inference of usage environments - connection to type inference / hindley milner
 \end{itemize}
 
 \section{Conclusions}
