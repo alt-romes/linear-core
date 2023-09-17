@@ -80,7 +80,8 @@
 \setlength{\absrightindent}{0cm}
 
 % Indices that open right on new page
-\newcommand{\xtableofcontents}{\tableofcontents*\cleardoublepage}
+% To hide "Contents" from the PDF viewer contents add an asterisk to the command end
+\newcommand{\xtableofcontents}{\tableofcontents\cleardoublepage}
 \newcommand{\xlistoffigures}{\listoffigures\cleardoublepage}
 \newcommand{\xlistoftables}{\listoftables}
 

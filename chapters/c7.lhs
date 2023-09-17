@@ -1115,7 +1115,7 @@ scrutinee, proof irrelevant resources, and tagged variables
 %iterativamente. Podemos começar com as triviais e avançar para os dois pontos
 %mais difíceis : Lets e Cases}
 
-\subsection{Language Syntax}
+\subsection{Language Syntax and Operational Semantics}
 
 The complete syntax of Linear Core is given by Figure~\ref{fig:full-linear-core-syntax}.
 % Figure~\ref{fig:linear-core-types} and Figure~\ref{fig:linear-core-terms}.
@@ -1184,6 +1184,15 @@ expression.
 %coercions --
 %a linear lambda calculus with algebraic datatypes, case
 %expressions, recursive let bindings, and multiplicity abstractions. The 
+
+\todo[inline]{The operational semantics! How shall I discuss this?}
+
+\input{language-v4/OperationalSemantics}
+
+\todo[inline]{The full typing system is given by...}
+
+\TypingRulesOther
+\TypingRules
 
 \subsection{Typing Foundations\label{sec:base-calculi}}
 
@@ -1307,6 +1316,7 @@ sections we type-check (recursive) let bindings and case expressions,
 accounting for semantic linearity as per the insights construed in
 Section~\ref{sec:linearity-semantically}, effectively distilling them into the
 key ideas of our work, encoded as rules.
+
 
 \subsection{Usage environments\label{sec:usage-environments}}
 
@@ -1488,7 +1498,7 @@ traditionally achieved through the Hindley–Milner inference
 algorithm~\cite{hindleymilner}, there might be an opportunity to develop a
 better algorithm leveraging existing inference techniques.
 %
-Despite seemingly being a useful observation, we leave exploring a potential
+Despite being a seemingly useful observation, we leave exploring a potential
 connection with type inference algorithms as future work.
 
 % We present a naive algorithm for inferring usage environments of recursive bindings in
@@ -1497,24 +1507,254 @@ connection with type inference algorithms as future work.
 
 \subsection{Case Expressions\label{sec:lc-case-exps}}
 
-\todo[inline]{Case expressions are the means by which we do evaluation and
-pattern matching -- when things are scrutinized, we evaluate them (if they
-aren't evaluated -- tag is 0), and then compare the result against multiple
-alternatives}
+Case expressions \emph{drive evaluation}, thus they are undoubtedly key to
+realize a type system that understands linearity in the presence of lazy
+evaluation.
+%
+%However, the evaluation of case expressions is considerably nuanced,
+%
+%In lazy let bindings, computations  can be a case
+%expression can effectively consume resources rather than just 
+%
+A case expression \emph{evaluates its scrutinee} to weak head normal form
+(WHNF), \emph{then} selects the case alternative corresponding to the pattern
+matching the weak head normal form of the scrutinee\footnote{In our calculus, the
+alternatives are always exhaustive, i.e. there always exists at least one
+pattern which matches the scrutinee in its WHNF, so we're guaranteed to have an
+expression to progress evaluation.}. An expression in weak head normal form can
+either be:
+\begin{itemize}
+\item A lambda expression $\lambda x.~e$,
+\item or a datatype constructor application $K~\ov{e}$, fully saturated.
+\end{itemize}
+In both cases, the sub-expressions $e$ occurring in the lambda body or as
+constructor arguments needn't be evaluated for the lambda or constructor
+application to be in weak head normal form (if otherwise all sub-expressions
+were fully evaluated the whole expression would also be in normal form).
+% (that is why it is called \emph{weak} head normal form).
 
-\todo[inline]{When things are evaluated, that's when consumption of resources
-really happen. For example, closing a handle is only closed when we pattern
-match on the result of closing the handle (a state token). This means two things
-}
-\todo[inline]{Item 1. Pattern matching on an expression in WHNF does no computation, so no resources are used}
-\todo[inline]{Item 2.
-    Pattern matching an expression that is evaluated will not consume all
-    the resources that define that computation -- because of laziness, we only
-    evaluate things to WHNF. To fully consume a value, we need to consume all
-    the linear components of that pattern.
-}
+Accordingly, sub-expressions might depend on linear resources that will
+be further consumed when they are evaluated. Despite only being properly
+motivated at a later time, following the discussion of typing expressions in weak
+head normal form, we present a new typing judgement $\G;\D \Vdash e : \s
+\gtrdot \ov{\D_i}$ for expressions in WHNF, and rules for the two possible
+forms above:
+\[
+    \TypeWHNFCons
+\qquad
+    \TypeWHNFLam
+\]
+This judgement differs from the main typing judgement in that (1) it only
+applies to expressions in weak head normal form, and (2) it ``outputs'' (to the right of $\gtrdot$) a
+disjoint set of linear environments ($\ov{\D_i}$), where each environment corresponds to the
+linear resources used by a sub-expression of the WHNF expression.
+%
+To typecheck a constructor application $K~\ov{e_\omega e_i}$, where $e_\omega$
+are unrestricted arguments and $e_i$ the linear arguments of the
+constructor, we split the resources $\D$ into a disjoint set of resources
+$\ov{\D_i}$ required to type each linear argument individually and return exactly
+that split of the resources; the unrestricted $e_\omega$ expressions must be
+typed on an empty linear environment. A lambda expression is typechecked with
+the main typing judgement and trivially ``outputs'' the whole $\D$ environment,
+as there is always just a single sub-expression in lambdas (the lambda body).
 
-\todo[inline]{In practice, we can't know which resources are consumed by
+Returning to the evaluation of case expressions, we recall that when a
+scrutinee $K~\ov{e}$ matches a constructor pattern $K~\ov{\x[\pi]}$, evaluation
+proceeds in the case alternative expression corresponding to that pattern, with
+occurrences of $\ov{x}$ being substituted by $\ov{e}$, and occurrences of the
+case binder $z$ substituted by the whole scrutinee $K~\ov{e}$. Constructors and
+lambda expressions otherwise match the wildcard pattern whose alternative is
+evaluated only substituting the case binder by the scrutinee as before. The
+operational semantics encode the evaluation of case expressions in these terms as:
+%
+\begin{tabbing}
+$\ccase{e}{z~\{\ov{\rho_i \to e_i}\}} \longrightarrow^* \ccase{e'}{z~\{\ov{\rho_i \to e_i}\}}$\`where $e'$ is in WHNF and $e$ is not\\
+$\ccase{K~\ov{e}}{z~\{K~\ov{x} \to e_i\}} \longrightarrow e_i\ov{[e/x]}[K~\ov{e}/z]$\\
+$\ccase{e}{z~\{\_ \to e_i\}} \longrightarrow e_i[e/z]$\`where $e$ is in WHNF\\
+\end{tabbing}
+
+We highlight that when evaluating a case expression, computation only
+effectively happens when a scrutinee not in WHNF is evaluated to WHNF. In the
+latter two cases, evaluation continues in the alternative by substituting in
+the appropriate scrutinee expressions, but without having computed anything
+(the scrutinee was already in weak head normal form!).
+%In short, no computation happens if the scrutinee is already in WHNF.
+
+In terms of linearity, if no computation happens then no resources are
+consumed. Therefore, resources used to typecheck a scrutinee not in
+WHNF will be consumed, making said resources unavailable in the case
+alternatives. In contrast, when the scrutinee is already in WHNF, linear
+resources required to typecheck it are still made available in the alternatives.
+These linear resources used by an expression in WHNF are exactly those which
+occur to the right of $\gtrdot$ in the WHNF judgement shown above -- they
+correspond to the resources required to typecheck the lambda body or the
+constructor arguments.
+
+%Recalling that patterns are either a wildcard that matches anything or data
+%constructors parametrised by variables to bind the constructor arguments in the
+%case alternative
+%
+%Let's consider how resources are consumed when the case exp ...
+%
+%Patterns data constructors with variables to bind the constructor arguments parametrised
+%
+%\begin{itemize}
+%\item The wildcard pattern matches against anything, and is the only pattern that matches against a lambda function
+%\item We can match against the data constructor and 
+%\end{itemize}
+%
+%Considering patterns are either data constructors and variables bounding
+%A function (lambda expression) can only be matched against the wildcard pattern $\_$, but 
+%
+%Evaluation continues in the selected branch by
+%substituting, first, the pattern variables by the (possibly unevaluated)
+%expressions used as arguments to the 
+
+% \todo[inline]{Case expressions are the means by which we do evaluation and
+% pattern matching -- when things are scrutinized, we evaluate them (if they
+% aren't evaluated -- tag is 0), and then compare the result against multiple
+% alternatives}
+
+% \todo[inline]{Item 2.
+%     Pattern matching an expression that is evaluated will not consume all
+%     the resources that define that computation -- because of laziness, we only
+%     evaluate things to WHNF. To fully consume a value, we need to consume all
+%     the linear components of that pattern.
+% }
+
+\subsubsection{Branching on WHNF-ness}
+
+This dichotomy between evaluation (hence resource usage) of a case expression
+whose scrutinee is in weak head normal form or otherwise leads to one of our
+key insights: we must \emph{branch on weak head normal formed-ness} to
+typecheck case expressions.
+
+When the scrutinee is already in weak head normal form, the resources are
+unused and thus made available to the alternatives. However, in said
+alternatives we also introduce the case binder, referring to the whole
+scrutinee, and possibly pattern variables, referring to the corresponding
+constructor argument. Using the case binder entails using all the resources required by the scrutinee,
+and using a pattern variable in turn implies using the resources of the corresponding constructor argument.
+
+Linear resources must be used exactly once, however, there are three competing
+ways to use the resources from the scrutinee in a case alternative: directly,
+via the case binder, or by using \emph{all} the pattern-bound variables.
+%
+As one might reasonably expect, case binders and pattern-bound variables are
+another instance of $\D$-bound variables. Intuitively, resources in a scrutinee
+that is already in WHNF are only properly consumed when all (linear) fields of
+the pattern are used -- agreeing with the definition of consuming resources
+given in Linear Haskell.
+%
+Summarily, we type a case expression whose scrutinee is in weak head normal form with:
+\[
+\TypeCaseWHNF
+\]
+First, we assert this rule is only applicable to expressions in weak head
+normal form. Second, we use the typing judgement for expressions in WHNF
+previously introduced to determine the split of resources amongst the scrutinee
+sub-expressions. Finally, we typecheck all case alternatives with the same context, using the
+$\vdash_{alt}$ judgement. Specifically:
+\begin{itemize}
+\item We introduce the case binder $z$ in the environment as a $\D$-bound
+variable whose usage environment is all linear resources used to type the
+scrutinee
+\item We make all the resources used to type the scrutinee $\ov{\D_i}$ available in the linear typing environment.
+\item We annotate the judgement with the disjoint set of linear resources used
+to typecheck the scrutinee sub-expressions $\ov{\D_i}$
+\item We annotate the judgement with the name of the case binder $z$ and use
+the $\Mapsto$ arrow in the judgement -- this is of most importance when typing
+the alternative itself, and will be motivated together with the alternative
+judgement below
+\end{itemize}
+
+The alternative judgement $\G;\D \vdash_{alt} \rho \to e :^z_\D \s \Rightarrow
+\vp$ is used to type case alternatives. Notably, there are three applicable
+arrows in the judgement:
+for alternatives of case expressions whose scrutinee is in WHNF ($\Mapsto$),
+case expressions in which the scrutinee is not in WHNF ($\Rrightarrow$), and for
+alternatives agnostic to the WHNF-ness of the scrutinee ($\Rightarrow$), with
+$\Rightarrow$ also generalizing the other two.
+
+Following the $Case_{WHNF}$ rule in which we use the $\Mapsto$ alternative
+judgement, the rule for type checking a case alternative whose pattern is a
+constructor with $N > 0$ linear components is:
+\[
+\TypeAltNWHNF
+\]
+The rule states that for such a pattern when matching a scrutinee already in
+WHNF, we introduce the linear components of the pattern as $\D$-bound variables
+whose usage environment matches the linear resources required to type the
+corresponding constructor argument in the scrutinee, which come annotated in
+the judgement ($\ov{\D_i}$). Unrestricted fields of the constructor are
+introduced as unrestricted variables. We note that the typing environment $\D$
+always contains the resources $\ov{\D_i}$ when we invoke the alternative
+judgement.
+
+Secondly, the rule for alternatives that match on the wildcard pattern:
+\[
+\TypeAltWild
+\]
+Out of the case alternative typing rules, this is the simplest as we simply
+typecheck the expression with the main judgement, ignoring all annotations on
+the judgement. Recall that the case binder was already introduced in the
+environment with the appropriate usage environment by the case expression
+rather than in the case alternative rule.
+
+Finally, consider an alternative matching on a case constructor without any
+linear components. According to the definition of consuming a resource from
+Linear Haskell, an expression matching such a pattern has fully consumed all
+linear resources it was typed with. Indeed, matching on a constructor without
+linear arguments entails that all the scrutinee resources have been fully
+consumed, and thus are no longer available.
+
+Considering that case expressions
+introduce the linear resources of the scrutinee in the typing environment of
+all alternatives, and in the usage environment of the case binder, we must
+reactively update the typing environments after learning we're matching such a
+pattern.
+%
+The $Alt0$ essentially encodes this insight, and is applicable for both
+scrutinees that are, or not, in WHNF (hence the $\Rightarrow$ arrow), when the
+constructor pattern has no linear fields:
+%
+\[
+\TypeAltZero
+\]
+The rule deletes the annotated scrutinee environment $\D_s$ from two select environments:
+\begin{itemize}
+\item The linear typing environment, effectively deleting the resources from
+the scrutinee made available here by the case expressions (written
+$\D[\cdot/\D_s]$, a substitution of the scrutinee typing environment by the
+empty linear environment $\cdot$).
+\item The usage environment of the case binder $z$, written $\G[\cdot/\D_s]_z$
+to denote replacing the usage environment of the variable $z$ available in $\G$, which
+is necessarily $\D_s$ (since we always annotate the judgement with the
+environment of the scrutinee), by the empty environment.
+\end{itemize}
+
+
+Without this rule, resources in such an alternative would be available when
+they shouldn't (which wouldn't really matter in the Not WHNF case when it
+mattered), necessarily have to be used, effectively rejecting e.g. an
+expression equivalent to $\lambda x.~x$: $\ccase{K_1~x}{\{K_2 -> K_2,K_1~y \to
+K_1~y\}}$, and would make the case binder only usable once
+
+% \todo[inline]{The trick here is to separate the case rules into two separate
+% rules, one that fires when the scrutinee is in WHNF, the other when it isn't.}
+
+
+\subsubsection{Proof irrelevant resources}
+
+It is not sufficient to evaluate the scrutinee to weak head normal
+form to \emph{fully} consume all resources used in the scrutinee, since
+sub-expressions such as constructor arguments will be left unevaluated. To
+\emph{fully} consume all resources occurring in the scrutinee, it must be
+evaluated to normal form, s.t. all linear components of an expression in
+WHNF are also fully evaluated (as witnessed by the $Alt0$ rule). How then shall we ...
+% We tackle this in due time, in the proof irrelevance section.
+
+In practice, we can't know which resources are consumed by
 evaluating a given expression. The resources become in a limbo state -- they
 cannot be used directly because they might have been consumed, but they 
 mustn't be considered as consumed, because they might not have been.  We say
@@ -1522,20 +1762,12 @@ these resources enter a proof irrelevant state. They must still be tracked as
 though they weren't consumed, but they cannot be used directly to construct the
 program. How can we ensure these proof irrelevant resource variables are fully
 consumed? With usage environments -- for the case binder and for the pattern
-variables, and otherwise propagate}
-
-\todo[inline]{The trick here is to separate the case rules into two separate
-rules, one that fires when the scrutinee is in WHNF, the other when it isn't.}
+variables, and otherwise propagate
 
 \todo[inline]{The case binder and pattern variables will consume the scrutinee
 resources, be those irrelevant or relevant resources}
 
-\subsubsection{Branching on WHNF-ness}
-\subsubsection{Proof irrelevant resources}
 \subsubsection{Splitting and tagging fragments}
-
-\TypingRules
-\TypingRulesOther
 
 \subsection{Linear Core Examples}
 
