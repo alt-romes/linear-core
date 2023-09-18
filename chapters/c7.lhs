@@ -1205,7 +1205,8 @@ and alternatives, in its purpose to typecheck semantic linearity.
 %
 \todo{And our treatment of multiplicity
 polymorphism completely ignores algebraic treatment of multiplicities with
-semiring operations!!! Would it be sufficient to add a rule for application of variable multiplicity functions?}
+semiring operations!!! Would it be sufficient to add a rule for application of
+variable multiplicity functions?}
 %
 Otherwise, the base rules of the calculus for, multiplicity and term,
 abstraction and application are quite similar. In this section we present the
@@ -1410,7 +1411,9 @@ resource usage). Let-bound variables are the canonical example of a
 $\Delta$-bound variable, that is, variables that bind expressions in which
 the resources required to type them are consumed lazily rather than eagerly.
 %
-Effectively, annotating let-bound variables with a usage environment $\D$ \emph{delays} the consumption of resources to when the variables themselves are used.
+Effectively, annotating let-bound variables with a usage environment $\D$
+\emph{delays} the consumption of resources to when the variables themselves are
+used.
 
 Summarily, let-bindings introduce $\Delta$-variables whose usage environments
 are the linear typing environments of the bindings' bodies:
@@ -1695,10 +1698,10 @@ Secondly, the rule for alternatives that match on the wildcard pattern:
 \[
 \TypeAltWild
 \]
-Out of the case alternative typing rules, this is the simplest as we simply
+Out of the case alternative typing rules, this is the simplest as we just
 typecheck the expression with the main judgement, ignoring all annotations on
 the judgement. Recall that the case binder was already introduced in the
-environment with the appropriate usage environment by the case expression
+environment with the appropriate usage environment by the case expression,
 rather than in the case alternative rule.
 
 Finally, consider an alternative matching on a case constructor without any
@@ -1711,8 +1714,8 @@ consumed, and thus are no longer available.
 Considering that case expressions
 introduce the linear resources of the scrutinee in the typing environment of
 all alternatives, and in the usage environment of the case binder, we must
-reactively update the typing environments after learning we're matching such a
-pattern.
+reactively update the typing environments after learning we're matching on such
+a pattern.
 %
 The $Alt0$ essentially encodes this insight, and is applicable for both
 scrutinees that are, or not, in WHNF (hence the $\Rightarrow$ arrow), when the
@@ -1732,19 +1735,49 @@ to denote replacing the usage environment of the variable $z$ available in $\G$,
 is necessarily $\D_s$ (since we always annotate the judgement with the
 environment of the scrutinee), by the empty environment.
 \end{itemize}
+%
+The notion that such an expression is unrestricted, in the sense that all
+linear resources have been consumed to produce it and the result is something
+that can be freely discarded or duplicated, is faithfully encoded by this rule.
+%
+It ensures that when we match on an unrestricted pattern we don't need to
+consume scrutinee resources any longer. Otherwise, for example,
+$\ccase{K_1~x}{\{K_2 \to K_2,K_1~y \to K_1~y\}}$ would not be well-typed since
+we aren't consuming the resource $x$ in the first branch.
+%
+Furthermore, the case binder referring the unrestricted expression can then be
+used unrestrictedly since its usage environment becomes empty.
 
+It might seem as though deleting the resources from the environment in this
+rule is important to guarantee a resource is not used after it is consumed, but
+it is not so -- the main reasons are in the previous paragraph. If the resources
+aren't removed, and scrutinee is in WHNF, then it is either an unrestricted
+expression against which any match only introduces unrestricted variables, or
+an expression that depends on linear resources s.t.  we can match with a linear
+pattern or an unrestricted pattern -- in the case of the unrestricted pattern,
+it is safe to use the linear resources from the scrutinee because entering
+branch would be a contradiction, and \emph{ex falso quodlibet}; in linear
+patterns the resources should indeed be available.
 
-Without this rule, resources in such an alternative would be available when
-they shouldn't (which wouldn't really matter in the Not WHNF case when it
-mattered), necessarily have to be used, effectively rejecting e.g. an
-expression equivalent to $\lambda x.~x$: $\ccase{K_1~x}{\{K_2 -> K_2,K_1~y \to
-K_1~y\}}$, and would make the case binder only usable once
+However, if the scrutinee is not in WHNF, the resources occurring in the
+scrutinee will be consumed when evaluation occurs, possibly resulting in an
+unrestricted expression in WHNF -- the resources originally consumed must
+certainly not occur in the alternative body (e.g. $x$ cannot occur in the
+alternative in $\ccase{close~x}{\{K_1 \to x\}}$). In fact, the resources from a
+scrutinee that is not in weak head normal form cannot occur in any of the
+alternatives, even ones matching on constructor with linear components, as the
+resources may have been consumed when evaluating the expression to weak head
+normal form. We will guarantee resources from a scrutinee that is not in weak
+head normal form cannot occur in any case alternative in our rules for typing
+case expressions not in WHNF, which we introduce below.
 
 % \todo[inline]{The trick here is to separate the case rules into two separate
 % rules, one that fires when the scrutinee is in WHNF, the other when it isn't.}
 
 
 \subsubsection{Proof irrelevant resources}
+
+
 
 It is not sufficient to evaluate the scrutinee to weak head normal
 form to \emph{fully} consume all resources used in the scrutinee, since
