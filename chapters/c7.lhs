@@ -1627,10 +1627,12 @@ constructor arguments.
 
 \subsubsection{Branching on WHNF-ness}
 
-This dichotomy between evaluation (hence resource usage) of a case expression
+The dichotomy between evaluation (hence resource usage) of a case expression
 whose scrutinee is in weak head normal form or otherwise leads to one of our
 key insights: we must \emph{branch on weak head normal formed-ness} to
 typecheck case expressions.
+
+\todo[inline]{Add example comparing}
 
 When the scrutinee is already in weak head normal form, the resources are
 unused and thus made available to the alternatives. However, in said
@@ -1756,8 +1758,8 @@ expression against which any match only introduces unrestricted variables, or
 an expression that depends on linear resources s.t.  we can match with a linear
 pattern or an unrestricted pattern -- in the case of the unrestricted pattern,
 it is safe to use the linear resources from the scrutinee because entering
-branch would be a contradiction, and \emph{ex falso quodlibet}; in linear
-patterns the resources should indeed be available.
+branch would be a contradiction, from which anything follows (\emph{ex falso
+quodlibet}); in linear patterns the resources should indeed be available.
 
 However, if the scrutinee is not in WHNF, the resources occurring in the
 scrutinee will be consumed when evaluation occurs, possibly resulting in an
@@ -1777,30 +1779,113 @@ case expressions not in WHNF, which we introduce below.
 
 \subsubsection{Proof irrelevant resources}
 
-
-
-It is not sufficient to evaluate the scrutinee to weak head normal
+Resources used by a scrutinee that is not in weak head normal form must
+definitely not be used in the case alternatives, since they have been used in
+the evaluation producing an expression in weak head normal form from the
+scrutinee, as shown in the example above.
+%
+However, it is not sufficient to evaluate the scrutinee to weak head normal
 form to \emph{fully} consume all resources used in the scrutinee, since
 sub-expressions such as constructor arguments will be left unevaluated. To
-\emph{fully} consume all resources occurring in the scrutinee, it must be
+\emph{fully} consume all resources occurring in the scrutinee, the scrutinee must be
 evaluated to normal form, s.t. all linear components of an expression in
-WHNF are also fully evaluated (as witnessed by the $Alt0$ rule). How then shall we ...
+WHNF are also fully evaluated (as witnessed by the $Alt0$ rule).
 % We tackle this in due time, in the proof irrelevance section.
 
-In practice, we can't know which resources are consumed by
-evaluating a given expression. The resources become in a limbo state -- they
-cannot be used directly because they might have been consumed, but they 
-mustn't be considered as consumed, because they might not have been.  We say
-these resources enter a proof irrelevant state. They must still be tracked as
-though they weren't consumed, but they cannot be used directly to construct the
-program. How can we ensure these proof irrelevant resource variables are fully
-consumed? With usage environments -- for the case binder and for the pattern
-variables, and otherwise propagate
+In case alternatives of a case expression in which the scrutinee is not in
+WHNF, we must consume the result of evaluating the scrutinee to WHNF, but the
+scrutinee resources must definitely not be available for consumption. In
+practice, the result of evaluating the scrutinee must be consumed by using
+either the case binder or all the linear components of a constructor pattern,
+except for patterns matching an unrestricted pattern, which are handled with
+the $Alt0$ rule. For WHNF scrutinees, we encode mutual exclusivity between
+consuming resources directly, with the case binder, or through linear pattern
+variables, by introducing the latter two as $\D$-bound variables.  In essence,
+for the counterpart not-WHNF scrutinees, either the case binder or linear
+pattern-bound variables \emph{must} still be used to guarantee the evaluation
+result is consumed (thus their usage environment cannot be empty), but the
+scrutinee resources cannot be used directly.
 
-\todo[inline]{The case binder and pattern variables will consume the scrutinee
-resources, be those irrelevant or relevant resources}
+We introduce \emph{proof irrelevant} resources, denoted as linear resources
+within square brackets $[\D]$, to encode exactly linear resources that cannot
+be directly instanced with a $Var$ rule. Proof irrelevant linear resources are
+linear resources in all other senses, meaning they must be used \emph{exactly
+once}. Since proof irrelevant resources cannot be forgotten neither used
+directly, they have to be consumed somehow else -- and we already have a way to
+consume resources \emph{indirectly}: $\D$-bound variables.
+
+To type a case expression whose scrutinee is in weak head normal form, we
+typecheck the scrutinee with linear resources $\D$ and typecheck the case
+alternatives by introducing the case binder with a usage environment $[\D]$,
+having the same proof irrelevant linear context $[\D]$ in the typing
+environment, and annotating the judgement with the proof irrelevant resources
+and the $\Rrightarrow$ arrow:
+\[
+\TypeCaseNotWHNF
+\]
+Note how the rule is quite similar to the one for scrutinees in WHNF, only
+diverging in that the resources in the case binder, typing environment, and
+judgement annotation, are made irrelevant.
+
+% In practice, we can't know which resources are consumed by evaluating a given
+% expression. The resources become in a limbo state -- they cannot be used
+% directly because they might have been consumed, but they mustn't be considered
+% as consumed, because they might not have been.  We say these resources enter a
+% proof irrelevant state. They must still be tracked as though they weren't
+% consumed, but they cannot be used directly to construct the program. How can we
+% ensure these proof irrelevant resource variables are fully consumed? With usage
+% environments -- for the case binder and for the pattern variables, and
+% otherwise propagate
+
+% \todo[inline]{The case binder and pattern variables will consume the scrutinee
+% resources, be those irrelevant or relevant resources}
 
 \subsubsection{Splitting and tagging fragments}
+
+Intuitively, in case alternatives whose scrutinee is not in weak head normal
+form (and for scrutinees in WHNF which don't match the case alternative) the
+proof-irrelevant resources introduced by the (not-WHNF) case expression must be
+fully consumed, either via the case binder $z$ which is annotated with all
+proof-irrelevant resources used in the scrutinee, or by using all linear
+pattern-bound variables.
+
+However, unlike with matching scrutinees in WHNF, the resources used by a
+scrutinee not in WHNF do not necessarily match those used by each
+sub-expression of the expression evaluated to WHNF. Therefore, there is no
+direct mapping between the usage environments of the linear pattern-bound
+variables and the resources used in the scrutinee.\todo{WAIT, there never was!
+Only when the K matches the scrutinee. Maybe we need a separate judgement for
+typing other constructors, which would be standalone and show up in this
+section too?}
+
+We introduce \emph{tagged resources} to guarantee all linearly-bound pattern
+variables are used jointly, or none at all, to consume all resources occurring
+in the environment (in alternative to the case binder). Given linear resources
+$[\D_s]$ used in a scrutinee, and a pattern $K~\ov{x_\omega},\ov{y_i}$ with $i$
+linear components, we attribute a usage environment $\D_i$ to each linear
+pattern variable where $\D_i$ is the scrutinee environment tagged with the
+constructor name and linear-variable index $\lctag{\D_s}{K_i}$:
+\[
+\TypeAltNNotWHNF
+\]
+A tag is comprised of a constructor name $K$ and an index $i$ identifying the
+position of the pattern variable among all bound variables in that pattern.
+The key idea is that a single resource $x$ can be split into $n$ resources
+of a given constructor, where $n$ is the number of positional linear arguments of the constructor.
+\[
+\TypeVarSplit
+\]
+Assigning to each linear pattern variable a fragment of the scrutinee resources
+with a tag guarantees that all linear pattern variables must be used in
+conjunction to consume the whole scrutinee resources, since for any of them to
+be used, we need to use the $Split$ rule and will require the rest of the
+fragments to be consumed through the other linear pattern-bound vars.
+
+Using tags for fragments instead of fractions (e.g. $\D_s*i/n$) is necessary to
+guarantee we cannot use the same variable multiple times to consume multiple
+fractions of the resource. It also has the added benefit of allowing mixing of
+pattern variables bound at different alternatives (e.g.~$\lambda x~y.~\ccase{(x,y)}{(a,b)\to\ccase{(a,b)}{(z,w)\to(a,w)}}$).
+
 
 \subsection{Linear Core Examples}
 
