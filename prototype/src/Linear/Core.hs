@@ -111,17 +111,19 @@ checkBind (Rec bs) = do
   -- Because we do a dryRun, we won't crash if they are.
   -- Then we use the naiveUsageEnv (the ones computed with the recursive
   -- bindings as linear variables) and compute the real usage environment.
-  (rhss', naiveUsages) <- unzip . fst <$> dryRun (extends (L.map (\(LCVar b (Just _d)) -> (b,LambdaBound (Relevant OneTy))) ids)
+  (_rhss', naiveUsages) <- unzip . fst <$> dryRun (extends (L.map (\(LCVar b (Just _d)) -> (b,LambdaBound (Relevant OneTy))) ids)
                                                  (traverse (dryRun . checkExpr) rhss))
   let recUsages = computeRecUsageEnvs (zip (L.map (.id) ids) naiveUsages)
       -- Repeated ocurrences of linear variables will be represented as many
       -- times as they occur in the recursive bindings in the usage
       -- environments with a linear multiplicity.
       -- In practice, when recursive binders are used, we'll try to use the linear variables more than once, if they exist more than once
-  recUes <- mapM (\i -> reconstructUe i recUsages inScope) (L.map (.id) ids)
+  recUes <- mapM (\i -> reconstructUe i.id recUsages inScope) ids
   pprTraceM "Has checked naiveUsages" (ppr recUsages $$ ppr recUes)
   let ids' = L.zipWith (\i b -> LCVar i.id (deltaBinding b)) ids recUes
-  -- ROMES:TODO: Must typecheck rhss' again with the recursive usage environments...
+
+  -- Must typecheck rhss' again with the correct recursive usage environments
+  rhss' <- extends (zipWith (\id' ue -> (id'.id, DeltaBound ue)) ids recUes) (traverse checkExpr rhss)
   return (Rec (zip ids' rhss'))
 
 checkExpr :: LCExpr -> LinearCoreM LCExpr

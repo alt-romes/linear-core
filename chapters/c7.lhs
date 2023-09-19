@@ -15,16 +15,21 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \chapter{A Type System for Semantic Linearity in Core}
 
-\begin{itemize}
-
-\item A linear type system statically guarantees that linear resources are consumed
+A linear type system statically guarantees that linear resources are consumed
 \emph{exactly once}.
-\item With linear types, programmers can create powerful abstractions that enforce
-certain resources to be used linearly, such as file handles or allocated
+%
+Even though linear types exist 
+Linear Haskell brings the promises of linear types to the Haskell.
+%, and is available in the Glasgow Haskell Compiler (GHC) starting from version 9.0.
+%
+With linear types, programmers can create powerful abstractions that enforce
+certain resources are used linearly, such as file handles or allocated
 memory.
+%
 
-\item Linear Haskell brings the promises of linear types to the Haskell, and is
-available in the Glasgow Haskell Compiler (GHC) starting from version 9.0.
+
+\begin{itemize}
+\item Linear types are unique in Haskell because of laziness! (amongst some other things)
 
 \item For example: trivial linear haskell program
 
@@ -85,6 +90,9 @@ types under the type system; and discuss
 \item We develop a GHC plugin that checks all intermediate Core programs using
 our type system
 \end{itemize}
+
+\item Somewhere add a stronger case for controlling program optimisations (see 7.1 of Linear Haskell) with linearity
+\item Somewhere say we build on linear haskell?
 
 \end{itemize}
 
