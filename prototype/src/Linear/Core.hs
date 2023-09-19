@@ -87,7 +87,9 @@ runLinearCore pgr = do
 type LinearCoreM = LinearCoreT Identity
 
 checkProgram :: LCProgram -> LinearCoreM LCProgram
-checkProgram = traverse checkBind
+checkProgram prog = do
+  pprTraceM "checkProgram" (ppr prog)
+  traverse checkBind prog
 
 -- ROMES:TODO: use isGlobalId and setTopLevelBindingName to set the binding
 -- name, s.t. functions started with "fail" don't crash the plugin
@@ -109,15 +111,17 @@ checkBind (Rec bs) = do
   -- Because we do a dryRun, we won't crash if they are.
   -- Then we use the naiveUsageEnv (the ones computed with the recursive
   -- bindings as linear variables) and compute the real usage environment.
-  (rhss', naiveUsages) <- unzip <$> extends (L.map (\(LCVar b (Just _d)) -> (b,LambdaBound (Relevant OneTy))) ids)
-                                            (traverse (dryRun . checkExpr) rhss)
+  (rhss', naiveUsages) <- unzip . fst <$> dryRun (extends (L.map (\(LCVar b (Just _d)) -> (b,LambdaBound (Relevant OneTy))) ids)
+                                                 (traverse (dryRun . checkExpr) rhss))
   let recUsages = computeRecUsageEnvs (zip (L.map (.id) ids) naiveUsages)
       -- Repeated ocurrences of linear variables will be represented as many
       -- times as they occur in the recursive bindings in the usage
       -- environments with a linear multiplicity.
       -- In practice, when recursive binders are used, we'll try to use the linear variables more than once, if they exist more than once
   recUes <- mapM (\i -> reconstructUe i recUsages inScope) (L.map (.id) ids)
+  pprTraceM "Has checked naiveUsages" (ppr recUsages $$ ppr recUes)
   let ids' = L.zipWith (\i b -> LCVar i.id (deltaBinding b)) ids recUes
+  -- ROMES:TODO: Must typecheck rhss' again with the recursive usage environments...
   return (Rec (zip ids' rhss'))
 
 checkExpr :: LCExpr -> LinearCoreM LCExpr
@@ -136,19 +140,19 @@ checkExpr expr = case expr of
     -> Lam b <$> extend b.id (fromMaybe (LambdaBound (Relevant ManyTy)) (multBinding b.id)) (checkExpr e)
   Let bind@(NonRec _b _) body
     -> do
-      bind'@(NonRec (LCVar b (Just delta')) _) <- checkBind bind
+      bind'@(NonRec (LCVar b (Just delta')) _) <- restoringState $ checkBind bind
       Let bind'
           <$> extend b delta' (checkExpr body)
   Let bind@(Rec _bs) body
     -> do
-      bind'@(Rec (unzip -> (bs, _))) <- checkBind bind
+      bind'@(Rec (unzip -> (bs, _))) <- restoringState $ checkBind bind
       Let bind'
           <$> extends (L.map (\(LCVar b (Just d)) -> (b,d)) bs) (checkExpr body)
   casee@(Case e b ty alts)
     -- Expression is in WHNF (See Note [exprIsHNF] and #23771, function is really "exprIsWHNF")
     | exprIsHNF (unconvertExpr e)
     -> do
-      (e', ue) <- record $ checkExpr e
+      (e', ue) <- restoringState $ record $ checkExpr e
       Case e'
            (LCVar b.id (deltaBinding ue))
            ty
@@ -157,10 +161,11 @@ checkExpr expr = case expr of
     -- Expression is definitely not in WHNF (or do we really mean HNF?)
     -> pprTrace "Case expression" (ppr casee) $ do
 
-      (e', makeIrrelevant -> ue) <- record $ checkExpr e
-      pprTraceM "Made irrelevant usage environment" (ppr ue)
+      (e', ue) <- restoringState $ record $ checkExpr e
+      pprTraceM "Making irrelevant usage environment" (ppr ue)
       -- ROMES:TODO: Make the resources irrelevant in the actual context, not only in the usage environment
       makeEnvResourcesIrrelevant ue
+      pprTraceM "Done irr" Ppr.empty
       Case e'
            (LCVar b.id (deltaBinding ue))
            ty

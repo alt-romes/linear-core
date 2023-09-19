@@ -22,6 +22,7 @@ module Linear.Core.Monad
 
   -- * Utils
   , pprDebugState
+  , restoringState
   , LCState
   )
   where
@@ -41,6 +42,7 @@ import qualified Data.List.NonEmpty as NE
 import Linear.Core.Multiplicities
 import GHC.Driver.Ppr (showPprUnsafe)
 import qualified Data.Map as M
+import qualified GHC.Utils.Panic as Ppr
 
 -- | Computations that thread through a linear context from which resources must
 -- be used exactly once, and resources of other multiplicities that can be
@@ -158,7 +160,7 @@ use = flip use' [] where
               if isDryRun
                  then tell [key]
                  else do
-                   pprTraceM "Using lambda bound" (Ppr.ppr key Ppr.<> Ppr.ppr mult)
+                   pprTraceM "Using lambda bound" (Ppr.ppr key Ppr.<+> Ppr.ppr mult)
                    modify (M.delete key)
 
             -- We are trying to use a fragment of this resource, so we split it
@@ -231,11 +233,14 @@ extend key value computation = LinearCoreT do
     Nothing -> do
       modify (M.insert key (Left value))
       result <- unLC computation
+      (isDryRun, _, _) <- ask
       wasConsumed key >>= \case
         Nothing -> return result
         Just ms
           | either isBindingLinear (const True) ms
-          -> throwError $ fromString $
+          , not isDryRun -- When doing a dry run, don't fail, even if the resource isn't consumed
+          -> do
+            throwError $ fromString $
                "The linear resource " ++ showPprUnsafe key ++ " wasn't fully consumed in the computation extended with it. [" ++ showPprUnsafe ms ++ "]"
           | otherwise
           -> do
@@ -255,13 +260,14 @@ extends ((v,b):bs) comp = extend v b $ extends bs comp
 -- | 'drop' resources listed in a usage environment from the available resources in the computation
 drop :: Monad m => UsageEnv -> LinearCoreT m a -> LinearCoreT m a
 drop (UsageEnv env) comp = do
-  prev <- LinearCoreT get
-  -- Remove (don't consume!) resources ocurring in the given usage env from the available resources, then run the computation
+  -- Why did we do this prev thing?
+  -- prev <- LinearCoreT get
+  -- -- Restore resources
+  -- LinearCoreT (put prev)
+
+  -- Remove resources ocurring in the given usage env from the available resources, then run the computation
   _ <- modify (M.\\ M.fromList env)
-  a <- comp
-  -- Restore resources
-  LinearCoreT (put prev)
-  return a
+  comp
 
 -- | Runs a computation that threads linear resources and fails if the
 -- computation consumed any resource at all (i.e. fails if the input and output
@@ -283,6 +289,9 @@ unrestricted computation = LinearCoreT do
 -- Linear resources must be used linearly or otherwise the computation
 -- will fail; if you're trying to count how many times a linear resource is used
 -- without failing, see 'dryRun'
+--
+-- If you mean to restore the resources consumed in this computation, you must
+-- do so manually (e.g. using 'restoringResources')
 record :: Monad m => LinearCoreT m a -> LinearCoreT m (a, UsageEnv)
 record computation = LinearCoreT do
   prev :: LCState <- get
@@ -326,7 +335,8 @@ makeEnvResourcesIrrelevant (UsageEnv vs) = do
       Nothing -> error "This shouldn't be possible! How does the usage env refer to variables out of scope?"
       Just (Left (LambdaBound m))
         | mult == m -> pure (var, Left (LambdaBound (makeMultIrrelevant m)))
-        | otherwise -> error "makeEnvResourcesIrrelevant: how can this be!?"
+        | otherwise
+        -> Ppr.pprPanic "makeEnvResourcesIrrelevant: differing mults" (Ppr.text "expected" Ppr.<+> Ppr.ppr var Ppr.<+> Ppr.text "to have mult" Ppr.<+> Ppr.ppr mult Ppr.<+> Ppr.text "but instead got" Ppr.<+> Ppr.ppr m)
       Just (Left (DeltaBound env')) -> pure (var, Left (DeltaBound $ makeIrrelevant env'))
       Just (Right mults) -> pure (var, Right $ NE.map (\x -> if x == mult then makeMultIrrelevant x else x) mults)
   put (lcstate0 <> M.fromList lcstate1)
@@ -338,9 +348,15 @@ withSameEnvMap f ls = do
   lcstate <- get
   (ls', states) <- mapAndUnzipM (\x -> put lcstate >> f x >>= \y -> gets (y,)) ls
   unless (allEq states) $
-    throwError "withSameEnvMap: Not all eq!"
+    Ppr.pprPanic "withSameEnvMap: Not all eq!" (Ppr.ppr states)
   return ls'
 
+restoringState :: Monad m => LinearCoreT m a -> LinearCoreT m a
+restoringState act = do
+  s <- get
+  a <- act
+  put s
+  return a
 
 setTopLevelBindingName :: Monad m => BindingName -> LinearCoreT m a -> LinearCoreT m a
 setTopLevelBindingName bn = local (\(a,b,_) -> (a,b,bn))
