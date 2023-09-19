@@ -9,3 +9,11 @@ Currently, the only modules that are not outdated with dropped implementations a
 
 Later on we can move them out of the package into an "outdated things" one, but
 for now it doesn't matter.
+
+---
+
+Testing:
+
+```
+ghc -fdefer-type-errors -fplugin=...
+```

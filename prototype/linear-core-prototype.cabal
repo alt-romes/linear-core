@@ -29,12 +29,13 @@ common common
                    th-abstraction >= 0.6,
                    recursion-schemes >= 5.2 && < 5.3,
                    text >= 2.0 && < 2.1,
-                   vector >= 0.13 && < 0.14,
+                   -- vector >= 0.13 && < 0.14,
                    megaparsec >= 9.4 && < 9.5,
                    diagnose >= 2.0.0 && < 2.1,
                    prettyprinter >= 1.7 && < 2,
                    parser-combinators >= 1.3 && < 2,
                    ghc >= 9.4,
+                   linear-base
 
 library
     import:           common
@@ -48,7 +49,7 @@ library
 executable linear-core-prototype
     import:           common
     main-is:          Main.hs
-    other-modules:    F
+    -- other-modules:    F
     build-depends:    linear-core-prototype
     hs-source-dirs:   app
     ghc-options: -dno-typeable-binds -fplugin=Linear.Core.Plugin
