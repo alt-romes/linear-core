@@ -1518,9 +1518,8 @@ connection with type inference algorithms as future work.
 
 \subsection{Case Expressions\label{sec:lc-case-exps}}
 
-Case expressions \emph{drive evaluation}, thus they are undoubtedly key to
-realize a type system that understands linearity in the presence of lazy
-evaluation.
+Case expressions \emph{drive evaluation}, thus they are key to realize a type
+system that understands linearity in the presence of lazy evaluation.
 %
 %However, the evaluation of case expressions is considerably nuanced,
 %
@@ -1536,7 +1535,7 @@ expression to progress evaluation.}. An expression in weak head normal form can
 either be:
 \begin{itemize}
 \item A lambda expression $\lambda x.~e$,
-\item or a datatype constructor application $K~\ov{e}$, fully saturated.
+\item or a datatype constructor application $K~\ov{e}$
 \end{itemize}
 In both cases, the sub-expressions $e$ occurring in the lambda body or as
 constructor arguments needn't be evaluated for the lambda or constructor
@@ -1569,20 +1568,21 @@ typed on an empty linear environment. A lambda expression is typechecked with
 the main typing judgement and trivially ``outputs'' the whole $\D$ environment,
 as there is always just a single sub-expression in lambdas (the lambda body).
 
-Returning to the evaluation of case expressions, we recall that when a
-scrutinee $K~\ov{e}$ matches a constructor pattern $K~\ov{\x[\pi]}$, evaluation
-proceeds in the case alternative expression corresponding to that pattern, with
-occurrences of $\ov{x}$ being substituted by $\ov{e}$, and occurrences of the
-case binder $z$ substituted by the whole scrutinee $K~\ov{e}$. Constructors and
-lambda expressions otherwise match the wildcard pattern whose alternative is
-evaluated only substituting the case binder by the scrutinee as before. The
-operational semantics encode the evaluation of case expressions in these terms as:
+Recall that the operational semantics encode the evaluation of case expressions as:
 %
 \begin{tabbing}
 $\ccase{e}{z~\{\ov{\rho_i \to e_i}\}} \longrightarrow^* \ccase{e'}{z~\{\ov{\rho_i \to e_i}\}}$\`where $e'$ is in WHNF and $e$ is not\\
 $\ccase{K~\ov{e}}{z~\{K~\ov{x} \to e_i\}} \longrightarrow e_i\ov{[e/x]}[K~\ov{e}/z]$\\
 $\ccase{e}{z~\{\_ \to e_i\}} \longrightarrow e_i[e/z]$\`where $e$ is in WHNF\\
 \end{tabbing}
+%
+When a scrutinee $K~\ov{e}$ matches a constructor pattern $K~\ov{\x[\pi]}$,
+evaluation proceeds in the case alternative expression corresponding to that
+pattern, with occurrences of $\ov{x}$ being substituted by $\ov{e}$, and
+occurrences of the case binder $z$ substituted by the whole scrutinee
+$K~\ov{e}$. Constructors and lambda expressions otherwise match the wildcard
+pattern whose alternative is evaluated only substituting the case binder by the
+scrutinee as before. 
 
 We highlight that when evaluating a case expression, computation only
 effectively happens when a scrutinee not in WHNF is evaluated to WHNF. In the
@@ -1643,23 +1643,25 @@ typecheck case expressions.
 \todo[inline]{Add example comparing}
 
 When the scrutinee is already in weak head normal form, the resources are
-unused and thus made available to the alternatives. However, in said
-alternatives we also introduce the case binder, referring to the whole
-scrutinee, and possibly pattern variables, referring to the corresponding
-constructor argument. Using the case binder entails using all the resources required by the scrutinee,
-and using a pattern variable in turn implies using the resources of the corresponding constructor argument.
+unused and thus made available to the alternatives. However, alternatives may
+use the case binder, referring to the whole scrutinee, and pattern variables,
+referring to the corresponding constructor argument. Using the case binder
+entails using all the resources required by the scrutinee, and using a pattern
+variable implies using the resources of the corresponding constructor
+argument.
 
-Linear resources must be used exactly once, however, there are three competing
-ways to use the resources from the scrutinee in a case alternative: directly,
-via the case binder, or by using \emph{all} the pattern-bound variables.
+Linear resources must be used exactly once, but there are three competing ways
+to use the resources from the scrutinee in a case alternative: directly, via
+the case binder, or by using \emph{all} the pattern-bound variables.
 %
-As one might reasonably expect, case binders and pattern-bound variables are
-another instance of $\D$-bound variables. Intuitively, resources in a scrutinee
-that is already in WHNF are only properly consumed when all (linear) fields of
-the pattern are used -- agreeing with the definition of consuming resources
-given in Linear Haskell.
+Recall how $\D$-variables can encode mutual exclusivity between alternative
+ways of consuming resources -- it follows that case binders and pattern-bound
+variables are another instance of $\D$-bound variables. Intuitively, resources
+in a scrutinee that is already in WHNF are only properly consumed when all
+(linear) fields of the pattern are used -- agreeing with the definition of
+consuming resources given in Linear Haskell.
 %
-Summarily, we type a case expression whose scrutinee is in weak head normal form with:
+We type a case expression whose scrutinee is in weak head normal form with:
 \[
 \TypeCaseWHNF
 \]
@@ -1708,11 +1710,10 @@ Secondly, the rule for alternatives that match on the wildcard pattern:
 \[
 \TypeAltWild
 \]
-Out of the case alternative typing rules, this is the simplest as we just
-typecheck the expression with the main judgement, ignoring all annotations on
-the judgement. Recall that the case binder was already introduced in the
-environment with the appropriate usage environment by the case expression,
-rather than in the case alternative rule.
+To type a wildcard alternative we simply typecheck the expression with the main
+judgement, ignoring all annotations on the judgement. Recalling that the case
+binder was already introduced in the environment with the appropriate usage
+environment by the case expression, rather than in the case alternative rule.
 
 Finally, consider an alternative matching on a case constructor without any
 linear components. According to the definition of consuming a resource from
@@ -1746,9 +1747,9 @@ is necessarily $\D_s$ (since we always annotate the judgement with the
 environment of the scrutinee), by the empty environment.
 \end{itemize}
 %
-The notion that such an expression is unrestricted, in the sense that all
-linear resources have been consumed to produce it and the result is something
-that can be freely discarded or duplicated, is faithfully encoded by this rule.
+The rule faithfully encodes the notion that such an expression is unrestricted,
+in the sense that all linear resources have already been consumed to produce it
+and the result is something that can be freely discarded or duplicated.
 %
 It ensures that when we match on an unrestricted pattern we don't need to
 consume scrutinee resources any longer. Otherwise, for example,
@@ -1759,27 +1760,42 @@ Furthermore, the case binder referring the unrestricted expression can then be
 used unrestrictedly since its usage environment becomes empty.
 
 It might seem as though deleting the resources from the environment in this
-rule is important to guarantee a resource is not used after it is consumed, but
-it is not so -- the main reasons are in the previous paragraph. If the resources
-aren't removed, and scrutinee is in WHNF, then it is either an unrestricted
-expression against which any match only introduces unrestricted variables, or
-an expression that depends on linear resources s.t.  we can match with a linear
-pattern or an unrestricted pattern -- in the case of the unrestricted pattern,
-it is safe to use the linear resources from the scrutinee because entering
-branch would be a contradiction, from which anything follows (\emph{ex falso
-quodlibet}); in linear patterns the resources should indeed be available.
+rule is important to guarantee a resource is not used after it is consumed.
+%
+However, let us consider two discrete situations -- matches on unrestricted
+patterns (patterns with no linear components) in a case expression whose
+scrutinee is in WHNF, and matching unrestricted patterns on a case expression
+whose scrutinee is \emph{not} in WHNF:
+%
+\begin{itemize}
+\item When the scrutinee is in WHNF, it is either an unrestricted expression
+against which any match will only introduce unrestricted variables, or an
+expression that depends on linear resources. The first case trivially allows
+any resource from the scrutinee in the alternatives as well. The second is
+further divided:
+\begin{itemize}
+\item The pattern is unrestricted while the
+scrutinee is not, so entering this branch is impossible as long as the case
+expression is well-typed; by contradiction, the linear resources from the
+scrutinee could occur unrestrictedly in that branch, since from falsity
+anything follows (\emph{ex falso quodlibet})
+\item The pattern is linear and matches the scrutinee, in which case the $AltN_{\textrm{WHNF}}$ is applicable instead of $Alt0$
+\item Lastly, the pattern could be linear but not match the scrutinee, thus is typed as though the scrutinee were not in WHNF
+\end{itemize}
 
-However, if the scrutinee is not in WHNF, the resources occurring in the
+\item However, if the scrutinee is not in WHNF, the resources occurring in the
 scrutinee will be consumed when evaluation occurs, possibly resulting in an
 unrestricted expression in WHNF -- the resources originally consumed must
 certainly not occur in the alternative body (e.g. $x$ cannot occur in the
 alternative in $\ccase{close~x}{\{K_1 \to x\}}$). In fact, the resources from a
 scrutinee that is not in weak head normal form cannot occur in any of the
-alternatives, even ones matching on constructor with linear components, as the
+alternatives, even ones matching on constructors with linear components, as the
 resources may have been consumed when evaluating the expression to weak head
 normal form. We will guarantee resources from a scrutinee that is not in weak
-head normal form cannot occur in any case alternative in our rules for typing
+head normal form cannot occur in any case alternative in our rule for typing
 case expressions not in WHNF, which we introduce below.
+
+\end{itemize}
 
 % \todo[inline]{The trick here is to separate the case rules into two separate
 % rules, one that fires when the scrutinee is in WHNF, the other when it isn't.}
