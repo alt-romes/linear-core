@@ -1544,11 +1544,15 @@ were fully evaluated the whole expression would also be in normal form).
 % (that is why it is called \emph{weak} head normal form).
 
 Accordingly, sub-expressions might depend on linear resources that will
-be further consumed when they are evaluated. Despite only being properly
-motivated at a later time, following the discussion of typing expressions in weak
-head normal form, we present a new typing judgement $\G;\D \Vdash e : \s
-\gtrdot \ov{\D_i}$ for expressions in WHNF, and rules for the two possible
-forms above:
+be further consumed when they are evaluated.
+%
+As will be made clear in later sections, we need to devise a special typing
+judgement discipline for scrutinees that is able to distinguish between terms
+in WHNF and terms that are not in WHNF.
+%
+Following the discussion of typing expressions in weak head normal form, we
+present a typing judgement $\G;\D \Vdash e : \s \gtrdot \ov{\D_i}$ for
+expressions in WHNF, and rules for the two possible forms above:
 \[
     \TypeWHNFCons
 \qquad
@@ -1927,21 +1931,55 @@ Concluding, $\dots$
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Metatheory}
 
-\subsection{Type safety}
+The Linear Core type system enjoys the usual type safety result: well-typed
+programs in Linear Core do not get \emph{stuck}. Besides type safety
+($\S$~\ref{sec:type-safety-meta}), we prove multiple optimising transformations
+preserve linearity ($\S$~\ref{sec:optimisations-preserve-types-meta}), and
+prove an auxiliary result regarding proof irrelevant resources, stating that a
+case alternative well-typed in a proof irrelevant context is also well-typed if
+all proof irrelevant resources were substituted with arbitrary relevant
+resources.
+%
+Additionally, we state our assumptions that outline an isomorphism between
+using a linear variable $\xl$ and a $\D$-variable $\xD$ that consumes existing
+resources $\D$ for any $\D$.
 
-We proved soundness of our system... The harder cases are for the interesting ones - lets, cases, and case alternatives...
+\subsection{Assumptions}
 
-\TypePreservationTheorem
-\ProgressTheorem
-\WHNFConvSoundness
+A $\Delta$-variable can replace its usage environment $\D$ as a linear variable if $\D$ is decidedly consumed \emph{through} it\\
 \DeltaLinearRelationLemma
 \DeltaUnrestrictedRelationLemma
+
+\subsection{Irrelevance}
+
+This is an auxiliary result...
+\WHNFConvSoundness
+
+\subsection{Type safety\label{sec:type-safety-meta}}
+
+We prove type safety/soundness of the Linear Core system via the standard type
+preservation and progress theorems. As is customary, we make use of multiple
+variable substitution lemmas, one for each kind of variable: unrestricted
+variables $\xo$, linear variables $\xl$, and $\D$-bound variables $\xD$.
+
+% We start with the auxiliary results, as we will make use of them in a select part of the preservation proof.
+
+Type preservation states, as usual, that a well-typed expression $e$ that evaluates to $e'$ remains well-typed
+well-typed
+
+\TypePreservationTheorem
+
+Evaluation of a well-typed term does not block. 
+\ProgressTheorem
+
 \LinearSubstitutionLemma
 \LinearSubstitutionAltsLemma
 \UnrestrictedSubstitutionLemma
 \UnrestrictedSubstitutionAltsLemma
 \DeltaSubstitutionLemma
 \DeltaSubstitutionAltsLemma
+
+We select the most interesting proof cases...
 
 %\input{language-v4/proofs/TypePreservationTheorem}
 %
@@ -1970,9 +2008,24 @@ We proved soundness of our system... The harder cases are for the interesting on
 %If $\Gamma, \Delta \vdash K~\ov{e}$ and $K{:}\ov{\sigma\to\pi}~T~\ov{p} \in \Gamma$ and $\hasnolinearvars{\Gamma}$
 %then $\ov{\Gamma, \Delta_i \vdash e_i : \sigma_i}$
 
-\subsection{Optimisations preserve linearity}
+\subsection{Optimisations preserve linearity\label{sec:optimisations-preserve-types-meta}}
 
-We proved multiple optimizing transformations preserve linearity...
+One of the primary goals of the Linear Core type system is being suitable for
+intermediate representations of optimizing compilers for lazy languages with
+linear types. In light of this goal, we prove that \emph{multiple optimizing
+transformations preserve linearity} and types in Linear Core.
+
+The optimizing transformations proved sound wrt Linear Core in this section
+have been previously explained and motivated in
+Section~\ref{sec:core-to-core-transformations}.
+%
+Transformations are described by an arbitrary expression of a certain shape, on
+the left hand side (lhs) of an arrow $\Longrightarrow$, and by an expression on
+the right hand side (rhs), resulting from applying the optimizing transformation
+to the first expression.
+
+For our proofs, we assume the lhs to be a well-typed expression and prove the
+rhs is well-typed as well.
 
 \subsubsection{Inlining}
 

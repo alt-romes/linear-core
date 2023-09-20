@@ -1031,7 +1031,7 @@ transforms the large Haskell language into the small Core language by
 simplifying all syntactic constructs to their equivalent Core form (e.g.  @newtype@
 constructors are transformed into coercions).
 
-\subsection{Core-To-Core Transformations}
+\subsection{Core-To-Core Transformations\label{sec:core-to-core-transformations}}
 
 % TODO: Rewrite rules which also operate on Core
 % TODO: Split worker/wrapper into its own section?
