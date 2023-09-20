@@ -9,8 +9,9 @@ using a different reduced syntax
 
 -}
 module Linear.Core
-  ( runLinearCore
-  ) where
+  -- ( runLinearCore
+  -- )
+  where
 
 -- import GHC.Driver.Config.Core.Lint
 import Control.Monad.State
@@ -26,9 +27,7 @@ import GHC.Utils.Trace
 import Linear.Core.Multiplicities
 import Linear.Core.Monad
 import GHC.Core.Multiplicity (scaledMult)
-import GHC.Core.Multiplicity (scaledThing)
 import Data.Bifunctor
-import qualified Data.List.NonEmpty as NE
 
 type LCProgram = [LCBind]
 type LCBind = Bind LCVar
@@ -74,7 +73,7 @@ runLinearCore pgr = do
 
   case runIdentity $ runLinearCoreT bindingsMap (checkProgram lcprg) of
     Left e -> do
-      pprTraceM "Failed to typecheck linearity!" (ppr lcprg)
+      pprTraceM "Failed to typecheck linearity!" (ppr pgr)
       return [text e]
     Right x -> do
       pprTraceM "Safe prog!" (ppr x)
@@ -309,7 +308,7 @@ convertBind (NonRec b e)
 convertBind (Rec bs) = do
   let (ids,rhss) = unzip bs
   rhss' <- traverse convertExpr rhss
-  let ids' = L.map (`LCVar` (deltaBinding emptyUE)) ids
+  let ids' = L.map (`LCVar` deltaBinding emptyUE) ids
   return (Rec (zip ids' rhss'))
 
 
@@ -376,7 +375,7 @@ unconvertBind (Rec bs) =
   let (ids,rhss) = unzip bs
       rhss' = L.map unconvertExpr rhss
       ids' = L.map (.id) ids
-   in (Rec (zip ids' rhss'))
+   in Rec (zip ids' rhss')
 
 
 unconvertExpr :: LCExpr -> CoreExpr
@@ -392,7 +391,7 @@ unconvertExpr expr = case expr of
            (unconvertExpr body)
   Case e b ty alts -> do
     Case (unconvertExpr e)
-         (b.id)
+         b.id
          ty
          (L.map unconvertAlt alts)
 
@@ -403,7 +402,7 @@ unconvertAlt :: LCAlt -> CoreAlt
 unconvertAlt (Alt con args rhs) =
   let rhs' = unconvertExpr rhs
       args' = L.map (.id) args
-   in (Alt con args' rhs')
+   in Alt con args' rhs'
 
 -- }}}
 --------------------------------------------------------------------------------
@@ -412,10 +411,10 @@ unconvertAlt (Alt con args rhs) =
 
 instance Outputable LCVar where
   ppr (LCVar id' Nothing)  = ppr id'
-  ppr (LCVar id' (Just b)) = ppr id' <+> ppr b
+  ppr (LCVar id' (Just b)) = ppr id' -- <+> ppr b
 
 instance OutputableBndr LCVar where
-  pprPrefixOcc v = ppr v
+  pprPrefixOcc = ppr
   pprInfixOcc v = text "`" GHC.Plugins.<> ppr v GHC.Plugins.<> text "`"
 
 -- }}}

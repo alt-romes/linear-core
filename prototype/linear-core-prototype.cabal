@@ -23,27 +23,25 @@ common common
                    template-haskell >= 0.21 && < 0.22,
                    containers >= 0.6 && < 0.7,
                    mtl >= 2.2 && < 3,
+                   text >= 2.0 && < 2.1,
+                   ghc >= 9.4,
                    -- Outdated, we moved to translation approach
                    -- We used recursion-schemes with the standalone language (modules also commented below)
                    -- However, for the plugin we need a patched version of GHC
-                   th-abstraction >= 0.6,
-                   recursion-schemes >= 5.2 && < 5.3,
-                   text >= 2.0 && < 2.1,
+                   -- th-abstraction >= 0.6,
+                   -- recursion-schemes >= 5.2 && < 5.3,
                    -- vector >= 0.13 && < 0.14,
-                   megaparsec >= 9.4 && < 9.5,
-                   diagnose >= 2.0.0 && < 2.1,
-                   prettyprinter >= 1.7 && < 2,
-                   parser-combinators >= 1.3 && < 2,
-                   ghc >= 9.4,
-                   linear-base
+                   -- megaparsec >= 9.4 && < 9.5,
+                   -- diagnose >= 2.0.0 && < 2.1,
+                   -- prettyprinter >= 1.7 && < 2,
+                   -- parser-combinators >= 1.3 && < 2,
 
 library
     import:           common
     exposed-modules:  Linear.Core.Monad, Linear.Core.Multiplicities,
-                      Linear.Core.Plugin,
-                      Linear.Core.Translate.Syntax, Linear.Core.Translate.Parser,
-                      Linear.Core.Translate.Check, Linear.Core.Translate.Infer,
-                      Linear.Core
+                      Linear.Core.Plugin, Linear.Core
+                      -- Linear.Core.Translate.Syntax, Linear.Core.Translate.Parser,
+                      -- Linear.Core.Translate.Check, Linear.Core.Translate.Infer,
     hs-source-dirs:   src
 
 executable linear-core-prototype
@@ -52,14 +50,15 @@ executable linear-core-prototype
     -- other-modules:    F
     build-depends:    linear-core-prototype
     hs-source-dirs:   app
-    ghc-options: -dno-typeable-binds -fplugin=Linear.Core.Plugin
+    ghc-options: -dno-typeable-binds
+                 -- -fplugin=Linear.Core.Plugin
 
 test-suite linear-core-test
   import: common
   build-depends: linear-core-prototype, tasty < 1.5, tasty-hunit < 0.11
   ghc-options: -dno-typeable-binds -fplugin=Linear.Core.Plugin
   type: exitcode-stdio-1.0
-  other-modules: Translate.Test
+  -- other-modules: Translate.Test
   hs-source-dirs: test
   main-is: Test.hs
 

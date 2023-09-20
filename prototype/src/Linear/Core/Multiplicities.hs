@@ -167,8 +167,8 @@ instance Outputable IdBinding where
   ppr (DeltaBound an) = text "Δ=" GHC.Plugins.<> ppr an
 
 instance Outputable Mult where
-  ppr (Relevant m) = text "Relevant" <+> ppr m
-  ppr (Irrelevant m) = text "Irrelevant" <+> ppr m
+  ppr (Relevant m) = text "@" GHC.Utils.Outputable.<> ppr m
+  ppr (Irrelevant m) = text "[@" GHC.Utils.Outputable.<> ppr m GHC.Utils.Outputable.<> text "]"
   ppr (Tagged t m) = ppr m GHC.Utils.Outputable.<> text "#" GHC.Utils.Outputable.<> ppr t
 
 instance Outputable Tag where

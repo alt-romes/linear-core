@@ -1,0 +1,9 @@
+Resolving dependencies...
+Warning: Fetched tarball
+/Users/romes/.cabal/packages/head.hackage.ghc.haskell.org/th-abstraction/0.6.0.0/th-abstraction-0.6.0.0.tar.gz
+does not match server, will redownload: file length mismatch
+Build profile: -w ghc-9.6.2 -O1
+In order, the following will be built (use -v for more details):
+ - linear-core-prototype-0.1.0.0 (lib) (configuration changed)
+ - linear-core-prototype-0.1.0.0 (exe:linear-core-prototype) (configuration changed)
+Configuring library for linear-core-prototype-0.1.0.0..
