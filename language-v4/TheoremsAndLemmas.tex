@@ -1,6 +1,7 @@
 \newcommand{\TypePreservationTheorem}{
 \begin{theorem}[Type preservation]
-\emph{If $\Gamma; \Delta \vdash e : \sigma$ and $e \longrightarrow e'$ then $\Gamma; \Delta \vdash e' : \sigma$}
+If $\Gamma; \Delta \vdash e : \sigma$ and $e \longrightarrow e'$ then $\Gamma;
+    \Delta \vdash e' : \sigma$
 \end{theorem}
 }
 
@@ -12,9 +13,8 @@ If $\cdot; \cdot \vdash e : \sigma$ then $e$ is a value or there exists $e'$ suc
 
 \newcommand{\WHNFConvSoundness}{
 \begin{lemma}[Irrelevance]
-...
-    If $\Gamma, \z[\irr{\D}]; \irr{\Delta}, \D' \vdash_{alt} \rho \to e :^z_{\irr{\D}} \sigma \Rrightarrow \vp$\\
-    then $\Gamma, \z[\D^\dag]; \D^\dag, \D' \vdash_{alt} \rho \to e :^z_{\D^\dag} \sigma \Rightarrow \vp$ for \emph{any} $\D^\dag$
+If $\Gamma, \z[\irr{\D}]; \irr{\Delta}, \D' \vdash_{alt} \rho \to e :^z_{\irr{\D}} \sigma \Rrightarrow \vp$\\
+then $\Gamma, \z[\D^\dag]; \D^\dag, \D' \vdash_{alt} \rho \to e :^z_{\D^\dag} \sigma \Rightarrow \vp$ for \emph{any} $\D^\dag$
 \end{lemma}
 }
 
@@ -23,12 +23,13 @@ If $\cdot; \cdot \vdash e : \sigma$ then $e$ is a value or there exists $e'$ suc
 If $\G,\xD; \D,\D' \vdash e : \s$ and $\D$ is consumed through $\xD$ in $e$
 then $\G; \D',\xl \vdash e :\s$.
 \end{assumption}
+}
 
+\newcommand{\LinearDeltaRelationLemma}{
 \begin{assumption}[$1 \Rightarrow \D$]
-A linear variable can be moved to the unrestricted context as a $\D$-var with usage environment $\D$ by introducing $\D$ in the linear resources\\
-    If $\G; \D',\xl \vdash e :\s$\\
-    then $\G,\xD; \D,\D' \vdash e : \s$.
-    and $\D$ is consumed through $\xD$ in $e$
+If $\G; \D',\xl \vdash e :\s$\\
+then $\G,\xD; \D,\D' \vdash e : \s$.
+and $\D$ is consumed through $\xD$ in $e$
 \end{assumption}
 }
 

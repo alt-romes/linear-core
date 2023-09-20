@@ -93,6 +93,13 @@ removeTag m = m
 -- handled outside of this function, here they are split just like relevant ones
 splitAsNeededThenConsume :: MonadError String m
                          => AllowIrrelevant -> [Tag] -> Mult -> m [Mult]
+splitAsNeededThenConsume allowsIrrelevant tagstack m
+  | DisallowIrrelevant <- allowsIrrelevant
+  , isIrrelevant m = throwError "Tried to use an irrelevant result when not allowed"
+
+  | extractTags m == tagstack
+  = pure [] -- consume successfully since the mult tags matches exactly the tagstack
+
 splitAsNeededThenConsume allowsIrrelevant (Tag con i:ts) m
   = join <$> traverse (\case
                  m'@(Tagged (Tag _ i') _)

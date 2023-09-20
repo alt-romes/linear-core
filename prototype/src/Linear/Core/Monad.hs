@@ -123,7 +123,6 @@ use = flip use' [] where
   use' :: Monad m => Var -> [Tag] -> LinearCoreT m ()
   use' key _    | isGlobalId key = pure () -- See Note [GlobalId/LocalId]; Global ids are top-level imported Ids, which are unrestricted
   use' key mtags = LinearCoreT do
-
     -- When recording, we count when linear resources are used, and allow them
     -- to be consumed more than once (despite that not being possible if we were
     -- typechecking).
@@ -131,6 +130,9 @@ use = flip use' [] where
 
     -- Lookup the variable in the environment
     mv <- gets (M.lookup key)
+
+    pprTraceM "Using var" (Ppr.ppr key Ppr.<+> Ppr.text "with mult" Ppr.<+> Ppr.ppr mv Ppr.<+> Ppr.text "and tag environment" Ppr.<+> Ppr.ppr mtags)
+
     case mv of
 
       -- Variable has already been consumed (it should be guaranteed to be in scope since Core programs are well-typed)
@@ -168,6 +170,7 @@ use = flip use' [] where
             -- given tag (in the form of a tagstack)
             tags -> do
               splits <- splitAsNeededThenConsume allowsIrrelevant tags mult
+              pprTraceM "Splitting key at tags" (Ppr.ppr key Ppr.<+> Ppr.ppr tags Ppr.<+> Ppr.ppr splits)
               case NE.nonEmpty splits of
                     Nothing
                       | isDryRun  -> tell [key]
@@ -209,6 +212,7 @@ use = flip use' [] where
           tags -> do
 
             splits <- join <$> mapM (splitAsNeededThenConsume allowsIrrelevant tags) (NE.toList mults)
+            pprTraceM "Split key at tags" (Ppr.ppr key Ppr.<+> Ppr.ppr tags Ppr.<+> Ppr.ppr splits)
             case NE.nonEmpty splits of
                 Nothing
                   | isDryRun  -> tell [key] -- Again, we don't consume things when dry run

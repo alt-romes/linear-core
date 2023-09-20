@@ -1948,6 +1948,10 @@ resources $\D$ for any $\D$.
 
 A $\Delta$-variable can replace its usage environment $\D$ as a linear variable if $\D$ is decidedly consumed \emph{through} it\\
 \DeltaLinearRelationLemma
+
+A linear variable can be moved to the unrestricted context as a $\D$-var with usage environment $\D$ by introducing $\D$ in the linear resources\\
+\LinearDeltaRelationLemma
+
 \DeltaUnrestrictedRelationLemma
 
 \subsection{Irrelevance}

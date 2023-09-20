@@ -49,9 +49,9 @@ mainLinearCoreTest
     ]
 
 f1 :: CoreBind
-f1 = NonRec 
+f1 = NonRec _ _
 
 
 mkId :: String -> Mult -> Type -> Id
-mkId s = mkLocalId (mkInternalName (mkVarOcc s) noSrcSpan)
+mkId s = mkLocalId (mkInternalName 0 (mkVarOcc s) noSrcSpan)
 

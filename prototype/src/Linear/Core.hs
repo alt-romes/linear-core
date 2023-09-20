@@ -170,7 +170,7 @@ checkExpr expr = case expr of
       Case e'
            (LCVar b.id (deltaBinding ue))
            ty
-       <$> withSameEnvMap (extend b.id (DeltaBound ue) . checkAlt ue) alts
+       <$> withSameEnvMap (extend b.id (DeltaBound ue) . checkAlt (makeIrrelevant ue)) alts
 
   Tick t e  -> Tick t <$> checkExpr e
   Cast e co -> Cast <$> checkExpr e <*> pure co
@@ -215,12 +215,11 @@ checkAlt ue alt@(Alt (DataAlt con) args rhs) = pprTrace "ALTN con" (ppr alt) $ d
 
   let (unrestricted_args, linear_args) = bimap (L.map snd) (L.map snd) $
                                           L.partition (isManyTy . scaledMult . fst) (zip (dataConOrigArgTys con) args)
-  -- TODO: We need to figure out how to typecheck alternatives (in the syntax directed form too) before we do this right.
-
 
   -- Add the tag the usage environment with the linear resources with this constructor and an index for each
   -- It will ensure that when we consume the resources by using this environment, we'll just split the resource according to the tag.
   let linear_args' = L.zipWith (\a i -> (a.id, deltaBindingTagged con i ue)) linear_args [1..]
+  pprTraceM "Linear args in ALTN con:" (ppr linear_args')
 
           -- First, extend computation with unrestricted resources
   rhs' <- extends (L.map ((, LambdaBound (Relevant ManyTy)) . (.id)) unrestricted_args)
@@ -411,7 +410,7 @@ unconvertAlt (Alt con args rhs) =
 
 instance Outputable LCVar where
   ppr (LCVar id' Nothing)  = ppr id'
-  ppr (LCVar id' (Just b)) = ppr id' -- <+> ppr b
+  ppr (LCVar id' (Just b)) = ppr id' <+> ppr b
 
 instance OutputableBndr LCVar where
   pprPrefixOcc = ppr
