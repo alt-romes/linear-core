@@ -7,6 +7,7 @@ If $\Gamma; \Delta \vdash e : \sigma$ and $e \longrightarrow e'$ then $\Gamma;
 
 \newcommand{\ProgressTheorem}{
 \begin{theorem}[Progress]
+Evaluation of a well-typed term does not block.\\
 If $\cdot; \cdot \vdash e : \sigma$ then $e$ is a value or there exists $e'$ such that $e \longrightarrow e'$.
 \end{theorem}
 }
@@ -14,12 +15,13 @@ If $\cdot; \cdot \vdash e : \sigma$ then $e$ is a value or there exists $e'$ suc
 \newcommand{\WHNFConvSoundness}{
 \begin{lemma}[Irrelevance]
 If $\Gamma, \z[\irr{\D}]; \irr{\Delta}, \D' \vdash_{alt} \rho \to e :^z_{\irr{\D}} \sigma \Rrightarrow \vp$\\
-then $\Gamma, \z[\D^\dag]; \D^\dag, \D' \vdash_{alt} \rho \to e :^z_{\D^\dag} \sigma \Rightarrow \vp$ for \emph{any} $\D^\dag$
+then $\Gamma, \z[\D^\dag]; \D^\dag, \D' \vdash_{alt} \rho \to e :^z_{\D^\dag} \sigma \Rightarrow \vp$, for \emph{any} $\D^\dag$
 \end{lemma}
 }
 
 \newcommand{\DeltaLinearRelationLemma}{
 \begin{assumption}[$\D \Rightarrow 1$]
+A $\Delta$-variable can replace its usage environment $\D$ as a linear variable if $\D$ is decidedly consumed through it\\
 If $\G,\xD; \D,\D' \vdash e : \s$ and $\D$ is consumed through $\xD$ in $e$
 then $\G; \D',\xl \vdash e :\s$.
 \end{assumption}
@@ -27,15 +29,17 @@ then $\G; \D',\xl \vdash e :\s$.
 
 \newcommand{\LinearDeltaRelationLemma}{
 \begin{assumption}[$1 \Rightarrow \D$]
-If $\G; \D',\xl \vdash e :\s$\\
+    TODO These assumptions are wrong.
+A linear variable can be moved to the unrestricted context as a $\D$-var with usage environment $\D$ by introducing $\D$ in the linear resources\\
+If $\G; \D',\xl \vdash e :\s$
 then $\G,\xD; \D,\D' \vdash e : \s$.
-and $\D$ is consumed through $\xD$ in $e$
+% and $\D$ is consumed through $\xD$ in $e$
 \end{assumption}
 }
 
 \newcommand{\DeltaUnrestrictedRelationLemma}{
-\begin{assumption}[$\xo = x{:}_{\cdot}\s$]
 An unrestricted variable is equivalent to a $\D$-var with an empty usage environment.\\
+\begin{assumption}[$\xo = x{:}_{\cdot}\s$]
 $\xo = \x[\cdot]$ and $\G,\xo; \D \vdash e : \s \equiv \G,\x[\cdot]; \D \vdash e$
 \end{assumption}
 }
@@ -44,19 +48,16 @@ $\xo = \x[\cdot]$ and $\G,\xo; \D \vdash e : \s \equiv \G,\x[\cdot]; \D \vdash e
 \newcommand{\LinearSubstitutionLemma}{
 \begin{lemma}[Substitution of linear variables preserves typing]
   If $\judg[\G][\D,\xl]{e}{\vp}$ and $\judg[\G][\D']{e}{\s}$
-  then $\judg[\subst{\G}{\D'}{x}][\D,\D']{e[e'/x]}{\vp}$,
-  where $\G[\D'/x]$ substitutes all occurrences of $x$ in the usage
-  environments of variables in $\G$ by the linear variables in $\D'$.
-  (really, $x$ couldn't appear anywhere else since $x$ is linear).
+  then $\judg[\subst{\G}{\D'}{x}][\D,\D']{e[e'/x]}{\vp}$
 \end{lemma}
 }
 
 \newcommand{\LinearSubstitutionAltsLemma}{
 \begin{sublemma}[Substitution of linear variables on case alternatives preserves typing]~\\
-    If $\judg[\G][\D,\xl]{\rho\to e}{\s \Longrightarrow \vp}[alt][\D_s][z]$ and
+    If $\judg[\G][\D,\xl]{\rho\to e}{\s \Rightarrow \vp}[alt][\D_s][z]$ and
     $\judg[\G][\D']{e'}{\s}$ and
     $\D_s \subseteq \D,x$ \\then
-    $\judg[\subst{\G}{\D'}{x}][\D,\D']{\rho \to e[e'/x]}{\s \Longrightarrow \vp}[alt][\subst{\D_s}{\D'}{x}][z]$
+    $\judg[\subst{\G}{\D'}{x}][\D,\D']{\rho \to e[e'/x]}{\s \Rightarrow \vp}[alt][\subst{\D_s}{\D'}{x}][z]$
 \end{sublemma}
 }
 
@@ -76,8 +77,8 @@ If $\G, \xo; \D \vdash_{alt} \rho \to e :^z_{\Delta_s} \s' \Rightarrow \vp$ and 
 
 \newcommand{\DeltaSubstitutionLemma}{
 % usage environments only record linear variables.
-\begin{lemma}[Substitution of $\Delta$-variables (with usage environments) preserves typing]
-If \\ $\G,\xD; \D, \D' \vdash e : \varphi$ and $\G; \D \vdash e' : \sigma$ then $\G; \D, \D' \vdash e[e'/x] : \varphi$
+\begin{lemma}[Substitution of $\Delta$-variables preserves typing]
+If $\G,\xD; \D, \D' \vdash e : \varphi$ and $\G; \D \vdash e' : \sigma$ then $\G; \D, \D' \vdash e[e'/x] : \varphi$
 % TODO: Write a paragraph about why this lemma has to have the same delta in the subst.
 % Do we still need the $Delta = empty$ restriction?
 % I think yes, and if we have $Delta = empty$ we never call delta substitution, but rather move the variable to be unrestricted and then call unr. subst. lemma

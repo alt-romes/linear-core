@@ -1931,33 +1931,74 @@ Concluding, $\dots$
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Metatheory}
 
-The Linear Core type system enjoys the usual type safety result: well-typed
-programs in Linear Core do not get \emph{stuck}. Besides type safety
-($\S$~\ref{sec:type-safety-meta}), we prove multiple optimising transformations
-preserve linearity ($\S$~\ref{sec:optimisations-preserve-types-meta}), and
-prove an auxiliary result regarding proof irrelevant resources, stating that a
-case alternative well-typed in a proof irrelevant context is also well-typed if
-all proof irrelevant resources were substituted with arbitrary relevant
-resources.
+The $\lambda^\pi_\D$ system is sound: well-typed programs in Linear Core do not
+get \emph{stuck}. Besides type safety ($\S$~\ref{sec:type-safety-meta}), we
+prove multiple optimising transformations preserve linearity
+($\S$~\ref{sec:optimisations-preserve-types-meta}), and prove an auxiliary
+result regarding proof irrelevant resources, stating that a case alternative
+well-typed in a proof irrelevant context is also well-typed if proof irrelevant
+resources are substituted by an arbitrary environment of relevant resources.
 %
 Additionally, we state our assumptions that outline an isomorphism between
 using a linear variable $\xl$ and a $\D$-variable $\xD$ that consumes existing
-resources $\D$ for any $\D$.
+resources $\D$, for any $\D$.
 
 \subsection{Assumptions}
 
-A $\Delta$-variable can replace its usage environment $\D$ as a linear variable if $\D$ is decidedly consumed \emph{through} it\\
+We use two key assumptions in our proofs, which really state two dual sides of
+an equivalence.
+
+First, a program well-typed with a linear variable ($\xl$) is equivalently
+well-typed if that same linear variable were instead $\D$-bound ($\xD$) with
+usage environment $\D$, and $\D$ were available in the linear context instead
+of the linear variable.
+
+First, we state that a linear variable $\xl$ can be replaced by a $\D$-bound
+variable as long as the context
+
+\LinearDeltaRelationLemma
+
 \DeltaLinearRelationLemma
 
-A linear variable can be moved to the unrestricted context as a $\D$-var with usage environment $\D$ by introducing $\D$ in the linear resources\\
-\LinearDeltaRelationLemma
+We additionally state that unrestricted resources are equivalent to $\D$-bound
+variables with an empty ($\cdot$) usage environment:
 
 \DeltaUnrestrictedRelationLemma
 
 \subsection{Irrelevance}
 
-This is an auxiliary result...
+Proof irrelevant resources are resources that cannot be consumed
+directly using a variable which otherwise behave as other (relevant) linear
+resources. Proof irrelevant resources are used to type case expressions whose
+scrutinee is not in WHNF, essentially encoding that the scrutinee resources
+must be consumed through the case binder or the linear pattern-bound variables.
+There is another rule to type case expressions whose scrutinee is in WHNF.
+Crucially, these rules must ``work together'' in the system, in the sense that
+case expressions well-typed using the $Case_{\textrm{Not WHNF}}$ rule must also
+be well-typed after the scrutinee is evaluated to WHNF, which is typed using
+the $Case_\textrm{WHNF}$ rule.
+
+In practice, the preservation theorem states that a well-typed expression
+remains well-typed in the presence of evaluation. Specifically, the case in
+which a case expression whose scrutinee is evaluated to WHNF is handled in the
+preservation proof.
+
+The \emph{Irrelevance} auxiliary result is required to prove preservation for
+exactly that evaluation case. We need to prove that the alternatives of a case
+expression typed with proof irrelevant resources is still well-typed when the
+proof irrelevant resource is replaced by the scrutinee resources when it
+becomes in WHNF. In this sense, \emph{Irrelevance} witnesses the soundness of
+typing a case alternative with proof irrelevant resources in a certain context
+wrt typing the same expression with arbitrary resources (we note, however,
+typing an alternative with proof irrelevant resources is not complete wrt using arbitrary resources -- a counter example needs only to use a resource directly).
+
 \WHNFConvSoundness
+
+\noindent Intuitively, the lemma holds since proof irrelevant resources must be used
+through the case binder or pattern-bound variables. If we consistently replace
+the proof irrelevant resources both in the typing environment and in the usage
+environments containing them, the expression remains well-typed (being somewhat
+akin to congruence).
 
 \subsection{Type safety\label{sec:type-safety-meta}}
 
@@ -1968,22 +2009,115 @@ variables $\xo$, linear variables $\xl$, and $\D$-bound variables $\xD$.
 
 % We start with the auxiliary results, as we will make use of them in a select part of the preservation proof.
 
-Type preservation states, as usual, that a well-typed expression $e$ that evaluates to $e'$ remains well-typed
-well-typed
-
+\paragraph{Preservation.\\} Type preservation states that a well-typed expression $e$ that
+evaluates to $e'$ remains well-typed under the same context:
+%
 \TypePreservationTheorem
+%
+\noindent The proof is done by structural induction on the reductions $e \longrightarrow e'$
+from the operational semantics. Most cases are trivial and usually invoke
+one or more of the substitution lemmas. The most interesting proof case is for case
+expression whose scrutinee can be further evaluated -- we branch on whether the
+scrutinee becomes in WHNF, and invoke the \emph{Irrelevance} lemma if it does.
+This proof case guarantees that the separation of rules treating scrutinees in
+and not in WHNF is consistent, in the sense that a well-typed case expression
+with a scrutinee not in WHNF remains well-typed after the scrutinee is
+evaluated to WHNF.
 
-Evaluation of a well-typed term does not block. 
+\paragraph{Progress.\\} Progress states that the evaluation of a well-typed term does not block:
+%
 \ProgressTheorem
+%
+\noindent Similarly, progress is proved by (trivial) induction. The more interesting case is also for case expressions...
+
+\subsubsection{Substitution Lemmas}
+
+The preservation and progress theorems depend on multiple substitution lemmas,
+one for each kind of variable, as is standard.
+% The ... themselves diverge from their common formulation, because
+% $\D$-variables refer to linearly bound variables, so substitution must take into account
+
+
+The linear substitution lemma states that a well-typed expression $e$ with a
+linear variable $x$ of type $\s$ in the context remains well-typed if
+occurrences of that variable in the term $e$ are replaced by an expression $e'$
+of the same type $\s$, and occurrences of $x$ in the linear context and in
+usage environments of $\D$-bound variables are replaced by the linear context
+$\D'$ used to type $e'$:
 
 \LinearSubstitutionLemma
+
+\noindent Where $\G[\D'/x]$ substitutes all occurrences of $x$ in the usage
+environments of $\D$-variables in $\G$ by the linear variables in $\D'$ ($x$
+couldn't appear anywhere besides usage environments of $\D$-bound
+variables, since $x$ is linear).
+
+The substitution of the resource in the usage environments is easily motivated
+by an example: $\lambda use~x.~\llet{y = use~x}{y}$.
+If we replace occurrences of $x$ by $e'$ (where $\G;\D \vdash e : \s$), then the
+``real'' usage environment of $y$ goes from $\{x\}$ to $\D$. If we don't update
+the usage environment of $y$ accordingly, we'll ultimately be typing
+$y{:}_{\{x\}}\vp$ with $\D$ instead of $x$, which is not valid.
+
+The linear variable substitution lemma extends to case alternatives as well.
+The lemma for substitution of linear variables in case alternatives is similar
+to the linear substitution lemma, applied to the case alternative judgement. Is
+slightly more involved, in the sense that there are more environments in which the
+substitution $[\D/x]$ must be applied (for the same reason):
+%
 \LinearSubstitutionAltsLemma
+%
+\noindent We further require that the environment annotated in the case
+alternative judgement, $\D_s$, is a subset of the environment used to type the
+whole alternative $\D_s \subseteq \D$. In all occurrences of the alternative
+judgement (in $Case_\textrm{WHNF}$ and $Case_\textrm{Not WHNF}$), the
+environment annotating the alternative judgement is \emph{always} a subset of
+the alternative environment.
+
+The substitution lemma for unrestricted variables follows the usual
+formulation, with the added restriction (common to linear type systems) that
+the expression $e'$ that is going to substitute the unrestricted variable $x$
+is typed on an empty linear environment:
+%
 \UnrestrictedSubstitutionLemma
+%
+\noindent Similarly, we also prove the substitution of unrestricted variables preserves types on an alternative case expression:
+%
 \UnrestrictedSubstitutionAltsLemma
+
+Finally, we introduce the lemma stating that substitution of $\D$-linear
+variables by expressions of the same type preserves the type of the original
+expression.
+%
+What distinguishes this lemma from traditional substitution lemmas is that the
+usage environment $\D$ of the variable $x$ being substituted by expression $e'$
+must match exactly the typing environment $\D$ of $e'$ and the
+environment of the original expression doesn't change with the substitution:
+%
 \DeltaSubstitutionLemma
+%
+\noindent Intuitively, if $x$ is well-typed with $\D$ in $e$, substituting $x$
+by an expression $e'$ which is typed in the same environment $\D$ allows the
+distribution of resources $\D,\D'$ used to type $e$ across sub-derivations to remain
+unchanged. To prove the theorems, we don't need a ``stronger'' substitution of
+$\D$-vars lemma (allowing arbitrary resources $\D''$ to type $e'$, as in other
+substitution lemmas), as we only ever substitute $\D$-variables by expressions
+whose typing environment matches the variables usage environment. However, it
+is not obvious whether such a lemma is possible to prove for $\D$-variables
+(e.g. let $\G;\D \vdash e :\s$ and $\G; \D' \vdash \llet{x = e'}{x}$, if we
+substitute $e$ for $x$ the resources $\D'$ are no longer consumed...).
+
+The $\D$-substitution lemma on case alternatives reflects again that the typing
+environment of the expression substitution the variable must match its usage
+environment. We recall that $\D_s \subseteq \D,\D'$ states that the annotated
+environment is always contained in the typing environment, which is true of all
+occurrences of this judgement. An alternative formulation of this lemma could
+instead explicitly list $\D_s$ as part of the typing environment for the same
+effect:
+
 \DeltaSubstitutionAltsLemma
 
-We select the most interesting proof cases...
+The proofs for preservation, progress, irrelevance, and for the substitution lemmas are available in full in the appendix.
 
 %\input{language-v4/proofs/TypePreservationTheorem}
 %
@@ -2159,90 +2293,5 @@ Vs. call-by-need
 % 
 % }}}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% {{{ Chapter: Linear Core as a GHC Plugin; Introduction
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\chapter{Linear Core as a GHC Plugin}
-
-This section discusses the implementation of Linear Core as a GHC Plugin, with
-a dash of painful history in the attempt of implementing Linear Core directly
-into GHC
-
-% Introduction...
-
-\section{Consuming tagged resources}
-
-As discussed in Section~\ref{}, constructor pattern bound linear variables are
-put in the context with a \emph{tagged} usage environment with the resources of
-the scrutinee. In a \emph{tagged} usage environment environment, all resources
-are tagged with a constructor and an index into the many fields of the
-constructor.
-
-In practice, a resource might have more than one tag. For example, in the following
-program, after the first pattern match, |a| and |b| have, respectively, usage
-environments $\{\lctag{x}{K_1}\}$ and $\{\lctag{x}{K_2}\}$:
-\begin{code}
-f x = case x of
-       K a b -> case a of
-        Pair n p -> (n,p)
-\end{code}
-However, in the following alternative, |n| has usage environment
-$\{\lctag{\lctag{x}{K_1}}{Pair_1}\}$ and |p| has
-$\{\lctag{\lctag{x}{K_1}}{Pair_2}\}$. To typecheck
-|(n,p)|, one has to $Split$ |x| first on |K| and then on |Pair|, in order for
-the usage environments to match.
-
-In our implementation, we split resources on demand (and don't directly allow
-splitting linear resources), i.e. when we use a tagged resource we split the
-linear resource in the linear environment (if available), but never split otherwise.
-%
-Namely, starting on the innermost tag (the closest to the variable name), we
-substitute the linear resource for its split fragments, and then we iteratively
-further split those fragments if there are additional tags.
-%
-We note that it is safe to destructively split the resource (i.e. removing the
-original and only leaving the split fragments) because we only split resources
-when we need to consume a fragment, and as soon as one fragment is consumed
-then using the original ``whole'' variable would violate linearity.
-
-In the example, if |n| is used, we have to use its usage environment, which in
-turn entails using $\lctag{\lctag{x}{K_1}}{Pair_1}$, which has two tags. In this order, we:
-\begin{itemize}
-\item Split $x$ into $\lctag{x}{K_1}$ and $\lctag{x}{K_2}$
-\item Split $\lctag{x}{K_1}$ and $\lctag{x}{K_2}$ into
-  \begin{itemize}
-  \item $\lctag{\lctag{x}{K_1}}{Pair_1}$ and $\lctag{\lctag{x}{K_1}}{Pair_2}$
-  \item Leave $\lctag{x}{K_2}$ untouched, as we only split on demand, and we aren't using a fragment of $\lctag{x}{K_2}$.
-  \end{itemize}
-\item Consume $\lctag{\lctag{x}{K_1}}{Pair_1}$, the usage environment of $n$, by removing it from the typing environment.
-\end{itemize}
-
-
-% }}}
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-\chapter{More ToDos}
-
-\begin{itemize}
-\item We know the case binder to ALWAYS be in WHNF, perhaps there could
-be some annotation on the case binder s.t. we know nothing happens when we
-scrutinize it as a single variable
-
-\item Operational semantics somewhere
-
-\item Should we discuss this? It would be fine, but we're not able to see this because of call-by-name substitution
-\begin{code}
-f x = case x of z { _ -> x }
-\end{code}
-
-\item Generalizing linearity section...
-
-\item We kind of ignore the multiplicity semiring. We should discuss
-how we don't do ring operations ... but that's kind of wrong.
-
-
-\item See TODOs near metatheory in the source
-\end{itemize}
-
-
-% vim: fdm=marker foldenable
+% vim: fen fdm=marker

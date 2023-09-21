@@ -1,7 +1,79 @@
+%include polycode.fmt
+%format ⊸ = "\lolli"
 \chapter{Discussion}
 
 Preamble
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% {{{ Chapter: Linear Core as a GHC Plugin; Introduction
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Linear Core as a GHC Plugin}
+
+This section discusses the implementation of Linear Core as a GHC Plugin, with
+a dash of painful history in the attempt of implementing Linear Core directly
+into GHC.
+
+Discuss a bit syntax-directedness non existent in the system and that our implementation slightly tweaks it to be more syntax directed or something
+
+Talk about using our plugin on linear-base and other code bases... If I can get
+a few more case studies it would be pretty good. But then it's imperative to
+also use -dlinear-lint and make sure my plugin rejects a few of the examples
+
+% Introduction...
+
+\subsection{Consuming tagged resources as needed}
+
+As discussed in Section~\ref{}, constructor pattern bound linear variables are
+put in the context with a \emph{tagged} usage environment with the resources of
+the scrutinee. In a \emph{tagged} usage environment environment, all resources
+are tagged with a constructor and an index into the many fields of the
+constructor.
+
+In practice, a resource might have more than one tag. For example, in the following
+program, after the first pattern match, |a| and |b| have, respectively, usage
+environments $\{\lctag{x}{K_1}\}$ and $\{\lctag{x}{K_2}\}$:
+\begin{code}
+f x = case x of
+       K a b -> case a of
+        Pair n p -> (n,p)
+\end{code}
+However, in the following alternative, |n| has usage environment
+$\{\lctag{\lctag{x}{K_1}}{Pair_1}\}$ and |p| has
+$\{\lctag{\lctag{x}{K_1}}{Pair_2}\}$. To typecheck
+|(n,p)|, one has to $Split$ |x| first on |K| and then on |Pair|, in order for
+the usage environments to match.
+
+In our implementation, we split resources on demand (and don't directly allow
+splitting linear resources), i.e. when we use a tagged resource we split the
+linear resource in the linear environment (if available), but never split otherwise.
+%
+Namely, starting on the innermost tag (the closest to the variable name), we
+substitute the linear resource for its split fragments, and then we iteratively
+further split those fragments if there are additional tags.
+%
+We note that it is safe to destructively split the resource (i.e. removing the
+original and only leaving the split fragments) because we only split resources
+when we need to consume a fragment, and as soon as one fragment is consumed
+then using the original ``whole'' variable would violate linearity.
+
+In the example, if |n| is used, we have to use its usage environment, which in
+turn entails using $\lctag{\lctag{x}{K_1}}{Pair_1}$, which has two tags. In this order, we:
+\begin{itemize}
+\item Split $x$ into $\lctag{x}{K_1}$ and $\lctag{x}{K_2}$
+\item Split $\lctag{x}{K_1}$ and $\lctag{x}{K_2}$ into
+  \begin{itemize}
+  \item $\lctag{\lctag{x}{K_1}}{Pair_1}$ and $\lctag{\lctag{x}{K_1}}{Pair_2}$
+  \item Leave $\lctag{x}{K_2}$ untouched, as we only split on demand, and we aren't using a fragment of $\lctag{x}{K_2}$.
+  \end{itemize}
+\item Consume $\lctag{\lctag{x}{K_1}}{Pair_1}$, the usage environment of $n$, by removing it from the typing environment.
+\end{itemize}
+
+
+% }}}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% {{{ Related Work
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Related Work}
 
 % TODO: A brief introduction to the related work section?
@@ -38,6 +110,10 @@ light of Core-to-Core optimizing transformations.
 
 \subsection{Linear Haskell\label{sec:related-work-linear-haskell}}
 
+\todo[inline]{Say something about Linear Haskell's lazy operational semantics,
+but the type system not being concerned with linearity in the presence of
+laziness}
+
 Haskell, contrary to most programming languages with linear types, has existed
 for 31 years of its life \emph{without} linear types. As such, the introduction
 of linear types to Haskell comes with added challenges that do not exist in
@@ -53,7 +129,7 @@ languages that were designed with linear types from the start:
     \item Future-proofing. Haskell, despite being an
         industrial-strength language, is also a petri-dish for experimentation
         and innovation in the field of programming languages. Therefore, Linear
-        Haskell takes care to accomodate possible future features, in
+        Haskell takes care to accommodate possible future features, in
         particular, its design is forwards compatible with affine and dependent
         types.
 \end{itemize}
@@ -129,6 +205,10 @@ linearity into account.
 % the lambda is linearly used and therefore floating-in is beneficial and
 % floating-out not as productive.
 
+% }}}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% {{{ Future Work
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Future Work\label{sec:future-work}}
 
 \begin{itemize}
@@ -144,9 +224,30 @@ programming idioms with linear types (also because laziness and strictness is le
 \item Beautiful inference algorithm for recursive usage environments -- insight
 that looks like inference for recursive function principle types, but haven't
 figured it out
+
 \item Beautiful inference of usage environments - connection to type inference / hindley milner
+
+\item We kind of ignore the multiplicity semiring. We should discuss
+how we don't do ring operations ... but that's kind of wrong.
+
+\item We know the case binder to ALWAYS be in WHNF, perhaps there could
+be some annotation on the case binder s.t. we know nothing happens when we
+scrutinize it as a single variable
+
+\item Should we discuss this? It would be fine, but we're not able to see this because of call-by-name substitution. I say yes, in the reverse binder swap section
+\begin{code}
+f x = case x of z { _ -> x }
+\end{code}
+
 \end{itemize}
 
+% }}}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% {{{ Conclusions
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Conclusions}
 
+% }}}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+% vim: fen fdm=marker

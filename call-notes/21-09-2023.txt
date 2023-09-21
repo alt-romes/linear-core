@@ -1,0 +1,11 @@
+Counter example to a "stronger" substitution lemma for $\D$-variables
+
+D |- let x = ...
+      in x
+
+xD, D |- x
+
+D' |- e
+
+D, D' |- let x = ... in e
+

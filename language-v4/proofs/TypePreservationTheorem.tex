@@ -72,11 +72,12 @@ By structural induction on the small-step reduction.
 % TODO: Subcases when \Delta == {}?
 \item[Case:]
     $\ccase{K~\overline{e}}{z{:}_{\Delta}\sigma}~\{\dots,K~\overline{x{:}_\pi\sigma}\to e'\}\ \longrightarrow e'\overline{[e/x]}[K~\overline{e}/z]$
-This is definitely another of the most interesting cases. We must invoke split,
-use Alt0 or AltN, use delta and unr. substitution, subcases where the
-case binder is used and isn't, use CaseWHNF and realize that if it were
-an expression reduced first with CaseNotWHNF then the usage environment
-is proof irrelevant, rearrange the usage environments of the case pattern alternatives, etc...
+% This is no longer completely up to date
+% This is definitely another of the most interesting cases. We must invoke split,
+% use Alt0 or AltN, use delta and unr. substitution, subcases where the
+% case binder is used and isn't, use CaseWHNF and realize that if it were
+% an expression reduced first with CaseNotWHNF then the usage environment
+% is proof irrelevant, rearrange the usage environments of the case pattern alternatives, etc...
 \begin{tabbing}
     (1) $\G;\D,\D'\vdash \ccase{K~\ov{e_\omega e_i}}{\zD~\{\dots,K~\ov{\var[w][\pi][\s]}\to e'\}} : \vp$\\
     (2) $K~\ov{e_\omega e_i}$ is in WHNF\` by def. of WHNF\\
