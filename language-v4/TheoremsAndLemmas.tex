@@ -126,7 +126,7 @@ If $\G \vdash \ccase{x}{\z[\ov{\D},x][\s]~\{\ov{\rho_i\to e_i}\}} : \vp$ then $\
 
 \newcommand{\InliningTheorem}{
 \begin{theorem}[Inlining preserves types]~\\
-If $\G; \D,\D' \vdash \llet{\xD = e}{e'} : \vp$ then $\G; \D, \D' \vdash \llet{\xD = e}{e'[e'/x]} : \vp$
+If $\G; \D,\D' \vdash \llet{\xD = e}{e'} : \vp$ then $\G; \D, \D' \vdash \llet{\xD = e}{e'[e/x]} : \vp$
 \end{theorem}
 }
 

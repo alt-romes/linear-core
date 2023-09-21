@@ -1807,10 +1807,18 @@ case expressions not in WHNF, which we introduce below.
 
 \subsubsection{Proof irrelevant resources}
 
+\todo[inline]{Itemize os dois componentes de consumir case expressions (tem de ser consumido, mas não pode ser usado diretamente)}
+
+\todo[inline]{O que é que eu vou fazer aqui? O que falta é conseguir tratar uma
+case expression de forma flexivel o suficiente. Explorar o scrutinee estar em
+WHNF ou não, agora é preciso usar essas ideias em typing rules.  Só preciso de
+dizer que para tipificar o caso em que não está em WHNF de forma rigorosa num
+sistema de tipos: Manter resources in scope pq é preciso consumir; Mas não
+podem ser usadas diretamente}
+
 Resources used by a scrutinee that is not in weak head normal form must
 definitely not be used in the case alternatives, since they have been used in
-the evaluation producing an expression in weak head normal form from the
-scrutinee, as shown in the example above.
+the evaluation of the scrutinee, as shown in the example above.
 %
 However, it is not sufficient to evaluate the scrutinee to weak head normal
 form to \emph{fully} consume all resources used in the scrutinee, since
@@ -1820,8 +1828,8 @@ evaluated to normal form, s.t. all linear components of an expression in
 WHNF are also fully evaluated (as witnessed by the $Alt0$ rule).
 % We tackle this in due time, in the proof irrelevance section.
 
-In case alternatives of a case expression in which the scrutinee is not in
-WHNF, we must consume the result of evaluating the scrutinee to WHNF, but the
+In alternatives of a case where the scrutinee is not in
+WHNF, we must also consume the result of evaluating the scrutinee to WHNF, but the
 scrutinee resources must definitely not be available for consumption. In
 practice, the result of evaluating the scrutinee must be consumed by using
 either the case binder or all the linear components of a constructor pattern,
@@ -1835,19 +1843,18 @@ result is consumed (thus their usage environment cannot be empty), but the
 scrutinee resources cannot be used directly.
 
 We introduce \emph{proof irrelevant} resources, denoted as linear resources
-within square brackets $[\D]$, to encode exactly linear resources that cannot
-be directly instanced with a $Var$ rule. Proof irrelevant linear resources are
+within square brackets $[\D]$, to encode linear resources that cannot
+be directly used (the $Var$ rule is not applicable). Proof irrelevant linear resources are
 linear resources in all other senses, meaning they must be used \emph{exactly
-once}. Since proof irrelevant resources cannot be forgotten neither used
-directly, they have to be consumed somehow else -- and we already have a way to
-consume resources \emph{indirectly}: $\D$-bound variables.
+once}. However, since proof irrelevant resources cannot be forgotten neither used
+directly, they have to be consumed \emph{indirectly} -- by $\D$-bound variables.
 
 To type a case expression whose scrutinee is in weak head normal form, we
-typecheck the scrutinee with linear resources $\D$ and typecheck the case
+type the scrutinee with linear resources $\D$ and type the case
 alternatives by introducing the case binder with a usage environment $[\D]$,
 having the same proof irrelevant linear context $[\D]$ in the typing
-environment, and annotating the judgement with the proof irrelevant resources
-and the $\Rrightarrow$ arrow:
+environment, annotating the judgement with the proof irrelevant resources,
+and using the $\Rrightarrow$ judgement:
 \[
 \TypeCaseNotWHNF
 \]
@@ -1872,12 +1879,12 @@ judgement annotation, are made irrelevant.
 
 Intuitively, in case alternatives whose scrutinee is not in weak head normal
 form (and for scrutinees in WHNF which don't match the case alternative) the
-proof-irrelevant resources introduced by the (not-WHNF) case expression must be
-fully consumed, either via the case binder $z$ which is annotated with all
-proof-irrelevant resources used in the scrutinee, or by using all linear
-pattern-bound variables.
+proof-irrelevant resources introduced by the case expression must be
+fully consumed, either via the case binder $z$,
+% which is annotated with all proof-irrelevant resources used in the scrutinee,
+or by using all linear pattern-bound variables.
 
-However, unlike with matching scrutinees in WHNF, the resources used by a
+However, unlike with scrutinees in WHNF, the resources used by a
 scrutinee not in WHNF do not necessarily match those used by each
 sub-expression of the expression evaluated to WHNF. Therefore, there is no
 direct mapping between the usage environments of the linear pattern-bound
@@ -1887,33 +1894,37 @@ typing other constructors, which would be standalone and show up in this
 section too?}
 
 We introduce \emph{tagged resources} to guarantee all linearly-bound pattern
-variables are used jointly, or none at all, to consume all resources occurring
-in the environment (in alternative to the case binder). Given linear resources
-$[\D_s]$ used in a scrutinee, and a pattern $K~\ov{x_\omega},\ov{y_i}$ with $i$
-linear components, we attribute a usage environment $\D_i$ to each linear
-pattern variable where $\D_i$ is the scrutinee environment tagged with the
-constructor name and linear-variable index $\lctag{\D_s}{K_i}$:
+variables are jointly used to consume all resources occurring in the
+environment (in alternative to the case binder), or not at all. Given linear
+resources $[\D_s]$ used to type a scrutinee, and a pattern
+$K~\ov{x_\omega},\ov{y_i}$ with $i$ linear components, we assign a usage
+environment $\D_i$ to each linear pattern variable where, $\D_i$ is obtained from the
+scrutinee environment tagged with the constructor name and linear-variable
+index $\lctag{\D_s}{K_i}$. The tag consists of a constructor name $K$ and an
+index $i$ identifying the position of the pattern variable among all bound
+variables in that pattern.
 \[
 \TypeAltNNotWHNF
 \]
-A tag is comprised of a constructor name $K$ and an index $i$ identifying the
-position of the pattern variable among all bound variables in that pattern.
-The key idea is that a single resource $x$ can be split into $n$ resources
-of a given constructor, where $n$ is the number of positional linear arguments of the constructor.
+The key idea is that a linear resource $x$ can be split into $n$ resources at a
+given constructor, where $n$ is the number of positional linear arguments of
+the constructor:
 \[
 \TypeVarSplit
 \]
-Assigning to each linear pattern variable a fragment of the scrutinee resources
-with a tag guarantees that all linear pattern variables must be used in
-conjunction to consume the whole scrutinee resources, since for any of them to
-be used, we need to use the $Split$ rule and will require the rest of the
-fragments to be consumed through the other linear pattern-bound vars.
+By assigning to each linear pattern variable a fragment of the scrutinee
+resources with a tag, we guarantee that all linear pattern variables must be
+simultaneously used to consume all the scrutinee resources, since for any of
+them to be used, we need to use the $Split$ rule and will require the rest of
+the fragments to be consumed through the other linear pattern-bound vars.
 
-Using tags for fragments instead of fractions (e.g. $\D_s*i/n$) is necessary to
-guarantee we cannot use the same variable multiple times to consume multiple
-fractions of the resource. It also has the added benefit of allowing mixing of
-pattern variables bound at different alternatives (e.g.~$\lambda x~y.~\ccase{(x,y)}{(a,b)\to\ccase{(a,b)}{(z,w)\to(a,w)}}$).
+\todo[inline]{Exemplo}
 
+% Using tags for fragments instead of fractions (e.g. $\D_s*i/n$) is necessary
+% to guarantee we cannot use the same variable multiple times to consume
+% multiple fractions of the resource. It also has the added benefit of allowing
+% mixing of pattern variables bound at different alternatives (e.g.~$\lambda
+% x~y.~\ccase{(x,y)}{(a,b)\to\ccase{(a,b)}{(z,w)\to(a,w)}}$).
 
 \subsection{Linear Core Examples}
 
@@ -1967,68 +1978,72 @@ variables with an empty ($\cdot$) usage environment:
 
 \subsection{Irrelevance}
 
-Proof irrelevant resources are resources that cannot be consumed
-directly using a variable which otherwise behave as other (relevant) linear
-resources. Proof irrelevant resources are used to type case expressions whose
-scrutinee is not in WHNF, essentially encoding that the scrutinee resources
-must be consumed through the case binder or the linear pattern-bound variables.
-There is another rule to type case expressions whose scrutinee is in WHNF.
+As discussed above, proof irrelevant resources are resources that can only be
+consumed indirectly, and are used to type case expressions whose scrutinee is
+not in WHNF, essentially encoding that the scrutinee resources must be consumed
+through the case binder or the linear pattern-bound variables.
+%
+As a case expression is evaluated, the scrutinee will eventually be in WHNF,
+which must then be typed with rule $Case_{\textrm{WHNF}}$.
+%
 Crucially, these rules must ``work together'' in the system, in the sense that
-case expressions well-typed using the $Case_{\textrm{Not WHNF}}$ rule must also
-be well-typed after the scrutinee is evaluated to WHNF, which is typed using
-the $Case_\textrm{WHNF}$ rule.
+case expressions typed using the $Case_{\textrm{Not WHNF}}$ rule must also be
+well-typed after the scrutinee is evaluated to WHNF, which is then typed using
+the $Case_{\textrm{WHNF}}$ rule.
 
-In practice, the preservation theorem states that a well-typed expression
-remains well-typed in the presence of evaluation. Specifically, the case in
-which a case expression whose scrutinee is evaluated to WHNF is handled in the
-preservation proof.
+% The type preservation theorem states that a well-typed expression
+% remains well-typed in the presence of evaluation. Specifically, when the case
+% expression whose scrutinee is evaluated to WHNF is handled in the
+% preservation proof.
 
-The \emph{Irrelevance} auxiliary result is required to prove preservation for
-exactly that evaluation case. We need to prove that the alternatives of a case
-expression typed with proof irrelevant resources is still well-typed when the
-proof irrelevant resource is replaced by the scrutinee resources when it
-becomes in WHNF. In this sense, \emph{Irrelevance} witnesses the soundness of
-typing a case alternative with proof irrelevant resources in a certain context
-wrt typing the same expression with arbitrary resources (we note, however,
-typing an alternative with proof irrelevant resources is not complete wrt using arbitrary resources -- a counter example needs only to use a resource directly).
+The \emph{Irrelevance} lemma is required to prove preservation for that
+evaluation case. We need to prove that the alternatives of a case expression
+typed with proof irrelevant resources are still well-typed when the proof
+irrelevant resource is substituted by the scrutinee resources as it is evaluated to WHNF.
+In this sense, the \emph{Irrelevance} lemma witnesses the soundness of typing a
+case alternative with proof irrelevant resources in a certain context with respect to
+typing the same expression with arbitrary resources (we note, however, typing
+an alternative with proof irrelevant resources is not complete wrt using
+arbitrary resources -- a counter example needs only to use a resource
+directly).
 
 \WHNFConvSoundness
 
 \noindent Intuitively, the lemma holds since proof irrelevant resources must be used
 through the case binder or pattern-bound variables. If we consistently replace
 the proof irrelevant resources both in the typing environment and in the usage
-environments containing them, the expression remains well-typed (being somewhat
-akin to congruence).
+environments containing them, the expression remains well-typed.
+% (being somewhat akin to congruence).
 
 \subsection{Type safety\label{sec:type-safety-meta}}
 
-We prove type safety/soundness of the Linear Core system via the standard type
-preservation and progress theorems. As is customary, we make use of multiple
-variable substitution lemmas, one for each kind of variable: unrestricted
-variables $\xo$, linear variables $\xl$, and $\D$-bound variables $\xD$.
+We prove type safety of the Linear Core system via the standard type
+preservation and progress results. As is customary, we make use of multiple
+substitution lemmas, one for each kind of variable: unrestricted variables
+$\xo$, linear variables $\xl$, and $\D$-bound variables $\xD$.
 
 % We start with the auxiliary results, as we will make use of them in a select part of the preservation proof.
 
-\paragraph{Preservation.\\} Type preservation states that a well-typed expression $e$ that
-evaluates to $e'$ remains well-typed under the same context:
-%
 \TypePreservationTheorem
 %
-\noindent The proof is done by structural induction on the reductions $e \longrightarrow e'$
-from the operational semantics. Most cases are trivial and usually invoke
-one or more of the substitution lemmas. The most interesting proof case is for case
-expression whose scrutinee can be further evaluated -- we branch on whether the
-scrutinee becomes in WHNF, and invoke the \emph{Irrelevance} lemma if it does.
-This proof case guarantees that the separation of rules treating scrutinees in
-and not in WHNF is consistent, in the sense that a well-typed case expression
-with a scrutinee not in WHNF remains well-typed after the scrutinee is
-evaluated to WHNF.
-
-\paragraph{Progress.\\} Progress states that the evaluation of a well-typed term does not block:
+\noindent Type preservation states that a well-typed expression $e$ that
+evaluates to $e'$ remains well-typed under the same context:
 %
+The proof is done by structural induction on the reductions $e \longrightarrow
+e'$ from the operational semantics. Most cases are straightforward and usually
+appeal to one or more of the substitution lemmas described below. The most
+interesting case is that of case expressions whose scrutinee can be further
+evaluated -- we branch on whether the scrutinee becomes in WHNF, and invoke the
+\emph{Irrelevance} lemma if so.
+%
+This case guarantees that the separation of rules for treating scrutinees is
+consistent, in the sense that a well-typed case expression with a scrutinee not
+in WHNF remains well-typed after the scrutinee is evaluated to WHNF.
+
 \ProgressTheorem
 %
-\noindent Similarly, progress is proved by (trivial) induction. The more interesting case is also for case expressions...
+\noindent Progress states that the evaluation of a well-typed term does not block:
+Similarly, progress is proved by induction on typing.
 
 \subsubsection{Substitution Lemmas}
 
@@ -2039,38 +2054,37 @@ one for each kind of variable, as is standard.
 
 
 The linear substitution lemma states that a well-typed expression $e$ with a
-linear variable $x$ of type $\s$ in the context remains well-typed if
-occurrences of that variable in the term $e$ are replaced by an expression $e'$
-of the same type $\s$, and occurrences of $x$ in the linear context and in
-usage environments of $\D$-bound variables are replaced by the linear context
-$\D'$ used to type $e'$:
+linear variable $x$ of type $\s$ remains well-typed if
+occurrences of $x$ in the $e$ are replaced by an expression $e'$ of the same
+type $\s$, and occurrences of $x$ in the linear context and in usage
+environments of $\D$-bound variables are replaced by the linear context $\D'$
+used to type $e'$:
 
 \LinearSubstitutionLemma
 
 \noindent Where $\G[\D'/x]$ substitutes all occurrences of $x$ in the usage
-environments of $\D$-variables in $\G$ by the linear variables in $\D'$ ($x$
-couldn't appear anywhere besides usage environments of $\D$-bound
-variables, since $x$ is linear).
+environments of $\D$-variables in $\G$ by the linear variables in $\D'$.
+% ($x$ couldn't appear anywhere besides usage environments of $\D$-bound variables, since $x$ is linear).
 
-The substitution of the resource in the usage environments is easily motivated
-by an example: $\lambda use~x.~\llet{y = use~x}{y}$.
-If we replace occurrences of $x$ by $e'$ (where $\G;\D \vdash e : \s$), then the
+The substitution of the resource in the usage environments is illustrated
+by the following example. Consider the term $\llet{y = use~x}{y}$ where $use$ and $x$ are free variables:
+if we replace occurrences of $x$ by $e'$ (where $\G;\D \vdash e : \s$), then the
 ``real'' usage environment of $y$ goes from $\{x\}$ to $\D$. If we don't update
 the usage environment of $y$ accordingly, we'll ultimately be typing
 $y{:}_{\{x\}}\vp$ with $\D$ instead of $x$, which is not valid.
 
-The linear variable substitution lemma extends to case alternatives as well.
+The linear substitution lemma extends to case alternatives as well.
 The lemma for substitution of linear variables in case alternatives is similar
-to the linear substitution lemma, applied to the case alternative judgement. Is
-slightly more involved, in the sense that there are more environments in which the
-substitution $[\D/x]$ must be applied (for the same reason):
+to the linear substitution lemma, applied to the case alternative judgement.
+% Is slightly more involved, in the sense that there are more environments in which the
+% substitution $[\D/x]$ must be applied (for the same reason):
 %
 \LinearSubstitutionAltsLemma
 %
 \noindent We further require that the environment annotated in the case
 alternative judgement, $\D_s$, is a subset of the environment used to type the
 whole alternative $\D_s \subseteq \D$. In all occurrences of the alternative
-judgement (in $Case_\textrm{WHNF}$ and $Case_\textrm{Not WHNF}$), the
+judgement (in $Case_{\textrm{WHNF}}$ and $Case_{\textrm{Not WHNF}}$), the
 environment annotating the alternative judgement is \emph{always} a subset of
 the alternative environment.
 
@@ -2085,7 +2099,7 @@ is typed on an empty linear environment:
 %
 \UnrestrictedSubstitutionAltsLemma
 
-Finally, we introduce the lemma stating that substitution of $\D$-linear
+Finally, we introduce the lemma stating that substitution of $\D$-bound
 variables by expressions of the same type preserves the type of the original
 expression.
 %
@@ -2105,7 +2119,7 @@ substitution lemmas), as we only ever substitute $\D$-variables by expressions
 whose typing environment matches the variables usage environment. However, it
 is not obvious whether such a lemma is possible to prove for $\D$-variables
 (e.g. let $\G;\D \vdash e :\s$ and $\G; \D' \vdash \llet{x = e'}{x}$, if we
-substitute $e$ for $x$ the resources $\D'$ are no longer consumed...).
+substitute $e$ for $x$ the resources $\D'$ are no longer consumed).
 
 The $\D$-substitution lemma on case alternatives reflects again that the typing
 environment of the expression substitution the variable must match its usage
@@ -2151,24 +2165,25 @@ The proofs for preservation, progress, irrelevance, and for the substitution lem
 One of the primary goals of the Linear Core type system is being suitable for
 intermediate representations of optimizing compilers for lazy languages with
 linear types. In light of this goal, we prove that \emph{multiple optimizing
-transformations preserve linearity} and types in Linear Core.
+transformations} are type preserving in Linear Core, and thus preserve linearity.
 
 The optimizing transformations proved sound wrt Linear Core in this section
 have been previously explained and motivated in
 Section~\ref{sec:core-to-core-transformations}.
 %
-Transformations are described by an arbitrary expression of a certain shape, on
-the left hand side (lhs) of an arrow $\Longrightarrow$, and by an expression on
-the right hand side (rhs), resulting from applying the optimizing transformation
-to the first expression.
+Transformations are described by an arbitrary well-typed expression with a certain shape, on
+the left hand side (lhs) of the arrow $\Longrightarrow$, resulting in an expression on
+the right hand side (rhs) that we prove to be well-typed.
 
-For our proofs, we assume the lhs to be a well-typed expression and prove the
-rhs is well-typed as well.
+% For our proofs, we assume the lhs to be a well-typed expression and prove the
+% rhs is well-typed as well.
+
+\todo[inline]{Explicar porque é que a transformações são razoáveis}
 
 \subsubsection{Inlining}
 
-To the best of our knowledge, there is no linear type system for which inlining
-preserves linearity\footnote{https://github.com/ghc-proposals/ghc-proposals/blob/master/proposals/0111-linear-types.rst\#id90}
+% To the best of our knowledge, there is no linear type system for which inlining
+% preserves linearity\footnote{https://github.com/ghc-proposals/ghc-proposals/blob/master/proposals/0111-linear-types.rst\#id90}
 
 % \InliningTheorem
 \input{language-v4/proofs/optimizations/Inlining}

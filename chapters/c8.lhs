@@ -10,6 +10,12 @@ Preamble
 
 \section{Linear Core as a GHC Plugin}
 
+\todo[inline]{A implementação existe; link para o github; validei o linear-base
+(excepto multiplicty coercions, e tive successo pq a implementação validou);
+validei os exemplos do inicio escrevendo Core à mão; Syntax-directedness
+}
+
+
 This section discusses the implementation of Linear Core as a GHC Plugin, with
 a dash of painful history in the attempt of implementing Linear Core directly
 into GHC.
