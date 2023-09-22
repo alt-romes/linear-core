@@ -1931,11 +1931,6 @@ the fragments to be consumed through the other linear pattern-bound vars.
 \todo[inline]{Copy over examples from Linear Mini-Core. The ones in the last
 section, but also the ones in 2.2 e.g.}
 
-\subsection{Conclusion}
-
-Concluding, $\dots$
-
-
 % }}}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % {{{ Metatheory
@@ -2133,18 +2128,6 @@ effect:
 
 The proofs for preservation, progress, irrelevance, and for the substitution lemmas are available in full in the appendix.
 
-%\input{language-v4/proofs/TypePreservationTheorem}
-%
-%\input{language-v4/proofs/ProgressTheorem}
-%
-%\input{language-v4/proofs/DeltaLinearLemma}
-%
-%\input{language-v4/proofs/LinearSubstitutionLemma}
-%
-%\input{language-v4/proofs/UnrestrictedSubstitutionLemma}
-%
-%\input{language-v4/proofs/DeltaSubstitutionLemma}
- 
 %TODO! Substitution of proof-irrelevant linear variables preserves typing. The
 %term always remains the same because $x$ cannot occur in any term, however, all
 %variables that refer to $x$ in their usage environment must now refer the usage env. of the substitee (e.g. $[x] => [\D]$).
@@ -2174,38 +2157,29 @@ Section~\ref{sec:core-to-core-transformations}.
 Transformations are described by an arbitrary well-typed expression with a certain shape, on
 the left hand side (lhs) of the arrow $\Longrightarrow$, resulting in an expression on
 the right hand side (rhs) that we prove to be well-typed.
-
+%
 % For our proofs, we assume the lhs to be a well-typed expression and prove the
 % rhs is well-typed as well.
-
-\todo[inline]{Explicar porque é que a transformações são razoáveis}
+%
+For each transformation, we describe the intuition behind the transformation
+preserving linearity in our system.
 
 \subsubsection{Inlining}
 
 % To the best of our knowledge, there is no linear type system for which inlining
 % preserves linearity\footnote{https://github.com/ghc-proposals/ghc-proposals/blob/master/proposals/0111-linear-types.rst\#id90}
 
-% \InliningTheorem
 \input{language-v4/proofs/optimizations/Inlining}
 
 \subsubsection{\texorpdfstring{$\beta$}{Beta}-reduction}
-
-% \BetaReductionTheorem
-% \BetaReductionSharingTheorem
-% \BetaReductionMultTheorem
 
 \input{language-v4/proofs/optimizations/BetaReduction}
 
 \subsubsection{Case of known constructor}
 
-%\CaseOfKnownConstructorTheorem
 \input{language-v4/proofs/optimizations/CaseOfKnownConstructor}
 
 \subsubsection{Let floating}
-
-%\FloatInTheorem
-%\FullLazinessTheorem
-%\LocalTransformationsTheorem
 
 \input{language-v4/proofs/optimizations/LetFloating}
 
@@ -2215,9 +2189,42 @@ the right hand side (rhs) that we prove to be well-typed.
 
 \subsubsection{Binder Swap}
 
-\BinderSwapTheorem
+The binder swap transformation applies to case expressions whose scrutinee is a
+single variable $x$, and it substitutes occurrences of $x$ in the case
+alternatives for the case binder $z$. If $x$ is a linear resource, $x$ cannot
+occur in the case alternatives (as we conservatively consider variables are not
+in WHNF), so the substitution preserves types vacuously. Otherwise, $x$ can be
+freely substituted by $z$, since $z$ is also an unrestricted resource (it's
+usage environment is empty because $x$ is unrestricted).
+
+\input{language-v4/proofs/optimizations/BinderSwap}
 
 \subsubsection{Reverse Binder Swap Considered Harmful}
+
+The reverse binder swap transformation substitutes occurrences of the case
+binder $z$ in case alternatives by the scrutinee, when the scrutinee is a
+variable $x$.
+
+\ReverseBinderSwapTheorem
+
+\todo[inline]{Maybe this shouldn't be a theorem since we don't prove it neither is it true}
+
+\noindent This is exactly backwards from what the binder swap transformation
+does in hope of eliminating multiple uses of $x$ so to inline it. However, by
+using the scrutinee $x$ instead of the case binder, we might be able to float
+out expressions from the alternative using the case binder. For example, we
+might float an expensive computation involving $z$ out of the case alternative,
+where $z$ is out of scope but $x$ isn't:
+\[
+\begin{array}{l}
+\lambda x.~\lletrec{go~y = \ccase{x}{z~\{(a,b) \to \dots (expensive~z) \dots\}}}{\dots}\\
+\Longrightarrow_\textrm{Reverse binder swap}\\
+\lambda x.~\lletrec{go~y = \ccase{x}{z~\{(a,b) \to \dots (expensive~x) \dots\}}}{\dots}\\
+\Longrightarrow_\textrm{Float out}\\
+\lambda x.~\llet{t = expensive~x}{\lletrec{go~y = \ccase{x}{z~\{(a,b) \to \dots t \dots\}}}{\dots}}\\
+\end{array}
+\]
+If $go$ is a loop, by applying the reverse binder swap we now only compute $expensive~x$ once instead of in every loop iteration.
 
 (Link to ticket)
 
@@ -2282,6 +2289,10 @@ Vs. call-by-need
 \subsubsection{Case of Case}
 
 \CaseOfCaseTheorem
+
+% \section{Conclusion}
+% 
+% Concluding, $\dots$
 
 % }}}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

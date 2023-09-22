@@ -1,3 +1,10 @@
+Inlining substitutes occurrences of a let-bound $\D$-variable $x$
+with the expression $e$ it is bound to, which determines its usage environment
+$\D$. Intuitively, in the let body $e'$, $x$ can occur once or not at all: if
+$x$ occurs, then the linear resources $\D$ used indirectly through $x$ are used
+via $e$ instead; if $x$ does not occur, then the resources $\D$ are already
+used linearly in $e'$ and the substitution is a no-op.
+
 \InliningTheorem
 
 \begin{proof}~

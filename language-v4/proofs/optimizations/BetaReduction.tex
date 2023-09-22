@@ -1,11 +1,26 @@
+$\beta$-reduction evaluates a $\lambda$-abstraction application by substituting
+the $\lambda$-bound variable $x$ with the argument $e'$ in the body of the
+$\lambda$-abstraction $e$.
+%
+We consider two definitions of $\beta$-reductions, one that substitutes all
+occurrences of a variable by an expression, as in call-by-name, and other which
+creates a lazy let binding to share the result of computing the argument
+expression amongst uses of the variable, as in call-by-need.
+
+The first kind of $\beta$-reduction on term abstractions can be seen to
+preserve linearity by case analysis. When the function is linear, the binding
+$x$ is used exactly once in the body of the lambda, thus can be substituted by
+an expression typed with linear resources, since the expression is guaranteed
+to be used exactly once in place of $x$. The proof is direct by type preservation.
+
 \BetaReductionTheorem
 
 \begin{proof}~
 
 \begin{tabbing}
 % Using preservation
-    (1) $\G; \D \vdash (\lambda \xl.~e)~e' : \vp$\\
-    (2) $(\lambda \xl.~e) e' \longrightarrow e[e'/x]$\\
+    (1) $\G; \D \vdash (\lambda \x[\pi].~e)~e' : \vp$\\
+    (2) $(\lambda \x[\pi].~e) e' \longrightarrow e[e'/x]$\\
     (3) $\G; \D \vdash e[e'/x] : \vp$ \` by type preservation theorem (1,2)\\
 
 % Manually
@@ -27,6 +42,16 @@
 \end{tabbing}
 \end{proof}
 
+\noindent We assume the $\beta$-reduction with sharing (i.e. the one that creates a let
+binding) is only applicable when the $\lambda$-abstraction has an unrestricted
+function type. Otherwise, the call-by-name $\beta$-reduction is always
+favourable, as we know the resource to be used exactly once and hence sharing
+would be counterproductive, and result in an unnecessary heap allocation.
+%
+Consequently, the argument to the function must be unrestricted (hence use no
+linear resources) for the term to be well-typed, and so it vacuously follows
+that linearity is preserved by this transformation.
+
 \BetaReductionSharingTheorem
 
 \begin{proof}~
@@ -40,6 +65,12 @@
     (6) $\G,\G' \vdash \llet{x = e'}{e} : \vp$\` by let (5,3)\\
 \end{tabbing}
 \end{proof}
+
+\noindent Finally, $\beta$-reduction on multiplicity abstractions is also type
+preserving. The argument of the application is a multiplicity rather than an
+expression, so no resources are needed to type it, and since the body of the
+lambda must treat the multiplicity $p$ as though it were a linear, the body
+uses the argument linearly regardless of the instantiation of $p$ at $\pi$.
 
 \BetaReductionMultTheorem
 

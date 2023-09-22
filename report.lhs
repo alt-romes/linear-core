@@ -555,32 +555,32 @@ non-linear programs are deemed linear); DONE (modulo 1)
 
 \input{language-v4/proofs/DeltaLinearLemma}
 
-\chapter{Optimisations Preserve Types Proofs}
-Should we keep this?
-% 
-\section{Inlining}
-% 
-% \input{language-v4/proofs/optimizations/Inlining}
-% 
-\section{\texorpdfstring{$\beta$}{Beta}-reduction}
-% 
-% \input{language-v4/proofs/optimizations/BetaReduction}
-% 
-\section{Case of known constructor}
-% 
-% \input{language-v4/proofs/optimizations/CaseOfKnownConstructor}
-% 
-\section{Binder-swap}
-% 
-% \input{language-v4/proofs/optimizations/BinderSwap}
-% 
-\section{Let floating}
-% 
-% \input{language-v4/proofs/optimizations/LetFloating}
-% 
-\section{Case of Case}
-% 
-% \input{language-v4/proofs/optimizations/CaseOfCase}
+% \chapter{Optimisations Preserve Types Proofs}
+% Should we keep this?
+% % 
+% \section{Inlining}
+% % 
+% % \input{language-v4/proofs/optimizations/Inlining}
+% % 
+% \section{\texorpdfstring{$\beta$}{Beta}-reduction}
+% % 
+% % \input{language-v4/proofs/optimizations/BetaReduction}
+% % 
+% \section{Case of known constructor}
+% % 
+% % \input{language-v4/proofs/optimizations/CaseOfKnownConstructor}
+% % 
+% \section{Binder-swap}
+% % 
+% % \input{language-v4/proofs/optimizations/BinderSwap}
+% % 
+% \section{Let floating}
+% % 
+% % \input{language-v4/proofs/optimizations/LetFloating}
+% % 
+% \section{Case of Case}
+% % 
+% % \input{language-v4/proofs/optimizations/CaseOfCase}
 
 \end{document}
 

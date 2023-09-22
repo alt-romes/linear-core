@@ -8,6 +8,15 @@
 % \end{tabbing}
 % \end{proof}
 
+The let floating transformation move lazy let constructs in and out
+of other constructs, in order to further unblock other optimisations.
+%
+In essence, since let bindings consume resources lazily (by introducing a
+$\D$-variable with usage environment $\D$, where $\D$ is the typing environment
+of the bound expression), we can intuitively move them around without violating linearity.
+%
+We prove let floating transformations \emph{full-laziness} and three
+\emph{local-transformations} preserve types and linearity.
 
 \FullLazinessTheorem
 

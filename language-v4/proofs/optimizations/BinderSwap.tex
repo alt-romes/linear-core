@@ -13,29 +13,47 @@
 %
 
 \begin{proof}~
-
 \begin{tabbing}
-    (1) $\G', \xl \vdash \ccase{x}{\z[\ov{\D},x][\s]~\{\ov{\rho_i\to e_i}\}} : \vp$\\
-    (2) $\xl \vdash x : \sigma$\\
-    (3) $\ov{\G',\z[\D_i,x][\s] \vdash_{alt} \rho_i \rightarrow e_i :_{\D_i | x} \s \Longrightarrow \vp}$\\
-    For every alternative\\
-    If $\rho_i$ is a constructor~($K$)\\
-    (3.1) $\G',\z[\D_i][\s] \vdash_{alt} K~\ov{\x[\pi][\tau]} \rightarrow e_i :_{\D_i} \s \Longrightarrow \vp$\\
-    (3.2) $\G',\z[\D_i][\s] \vdash_{alt} K~\ov{\x[\pi][\tau]} \rightarrow e_i[z/x] :_{\D_i} \s \Longrightarrow \vp$\\
-    \` since $x$ cannot occur in the alternatives\\
-    If $\rho_i$ is the DEFAULT alternative~($\_$)\\
-    (3.1) $\G',\z[x][\s] \vdash_{alt} \_ \to e_i :_{x} \s \Longrightarrow \vp$\\
-    (3.2) $\G',\z[x][\s],\xl \vdash e_i : \vp$ \` by inv. on $Alt_{\_}$\\
-    (3.3) $\xl,\z[x][\s] \vdash z : \s$\` by $Var_\Delta$\\
-    (3.4) $(\G',\z[x][\s])[x / x], (\x,\z[x][\s]) \vdash e_i[z/x] : \vp$\`by linear var subst. lemma.\\
-    (3.5) $\G',\z[x][\s], \x, \z[x][\s] \vdash e_i[z/x] : \vp$\\
-    (3.6) $\G', \x, \z[x][\s] \vdash e_i[z/x] : \vp$\` by admissible rule $Contract_\Delta$\footnote{We don't include this rule since, naturally, we'll never needed. But it still holds, and is useful to prove optimizations.} \\
-    (3.7) $\G',\z[x][\s] \vdash_{alt} \_ \to e_i[z/x] :_{x} \s \Longrightarrow \vp$ \` by ($Alt_\_$)\\
-    Therefore
-    (4) $\ov{\G',\z[\D_i,x][\s] \vdash_{alt} \rho_i \rightarrow e_i[z/x] :_{\D_i | x} \s \Longrightarrow \vp}$\\
-    (5) $\G', \xl \vdash \ccase{x}{\z[\ov{\D},x][\s]~\{\ov{\rho_i\to e_i[z/x]}\}} : \vp$\` by (Case)\\
-
+    Subcase $x$ is linear\\
+    (1) $\G; \D,\xl \vdash \ccase{x}{\z[\irr{x}]~\{\ov{\rho \to e}\}} : \vp$\\
+    (2) $\G; \xl \vdash x : \s$\`by inv. on $Case_\textrm{Not WHNF}$\\
+    (3) $\ov{\G, \z[\irr{x}]; \D, \irr{\xl} \vdash_{alt} \rho \to e :^z_{\irr{x}} \s \Rrightarrow \vp}$\`by inv. on $Case_\textrm{Not WHNF}$\\
+    (4) $\ov{\G, \z[\irr{x}]; \D, \irr{\xl} \vdash_{alt} \rho \to e[z/x] :^z_{\irr{x}} \s \Rrightarrow \vp}$\\\`by $x$ cannot occur in $e$ bc it's proof irrelevant\\
+    (5) $\G;\D,\xl \vdash \ccase{x}{\z[\irr{x}]~\{\ov{\rho \to e[z/x]}\}} : \vp$\`by $Case_\textrm{Not WHNF}$\\
+    Subcase $x$ is unrestricted\\
+    (1) $\G,\xo; \D \vdash \ccase{x}{\z[\cdot]~\{\ov{\rho \to e}\}} : \vp$\\
+    (2) $\G,\xo; \cdot \vdash x : \s$\`by inv. on $Case_\textrm{Not WHNF}$\\
+    (3) $\ov{\G,\xo, \z[\cdot]; \D \vdash_{alt} \rho \to e :^z_{\cdot} \s \Rrightarrow \vp}$\`by inv. on $Case_\textrm{Not WHNF}$\\
+    (4) $\G,\z[\cdot]; \cdot \vdash z : \s$\`by $Var_\D$\\
+    (5) $\ov{\G, \z[\cdot]; \D \vdash_{alt} \rho \to e[z/x] :^z_{\cdot} \s \Rrightarrow \vp}$\`by unr. subst. lemma (3,4)\\
+    % (5.5) $\ov{\G,\xo, \z[\cdot]; \D \vdash_{alt} \rho \to e[z/x] :^z_{\cdot} \s \Rrightarrow \vp}$\`by (admissible) $Weaken_\omega$\\
+    (6) $\G,\xo;\D \vdash \ccase{x}{\z[\cdot]~\{\ov{\rho \to e[z/x]}\}} : \vp$\`by $Weaken_\omega$ and $Case_\textrm{Not WHNF}$\\
 \end{tabbing}
+
+
+% Old proof:
+% \begin{tabbing}
+%     (1) $\G', \xl \vdash \ccase{x}{\z[\ov{\D},x][\s]~\{\ov{\rho_i\to e_i}\}} : \vp$\\
+%     (2) $\xl \vdash x : \sigma$\\
+%     (3) $\ov{\G',\z[\D_i,x][\s] \vdash_{alt} \rho_i \rightarrow e_i :_{\D_i | x} \s \Longrightarrow \vp}$\\
+%     For every alternative\\
+%     If $\rho_i$ is a constructor~($K$)\\
+%     (3.1) $\G',\z[\D_i][\s] \vdash_{alt} K~\ov{\x[\pi][\tau]} \rightarrow e_i :_{\D_i} \s \Longrightarrow \vp$\\
+%     (3.2) $\G',\z[\D_i][\s] \vdash_{alt} K~\ov{\x[\pi][\tau]} \rightarrow e_i[z/x] :_{\D_i} \s \Longrightarrow \vp$\\
+%     \` since $x$ cannot occur in the alternatives\\
+%     If $\rho_i$ is the DEFAULT alternative~($\_$)\\
+%     (3.1) $\G',\z[x][\s] \vdash_{alt} \_ \to e_i :_{x} \s \Longrightarrow \vp$\\
+%     (3.2) $\G',\z[x][\s],\xl \vdash e_i : \vp$ \` by inv. on $Alt_{\_}$\\
+%     (3.3) $\xl,\z[x][\s] \vdash z : \s$\` by $Var_\Delta$\\
+%     (3.4) $(\G',\z[x][\s])[x / x], (\x,\z[x][\s]) \vdash e_i[z/x] : \vp$\`by linear var subst. lemma.\\
+%     (3.5) $\G',\z[x][\s], \x, \z[x][\s] \vdash e_i[z/x] : \vp$\\
+%     (3.6) $\G', \x, \z[x][\s] \vdash e_i[z/x] : \vp$\` by admissible rule $Contract_\Delta$\footnote{We don't include this rule since, naturally, we'll never needed. But it still holds, and is useful to prove optimizations.} \\
+%     (3.7) $\G',\z[x][\s] \vdash_{alt} \_ \to e_i[z/x] :_{x} \s \Longrightarrow \vp$ \` by ($Alt_\_$)\\
+%     Therefore
+%     (4) $\ov{\G',\z[\D_i,x][\s] \vdash_{alt} \rho_i \rightarrow e_i[z/x] :_{\D_i | x} \s \Longrightarrow \vp}$\\
+%     (5) $\G', \xl \vdash \ccase{x}{\z[\ov{\D},x][\s]~\{\ov{\rho_i\to e_i[z/x]}\}} : \vp$\` by (Case)\\
+% 
+% \end{tabbing}
 \end{proof}
 
 

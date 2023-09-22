@@ -1,3 +1,19 @@
+Case-of-known constructor is a transformation that essentially evaluates a case
+expression of a known constructor at compile time, by substituting in the
+matching alternative the case binder by the scrutinee and pattern variables by
+constructor arguments.
+%
+Intuitively, either the case binder is used exactly once to consume the
+resources of the scrutinee, or the pattern components whose matching
+constructor argument uses linear resources are used exactly once, so one of the
+substitutions is a no-op.  If the pattern variables are substituted by the
+matching scrutinee expressions, the expressions are still only used once, and
+if the case binder is substituted by the scrutinee, it is still used exactly
+once.
+%
+The proof follows trivially from the preservation theorem.
+
+
 \CaseOfKnownConstructorTheorem
 
 \begin{proof}~

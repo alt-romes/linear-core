@@ -120,7 +120,13 @@ If $\G; \D \vdash (\lambda \x[\pi][\s].~e)~e' : \vp$ then $\G; \D \vdash e[e'/x]
 
 \newcommand{\BinderSwapTheorem}{
 \begin{theorem}[Binder-swap preserves types]~\\
-If $\G \vdash \ccase{x}{\z[\ov{\D},x][\s]~\{\ov{\rho_i\to e_i}\}} : \vp$ then $\G \vdash \ccase{x}{\z[\ov{\D},x][\s]~\{\ov{\rho_i\to e_i[z/x]}\}} : \vp$
+If $\G; \D \vdash \ccase{x}{z~\{\ov{\rho_i\to e_i}\}} : \vp$ then $\G; \D \vdash \ccase{x}{z~\{\ov{\rho_i\to e_i[z/x]}\}} : \vp$
+\end{theorem}
+}
+
+\newcommand{\ReverseBinderSwapTheorem}{
+\begin{theorem}[Reverse-binder-swap preserves types]~\\
+If $\G; \D \vdash \ccase{x}{z~\{\ov{\rho_i\to e_i}\}} : \vp$ then $\G; \D \vdash \ccase{x}{z~\{\ov{\rho_i\to e_i[x/z]}\}} : \vp$
 \end{theorem}
 }
 
