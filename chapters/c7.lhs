@@ -2418,14 +2418,9 @@ to a function is not copied before it is reduced to a value.
 
 \input{language-v4/proofs/optimizations/CaseOfCase}
 
-\section{Conclusion}
-
-Should we have a conclusion for chapter 3?
-Or one for 3.2 only?
-
 % }}}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% {{{ Syntax Directed System
+% {{{ Conclusion
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % We give up on this section and instead describe "syntax-directedness" in the implementation chapter
 %
@@ -2446,6 +2441,40 @@ Or one for 3.2 only?
 % 
 % \todo[inline]{Rather, we define a syntax directed type system that infers usage environments while checking...}
 % 
+
+\section{Conclusion}
+
+In an optimising compiler with a typed and lazy intermediate language with
+linear types (of which GHC is the prime example), laziness is leveraged to
+heavily transform and rewrite the original programs into simpler forms.
+However, these optimisations push the interaction between linearity and
+laziness to the limits where linearity can no longer be seen syntactically,
+despite being maintained semantically, in the sense that linear resources are
+still used exactly once when the optimised program is run.
+
+In this chapter we explored linearity in the presence of laziness by example
+through the interactions of linear types with lazy (recursive) let bindings and
+case expressions that evaluate their scrutinee to Weak Head Normal. Most
+example programs were linear semantically, but not syntactically.
+
+We developed a linear type system, Linear Core, for an intermediate language
+akin to GHC Core, with laziness and linearity. In contrast to GHC Core's type
+system, or any other linear type system (to the best of our knowledge), our
+type system understands semantic linearity, and anecdotally accepts as
+well-typed all but one of the programs explored in the semantic linearity
+examples.
+%
+Crucially, we proved soundness of the type system, and proved multiple
+optimising transformations preserve linearity in it, despite most violating
+linearity in other linear type systems.
+
+Concluding, Linear Core is a suitable type system for linear, lazy,
+intermediate languages of optimising compilers such as GHC, as it understands
+linearity in the presence of laziness s.t. optimisations preserve types and
+linearity, and further unblocks optimisations influenced by linearity, e.g.
+inlining and call-by-name $\beta$-reduction for applications of (semantically)
+linear functions.
+
 % }}}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 

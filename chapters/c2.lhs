@@ -483,11 +483,11 @@ does not allow calling \texttt{head} on \texttt{Nil} (once again, its type,
 In practice, the idea of using more expressive types to enforce invariants at
 compile time, that is illustrated by this simple example, can be taken much
 further, e.g., to implement type-safe artificial neural
-networks\cite{cite:practicaldependenttypesinhaskell},
+networks~\cite{cite:practicaldependenttypesinhaskell},
 enforce size compatibility in operations between matrices and
-vectors\cite{cite:hmatrix}, to
+vectors~\cite{cite:hmatrix}, to
 implement red-black trees guaranteeing its invariants at compile-time, or to
-implement a material system in a game engine\cite{cite:ghengin}.
+implement a material system in a game engine~\cite{cite:ghengin}.
 % TODO: cite: https://blog.jle.im/entry/practical-dependent-types-in-haskell-1.html
 % TODO: haskell-servant?
 

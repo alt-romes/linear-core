@@ -2,7 +2,7 @@
 %format ⊸ = "\lolli"
 \chapter{Discussion}
 
-Preamble
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % {{{ Chapter: Linear Core as a GHC Plugin; Introduction
