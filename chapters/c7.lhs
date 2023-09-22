@@ -1928,8 +1928,59 @@ the fragments to be consumed through the other linear pattern-bound vars.
 
 \subsection{Linear Core Examples}
 
-\todo[inline]{Copy over examples from Linear Mini-Core. The ones in the last
-section, but also the ones in 2.2 e.g.}
+Linear Mini-Core~\cite{cite:linear-mini-core} lists examples of Core programs
+where semantic linearity must be understood in order for them to be well-typed.
+In this section, we type those examples in Linear Core ($\lambda^\pi_\Delta$).
+
+\subsubsection{Equations}
+
+The Linear Haskell function
+\begin{code}
+data C = Red | Green | Blue
+f :: C ⊸ C ⊸ C
+f Red q = q
+f p Green = p
+f Blue q = q
+\end{code}
+is compiled in Linear Core as
+\[
+\begin{array}{ll}
+\lambda p{:}_1C~q{:}_1C.~\ccase{p}{p2{:}_{\{p\}}C \\
+\{Red \to q \\
+; \_ \to \ccase{q}{q2{:}_{\{q\}}C\\
+  \{Green \to p2\\
+  ; \_ \to \ccase{p2}{p3{:}_{\{p\}}C \\
+  \{Blue \to q2\}} \}} \\
+\}}
+\end{array}
+\]
+...
+
+\subsubsection{Unrestricted Fields}
+
+The following is well-typed:
+\begin{code}
+data Foo where
+  Foo :: A ⊸ B -> C
+
+f = \x -> case x of z { Foo a b -> (z, b) }
+\end{code}
+
+\subsubsection{Wildcard}
+
+The following is ill-typed:
+\begin{code}
+f = \x -> case x of z { _ -> True }
+\end{code}
+
+\subsubsection{Duplication}
+
+The following is ill-typed:
+\begin{code}
+data Foo = Foo A
+f = \x -> case x of z { Foo a -> (z, a) }
+\end{code}
+
 
 % }}}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -2217,41 +2268,118 @@ might float an expensive computation involving $z$ out of the case alternative,
 where $z$ is out of scope but $x$ isn't:
 \[
 \begin{array}{l}
-\lambda x.~\lletrec{go~y = \ccase{x}{z~\{(a,b) \to \dots (expensive~z) \dots\}}}{\dots}\\
+\lambda x.~\lletrec{go~y = \ccase{x}{z~\{(a,b) \to \dots (expensive~z) \dots\} }}{\dots}\\
 \Longrightarrow_\textrm{Reverse binder swap}\\
-\lambda x.~\lletrec{go~y = \ccase{x}{z~\{(a,b) \to \dots (expensive~x) \dots\}}}{\dots}\\
+\lambda x.~\lletrec{go~y = \ccase{x}{z~\{(a,b) \to \dots (expensive~x) \dots\} }}{\dots}\\
 \Longrightarrow_\textrm{Float out}\\
-\lambda x.~\llet{t = expensive~x}{\lletrec{go~y = \ccase{x}{z~\{(a,b) \to \dots t \dots\}}}{\dots}}\\
+\lambda x.~\llet{t = expensive~x}{\lletrec{go~y = \ccase{x}{z~\{(a,b) \to \dots t \dots\} }}{\dots}}\\
 \end{array}
 \]
-If $go$ is a loop, by applying the reverse binder swap we now only compute $expensive~x$ once instead of in every loop iteration.
+If $go$ is a loop, by applying the reverse binder swap we now only compute
+$expensive~x$ once instead of in every loop iteration.
 
-(Link to ticket)
+Despite GHC applying the reverse binder swap transformation to core programs
+during Core-to-Core optimisation passes, this optimisation violates linearity
+when considered as a transformation on Linear Core programs. In practice, the
+optimisation preserves linearity in Core when applied as part of the GHC
+transformation pipeline only due to the occurrence analyser being naive with
+regard to semantic linearity. Initially, it might seem as though an expression
+in which a variable $x$ occurs both in the case scrutinee and in the
+alternatives is linear, for example:
+\[
+\G; \xl \vdash \ccase{x}{\_ \to x} : \s
+\]
+The reasoning is done by branching on whether $x$ refers to an expression in
+WHNF or an unevaluated thunk.
+\begin{itemize}
+\item If $x$ refers to an unevaluated expression, then scrutinizing it results
+in the expression bound by $x$ to be evaluated to WHNF. In a subsequent use of
+$x$ in the alternatives, $x$ refers to the evaluated scrutinee in WHNF, which
+must be consumed. Since $x$ is just another name (like the case binder) for the
+scrutinee in WHNF, we may use it instead of the case binder or pattern
+variables.
+\item If $x$ already refers to an expression evaluated to WHNF, then
+scrutinizing it in a case expression is a no-op, thus we may use it again (in
+mutual exclusion with the case binder and pattern variables)
+\end{itemize}
+%
+% This idea would be encoded by a possible rule like $$\TypeCaseVar$$
+%
+Even though, on its own, it makes intuitive sense that this example indeed uses
+$x$ linearly, when considered as part of complete type system, allowing this
+expression to be linear makes the system unsound.
 
-\begin{tabbing}
-(1) All optimisations preserve (semantic) linearity\\
-(2) If a function is (semantically) linear, then we can evaluate it using call-by-name and preserve linearity\\
-(3) Reverse binder swap is an optimisation\\
-(4) If reverse binder swap is applied to a case scrutinizing a linear resource in the body (`e`) of a linear function `f`, then the function is still linear by (1)\\
-(5) If we evaluate `f`, we do it call-by-name because of (2)\\
-(6) Call-by-name substitution of the linear argument in the body of a function has been reverse binder swapped doesn’t preserve linearity\\
-(7) Contradiction: By 3 and 1, `f` is linear after reverse-binder-swap. By 2, we can substitute arguments to `f` call-by-name and preserve linearity, which contradicts with 6 that says call-by-name substitution after reverse binder swap violates linearity\\
-\end{tabbing}
+We recall that $\beta$-reduction reduces an application of a linear function
+using call-by-name -- if we know the argument is used exactly once, a binding
+to share the result of computing the argument is unnecessary, so we instead
+substitute the argument expression for the linearly-bound variable in the
+$\lambda$-body directly.
 
-Conclusion:
-Either we need to forfeit that we can always substitute call-by-name linear
-function applications, or we forfeit that reverse binder swap preserves
-linearity (instead, it preserves a weaker notion of linearity understood by the
-syntatic-occurrence-analyzer)
+Consider the function application $$(\lambda x.~\ccase{x}{\_ \to x})~(use~y)$$
+where $y$ is a free linear variable. Assuming $\lambda x.~\ccase{x}{\_ \to x}$
+is a linear function by the reasoning above, $\beta$-reduction transforms the
+application in $(\ccase{x}{\_ \to x})[use~y/x]$, i.e. $\ccase{use~y}{\_ \to
+use~y}$. Now, $y$ is a linear variable \emph{consumed} in the scrutinee of the case
+expression, yet it occurs in the body of the case alternative as well --
+linearity is violated by using the linear resource $y$ twice.
 
-\todo[inline]{Reverse-binder-swap is only well-defined in certain scenarios
-where the optimizations don't apply call-by-name beta-reduction after the
-reverse-binder-swap optimization -- otherwise we would duplicate resources.
-In this case, it is not a matter of syntatic vs semantic linearity
-}
+Essentially, Linear Core would be unsound, and even duplicate resources, if the
+above kind of expressions, where linear variable scrutinees occur in the
+alternatives body, were well-typed, because of its interaction with the
+call-by-name reduction of linear functions. In this sense, the reverse binder
+swap is an optimisation that creates ill-typed expressions from well-typed
+ones, so it is deemed an invalid optimisation that doesn't preserve types in
+our system.
 
-\todo[inline]{On the reverse binder swap, mention
-From Call-by-name, call-by-value, call-by-need and the linear lambda calculus:
+The reverse binder swap not a problem in the GHC simplifier because of the
+weaker notion of linearity understood by occurrence analysis. Occurrence
+analysis is a static analysis pass which can be used to determine whether a
+lambda application can be $\beta$-reduced call-by-name, and $\ccase{x}{\_ \to
+x}$ is \emph{not} seen as using $x$ linearly by it. Thus, $\beta$-reduction is
+done with call-by-need on such an expression. If the above example were reduced
+with call-by-need:
+\[
+\begin{array}{l}
+(\lambda x.~\ccase{x}{\_ \to x})~(use~y)\\
+\Longrightarrow_\textrm{call-by-need $\beta$-reduction}\\
+\llet{x = use~y}{\ccase{y}{\_ \to y}}
+\end{array}
+\]
+Then the computation using $y$ would be let-bound, and $y$ used as a scrutinee
+variable, which is indeed an expression semantically linear in $x$.
+
+Concluding, in being able to understand more programs as linear, our type
+system allows more expressions to be considered linear for $\beta$-reduction
+without a let-allocation, however, it makes reverse binder swap an invalid
+transformation since its output, when considered linear, might violate
+linearity when further optimised.
+
+% (Link to ticket)
+% 
+% \begin{tabbing}
+% (1) All optimisations preserve (semantic) linearity\\
+% (2) If a function is (semantically) linear, then we can evaluate it using call-by-name and preserve linearity\\
+% (3) Reverse binder swap is an optimisation\\
+% (4) If reverse binder swap is applied to a case scrutinizing a linear resource in the body (`e`) of a linear function `f`, then the function is still linear by (1)\\
+% (5) If we evaluate `f`, we do it call-by-name because of (2)\\
+% (6) Call-by-name substitution of the linear argument in the body of a function has been reverse binder swapped doesn’t preserve linearity\\
+% (7) Contradiction: By 3 and 1, `f` is linear after reverse-binder-swap. By 2, we can substitute arguments to `f` call-by-name and preserve linearity, which contradicts with 6 that says call-by-name substitution after reverse binder swap violates linearity\\
+% \end{tabbing}
+
+% Conclusion:
+% Either we need to forfeit that we can always substitute call-by-name linear
+% function applications, or we forfeit that reverse binder swap preserves
+% linearity (instead, it preserves a weaker notion of linearity understood by the
+% syntatic-occurrence-analyzer)
+
+% \todo[inline]{Reverse-binder-swap is only well-defined in certain scenarios
+% where the optimizations don't apply call-by-name beta-reduction after the
+% reverse-binder-swap optimization -- otherwise we would duplicate resources.
+% In this case, it is not a matter of syntatic vs semantic linearity
+% }
+
+\todo[inline]{
+Mention, from ``Call-by-name, call-by-value, call-by-need and the linear lambda calculus'':
 The call-by-name calculus is not entirely suitable for reasoning about
 functional programs in lazy languages, because the beta rule may copy the
 argument of a function any number of times. The call-by-need calculus uses a
@@ -2260,39 +2388,40 @@ calculus. But call-by-need, like call-by-value, guarantees that the argument
 to a function is not copied before it is reduced to a value.
 }
 
-It's also interesting to note that reverse-binder-swap preserves linearity under pure call-by-need but not under call-by-name, because
-(In the sense that if EVEN linear functions reduce call-by-need rather than call-by-name, then it would preserve optimisations)
+% It's also interesting to note that reverse-binder-swap preserves linearity under pure call-by-need but not under call-by-name, because
+% (In the sense that if EVEN linear functions reduce call-by-need rather than call-by-name, then it would preserve optimisations)
 
-Reduce call-by-name linear function application
-\begin{code}
-f y = (\x. case x of _ -> x:1) (h y)
-===>
-f y = (case x of _ -> x)[h y/x]
-===>
-f y = (case h y of _ -> h y) -- consume y twice.
-\end{code}
-
-Vs. call-by-need
-\begin{code}
- (\y = (\x. case x of _ -> x:1) (h y)) e
-===>
-    let y = e in
-       let x = h y in
-        case x of _ -> x
-===>
-       let x = h e_v in
-        case x of _ -> x
-===>
-        case x_v of _ -> x_v
-\end{code}
+% Reduce call-by-name linear function application
+% \begin{code}
+% f y = (\x. case x of _ -> x:1) (h y)
+% ===>
+% f y = (case x of _ -> x)[h y/x]
+% ===>
+% f y = (case h y of _ -> h y) -- consume y twice.
+% \end{code}
+% 
+% Vs. call-by-need
+% \begin{code}
+%  (\y = (\x. case x of _ -> x:1) (h y)) e
+% ===>
+%     let y = e in
+%        let x = h y in
+%         case x of _ -> x
+% ===>
+%        let x = h e_v in
+%         case x of _ -> x
+% ===>
+%         case x_v of _ -> x_v
+% \end{code}
 
 \subsubsection{Case of Case}
 
-\CaseOfCaseTheorem
+\input{language-v4/proofs/optimizations/CaseOfCase}
 
-% \section{Conclusion}
-% 
-% Concluding, $\dots$
+\section{Conclusion}
+
+Should we have a conclusion for chapter 3?
+Or one for 3.2 only?
 
 % }}}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
