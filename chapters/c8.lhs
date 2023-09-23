@@ -2,10 +2,33 @@
 %format ⊸ = "\lolli"
 \chapter{Discussion}
 
+Linear Core is an intermediate language with a type system system that
+understands (semantic) linearity in the presence of laziness, suitable for
+optimising compilers with these characteristics which leverage laziness and
+(possibly) linearity in its transformations.
 
+In this chapter, we discuss an implementation of Linear Core as a core plugin
+for the Glasgow Haskell Compiler which typechecks linearity of the Core
+resulting from desugaring and from each optimisation pass. The prototype
+implementation of Linear Core as a plugin successfully validates linearity of
+Core throughout compilation of linearity-heavy libraries, namely
+\texttt{linear-base} and \texttt{linear-smc}. Additionally, we discuss the
+implementation of the Linear Core type system directly in the Glasgow Haskell Compiler.
+% , except for multiplicity coercions which our system doesn't handle~\ref{sec}.
+%
+Then, we review the literature related to our own work, highlighting Linear
+Core's novel contributions in light of the existing prominent works in the
+area, or how they otherwise compare.
+% (including linearity in a lazy, evaluation models in terms of linearity, and
+% the Core system).
+%
+Lastly, we consider future work deemed out of scope for our work and for the
+Linear Core type system (most importantly, we discuss so-called
+\emph{multiplicity coercions} to handle the interaction between linearity and
+coercions, a key feature of Core which we left out our system); and conclude.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% {{{ Chapter: Linear Core as a GHC Plugin; Introduction
+% {{{ Linear Core as a GHC Plugin; Introduction
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \section{Linear Core as a GHC Plugin}
@@ -75,6 +98,10 @@ turn entails using $\lctag{\lctag{x}{K_1}}{Pair_1}$, which has two tags. In this
 \item Consume $\lctag{\lctag{x}{K_1}}{Pair_1}$, the usage environment of $n$, by removing it from the typing environment.
 \end{itemize}
 
+\subsection{Merging Linear Core into GHC}
+
+Describe the ticket for linear Core, the pending MRs, and the difficulty in
+even annotating the bind site across optimisations regardless of multiplicities.
 
 % }}}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -211,17 +238,25 @@ linearity into account.
 % the lambda is linearly used and therefore floating-in is beneficial and
 % floating-out not as productive.
 
+\subsection{Call-by-value, call-by-name and call-by-value...}
+
 % }}}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % {{{ Future Work
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Future Work\label{sec:future-work}}
 
+Our work ...
+
 \begin{itemize}
+
 \item Linear(X), a linear type system defined by the underlying definition of evaluation (which in turn implies how consuming a resource is defined)
+
 \item Implementation in Core
+
 \item Generalization to source level language, being more permissive in the
 handling of resources imposes less burden on the programmer
+
 \item It's harder to typecheck linearity like this in the source level because
 of the interaction with other source features, but seems feasible and an
 improvement to the usability of linear types. It allows more lazy functional
@@ -229,23 +264,68 @@ programming idioms with linear types (also because laziness and strictness is le
 
 \item Beautiful inference algorithm for recursive usage environments -- insight
 that looks like inference for recursive function principle types, but haven't
-figured it out
-
-\item Beautiful inference of usage environments - connection to type inference / hindley milner
+figured it out -- connection to type inference / hindley milner
 
 \item We kind of ignore the multiplicity semiring. We should discuss
 how we don't do ring operations ... but that's kind of wrong.
 
-\item We know the case binder to ALWAYS be in WHNF, perhaps there could
-be some annotation on the case binder s.t. we know nothing happens when we
-scrutinize it as a single variable
+% \item We know the case binder to ALWAYS be in WHNF, perhaps there could
+% be some annotation on the case binder s.t. we know nothing happens when we
+% scrutinize it as a single variable
 
-\item Should we discuss this? It would be fine, but we're not able to see this because of call-by-name substitution. I say yes, in the reverse binder swap section
-\begin{code}
-f x = case x of z { _ -> x }
-\end{code}
+\item Mechanizing the system and metatheory
 
 \end{itemize}
+
+\subsubsection{Multiplicity Coercions}
+
+\todo[inline]{Relate to levity polymorphism and runtime rep coercions (Sam)}
+
+Linear Core doesn't have type equality coercions, a flagship feature of GHC
+Core's type system. Coercions, briefly explained in Section~\ref{sec:core},
+allow the Core intermediate language to encode a panoply of Haskell source
+type-level features such as GADTs (briefly discussed in~\ref{sec:background-gadts}), type families or newtypes.
+
+In Linear Haskell, multiplicities are introduced as annotations to function
+arrows which specify the linearity of the function. In practice,
+multiplicities are simply types of kind |Multiplicity|, where |One| and |Many|
+are the type constructors of the kind |Multiplicity|; multiplicity polymorphism
+follows from (any kind) type polymorphism, where multiplicity variables are
+just type variables. Encoding multiplicities as types allows Haskell programs
+to leverage features available for types to naturally extend to multiplicities
+as well.
+%
+For example, we might define, using a GADT |SBool| and a type family |If|, the
+following program, which is linear in the second argument of |dep| if the first
+argument is |STrue| and unrestricted otherwise:
+%
+% ROMES:TODO: fazer exemplos laranja (linear but we can't see it)
+% \begin{laranja}
+\begin{code}
+data SBool :: Bool -> Type where
+  STrue :: SBool True
+  SFalse :: SBool False
+
+type family If b t f where
+  If True t _ = t
+  If False _ f = f
+
+dep :: SBool b -> Int %(If b One Many) -> Int
+dep STrue x = x
+dep SFalse _ = 0
+\end{code}
+% \end{laranja}
+%
+In theory, this example is linear and should be accepted. However, in practice,
+the example is rejected by the GHC Core type checker. Critically, Core doesn't
+currently understand so-called \emph{multiplicity coercions}. Even though after
+matching on |STrue| we have access to a coercion from the function multiplicity
+$m$ to $1$ ($m \sim 1$), we cannot use this coercion to determine whether the
+usages of the linear resources match the multiplicity.
+
+Studying the interaction between coercions and multiplicities is a main avenue
+of future work for Linear Core. In GHC, multiplicity coercions are tracked by
+issue $19517$\footnote{https://gitlab.haskell.org/ghc/ghc/-/issues/19517}.
 
 % }}}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

@@ -2444,6 +2444,9 @@ to a function is not copied before it is reduced to a value.
 
 \section{Conclusion}
 
+\todo[inline]{Se calhar esta secção quase dá como capitulo final, e removo
+daqui. Pq não sei mt bem o que vou escrever na outra que não seja isto...}
+
 In an optimising compiler with a typed and lazy intermediate language with
 linear types (of which GHC is the prime example), laziness is leveraged to
 heavily transform and rewrite the original programs into simpler forms.

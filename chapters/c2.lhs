@@ -403,7 +403,7 @@ introduce Generalized Algebraic Data Types (GADTs) and create a list type
 indexed by size for which we can write a completely safe \texttt{head} function
 by expressing that the size of the list must be at least one, at the type level.
 
-\subsection{Generalized Algebraic Data Types}
+\subsection{Generalized Algebraic Data Types\label{sec:background-gadts}}
 
 \textbf{GADTs}~\cite{Cheney2003FirstClassPT,10.1145/1159803.1159811,cite:outsideinx} are an advanced Haskell feature
 that allows users to define data types as they would common algebraic data
@@ -654,7 +654,7 @@ $f$ and $g$ ($m$ will unify with $1$ and $\omega$ at the call sites).
     % \item Talvez na próxima. Que relaciona o systemFC com o calculo lambda linear
 % \end{itemize}
 
-\section{Evaluation Strategies}
+\section{Evaluation Strategies\label{sec:background:evaluation-strategies}}
 
 \todo[inline]{Edit first draft. Não gosto particularmente do que escrevi}
 \todo[inline]{Cite Ariola's work, Plotkins? Who to cite for call-by-value?}
