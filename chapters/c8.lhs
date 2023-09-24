@@ -123,7 +123,7 @@ accounts for linearity. In this context, we intend to introduce a linearly typed
 System $F_C$ with multiplicity annotations and typing rules to serve
 as a basis for a linear Core. Critically, this Core linear language
 must account for call-by-need evaluation semantics and be valid in
-light of Core-to-Core optimizing transformations.
+light of Core-to-Core optimising transformations.
 
 % \parawith{System FC}
 
@@ -177,7 +177,7 @@ which presents its own challenges.
 Nonetheless, while the Linear Haskell work keeps Core unchanged, its
 implementation in GHC does modify and extend Core with linearity/multiplicity
 annotations, and said extension of Core with linear types does not account for
-optimizing transformations and the non-strict semantics of Core.
+optimising transformations and the non-strict semantics of Core.
 
 Our work on linear Core intends to overcome the limitations of linear types as
 they exist in Core, i.e. integrating call-by-need semantics and validating the
@@ -214,11 +214,11 @@ benefit from linearity analysis and, in order to improve those transformation,
 linear-type-inspired systems were created specifically for the purpose of the
 transformation.
 
-By fully supporting linear types in Core, these optimizing transformations
+By fully supporting linear types in Core, these optimising transformations
 could be informed by the language inherent linearity, and, consequently, avoid
 an ad-hoc or incomplete linear-type inference pass custom-built for
 optimizations. Additionally, the linearity information may potentially be used
-to the benefit of optimizing transformations that currently don't take any
+to the benefit of optimising transformations that currently don't take any
 linearity into account.
 
 % \begin{itemize}
@@ -229,7 +229,7 @@ linearity into account.
 % \item Ser ad-hoc incompleto ou nao feito de todo
 % \end{itemize}
 
-% \parawith{A transformation based optimizer for Haskell}
+% \parawith{A transformation based optimiser for Haskell}
 % They discuss a cardinality analysis based on a linear type system but create (an
 % ad-hoc?) one suited. Comparison in the measure of creating optimizations based
 % on linearity.

@@ -115,13 +115,13 @@ which is used as an internal consistency tool to validate the transformations a
 Haskell program undergoes during compilation.
 %
 However, the current Core type-checker rejects many linearly valid programs
-that originate from Core-to-Core optimizing transformations. As such, linearity
+that originate from Core-to-Core optimising transformations. As such, linearity
 typing is effectively disabled, for otherwise disabling optimizations would be
 far more devastating.
 %
 % This dissertation presents an extension to Core's type system that accepts a
 The goal of our proposed dissertation is to develop an extension to Core's type
-system that accepts a larger amount of programs and verifies that optimizing
+system that accepts a larger amount of programs and verifies that optimising
 transformations applied to well-typed linear Core produce well-typed linear
 Core.
 %
@@ -283,11 +283,11 @@ due to the following reasons:
         intermediate language into which Haskell is
         translated. Core is a minimal, explicitly typed,
         functional language, to which multiple
-        Core-to-Core optimizing transformations are
+        Core-to-Core optimising transformations are
         applied during compilation. Due to Core's minimal design, typechecking
         Core programs is very efficient and doing so serves as a sanity check to the
-        correction of the source transformations. If the resulting optimized
-        Core program fails to typecheck, the optimizing
+        correction of the source transformations. If the resulting optimised
+        Core program fails to typecheck, the optimising
         transformations (are very likely to) have introduced an error
         in the resulting program. We present Core (and its formal
         basis, System~$F_C$~\cite{cite:systemfc}) in Section~\ref{sec:core}.
@@ -324,7 +324,7 @@ due to the following reasons:
 % extending Core with linear types.
 %
 Much like a typed Core ensures that the translation from Haskell (dubbed
-\emph{desugaring}) and the subsequent optimizing transformations applied to
+\emph{desugaring}) and the subsequent optimising transformations applied to
 Core are correctly implemented, a \emph{linearly typed} Core guarantees that
 linear resource usage in the source language is not violated by the translation
 process and the compiler optimization passes.
@@ -337,18 +337,18 @@ duplicated a pointer to heap-allocated memory that was previously just used
 once and then freed in the original program.
 %TODO: linearidade pode informar otimizacoes
 %
-Even more, linearity in Core can inform Core-to-Core optimizing
+Even more, linearity in Core can inform Core-to-Core optimising
 transformations~\cite{cite:let-floating,peytonjones1997a,cite:linearhaskell},
 such as inlining and $\beta$-reduction, to produce more performant programs.
 
 % Linear core actually not so good
 % Additionally, while not yet a reality, linearity in Core could be used to inform
 % certain program optimizations, i.e. having linear types in Core could be used to
-% further optimize certain programs and, therefore, benefit the runtime
+% further optimise certain programs and, therefore, benefit the runtime
 % performance characteristics of our programs. For example, Linear Haskell\cite{}
 % describes as future work an improvement to the inlining optimization: Inlining
 % is a centerpiece program optimization primarily because of the subsequent
-% optimizing opportunities unlocked by inlining. However, it relies on a heuristic
+% optimising opportunities unlocked by inlining. However, it relies on a heuristic
 % process known as \emph{cardinality analysis} to discover safe inlining
 % opportunities. Unfortunately, heuristics can be volatile and fail in identifying
 % crucial inlining opportunities resulting in programs that fall short of their
@@ -359,7 +359,7 @@ such as inlining and $\beta$-reduction, to produce more performant programs.
 % While the current version of Core is linearity-aware (i.e.,~Core has so-called
 % multiplicity annotations in variable binders), its type system does not (fully)
 % validate the linearity constraints in the desugared program and essentially
-% fails to type-check programs resulting from several optimizing transformations
+% fails to type-check programs resulting from several optimising transformations
 % that are necessary to produce efficient object code. The reason for this latter
 % point is not evidently clear:
 % %
@@ -378,7 +378,7 @@ if we can typecheck linearity in the surface level Haskell why do we fail to do
 so in Core?
 
 The desugaring process from surface level Haskell to Core, and the subsequent
-Core-to-Core optimizing transformations, eliminate and rearrange most of the
+Core-to-Core optimising transformations, eliminate and rearrange most of the
 syntactic constructs through which linearity checking is performed -- often
 resulting in programs completely different from the original, especially due to
 the flexibility laziness provides a compiler in the optimisations it may
@@ -397,7 +397,7 @@ f :: a ⊸ a
 f x = let y = use x in x
 \end{code}
 
-The Core optimizing transformations expose a fundamental limitation of Core's
+The Core optimising transformations expose a fundamental limitation of Core's
 current linear type system -- it does not account for Core's call-by-need
 evaluation model, and thus a whole class of programs that are linear under the
 lens of lazy evaluation are rejected by Core's current linear type system.
@@ -446,7 +446,7 @@ transformations in linearity-heavy Haskell libraries, such as
 % In fact, we are not aware of any linear type system which
 % understands linearity in the presence of laziness.
 
-% \todo[inline]{In reality, the Core optimizing transformations only expose a
+% \todo[inline]{In reality, the Core optimising transformations only expose a
 % more fundamental issue in the existing linear types in Haskell -- its mismatch
 % with the evaluation model. In call-by-need languages a mention of a variable
 % might not entail using that variable - it depends on it being required or not.
@@ -456,8 +456,8 @@ transformations in linearity-heavy Haskell libraries, such as
 % annotations such that we can desugar all of Linear Haskell and validate it
 % accross transformations taking into consideration Core's call-by-need
 % semantics, we can validate the surface level linear type's implementation, we
-% can guarantee optimizing transformations do not destroy linearity, and we might
-% be able to inform optimizing transformations with linearity.
+% can guarantee optimising transformations do not destroy linearity, and we might
+% be able to inform optimising transformations with linearity.
 
 % Consider the following recursive let
 % definition, where $x$ is a linear variable that must be used exactly once, would
@@ -472,12 +472,12 @@ transformations in linearity-heavy Haskell libraries, such as
 % \end{code}
 
 % Alternatively, one might imagine Haskell being desugared into an intermediate
-% representation to which multiple different optimizing transformations are
+% representation to which multiple different optimising transformations are
 % applied but on which no integrity checks are done
 
 % Despite \emph{want} a linearly-typed core
 % because a linearly-typed Core ensures that desugaring
-% Haskell and optimizing transformations don't destroy linearity.
+% Haskell and optimising transformations don't destroy linearity.
 
 % In theory, because the Core language must also know about linearity, we should
 
@@ -487,7 +487,7 @@ transformations in linearity-heavy Haskell libraries, such as
 % In theory, we should typecheck \emph{linearity} in \textbf{Core} just the same
 % as the typechecking verification we had with the existing type annotations prior
 % to the addition of linear types, that is, our Core program with linearity
-% annotations should be typechecked after the optimizing transformations...
+% annotations should be typechecked after the optimising transformations...
 
 \todo[inline]{We should discuss the alternative motivation of figuring out how
 to typecheck linearity in the presence of laziness on its own, why its hard and
@@ -505,7 +505,7 @@ the programmer so much}
 
 \todo[inline]{Saying, finally, what we are going to do, and that our system is
 capable of seeing linearity in all of these programs, and more -- it is capable
-of typechecking almost all optimizing transformations we studied}
+of typechecking almost all optimising transformations we studied}
 
 \todo[inline]{Conclude by explaining that the document is structured in such a
 way that the payload starts in chapter 3 after delivering the background

@@ -7,7 +7,7 @@ short, we discuss linear types, the Haskell programming language, linear types
 as they exist in Haskell (dubbed Linear Haskell), evaluation strategies,
 Haskell's main intermediate language (Core) and its formal foundation (System
 $F_C$) and, finally, an overview of GHC's pipeline with explanations of crucial
-Core-to-Core optimizing transformations that we'll try to validate.
+Core-to-Core optimising transformations that we'll try to validate.
 
 \section{Linear Types\label{sec:linear-types}}
 
@@ -829,7 +829,7 @@ compiler.
 
 \begin{itemize}
 \item Core allows us to reason about the entirety of Haskell in a much smaller
-functional language. Performing analysis, optimizing transformations, and code
+functional language. Performing analysis, optimising transformations, and code
 generation is done on Core, not Haskell. The implementation of these compiler passes is
 significantly simplified by the minimality of Core.
  
@@ -839,8 +839,8 @@ type-checking Core serves as an internal consistency check for the desugaring
 and optimization passes.
 %
 The Core typechecker provides a verification layer for the correctness of
-desugaring and optimizing transformations (and their implementations) because
-both desugaring and optimizing transformations must produce well-typed Core.
+desugaring and optimising transformations (and their implementations) because
+both desugaring and optimising transformations must produce well-typed Core.
  
 \item Finally, Core's expressiveness serves as a sanity-check for
 all the extensions to the source language -- if we can desugar a
@@ -955,7 +955,7 @@ compilation strategy, we highlight the inherent incompatibility of
 linearity with Core / System~$F_C$ as a current flaw in GHC that
 invalidates all the benefits of Core wrt linearity.  Thus, we must
 extend System $F_C$ (and, therefore, Core) with linearity in order to
-adequately validate the desugaring and optimizing transformations as
+adequately validate the desugaring and optimising transformations as
 linearity preserving, ensuring we can reason about Linear Haskell in
 its Core representation.
 
@@ -1037,12 +1037,12 @@ constructors are transformed into coercions).
 % TODO: Split worker/wrapper into its own section?
 
 The Core-to-Core transformations are the most important set of
-optimizing transformations that GHC performs during compilation. By design, the
+optimising transformations that GHC performs during compilation. By design, the
 frontend of the pipeline (parsing, renaming, typechecking and desugaring) does
 not include any optimizations -- all optimizations are done in Core.
 The transformational approach focused on Core, known as \emph{compilation by
   transformation}, allows transformations to be both modular and simple.
-Each transformation focuses on optimizing a specific set of
+Each transformation focuses on optimising a specific set of
 constructs, where applying a transformation often exposes opportunities for
 other transformations to fire. Since transformations are modular, they
 can be chained and iterated in order to maximize the optimization potential (as
@@ -1053,21 +1053,21 @@ shown in Figure~\ref{fig:eg:transformations}).
 % I know this paragraph is useless :)
 However, due to the destructive nature of transformations (i.e. applying a
 transformation is not reversible), the order in which transformations
-are applied determines how well the resulting program is optimized.
+are applied determines how well the resulting program is optimised.
 As such, certain orderings of optimizations can hide 
 optimization opportunities and block them from firing. This phase-ordering
-problem is present in most optimizing compilers.
+problem is present in most optimising compilers.
 
 % Techniques such as
 % equality saturation~\cite{} bypass the phase-ordering problem because all
-% optimizing transformations are applied non-destructively; however, it's a much
+% optimising transformations are applied non-destructively; however, it's a much
 % more expensive technique that has not been .
 %
 % transformation based approach to optimization allows each producing a Core
-% program fed to the next optimizing transformation.
+% program fed to the next optimising transformation.
 
 Foreshadowing the fact that Core is the main object of our study, we want to type-check
-linearity in Core before \emph{and} after each optimizing transformation is
+linearity in Core before \emph{and} after each optimising transformation is
 applied (Section~\ref{sec:core}).
 %
 In light of it, we describe below some of the individual Core-to-Core
@@ -1076,7 +1076,7 @@ the literature, the first set of Core-to-Core optimizations was described
 in~\cite{santos1995compilation,peytonjones1997a}. These were subsequently
 refined and
 expanded~\cite{peytonjones2002secrets,baker-finch2004constructed,maurer2017compiling,Breitner2016_1000054251,sergey_vytiniotis_jones_breitner_2017}.
-In Figure~\ref{fig:eg:transformations} we present an example that is optimized
+In Figure~\ref{fig:eg:transformations} we present an example that is optimised
 by multiple transformations to highlight how the compilation by transformation
 process produces performant programs.
 
@@ -1472,7 +1472,7 @@ The code generation needn't be changed to account for the work we will do in
 the context of this thesis, so we only briefly describe it.
 
 After the core-to-core pipeline is run on the Core program and produces
-optimized Core, the program is translated down to the Spineless Tagless
+optimised Core, the program is translated down to the Spineless Tagless
 G-Machine (STG) language~\cite{jones_1992}. STG language is a small functional
 language that serves as the abstract machine code for the STG abstract machine
 that ultimately defines the evaluation model and compilation of Haskell through

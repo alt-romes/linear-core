@@ -142,9 +142,9 @@ optimising compiler $\dots$}
 %system, not Core. Nonetheless, in practice, Core is linearity-aware.
 %
 %We want Core and its type system to give us guarantees about desugaring and
-%optimizing transformations with regard to linearity just as Core does for types
+%optimising transformations with regard to linearity just as Core does for types
 %-- a linearly typed Core ensures that linearly-typed programs remain correct
-%both after desugaring and across all GHC optimizing transformations,
+%both after desugaring and across all GHC optimising transformations,
 %i.e.~linearity is preserved when desugaring and optimisations should not
 %destroy linearity.
 %
@@ -234,12 +234,12 @@ optimising compiler $\dots$}
 %produced by Core transformations.
 %
 %% Therefore, the Core linear type-checker rejects various valid programs after
-%% desugaring and optimizing transformations, because linearity is seemingly
+%% desugaring and optimising transformations, because linearity is seemingly
 %% violated.
 %%
 %The current solution to valid programs being rejected by Core's linear
 %type-checker is to effectively disable the linear type-checker since,
-%alternatively, disabling optimizing transformations which violate linearity
+%alternatively, disabling optimising transformations which violate linearity
 %incurs significant performance costs.
 %%
 %However, we believe that GHC's transformations are correct, and it is the
@@ -915,7 +915,7 @@ resources are consumed to be able to use the case binder unrestrictedly. This
 one doesn't typecheck, but is still semantically linear}
 This particular example has a known constructor being scrutinized which might
 seem like an unrealistic example, but we recall that during the transformations
-programs undergo in an optimizing compiler, many programs such as this
+programs undergo in an optimising compiler, many programs such as this
 naturally occur (e.g. if the definition of a function were inlined in the scrutinee).
 
 Moreover, in a branch of a constructor without linear fields we also know the
@@ -1080,7 +1080,7 @@ programs (highlighted with \colorbox{notyet}{\notyetcolorname})
 from Section~\ref{sec:semantic-linearity-examples}, which Core currently
 rejects.
 %
-Besides type safety, we prove that multiple optimizing Core-to-Core
+Besides type safety, we prove that multiple optimising Core-to-Core
 transformations preserve linearity in Linear Core. These same transformations
 don't preserve linearity under Core's current type system. As far as we know,
 we are the first to prove optimisations preserve types in a non-strict linear
@@ -2197,11 +2197,11 @@ The proofs for preservation, progress, irrelevance, and for the substitution lem
 \subsection{Optimisations preserve linearity\label{sec:optimisations-preserve-types-meta}}
 
 One of the primary goals of the Linear Core type system is being suitable for
-intermediate representations of optimizing compilers for lazy languages with
-linear types. In light of this goal, we prove that \emph{multiple optimizing
+intermediate representations of optimising compilers for lazy languages with
+linear types. In light of this goal, we prove that \emph{multiple optimising
 transformations} are type preserving in Linear Core, and thus preserve linearity.
 
-The optimizing transformations proved sound wrt Linear Core in this section
+The optimising transformations proved sound wrt Linear Core in this section
 have been previously explained and motivated in
 Section~\ref{sec:core-to-core-transformations}.
 %
