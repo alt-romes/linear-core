@@ -539,7 +539,7 @@ implying using |x|, and therefore uses of |z| imply using |x|, however, if
 neither is used, then |x| isn't used. Since |x| is effectively discarded, this
 example also violates linearity.
 
-\parawith{Summary}
+% \parawith{Summary}
 The examples so far build an intuition for semantic linearity in the presence
 of lazy let bindings. In essence, an unused let binding doesn't consume any
 resources, and a let binding used exactly once consumes its resources exactly
@@ -710,18 +710,18 @@ We additionally note that a strongly connected group of recursive bindings
 consume the same set of resources -- if all bindings are potentially reachable,
 then all linear resources are too.
 
-\parawith{Summary}
-Recursive let bindings behave like non-recursive let bindings in that if they
-aren't consumed, the resources they depend on aren't consumed either.  However,
-recursive let bindings are defined in terms of themselves, so the set of linear
-resources that will be consumed when the binder is evaluated is also defined in
-terms of itself (we need it to determine what resources are used when we
-recurse). We can intuitively think of this set of linear resources that will be
-consumed as a solution to a set of equations defined by a group of mutually
-recursive bindings, which we are able to reason about without an algorithm for
-simpler programs. In our work, the core type system isn't concerned with
-deriving said solution, but we present a simple algorithm for inferring with
-our implementation.
+% \parawith{Summary}
+Summarising, recursive let bindings behave like non-recursive let bindings in
+that if they aren't consumed, the resources they depend on aren't consumed
+either.  However, recursive let bindings are defined in terms of themselves, so
+the set of linear resources that will be consumed when the binder is evaluated
+is also defined in terms of itself (we need it to determine what resources are
+used when we recurse). We can intuitively think of this set of linear resources
+that will be consumed as a solution to a set of equations defined by a group of
+mutually recursive bindings, which we are able to reason about without an
+algorithm for simpler programs. In our work, the core type system isn't
+concerned with deriving said solution, but we present a simple algorithm for
+inferring it with our implementation.
 
 \subsubsection{Case expressions}
 
@@ -964,7 +964,8 @@ alternative, if the scrutinee is not in WHNF, we \emph{must} use the case
 binder, as it's the only way to linearly consume the result of evaluating the
 scrutinee to WHNF.
 
-\parawith{Summary} Case expressions evaluate their scrutinees to WHNF,
+% \parawith{Summary}
+In summary, case expressions evaluate their scrutinees to WHNF,
 introduce a case binder, and bind pattern variables. If the scrutinee is
 already in WHNF, all resources occurring in it are still available in the case
 alternative, alongside the case binder and the pattern-bound variables. In the
