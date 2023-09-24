@@ -73,10 +73,10 @@ runLinearCore pgr = do
 
   case runIdentity $ runLinearCoreT bindingsMap (checkProgram lcprg) of
     Left e -> do
-      pprTraceM "Failed to typecheck linearity!" (ppr pgr)
+      -- pprTraceM "Failed to typecheck linearity!" (ppr pgr)
       return [text e]
     Right x -> do
-      pprTraceM "Safe prog!" (ppr x)
+      -- pprTraceM "Safe prog!" (ppr x)
       return []
 
 --------------------------------------------------------------------------------
@@ -87,7 +87,7 @@ type LinearCoreM = LinearCoreT Identity
 
 checkProgram :: LCProgram -> LinearCoreM LCProgram
 checkProgram prog = do
-  pprTraceM "checkProgram" (ppr prog)
+  -- pprTraceM "checkProgram" (ppr prog)
   traverse checkBind prog
 
 -- ROMES:TODO: use isGlobalId and setTopLevelBindingName to set the binding
@@ -118,7 +118,7 @@ checkBind (Rec bs) = do
       -- environments with a linear multiplicity.
       -- In practice, when recursive binders are used, we'll try to use the linear variables more than once, if they exist more than once
   recUes <- mapM (\i -> reconstructUe i.id recUsages inScope) ids
-  pprTraceM "Has checked naiveUsages" (ppr recUsages $$ ppr recUes)
+  -- pprTraceM "Has checked naiveUsages" (ppr recUsages $$ ppr recUes)
   let ids' = L.zipWith (\i b -> LCVar i.id (deltaBinding b)) ids recUes
 
   -- Must typecheck rhss' again with the correct recursive usage environments
@@ -163,10 +163,9 @@ checkExpr expr = case expr of
     -> pprTrace "Case expression" (ppr casee) $ do
 
       (e', ue) <- restoringState $ record $ checkExpr e
-      pprTraceM "Making irrelevant usage environment" (ppr ue)
-      -- ROMES:TODO: Make the resources irrelevant in the actual context, not only in the usage environment
+      -- pprTraceM "Making irrelevant usage environment" (ppr ue)
       makeEnvResourcesIrrelevant ue
-      pprTraceM "Done irr" Ppr.empty
+      -- pprTraceM "Done irr" Ppr.empty
       Case e'
            (LCVar b.id (deltaBinding ue))
            ty
@@ -219,7 +218,7 @@ checkAlt ue alt@(Alt (DataAlt con) args rhs) = pprTrace "ALTN con" (ppr alt) $ d
   -- Add the tag the usage environment with the linear resources with this constructor and an index for each
   -- It will ensure that when we consume the resources by using this environment, we'll just split the resource according to the tag.
   let linear_args' = L.zipWith (\a i -> (a.id, deltaBindingTagged con i ue)) linear_args [1..]
-  pprTraceM "Linear args in ALTN con:" (ppr linear_args')
+  -- pprTraceM "Linear args in ALTN con:" (ppr linear_args')
 
           -- First, extend computation with unrestricted resources
   rhs' <- extends (L.map ((, LambdaBound (Relevant ManyTy)) . (.id)) unrestricted_args)

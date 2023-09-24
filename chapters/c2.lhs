@@ -6,8 +6,9 @@ In this section we review the concepts required to understand our work. In
 short, we discuss linear types, the Haskell programming language, linear types
 as they exist in Haskell (dubbed Linear Haskell), evaluation strategies,
 Haskell's main intermediate language (Core) and its formal foundation (System
-$F_C$) and, finally, an overview of GHC's pipeline with explanations of crucial
-Core-to-Core optimising transformations that we'll try to validate.
+$F_C$) and, finally, an overview of GHC's pipeline with explanations of
+multiple Core-to-Core optimising transformations that we prove type-preserving
+in our type system.
 
 \section{Linear Types\label{sec:linear-types}}
 
@@ -656,11 +657,12 @@ $f$ and $g$ ($m$ will unify with $1$ and $\omega$ at the call sites).
 
 \section{Evaluation Strategies\label{sec:background:evaluation-strategies}}
 
-\todo[inline]{Edit first draft. Não gosto particularmente do que escrevi}
+\todo[inline]{Edit first draft. Acho que ainda está confuso}
 \todo[inline]{Cite Ariola's work, Plotkins? Who to cite for call-by-value?}
 
-Unlike most mainstream programming languages, Haskell has a so called
-\emph{lazy} evaluation strategy, namely \emph{call-by-need}.
+Unlike most mainstream programming languages, Haskell has so called
+\emph{non-strict} evaluation semantics due to its \emph{lazy} evaluation
+strategy, also known as \emph{call-by-need}.
 \emph{Call-by-need} evaluation dictates that an expression is only evaluated
 when it is needed (so no work is done to evaluate expressions that are unused
 at runtime), and the values that are indeed evaluated are memoized and shared
@@ -694,17 +696,23 @@ the former only does work once and then shares the result.
 
 \emph{Call-by-value}, \emph{call-by-name}, and \emph{call-by-need} are the most
 common evaluation strategies used to describe a language's execution model.
-Each has a different definition of $\beta$-reduction for the operational semantics of the language:
+These execution models can be rigorously described through the operational
+semantics of the language. The so-called small-step operational semantics
+define the valid evaluation steps (reductions) an expression can use to evaluate to a value.
+%
+The operational semantics of these three evaluation models primarily differ in
+how the reduction rule for function application, also known as
+$\beta$-reduction, is defined:
 \begin{itemize}
-\item Under \emph{call-by-value}, a function application is reduced to a value
-by evaluating the function and the argument to a \emph{value}, then
-substituting occurrences of the function argument variable by the argument
-value:
+\item Under \emph{call-by-value}, a function application is reduced to a
+\emph{value} by evaluating the function $\lambda x.~b$ and the argument $e$ to a
+\emph{value} $v$, then substituting occurrences of the function argument
+variable by the argument value:
 \[
 \begin{array}{c}
-\infer{e\longrightarrow e'}{(\lambda x. b)~e \longrightarrow v~e'}
+\infer{e\longrightarrow e'}{(\lambda x.~b)~e \longrightarrow (\lambda x.~b)~e'}
 \qquad
-(\lambda x. b)~v \longrightarrow b[v/x]
+(\lambda x.~b)~v \longrightarrow b[v/x]
 \end{array}
 \]
 \item Under \emph{call-by-name}, a function application is reduced to a value
@@ -713,7 +721,7 @@ substituting occurrences of the function argument variable by the whole
 argument expression:
 \[
 \begin{array}{c}
-(\lambda x. e)~e' \longrightarrow e[e'/x]
+(\lambda x.~e)~e' \longrightarrow e[e'/x]
 \end{array}
 \]
 \item Under \emph{call-by-need}, a function application is reduced to a value
@@ -721,7 +729,7 @@ by evaluating the function to a \emph{value}, then transforming the function
 application into a \textbf{let} binding:
 \[
 \begin{array}{c}
-(\lambda x. e)~e' \longrightarrow \llet{x = e'}{e}
+(\lambda x.~e)~e' \longrightarrow \llet{x = e'}{e}
 \end{array}
 \]
 The \textbf{let} binding introduces a suspended computation known as a
@@ -729,74 +737,117 @@ The \textbf{let} binding introduces a suspended computation known as a
 After evaluating the expression, the binding is overwritten with the result of
 the computation and subsequent uses of the binding use the
 computed value without additional work.
+%
+Evaluation then progresses in the let body until the value of a let-bound
+variable is needed, being then computed and substituted in the let body. The
+call-by-need lambda calculus~\cite{cite:a-call-by-need-calculus} is, accordingly, further characterized by the following evaluation axioms:
+\[
+\begin{array}{l}
+\llet{x = V}{C[x]} \longrightarrow \llet{x = V}{C[V]}\\
+(\llet{x = L}{M})~N \longrightarrow \llet{x=L}{M~N}\\
+\llet{y = (\llet{x = L}{M})}{N} \longrightarrow \llet{x=L}{\llet{y=M}{N}}
+\end{array}
+\]
+
 \end{itemize}
 
 In essence, \emph{call-by-value} gives the language \emph{strict} evaluation
-semantics ($f(\bot)=\bot$) by evaluating the arguments in order before the body
-of the function, whereas \emph{call-by-name} and \emph{call-by-need} give the
-language \emph{non-strict} semantics, by evaluating the arguments only when
-they are needed ($f(\bot)$ is not $\bot$ if $f$'s argument isn't used).
-\emph{Call-by-need} additionally guarantees work is only done once by
-suspending computations into a \emph{thunk} that is overwritten with the value
-of running the suspended computation when it is \emph{forced}, ensuring
-sharing.
+semantics, where expressions are evaluated in the order they occur, s.t. using a non-terminating computation (e.g. $f(x) = f(x)$, usually
+written $\bot$) in the program text will necessarily make the program not terminate
+upon reaching that expression (i.e. written $g(\bot)=\bot$ for all $g$).
+%
+In contrast, \emph{call-by-name} and \emph{call-by-need} evaluation give the
+language \emph{non-strict} semantics, where the order in which expressions are
+evaluated is undefined, since they are evaluated only when needed.
+%
+Consequently, in non-strict semantics, using $\bot$ only results in a
+non-termination if $\bot$ is evaluated, which isn't necessary for the program
+to reach a result (i.e. $g(\bot)$ is not necessarily $\bot$).
 
+% entail non-termination -- a program does not terminate if a non-terminating
+% computation is evaluated, which is not guaranteed (i.e. in \emph{call-by-name}
+% and \emph{call-by-need}, $g(\bot)$ only results in non-termination ($\bot$) if
+% $g$'s argument is evaluated when $g$ is executed).
+
+\emph{Call-by-need} additionally guarantees we only do ``work'' to compute an
+expression bound to a variable \emph{once}, when it is first required, and
+share the result of the computation amongst subsequent occurrences of the
+variable. Intuitively:
+\begin{itemize}
+\item When an expression is bound by a \texttt{let}, a \emph{thunk} is created,
+representing the (suspended) computation that evaluates the expression to a
+value
+
+\item \emph{If} the let-bound variable is used in a computation, we must evaluate
+the \emph{thunk}-suspended computation to determine the value this variable represents.
+
+\item The \emph{thunk} is overwritten with the resulting value, s.t. subsequent
+uses of the same variable now refer to the already computed value instead of
+the suspended computation.
+\end{itemize}
+%
+% done once by suspending computations into a \emph{thunk} that is overwritten
+% with the value of running the suspended computation when it is \emph{forced},
+% ensuring sharing of the computed result amongst subsequent uses of the same
+% binding.
+%
 The subtleties of suspending computations (i.e.~creating \emph{thunks}) and
 \emph{forcing} them under \emph{call-by-need} evaluation are especially
-relevant in the context of our work regarding linearity in Core, so we discuss
-them in more depth below.
+relevant in the context of our work regarding linearity in Core, so we review laziness in that context:
 
-\subsection{Evaluation in Haskell\label{sec:bg:evaluation-haskell}}
+In Haskell and in its intermediate language Core, applying a function to an
+expression, in general\footnote{Optimisations such as ocurrence analysis, allow
+us to substitute some expressions in a \emph{call-by-name}-style without
+creating a let binding if the argument is only used once in the body.}, results
+in a \textbf{let} binding that suspends the evaluation of the
+expression/computation of the result (as per the $\beta$-reduction rule under
+call-by-need).
+%
+Suspending a computation amounts to giving a name to the
+unevaluated expression. As before, when the value associated to this name is required, then the suspended computation
+is said to be \emph{forced}, a result is computed by evaluating the
+expression, and the \emph{thunk} is overwritten with the result.
+% The result of the computation then
+% overwrites the unevaluated expression the name was associated with, and
+% subsequent uses of the same name will now refer to the computed result. The
+% suspended computation is called a \emph{thunk}, and
+Call-by-need evaluation is traditionally modelled with a mutable heap for the
+existing thunks or values they are overwritten with~\cite{}.
+%
+Beyond lambdas and let-bindings, Haskell and Core also feature algebraic
+datatypes and case expressions to match on datatype constructors:
+\begin{itemize}
+\item A datatype defines a (user-defined) \emph{type} through a set of
+constructors $\overline{K_i}$ that can be used to build values of the type they
+define. A constructor applied to a set of argument expressions, $K~\overline{e}$, is
+said to be in Weak Head Normal Form, and does not reduce any further on its own.
 
-\todo[inline]{When do we require an argument for the call-by-need lambda
-calculus without case? I suppose when arguments appear in function position}
+\item A case expression $\ccase{e_s}{\overline{\rho_i \to e_i}}$ is defined by a
+scrutinee $e_s$ and a list of alternatives comprised of a pattern $\rho$
+(either a wildcard $\_$, or a constructor and a set of variables to bind the
+constructor arguments $K~\overline{x}$) and a right hand side expression $e_i$. Case
+expressions are lazily evaluated by
+  \begin{enumerate}
+  \item Evaluating the scrutinee to Weak Head Normal Form, resulting in
+  either a lambda expression or a constructor of arity $n$ applied to $n$
+  unevaluated expressions $\overline{e_i}^n$
+  \item Matching the weak head normal form of the scrutinee against the
+  patterns, (possibly) substituting the pattern-bound variables of a matching
+  constructor by the unevaluated arguments of a scrutinee constructor application in Weak Head Normal Form, e.g.:
+  \[
+  \ccase{K~\overline{e_i}^n}{K~\overline{x_i}^n \to e'} \Longrightarrow e'\overline{e_i/x_i}^n
+  \]
+  \end{enumerate}
+\end{itemize}
 
-In Haskell, applying a function to an expression, in
-general\footnote{Optimisations such as ocurrence analysis, allow us to
-substitute some expressions in a \emph{call-by-name}-style without creating a
-let binding if the argument is only used once in the body.}, results in a
-\textbf{let} binding that suspends the evaluation of the expression/computation
-of the result (seen in the $\beta$-reduction rule under call-by-need).
-
-Suspending a computation amounts to giving a name to the unevaluated
-expression. When this name itself is evaluated then the computation is said to be
-\emph{forced}, and a result is computed by evaluating the expression associated
-to that name. The result of the computation then overwrites the unevaluated
-expression the name was associated with, and subsequent uses of the same name
-will now refer to the computed result. The suspended computation is called a
-\emph{thunk}, and call-by-need evaluation is usually modelled with a mutable
-heap for the existing thunks or values they are overwritten with~\cite{}.
-
-
-\todo[inline]{On second thought, it might be better to discuss the notion of
-consuming resources in the call-by-need lambda calculus in the first section of
-the Linear Core chapter (note, all resources are consumed when something is evaluated to a lambda, so function application is already correct}
-\todo[inline]{As for the call-by-need linear lambda calculus paper, it might be better to discuss it there}
-\todo[inline]{Connection between forcing thunks and consuming resources}
-
-\todo[inline]{Cite https://www.sciencedirect.com/science/article/pii/S1571066104000222}
-
-\todo[inline]{Introduce evaluation semantics, call-by-value as the most common, call-by-need, call-by-name, call-by-let?}
-\todo[inline]{Call-by-need, refer to background work, discuss sharing etc?}
-
-\todo[inline]{We've already introduced linear haskell, so be sure to include at
-least one example of linearity with laziness, and how the linear typechecker
-doesn't see it}
-
-\todo[inline]{Foreshadowing para que syntatically coisas aparecem muitas vezes, but not a problem}
-
-\todo[inline]{Also refer that paper about call-by-need linear lambda calculus,
-but only discuss it later in Related Work}
-
-\todo[inline]{Falar de thunks + sharing, de suspended computations e de coisas
-em memória serem overwritten. Talvez deixar a discussão sobre interação com
-linearidade para mais tarde}
-
-\todo[inline]{Falar de WHNF vs NF, possivelmente numa subsecção (maybe not and leave this for third chapter)}
-
-\todo[inline]{Haskell isn't really call-by-need, it's like a mix of things,
-right? e.g. linear applications are evaluated w/ call by name without
-allocating closures}
+Finally, briefly accounting for linearity in this context, we note that a
+linear resource occurring in a suspended computation is only consumed if that
+computation is executed, foreshadowing the distinction we will explore in
+Section~\ref{sec:linearity-semantically} between multiple \emph{syntactic}
+occurrences of a linear resource and the \emph{semantic} usages of the same
+resource, where we may have multiple \emph{syntactic} occurrences of a linear
+resource in suspended computations, but \emph{semantically} consume the
+resource exactly once as long as we run just one of them exactly once.
 
 \section{Core and System $F_C$\label{sec:core}}
 

@@ -131,7 +131,7 @@ use = flip use' [] where
     -- Lookup the variable in the environment
     mv <- gets (M.lookup key)
 
-    pprTraceM "Using var" (Ppr.ppr key Ppr.<+> Ppr.text "with mult" Ppr.<+> Ppr.ppr mv Ppr.<+> Ppr.text "and tag environment" Ppr.<+> Ppr.ppr mtags)
+    -- pprTraceM "Using var" (Ppr.ppr key Ppr.<+> Ppr.text "with mult" Ppr.<+> Ppr.ppr mv Ppr.<+> Ppr.text "and tag environment" Ppr.<+> Ppr.ppr mtags)
 
     case mv of
 
@@ -162,7 +162,7 @@ use = flip use' [] where
               if isDryRun
                  then tell [key]
                  else do
-                   pprTraceM "Using lambda bound" (Ppr.ppr key Ppr.<+> Ppr.ppr mult)
+                   -- pprTraceM "Using lambda bound" (Ppr.ppr key Ppr.<+> Ppr.ppr mult)
                    modify (M.delete key)
 
             -- We are trying to use a fragment of this resource, so we split it
@@ -170,12 +170,12 @@ use = flip use' [] where
             -- given tag (in the form of a tagstack)
             tags -> do
               splits <- splitAsNeededThenConsume allowsIrrelevant tags mult
-              pprTraceM "Splitting key at tags" (Ppr.ppr key Ppr.<+> Ppr.ppr tags Ppr.<+> Ppr.ppr splits)
+              -- pprTraceM "Splitting key at tags" (Ppr.ppr key Ppr.<+> Ppr.ppr tags Ppr.<+> Ppr.ppr splits)
               case NE.nonEmpty splits of
                     Nothing
                       | isDryRun  -> tell [key]
                       | otherwise -> do
-                        pprTraceM "Using lambda bound split" (Ppr.ppr key)
+                        -- pprTraceM "Using lambda bound split" (Ppr.ppr key)
                         modify (M.delete key) -- we split the fragment and consumed the only one
                     Just splits'  -> modify (M.insert key (Right splits')) -- we keep the remaining fragments
 
@@ -212,12 +212,12 @@ use = flip use' [] where
           tags -> do
 
             splits <- join <$> mapM (splitAsNeededThenConsume allowsIrrelevant tags) (NE.toList mults)
-            pprTraceM "Split key at tags" (Ppr.ppr key Ppr.<+> Ppr.ppr tags Ppr.<+> Ppr.ppr splits)
+            -- pprTraceM "Split key at tags" (Ppr.ppr key Ppr.<+> Ppr.ppr tags Ppr.<+> Ppr.ppr splits)
             case NE.nonEmpty splits of
                 Nothing
                   | isDryRun  -> tell [key] -- Again, we don't consume things when dry run
                   | otherwise -> do
-                    pprTraceM "Using last lambda bound split" (Ppr.ppr key)
+                    -- pprTraceM "Using last lambda bound split" (Ppr.ppr key)
                     modify (M.delete key) -- OK, we only had one fragment left and consumed it
                 Just splits'  -> modify (M.insert key (Right splits'))   -- we keep the remaining fragments
 

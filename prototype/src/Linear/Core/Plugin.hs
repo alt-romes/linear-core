@@ -35,6 +35,7 @@ import GHC.Plugins
 import Control.Monad
 import Control.Monad.Reader
 import Control.Monad.Except
+import qualified GHC.Utils.Trace as Trace
 
 -- import qualified Linear.Core.Translate.Syntax as LC
 -- import qualified Linear.Core.Translate.Check as LC
@@ -67,8 +68,10 @@ linearCorePass guts = do
     [] -> pure ()
     errs ->
       if all (L.isPrefixOf "fail_" . showSDocUnsafe) errs
+       -- the fail_ thing was an attempt to allow the plugin to continue on
+       -- functions marked for failing, but that feature isn't finished
        then fatalErrorMsg (ppr errs)
-       else pprPanic "Linear typechecking failed when it shouldn't!" (ppr errs)
+       else Trace.pprTraceM "[FAILED] Linear typechecking failed when it shouldn't!" (ppr errs)
 
   return guts -- unchanged guts, after validating them.
 

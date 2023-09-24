@@ -242,6 +242,8 @@ linearity into account.
 
 \subsection{Call-by-value, call-by-name and call-by-value...}
 
+The work~\cite{cite:call-by-name-value-and-need-linear-lambda-calculus}...
+
 % }}}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % {{{ Future Work

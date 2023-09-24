@@ -401,7 +401,7 @@ We start our discussion with non-strict (non-recursive) let bindings, i.e. let b
 body is evaluated only when the binding is needed, rather than when declared.
 In Core, a let binding entails the creation of a \emph{thunk} that suspends the
 evaluation of the let body (for background, see
-Section~\ref{sec:bg:evaluation-haskell}). When the \emph{thunk} is
+Section~\ref{sec:background:evaluation-strategies}). When the \emph{thunk} is
 \emph{forced}, the evaluation is carried out, and the result overrides the
 \emph{thunk} -- the let binding now points to the result of the evaluation. A
 \emph{thunk} is \emph{forced} (and the suspended computation is evaluated) when
