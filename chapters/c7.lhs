@@ -1060,7 +1060,7 @@ Haskell about linearity and strictness, and basically revisit what they say.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % {{{ Linear Core
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Linear Core}
+\section{Linear Core\label{sec:main:linear-core}}
 
 In this section, we develop a linear calculus $\lambda_\Delta^\pi$, dubbed \emph{Linear Core}, that 
 combines the linearity-in-the-arrow and multiplicity polymorphism introduced by
@@ -1986,7 +1986,7 @@ f = \x -> case x of z { Foo a -> (z, a) }
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % {{{ Metatheory
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Metatheory}
+\section{Metatheory\label{sec:main:metatheory}}
 
 The $\lambda^\pi_\D$ system is sound: well-typed programs in Linear Core do not
 get \emph{stuck}. Besides type safety ($\S$~\ref{sec:type-safety-meta}), we

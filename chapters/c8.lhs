@@ -1,6 +1,6 @@
 %include polycode.fmt
 %format ⊸ = "\lolli"
-\chapter{Discussion}
+\chapter{Discussion\label{sec:discussion}}
 
 Linear Core is an intermediate language with a type system system that
 understands (semantic) linearity in the presence of laziness, suitable for
@@ -31,7 +31,7 @@ coercions, a key feature of Core which we left out our system); and conclude.
 % {{{ Linear Core as a GHC Plugin; Introduction
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\section{Linear Core as a GHC Plugin}
+\section{Linear Core as a GHC Plugin\label{sec:discuss:implementation}}
 
 \todo[inline]{A implementação existe; link para o github; validei o linear-base
 (excepto multiplicty coercions, e tive successo pq a implementação validou);
@@ -140,6 +140,8 @@ light of Core-to-Core optimizing transformations.
 % Multiplicity annotations in SystemFC?
 % 
 % Rules?
+
+\todo[inline]{Linear Constraints?}
 
 \subsection{Linear Haskell\label{sec:related-work-linear-haskell}}
 

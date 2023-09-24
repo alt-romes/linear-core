@@ -1,6 +1,6 @@
 %include polycode.fmt
 
-\chapter{Background}
+\chapter{Background\label{sec:background}}
 
 In this section we review the concepts required to understand our work. In
 short, we discuss linear types, the Haskell programming language, linear types

@@ -257,8 +257,12 @@ Haskell~\cite{cite:linearhaskell}, a pure, functional, and
 \emph{lazy} general purpose programming language.
 % TODO: Extend above: it's the language of our focus
 
-% TODO: Better sentence here, why do we also want linearity in Haskell?
-% linear types
+% Besides Haskell's supporting linear
+% types according to the said paper, Idris 2\cite{} supports linear types in a
+% dependently typed setting, Clean\cite{} has uniqueness types which are closely
+% related to linear types, and Rust\cite{} has ownership types which build from
+% linear types. 
+
 Linearity in Haskell stands out from linearity in Rust and Idris 2
 due to the following reasons:
 
@@ -392,53 +396,68 @@ $x$ is only consumed once when returned in the let body:
 f :: a ⊸ a
 f x = let y = use x in x
 \end{code}
-Core optimizing transformations expose a fundamental limitation of Core's
-current linear type system -- ... its naivety with respect to Core's call-by-need
-evaluation model.
 
-\todo[inline]{In reality, the Core optimizing transformations only expose a
-more fundamental issue in the existing linear types in Haskell -- its mismatch
-with the evaluation model. In call-by-need languages a mention of a variable
-might not entail using that variable - it depends on it being required or not.
-This is not explored at all and we're the first to do so as far as we know}
+The Core optimizing transformations expose a fundamental limitation of Core's
+current linear type system -- it does not account for Core's call-by-need
+evaluation model, and thus a whole class of programs that are linear under the
+lens of lazy evaluation are rejected by Core's current linear type system.
 
-% TODO:
-% Consider the minimal example of a function that let binds... this is all quite
-% hard: the simple let example wouldn't type check in Haskell, so making it
-% typecheck in Core would perhaps entail explaining that we also desire to
-% typecheck more linearity in Core than in Haskell.
-% \begin{code}
-% f x = let y = x in y
-% \end{code}
-% Moreover, I'm re-thinking our definitions for usage and using usage
-% environments to type let bindings. $\llet{y = x+1}{y + y}$ might either
-% evaluate $x+1$ only once if $y$ is compiled to a heap allocation or twice if
-% $y$ is inlined, and twice if it's inlined just once? If we're conservative we
-% always assume it could be consumed the maximum amount of times, and our typing
-% rule using usage environments would be correct. This simple example raises many
-% questions.
+We address this limitation (and its implications on validating and influencing
+optimising transformations) by designing a type system which understands
+semantic linearity in the presence of laziness and is suitable for the
+intermediate language of an optimising compiler.
+%
+In detail, our contributions are:
+%
+\begin{itemize}
 
-% \begin{itemize}
-% \item Exemplo de um programa que fica borked pelas otimizacoes
-% \item Explicar que moralmente a linearidade nao foi borked, e so a
-%   ``sintaxe'' que e insuficiente.
-% \item Mencionar (muito brevemente) que com algumas extensoes a
-%   informacao disponivel, era possivel validar coisas, que e
-%   ultimamente o objectivo deste trabalho.
-% \end{itemize}
+\item We review background concepts necessary to understand our work, in
+Chapter~\ref{sec:background}. Namely, linear type systems and linear types in
+Haskell, evaluation strategies, the Core type system ($System~F_C$), and
+multiple optimising transformations applied by GHC in its compilation pipeline.
 
-% \begin{itemize}
-% \item é necessário uma extensao ao Core que enriquece a informação de linearidade
-% \item para poder ter mais context no qual analisar os programas
-% \item mencionar multiplicity annotaitons só depois, e forward reference
-% \end{itemize}
+\item We explain and provide insights into \emph{semantic} linearity in
+contrast to \emph{syntactic} linearity, in Haskell, by example
+($\S$~\ref{sec:linearity-semantically}).
 
-Concluding, by extending Core / System $F_C$ with linearity and multiplicity
-annotations such that we can desugar all of Linear Haskell and validate it
-accross transformations taking into consideration Core's call-by-need
-semantics, we can validate the surface level linear type's implementation, we
-can guarantee optimizing transformations do not destroy linearity, and we might
-be able to inform optimizing transformations with linearity.
+\item We introduce Linear Core, a type system for a linear lazy language with
+all key features from Core (except for type equality coercions), which,
+crucially, understands semantic linearity in the presence of laziness
+($\S$~\ref{sec:main:linear-core}). To the best of our knowledge, this is the
+first type system to understand linearity semantically in the context of lazy evaluation.
+
+\item We prove Linear Core to be sound (well-typed Linear Core programs do not
+get ``stuck'') \emph{and} prove that multiple optimising transformations (which
+currently violate linearity in Core) preserve types and linearity in Linear Core ($\S$~\ref{sec:main:metatheory}).
+
+\item We implement Linear Core as a GHC plugin which typechecks linearity in
+all intermediate Core programs produced during the compilation process, showing
+it accepts the intermediate programs resulting from (laziness-abusing)
+transformations in linearity-heavy Haskell libraries, such as
+\texttt{linear-base} ($\S$~\ref{sec:discuss:implementation}).
+
+\item Finally, we discuss related and future work (highlighting so-called
+\emph{multiplicity coercions}) in the remainder of Chapter~\ref{sec:discussion}.
+
+\end{itemize}
+
+% This observation lies at the core of our work
+
+% In fact, we are not aware of any linear type system which
+% understands linearity in the presence of laziness.
+
+% \todo[inline]{In reality, the Core optimizing transformations only expose a
+% more fundamental issue in the existing linear types in Haskell -- its mismatch
+% with the evaluation model. In call-by-need languages a mention of a variable
+% might not entail using that variable - it depends on it being required or not.
+% This is not explored at all and we're the first to do so as far as we know}
+
+% Concluding, by extending Core / System $F_C$ with linearity and multiplicity
+% annotations such that we can desugar all of Linear Haskell and validate it
+% accross transformations taking into consideration Core's call-by-need
+% semantics, we can validate the surface level linear type's implementation, we
+% can guarantee optimizing transformations do not destroy linearity, and we might
+% be able to inform optimizing transformations with linearity.
 
 % Consider the following recursive let
 % definition, where $x$ is a linear variable that must be used exactly once, would
@@ -451,10 +470,6 @@ be able to inform optimizing transformations with linearity.
 %         False -> x
 % in f True
 % \end{code}
-
-% Is this program really still linear? Yes, but ...
-
-% If one looks at it 
 
 % Alternatively, one might imagine Haskell being desugared into an intermediate
 % representation to which multiple different optimizing transformations are
@@ -474,61 +489,23 @@ be able to inform optimizing transformations with linearity.
 % to the addition of linear types, that is, our Core program with linearity
 % annotations should be typechecked after the optimizing transformations...
 
-% Even though Linear Haskell was successful in integrating linear types in an
-% existing language 
-% In spite of the smooth integration of linear types in an existing language
-% with regard to backwards compatibility and (re)usability, 
-
-% The advent of linear types in Haskell bring forth
-
-% Besides Haskell's supporting linear
-% types according to the said paper, Idris 2\cite{} supports linear types in a
-% dependently typed setting, Clean\cite{} has uniqueness types which are closely
-% related to linear types, and Rust\cite{} has ownership types which build from
-% linear types. 
-% released in the Glasgow Haskell Compiler (GHC) version 9.0.
-% , and, e.g., avoid the required boilerplate threading of linear resources that
-% we will get to know ahead.
-
-% Linear types were introduced in GHC 9.0
-
-
-% In an attempt to bridge the gap between the theory and practicality of linear
-% types, Linear Haskell\cite{} describes , the 9.0 version series of Haskell's
-% \emph{de facto} compiler, GHC, supports linear types. However, retrofitting
-% linear types to a purely-functional lazy language 
-
-% The main contributions of this thesis are:
-% \begin{itemize}
-%     \item Core Type system which accepts optimized linear programs
-% \end{itemize}
-
-% stores a value to the allocated memory, reads from it and finally frees 
-
-% about the usage of resources in a
-% programming language.
-
-\todo[inline]{Change some of the second part of the introduction}
-
 \todo[inline]{We should discuss the alternative motivation of figuring out how
 to typecheck linearity in the presence of laziness on its own, why its hard and
 how it allows simpler use of linear types since the compiler doesn't constrain
 the programmer so much}
 
-\todo[inline]{Rather, the linearity x call-by-need should be the original
-motivation, with linear core as the prime example?}
+% \todo[inline]{Rather, the linearity x call-by-need should be the original
+% motivation, with linear core as the prime example?}
 
-\todo[inline]{Explain examples of non-trivial interaction of linearity with
-laziness, with both lets and also with case expressions not evaluating
-expressions in WHNF, and otherwise}
+% \todo[inline]{Explain examples of non-trivial interaction of linearity with
+% laziness, with both lets and also with case expressions not evaluating
+% expressions in WHNF, and otherwise}
 
-\todo[inline]{Glimpse at how core optimizations can get us into these situations where we have to see this linearity}
+% \todo[inline]{Glimpse at how core optimizations can get us into these situations where we have to see this linearity}
 
 \todo[inline]{Saying, finally, what we are going to do, and that our system is
 capable of seeing linearity in all of these programs, and more -- it is capable
 of typechecking almost all optimizing transformations we studied}
-
-\todo[inline]{Changing our Goals into things we actually did}
 
 \todo[inline]{Conclude by explaining that the document is structured in such a
 way that the payload starts in chapter 3 after delivering the background
@@ -538,9 +515,6 @@ introduction there, more in depth, assuming understanding of the background conc
 \section*{Goals}
 
 From a high-level view, our goals for the dissertation include:
-
-% Copiar do outro lado. qual é o objetivo. extender coisas de type syhstem e type checking
-% Ser um bocadinho mais concreto sobre a implementação no Core.
 
 \begin{itemize}
 \item Extending Core's type system and type-checking algorithm with additional
