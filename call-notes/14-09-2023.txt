@@ -25,9 +25,9 @@ Background
     [x] still used linearly semantically -> still used semantically linearly DONE
     [x] remover os "sumarios" headers e a frase a introduzir
     [x] recursive lets: terminar items com pontos finais DONE
-    [ ] Mudar o exemplo do linearity semantically que esta errado para
-        [ ] Laranja (Apresentar la em cima)
-        [ ] Mudar a escrita do exemplo
+    [x] Mudar o exemplo do linearity semantically que esta errado para
+        [x] Laranja (Apresentar la em cima)
+        [x] Mudar a escrita do exemplo
 3.2
     [x] Escrever os lets e os cases do Linear Core e tudo o resto...
 3.3.

@@ -341,7 +341,8 @@ result consumes that resource iff the result is effectively computed; in
 contrast, a computation that depends on a linear resource, but is never run,
 will not consume that resource.
 
-From this observation, and exploring the connection between computation and evaluation,\todo{Alguma dificuldade em dizer exatamente como é que evaluation drives/is computation}
+From this observation, and exploring the connection between computation and evaluation,
+% \todo{Alguma dificuldade em dizer exatamente como é que evaluation drives/is computation}
 it becomes clear that \emph{linearity} and \emph{consuming resources}, in the
 above example and for programs in general, should be defined in function of the
 language's evaluation strategy.
@@ -388,10 +389,11 @@ system.
 %
 In the examples, a \colorbox{working}{\workingcolorname} background highlights programs that are
 syntactically linear and are accepted by Core's naive linear type system. A
-\colorbox{notyet}{\notyetcolorname} background marks programs that are
-semantically linear, but are not seen as linear by Core's naive linear type
+\colorbox{notyet}{\notyetcolorname} or \colorbox{limitation}{\limitationcolorname} background mark programs that are
+semantically linear, but are not seen as linear by Core's (naive wrt laziness) linear type
 system. Notably, the linear type system we develop in this work accepts all
 \colorbox{notyet}{\notyetcolorname} programs.
+% (while the few \colorbox{limitation}{\limitationcolorname} programs are not accepted).
 A \colorbox{noway}{\nowaycolorname} background indicates that the program
 simply isn't linear, not even semantically, i.e. the program effectively
 discards or duplicates linear resources.
@@ -897,37 +899,45 @@ discarding linear resources (for cases such as the |use = (,)| example). In
 short, if the scrutinee is not in WHNF we must either consume the case binder
 or the linear components of the pattern.
 
-However, it is crucial to also consider pattern matches on constructors without
+However, we must also consider pattern matches on constructors without
 any linear components. If the constructor has no linear fields, it means the
 result can be consumed unrestrictedly and, therefore, all linear resources used
-in the computation have been fully consumed. For instance, the following
-program, where |K2| has no fields and |K1| has one linear field, shouldn't
-typecheck because in case alternatives that matched a constructor without
-linear fields the scrutinee resources are no longer available:
-\begin{noway}
-\begin{code}
-f :: a ⊸ a
-f x = case K1 x of z { K2 -> x; K1 a -> x }
-\end{code}
-\end{noway}
-\todo[inline]{Actually, this example is fine; in practice, it only matters that
-resources are consumed to be able to use the case binder unrestrictedly. This
-one doesn't typecheck, but is still semantically linear}
-This particular example has a known constructor being scrutinized which might
-seem like an unrealistic example, but we recall that during the transformations
-programs undergo in an optimising compiler, many programs such as this
-naturally occur (e.g. if the definition of a function were inlined in the scrutinee).
-
-Moreover, in a branch of a constructor without linear fields we also know the
-result of evaluating the scrutinee to be unrestricted, so we can also use the
-case binder unrestrictedly and refer to it zero or more times. For example, this
-program is also linear:
+in the computation have been fully consumed.
+%
+Consequently, in a branch of a constructor without linear fields we know the
+result of evaluating the scrutinee to be unrestricted, so we can use the case
+binder unrestrictedly and refer to it zero or more times. For example, this
+program is semantically linear:
 \begin{notyet}
 \begin{code}
 f16 :: () ⊸ ()
 f16 x = case x of z { () -> z <> z }
 \end{code}
 \end{notyet}
+A second example of an unrestricted pattern, where |K2| has no fields and |K1|
+has one linear field, seems as though it shouldn't typecheck since the resource
+$x$ must have been fully consumed to take the |K2| branch, but because the
+scrutinee is known to be |K1|, the |K2| branch is \emph{absurd}, so, in reality
+any resource could be freely used in that branch, and the example is
+\emph{semantically} linear (despite not being seen as so by our system):
+%
+\begin{limitation}
+\begin{code}
+f :: a ⊸ a
+f x = case K1 x of z { K2 -> x; K1 a -> x }
+\end{code}
+\end{limitation}
+%
+This particular example has a known constructor being scrutinized which might
+seem like an unrealistic example, but we recall that during the transformations
+programs undergo in an optimising compiler, many programs such as this
+naturally occur (e.g. if the definition of a function is inlined in the
+scrutinee).
+%
+% However, the scrutinee before evaluation likely isn't in WHNF, thus scrutinee
+% resources cannot directly occur in the case alternatives, since they might be
+% potentially consumed when evaluating the scrutinee, the program leading up to
+% this one wouldn't have been linear (even semantically).
 
 Further exploring that each linear field must be consumed exactly once, and
 that resources in WHNF scrutinees aren't consumed, we are able to construct
@@ -954,15 +964,47 @@ f w = case w of z
 \end{code}
 \end{notyet}
 
-Finally, we consider the default case alternatives, also known as wildcards
-(written $\_$), in the presence of linearity: Matching against the wildcard
-doesn't provide new information, so we linearity is seen as before but without
-fully consuming linear resources (in non-linear patterns) nor binding new
-linear resources (in linear patterns). If the scrutinee is in WHNF, we can
-either use the resources from the scrutinee or the case binder in that
-alternative, if the scrutinee is not in WHNF, we \emph{must} use the case
-binder, as it's the only way to linearly consume the result of evaluating the
-scrutinee to WHNF.
+Before last, we consider the default case alternatives, also known as wildcards
+(written $\_$), in the presence of linearity: matching against the wildcard
+doesn't provide new information, so linearity is seen as before but without
+fully consuming the scrutinee linear resources (in non-linear patterns) nor
+binding new linear resources (in linear patterns). In short, if the scrutinee
+is in WHNF, we can either use the resources from the scrutinee or the case
+binder in that alternative, if the scrutinee is not in WHNF, we \emph{must} use
+the case binder, as it's the only way to linearly consume the result of
+evaluating the scrutinee.
+
+Finally, we discuss the special case of a case expression scrutinizing a
+variable $x$:
+\[
+fvar = \lambda x.~\ccase{x}{\_ \to x}
+\]
+It might seem as though the program is linear:
+\begin{itemize}
+\item If $x$ is in WHNF, then scrutinizing it is a no-op, and returning $x$
+just returns the resource intact.
+\item If $x$ is not in WHNF, then scrutinizing it evaluates it to WHNF, and
+returning $x$ returns the result of evaluating $x$ that still had to be
+consumed exactly once.
+\end{itemize}
+However, in practice, it depends on the evaluation strategy. If linear function
+applications are $\beta$-reduced \emph{call-by-name} (a common practice, as
+linear functions use their argument exactly once), and $fvar$ is considered
+linear, then an application might duplicate linear resources during evaluation.
+For example:
+\[
+\begin{array}{l}
+(\lambda x.~\ccase{x}{\_ \to x})~(free~x)\\
+\Longrightarrow_{CBN~\beta-reduction}\\
+\ccase{free~x}{\_ \to free~x}
+\end{array}
+\]
+Therefore, the type system we present in the next section, which evaluates
+linear applications call-by-name, does not accept the above program as linear.
+Foreshadowing, this particular interaction between evaluation and linearity
+comes up in the type preservation proof of our program, and is again explored
+with the reverse binder swap transformation in
+Section~\ref{sec:optimisations-preserve-types-meta}.
 
 % \parawith{Summary}
 In summary, case expressions evaluate their scrutinees to WHNF,
@@ -972,7 +1014,7 @@ alternative, alongside the case binder and the pattern-bound variables. In the
 case alternative, either the resources of the scrutinee, the case binder, or
 the linearly bound pattern variables must be used exactly once, but mutually
 exclusively. For scrutinees not in WHNF, in the case alternative, either the
-case binder or the linear pattern variables must be used mutually exclusively.
+case binder or the linear pattern variables need to be used, in mutual exclusion.
 If the pattern doesn't bind any linear resources, then it may be consumed
 unrestrictedly, and therefore the case binder may also be used unrestrictedly.
 

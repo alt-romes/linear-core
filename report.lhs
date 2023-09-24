@@ -44,17 +44,21 @@
 % https://github.com/goldfirere/thesis/blob/master/tex/rae.fmt
 
 % colorboxes, from rae's thesis as well
-\definecolor{notyet}{rgb}{1,1,0.85}
-\newmdenv[hidealllines=true,backgroundcolor=notyet,innerleftmargin=0pt,innerrightmargin=0pt,innertopmargin=-3pt,innerbottommargin=-3pt,skipabove=3pt,skipbelow=3pt]{notyet}
-\newcommand{\notyetcolorname}{light yellow}
-
 \definecolor{working}{rgb}{0.9,1,0.9}
 \newmdenv[hidealllines=true,backgroundcolor=working,innerleftmargin=0pt,innerrightmargin=0pt,innertopmargin=-3pt,innerbottommargin=-3pt,skipabove=3pt,skipbelow=3pt]{working}
 \newcommand{\workingcolorname}{light green}
 
+\definecolor{notyet}{rgb}{1,1,0.85}
+\newmdenv[hidealllines=true,backgroundcolor=notyet,innerleftmargin=0pt,innerrightmargin=0pt,innertopmargin=-3pt,innerbottommargin=-3pt,skipabove=3pt,skipbelow=3pt]{notyet}
+\newcommand{\notyetcolorname}{light yellow}
+
 \definecolor{noway}{rgb}{1,0.9,0.9}
 \newmdenv[hidealllines=true,backgroundcolor=noway,innerleftmargin=0pt,innerrightmargin=0pt,innertopmargin=-3pt,innerbottommargin=-3pt,skipabove=3pt,skipbelow=3pt]{noway}
 \newcommand{\nowaycolorname}{light red}
+
+\definecolor{limitation}{rgb}{1.0, 0.875, 0.75}
+\newmdenv[hidealllines=true,backgroundcolor=limitation,innerleftmargin=0pt,innerrightmargin=0pt,innertopmargin=-3pt,innerbottommargin=-3pt,skipabove=3pt,skipbelow=3pt]{limitation}
+\newcommand{\limitationcolorname}{light orange}
 
 \DefineVerbatimEnvironment{code}{Verbatim}{fontsize=\small}
 \DefineVerbatimEnvironment{example}{Verbatim}{fontsize=\small}

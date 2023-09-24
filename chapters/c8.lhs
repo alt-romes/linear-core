@@ -303,8 +303,7 @@ For example, we might define, using a GADT |SBool| and a type family |If|, the
 following program, which is linear in the second argument of |dep| if the first
 argument is |STrue| and unrestricted otherwise:
 %
-% ROMES:TODO: fazer exemplos laranja (linear but we can't see it)
-% \begin{laranja}
+\begin{limitation}
 \begin{code}
 data SBool :: Bool -> Type where
   STrue :: SBool True
@@ -318,7 +317,7 @@ dep :: SBool b -> Int %(If b One Many) -> Int
 dep STrue x = x
 dep SFalse _ = 0
 \end{code}
-% \end{laranja}
+\end{limitation}
 %
 In theory, this example is linear and should be accepted. However, in practice,
 the example is rejected by the GHC Core type checker. Critically, Core doesn't
