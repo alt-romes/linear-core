@@ -1238,12 +1238,25 @@ expression.
 
 \todo[inline]{The operational semantics! How shall I discuss this?}
 
+The (small-step) operational semantics of Linear Core are given by
+Figure~\ref{fig:linear-core-operational-semantics}. We use call-by-name
+semantics for our Linear Core as it captures the non-strict semantics in which
+our type system understands linearity, while being simpler to reason about than
+call-by-need operational semantics which is traditionally modelled with a
+mutable to store \emph{thunks} and the values they are overwritten with.
+Furthermore, linear function applications, even in a \emph{call-by-need} system, are
+usually reduced \emph{call-by-name} as the function argument is guaranteed to
+be used exactly once (thus avoiding unnecessarily allocating memory on the heap
+for a redundant \emph{thunk}).
+
+Specifically, function application is reduced by the standard
+\emph{call-by-name} $\beta$-reduction that substitutes the expression whole by
+occurrences of the lambda argument in its body, case expressions evaluate their
+scrutinee to WHNF and substitute the result by the case binder and possibly
+constructor arguments for pattern-bound bound variables matching on that same
+constructor.
+
 \input{language-v4/OperationalSemantics}
-
-\todo[inline]{The full typing system is given by...}
-
-\TypingRulesOther
-\TypingRules
 
 \subsection{Typing Foundations\label{sec:base-calculi}}
 
@@ -1261,9 +1274,14 @@ variable multiplicity functions?}
 %
 Otherwise, the base rules of the calculus for, multiplicity and term,
 abstraction and application are quite similar. In this section we present the
-linear calculi with rules that share much in common with $\lambda^p_\to$, and
+linear calculi with typing rules that share much in common with $\lambda^q_\to$, and
 in the subsequent ones the rules encoding the novel insights from Linear Core
-explored by example in Section~\ref{sec:linearity-semantically}.
+explored by example in Section~\ref{sec:linearity-semantically}. The full type
+system is given by Figure~\ref{fig:linear-core-typing-rules}, with auxiliary
+judgements given by Figure~\ref{fig:linear-core-other-judgements}.
+
+\TypingRules
+\TypingRulesOther
 
 We start with the main typing judgement. As is customary for linear type
 systems, we use two typing environments, an \emph{unrestricted} $\G$ and
