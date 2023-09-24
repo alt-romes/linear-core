@@ -996,7 +996,8 @@ short, these three features are desugared as follows:
 Core further extends $System~F_C$ with \emph{jumps} and \emph{join
 points}~\cite{maurer2017compiling}, allowing new optimizations to be performed
 which ultimately result in efficient code using labels and jumps, and
-with a construct used for internal notes such as profiling information.\todo{We could mention Sequent Core as the origin of jumps and joins here, or simply cite it}
+with a construct used for internal notes such as profiling information.
+% DONE: \todo{We could mention Sequent Core as the origin of jumps and joins here, or simply cite it}
 
 % $System~F_C$ is expressive enough as a target for Haskell
 
@@ -1100,14 +1101,13 @@ can be chained and iterated in order to maximize the optimization potential (as
 shown in Figure~\ref{fig:eg:transformations}).
 
 
-
 % I know this paragraph is useless :)
 However, due to the destructive nature of transformations (i.e. applying a
-transformation is not reversible), the order in which transformations
-are applied determines how well the resulting program is optimised.
-As such, certain orderings of optimizations can hide 
-optimization opportunities and block them from firing. This phase-ordering
-problem is present in most optimising compilers.
+transformation is not reversible), the order in which transformations are
+applied determines how well the resulting program is optimised.  As such,
+certain orderings of optimizations can hide optimization opportunities and
+block them from firing. This phase-ordering problem is present in most
+optimising compilers.
 
 % Techniques such as
 % equality saturation~\cite{} bypass the phase-ordering problem because all
@@ -1116,6 +1116,7 @@ problem is present in most optimising compilers.
 %
 % transformation based approach to optimization allows each producing a Core
 % program fed to the next optimising transformation.
+
 
 Foreshadowing the fact that Core is the main object of our study, we want to type-check
 linearity in Core before \emph{and} after each optimising transformation is
@@ -1446,8 +1447,6 @@ is especially significant in recursive functions. To this effect, the
 a free variable in its body. It can be thought of as the transformation inverse
 to \emph{lambda lifting}.
 
-% \parawith{Binder-swap.}
-
 \parawith{Strictness analysis and worker/wrapper split.} The strictness
 analysis, in lazy programming languages, identifies functions that always
 evaluate their arguments, i.e.  functions with (morally) \emph{strict
@@ -1463,38 +1462,57 @@ expressions other than the wrapper, saving allocations and being possibly much
 faster, especially if the worker recursively ends up calling itself rather than
 the wrapper.
 
-\todo[inline]{Add examples/definitions to the three previous transformations}
+% Leave it... \todo[inline]{Add examples/definitions to the three previous transformations}
 
-\todo[inline]{Add a paragraph about the binder swap, and another about the
-reverse binder swap, possibly foreshadowing how it is important in our study as
-something that is only linearity preserving because of the way other
-optimizations are defined.}
+% DONE \todo[inline]{Add a paragraph about the binder swap, and another about the
+% reverse binder swap, possibly foreshadowing how it is important in our study as
+% something that is only linearity preserving because of the way other
+% optimizations are defined.}
 
-\begin{code}
-f x = letrec go y = case x of z { (a,b) -> ...(expensive z)... }
-        in ...
-\end{code}
+\parawith{Binder-swap.} The binder swap transformation applies to a case
+expression whose scrutinee is a variable $x$, and consists of swapping the case
+binder $z$ for $x$ in all case alternatives:
+\[
+\ccase{x}{z~\{\overline{\rho_i\to e_i}\}} \Longrightarrow \ccase{x}{z~\{\overline{\rho_i\to e_i[z/x]}\}}
+\]
+By removing occurrences of $x$ in the case alternatives we might end up with
+the case scrutinee being the only occurrence of $x$, which allows us to inline
+$x$ and possibly save an allocation, for example:
+\[
+\begin{array}{l}
+\llet{x = factorial~y}{\ccase{x}{b~\{ I\#~v \to \dots x \dots \}}}\\
+\Longrightarrow_{Binder~swap}\\
+\llet{x = factorial~y}{\ccase{x}{b~\{ I\#~v \to \dots b \dots \}}}\\
+\Longrightarrow_{Inlining}\\
+\ccase{factorial~y}{b~\{ I\#~v \to \dots b \dots \}}\\
+\end{array}
+\]
+\parawith{Reverse binder-swap.} The reverse binder swap is (unsurprisingly) the
+reverse of the binder swap transformation. For a case whose scrutinee is a
+variable $x$, reverse binder swaps occurrences of the case binder $z$ by the
+variable $x$:
+\[
+\ccase{x}{z~\{\overline{\rho_i\to e_i}\}} \Longrightarrow \ccase{x}{z~\{\overline{\rho_i\to e_i[x/z]}\}}
+\]
+It is not entirely obvious why this might optimise a program, however, $z$ is
+bound in the case alternative, so expressions involving $z$ may not be floated
+out of the case alternative. If $z$ is substituted by $x$, which isn't bound to
+the case, we might float out an expensive operation out of the case
+alternatives and, for example, out of a loop:
+\[
+\begin{array}{l}
+\lletrec{go~y = \ccase{x}{z~\{(a,b) \to \dots (expensive~z) \dots\}}}{\dots go \dots}\\
+\Longrightarrow_{Reverse~binder~swap}\\
+\lletrec{go~y = \ccase{x}{z~\{(a,b) \to \dots (expensive~x) \dots\}}}{\dots go \dots}\\
+\Longrightarrow_{Float~out}\\
+\llet{t = expensive~x}{\lletrec{go~y = \ccase{x}{z~\{(a,b) \to \dots t \dots\}}}{\dots go \dots}}
+\end{array}
+\]
+In this example\todo{credit Simon?}, $expensive~x$ is now computed once, instead of once per loop iteration.
 
-If we do the reverse binder-swap we get
-
-\begin{code}
-f x = letrec go y = case x of z { (a,b) -> ...(expensive x)... }
-        in ...
-\end{code}
-
-and now we can float out:
-
-\begin{code}
-f x = let t = expensive x
-        in letrec go y = case x of z { (a,b) -> ...(t)... }
-        in ...
-\end{code}
-
-Now (expensive x) is computed once, rather than once each time around the 'go' loop..
 
 
 \begin{figure}[ht]
-
 \[
 \begin{array}{lc}
 \begin{array}{l}\textrm{if}~(not~x)~\textrm{then}~e_1~\textrm{else}~e_2\end{array} & \overset{Desugar}{\Longrightarrow}\\
@@ -1510,12 +1528,9 @@ Now (expensive x) is computed once, rather than once each time around the 'go' l
 \begin{array}{l}\ccase{x}{\\~~\textrm{True}\to e_2\\~~\textrm{False}\to e_1}\end{array} & \square \\
 \end{array}
 \]
-
 \caption{Example sequence of transformations}
 \label{fig:eg:transformations}
 \end{figure}
-
-\todo[inline]{Add another example sequence of transformations with the example Simon provided using reverse-binder-swap}
 
 \subsection{Code Generation}
 
