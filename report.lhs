@@ -387,15 +387,31 @@ perform without changing the program semantics.
 Crucially, the resulting program is still linear, since optimisations don't
 destroy linearity, however, the linear type system doesn't accept the resulting
 programs as linear. The optimisations transform programs that are linear into
-ones that don't \emph{look} linear, but remain linear \emph{semantically}. For
-example, the following program, despite not looking linear (as there are two
-syntactic occurrences of the linear resource $x$), \emph{is} linear, as the let
-bound expression using $x$ is never evaluated (because is not needed) -- thus
-$x$ is only consumed once when returned in the let body:
-\begin{code}
-f :: a ⊸ a
-f x = let y = use x in x
-\end{code}
+ones that don't \emph{look} linear, but remain linear \emph{semantically}.
+%
+For example, let $x$ be a linear resource in the two following programs, where
+the latter results from inlining $y$ in the let body of the former. Despite the
+result no longer \emph{looking} linear (as there are now two syntactic
+occurrences of the linear resource $x$), the program \emph{is} indeed linear
+because the let-bound expression freeing $x$ is never evaluated, so $x$ is
+consumed exactly once when it is freed in the let body:
+% executed, $x$ will be freed exactly once:
+%
+% , \emph{is} linear, as the let bound expression freeing $x$
+% is never evaluated (because is not needed) -- thus $x$ is only consumed once
+% when freed in the let body:
+\[
+\begin{array}{ccc}
+\llet{y = \textsf{free}~x}{y} & \Longrightarrow_{Inlining} & \llet{y = \textsf{free}~x}{\textsf{free}~x}
+\end{array}
+\]
+
+% \begin{boxedminipage}
+% \begin{code}
+% let y = free x
+% in free x
+% \end{code}
+% \end{boxedminipage}
 
 The Core optimising transformations expose a fundamental limitation of Core's
 current linear type system -- it does not account for Core's call-by-need
