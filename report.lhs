@@ -489,10 +489,10 @@ transformations in linearity-heavy Haskell libraries, such as
 % to the addition of linear types, that is, our Core program with linearity
 % annotations should be typechecked after the optimising transformations...
 
-\todo[inline]{We should discuss the alternative motivation of figuring out how
-to typecheck linearity in the presence of laziness on its own, why its hard and
-how it allows simpler use of linear types since the compiler doesn't constrain
-the programmer so much}
+% \todo[inline]{We should discuss the alternative motivation of figuring out how
+% to typecheck linearity in the presence of laziness on its own, why its hard and
+% how it allows simpler use of linear types since the compiler doesn't constrain
+% the programmer so much}
 
 % \todo[inline]{Rather, the linearity x call-by-need should be the original
 % motivation, with linear core as the prime example?}
@@ -503,29 +503,31 @@ the programmer so much}
 
 % \todo[inline]{Glimpse at how core optimizations can get us into these situations where we have to see this linearity}
 
-\todo[inline]{Saying, finally, what we are going to do, and that our system is
-capable of seeing linearity in all of these programs, and more -- it is capable
-of typechecking almost all optimising transformations we studied}
+% \todo[inline]{Saying, finally, what we are going to do, and that our system is
+% capable of seeing linearity in all of these programs, and more -- it is capable
+% of typechecking almost all optimising transformations we studied}
 
-\todo[inline]{Conclude by explaining that the document is structured in such a
-way that the payload starts in chapter 3 after delivering the background
-knowledge necessary to read through it (enumerate), and that we revise the
-introduction there, more in depth, assuming understanding of the background concepts}
+% ROMES:TODO: Does this still make sense? I think we can just not say anything, the introduction is finer now.
+% \todo[inline]{Conclude by explaining that the document is structured in such a
+% way that the payload starts in chapter 3 after delivering the background
+% knowledge necessary to read through it (enumerate), and that we revise the
+% introduction there, more in depth, assuming understanding of the background concepts}
+% Perhaps now we can have a smaller introduction in chapter 3
 
-\section*{Goals}
+% \section*{Goals}
 
-From a high-level view, our goals for the dissertation include:
+% From a high-level view, our goals for the dissertation include:
 
-\begin{itemize}
-\item Extending Core's type system and type-checking algorithm with additional
-linearity information in order to successfully type-check linearity in Core
-across transformations; DONE
-\item Validating that our type-system accepts programs before and after each
-transformation is applied; WIP Proofs of optimizations
-\item Arguing the soundness of the resulting system (i.e. no semantically
-non-linear programs are deemed linear); DONE (modulo 1)
-\item Implementing our extensions to Core in GHC, the leading Haskell Compiler. NOPE.
-\end{itemize}
+% \begin{itemize}
+% \item Extending Core's type system and type-checking algorithm with additional
+% linearity information in order to successfully type-check linearity in Core
+% across transformations; DONE
+% \item Validating that our type-system accepts programs before and after each
+% transformation is applied; WIP Proofs of optimizations
+% \item Arguing the soundness of the resulting system (i.e. no semantically
+% non-linear programs are deemed linear); DONE (modulo 1)
+% \item Implementing our extensions to Core in GHC, the leading Haskell Compiler. NOPE.
+% \end{itemize}
 
 
 \include{chapters/c2.tex}
