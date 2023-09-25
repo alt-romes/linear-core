@@ -7,107 +7,26 @@ understands (semantic) linearity in the presence of laziness, suitable for
 optimising compilers with these characteristics which leverage laziness and
 (possibly) linearity in its transformations.
 
-In this chapter, we discuss an implementation of Linear Core as a core plugin
-for the Glasgow Haskell Compiler which typechecks linearity of the Core
-resulting from desugaring and from each optimisation pass. The prototype
-implementation of Linear Core as a plugin successfully validates linearity of
-Core throughout compilation of linearity-heavy libraries, namely
-\texttt{linear-base} and \texttt{linear-smc}. Additionally, we discuss the
-implementation of the Linear Core type system directly in the Glasgow Haskell Compiler.
-% , except for multiplicity coercions which our system doesn't handle~\ref{sec}.
-%
-Then, we review the literature related to our own work, highlighting Linear
-Core's novel contributions in light of the existing prominent works in the
-area, or how they otherwise compare.
+In this chapter, review the literature related to our own work, highlighting
+Linear Core's novel contributions in light of the existing prominent works in
+the area, or how they otherwise compare,
 % (including linearity in a lazy, evaluation models in terms of linearity, and
 % the Core system).
 %
-Lastly, we consider future work deemed out of scope for our work and for the
-Linear Core type system (most importantly, we discuss so-called
-\emph{multiplicity coercions} to handle the interaction between linearity and
-coercions, a key feature of Core which we left out our system); and conclude.
+consider further research deemed out of the scope of our work and of the Linear
+Core type system (notably, we discuss so-called \emph{multiplicity coercions}
+to handle the interaction between linearity and coercions, a key feature of
+Core which we left out our system), and conclude.
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% {{{ Linear Core as a GHC Plugin; Introduction
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-\section{Linear Core as a GHC Plugin\label{sec:discuss:implementation}}
-
-\todo[inline]{A implementação existe; link para o github; validei o linear-base
-(excepto multiplicty coercions, e tive successo pq a implementação validou);
-validei os exemplos do inicio escrevendo Core à mão; Syntax-directedness
-}
-
-
-This section discusses the implementation of Linear Core as a GHC Plugin, with
-a dash of painful history in the attempt of implementing Linear Core directly
-into GHC.
-
-Discuss a bit syntax-directedness non existent in the system and that our implementation slightly tweaks it to be more syntax directed or something
-
-Talk about using our plugin on linear-base and other code bases... If I can get
-a few more case studies it would be pretty good. But then it's imperative to
-also use -dlinear-lint and make sure my plugin rejects a few of the examples
-
-% Introduction...
-
-\subsection{Consuming tagged resources as needed}
-
-As discussed in Section~\ref{}, constructor pattern bound linear variables are
-put in the context with a \emph{tagged} usage environment with the resources of
-the scrutinee. In a \emph{tagged} usage environment environment, all resources
-are tagged with a constructor and an index into the many fields of the
-constructor.
-
-In practice, a resource might have more than one tag. For example, in the following
-program, after the first pattern match, |a| and |b| have, respectively, usage
-environments $\{\lctag{x}{K_1}\}$ and $\{\lctag{x}{K_2}\}$:
-\begin{code}
-f x = case x of
-       K a b -> case a of
-        Pair n p -> (n,p)
-\end{code}
-However, in the following alternative, |n| has usage environment
-$\{\lctag{\lctag{x}{K_1}}{Pair_1}\}$ and |p| has
-$\{\lctag{\lctag{x}{K_1}}{Pair_2}\}$. To typecheck
-|(n,p)|, one has to $Split$ |x| first on |K| and then on |Pair|, in order for
-the usage environments to match.
-
-In our implementation, we split resources on demand (and don't directly allow
-splitting linear resources), i.e. when we use a tagged resource we split the
-linear resource in the linear environment (if available), but never split otherwise.
-%
-Namely, starting on the innermost tag (the closest to the variable name), we
-substitute the linear resource for its split fragments, and then we iteratively
-further split those fragments if there are additional tags.
-%
-We note that it is safe to destructively split the resource (i.e. removing the
-original and only leaving the split fragments) because we only split resources
-when we need to consume a fragment, and as soon as one fragment is consumed
-then using the original ``whole'' variable would violate linearity.
-
-In the example, if |n| is used, we have to use its usage environment, which in
-turn entails using $\lctag{\lctag{x}{K_1}}{Pair_1}$, which has two tags. In this order, we:
-\begin{itemize}
-\item Split $x$ into $\lctag{x}{K_1}$ and $\lctag{x}{K_2}$
-\item Split $\lctag{x}{K_1}$ and $\lctag{x}{K_2}$ into
-  \begin{itemize}
-  \item $\lctag{\lctag{x}{K_1}}{Pair_1}$ and $\lctag{\lctag{x}{K_1}}{Pair_2}$
-  \item Leave $\lctag{x}{K_2}$ untouched, as we only split on demand, and we aren't using a fragment of $\lctag{x}{K_2}$.
-  \end{itemize}
-\item Consume $\lctag{\lctag{x}{K_1}}{Pair_1}$, the usage environment of $n$, by removing it from the typing environment.
-\end{itemize}
-
-\subsection{Merging Linear Core into GHC\label{sec:merging-linear-core}}
-
-Describe the ticket for linear Core, the pending MRs, and the difficulty in
-even annotating the bind site across optimisations regardless of multiplicities.
-
-% }}}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % {{{ Related Work
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Related Work}
+
+In this section we discuss related work, namely, Linear
+Haskell~\cite{cite:linearhaskell}, Linear Mini-Core~\cite{cite:minicore}, and
+literature on linearity-influenced optimising
+transformations~\cite{cite:let-floating,peytonjones1997a,cite:linearhaskell}.
 
 % TODO: A brief introduction to the related work section?
 
@@ -142,13 +61,11 @@ even annotating the bind site across optimisations regardless of multiplicities.
 % 
 % Rules?
 
-\todo[inline]{Linear Constraints?}
-
 \subsection{Linear Haskell\label{sec:related-work-linear-haskell}}
 
-\todo[inline]{Say something about Linear Haskell's lazy operational semantics,
-but the type system not being concerned with linearity in the presence of
-laziness}
+% \todo[inline]{Say something about Linear Haskell's lazy operational semantics,
+% but the type system not being concerned with linearity in the presence of
+% laziness}
 
 Haskell, contrary to most programming languages with linear types, has existed
 for 31 years of its life \emph{without} linear types. As such, the introduction
@@ -177,17 +94,35 @@ which presents its own challenges.
 
 Nonetheless, while the Linear Haskell work keeps Core unchanged, its
 implementation in GHC does modify and extend Core with linearity/multiplicity
-annotations, and said extension of Core with linear types does not account for
-optimising transformations and the non-strict semantics of Core.
-
-Our work on linear Core intends to overcome the limitations of linear types as
-they exist in Core, i.e. integrating call-by-need semantics and validating the
-Core-to-Core passes, ultimately doubling as a validation of the implementation
-of Linear Haskell.
+annotations. Core's type system is unable to type \emph{semantic} linearity of
+programs (in contrast to \emph{syntactic} linearity), which result in Core
+rejecting linear programs resulting from optimising transformations that
+leverage the non-strict semantics of Core.
+%
+Linear Core overcomes the limitations of Core's linear type system derived from
+Linear Haskell by understanding semantic linearity in the presence of laziness,
+and provably accepts multiple Core-to-Core passes. Linear Core, ultimately, can
+also be seen as a system that validates the programs written in Linear Haskell
+and compiled by GHC by guaranteeing (through typing) that linear resources are
+still used exactly once throughout the optimising transformations.
 
 \subsection{Linear Mini-Core\label{sec:linear-mini-core}}
 
-Linear Mini core is the precursor to our work
+Linear Mini-Core~\cite{cite:minicore} is a specification of linear types in
+Core as they were being implemented in GHC, and doubles as the (unpublished)
+precursor to our work. Linear Mini-Core first observes the incapacity of
+Core's type system to accept linear programs after transformations, and first
+introduces usage environments for let-bound variables with the same goal of
+Linear Core of specifying a linear type system for Core that accepts the
+optimising transformations.
+
+We draw from Linear Mini-Core's the rule for non-recursive let
+expressions and how let-bound variables are annotated with a usage environment,
+however, our work further explores the interaction of laziness with linearity
+in depth, and diverges in rules for typing other constructs, notably, case
+expressions and case alternatives. Furthermore, we prove soundness of our
+system and that multiple optimising transformations, when applied to Linear
+Core programs, preserve linearity as understood by the system.
 
 % \subsection{OutsideIn(X)\label{related-work-gadts}}
 % 
@@ -241,9 +176,9 @@ linearity into account.
 % the lambda is linearly used and therefore floating-in is beneficial and
 % floating-out not as productive.
 
-\subsection{Call-by-value, call-by-name and call-by-value...}
-
-The work~\cite{cite:call-by-name-value-and-need-linear-lambda-calculus}...
+% \subsection{Call-by-value, call-by-name and call-by-value...}
+% 
+% The work~\cite{cite:call-by-name-value-and-need-linear-lambda-calculus}...
 
 % }}}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -251,7 +186,7 @@ The work~\cite{cite:call-by-name-value-and-need-linear-lambda-calculus}...
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Future Work\label{sec:future-work}}
 
-In this section we highlight promising topics for further research. Briefly,
+In this section we highlight some avenues of further research. Briefly,
 these include \emph{multiplicity coercions}, optimisations leveraging
 linearity, resource inference for usage environments, and ultimately using
 Linear Core in a mature optimising compiler with lazy evaluation and linear
@@ -259,13 +194,14 @@ types -- the Glasgow Haskell Compiler. Lastly, we discuss the
 % we hypothesize Linear($X$), a linear system parametrized on the evaluation strategy, and the
 generalization of Linear Core to the surface Haskell language.
 
-\parawith{Multiplicity Coercions}
+\parawith{Multiplicity Coercions.}
 Linear Core doesn't have type equality coercions, a flagship feature of GHC
-Core's type system. Coercions, briefly explained in Section~\ref{sec:core},
+Core's type system.
+%
+Coercions, briefly explained in Section~\ref{sec:core},
 allow the Core intermediate language to encode a panoply of Haskell source
-type-level features such as GADTs (briefly discussed
-in~\ref{sec:background-gadts}), type families or newtypes.
-
+type-level features such as GADTs, type families or newtypes.
+%
 In Linear Haskell, multiplicities are introduced as annotations to function
 arrows which specify the linearity of the function. In practice,
 multiplicities are simply types of kind |Multiplicity|, where |One| and |Many|
@@ -275,8 +211,8 @@ just type variables. Encoding multiplicities as types allows Haskell programs
 to leverage features available for types to naturally extend to multiplicities
 as well.
 %
-For example, we might define, using a GADT |SBool| and a type family |If|, the
-following program, which is linear in the second argument of |dep| if the first
+Consequently, we might define, e.g., using a GADT |SBool| and a type family
+|If|, the function |dep| which is linear in the second argument if the first
 argument is |STrue| and unrestricted otherwise:
 %
 \begin{limitation}
@@ -296,18 +232,20 @@ dep SFalse _ = 0
 \end{limitation}
 %
 In theory, this example is linear and should be accepted. However, in practice,
-the example is rejected by the GHC Core type checker. Critically, Core doesn't
+the example is rejected by the GHC's Core type checker. Critically, Core doesn't
 currently understand so-called \emph{multiplicity coercions}. Even though after
 matching on |STrue| we have access to a coercion from the function multiplicity
 $m$ to $1$ ($m \sim 1$), we cannot use this coercion to determine whether the
 usages of the linear resources match the multiplicity.
-
+%
 Studying the interaction between coercions and multiplicities is a main avenue
-of future work for Linear Core. In GHC, multiplicity coercions are tracked by
-issue $19517$\footnote{https://gitlab.haskell.org/ghc/ghc/-/issues/19517}.
-\todo[inline]{Relate to levity polymorphism and runtime rep coercions (Sam)}
+of future work for Linear Core.
 
-\parawith{Optimisations leveraging linearity}
+% In GHC, multiplicity coercions are tracked by issue $19517$\footnote{https://gitlab.haskell.org/ghc/ghc/-/issues/19517}.
+
+% \todo[inline]{Relate to levity polymorphism and runtime rep coercions (Sam)}
+
+\parawith{Optimisations leveraging linearity.}
 We only briefly mentioned how linearity can inform optimisations to produce
 more performant programs. We leave exploring optimisations unblocked by
 preserving linearity in the intermediate language with Linear Core as future
@@ -323,7 +261,7 @@ Core accepting more programs as linear there are more chances to (ab)use
 linearity, in contrast to a linear type system which does not account for lazy
 evaluation and thus rejects more programs.
 
-\parawith{Usage environment resource inference}
+\parawith{Usage environment resource inference.}
 In Section~\ref{sec:linearity-semantically}, we explained that the linear
 resources used by a group of recursive bindings aren't obvious and must be
 consistent with each other (i.e. considering the mutually-recursive calls) as
@@ -337,36 +275,37 @@ Linear Core uses a naive algorithm to determine the usage environments, thereby
 leaving as future work the design of a principled algorithm to determine the
 usage environments of recursive group of bindings.
 
-\parawith{Linear Core in the Glasgow Haskell Compiler}
+\parawith{Linear Core in the Glasgow Haskell Compiler.}
 Linear Core is suitable as the intermediate language of an optimising compiler
 for a linear and lazy language such as Haskell Core, in that optimising
 transformations in Linear Core preserve types \emph{and} linearity since Linear
 Core understands (semantic) in the presence of laziness, unlike Core's current
-type system (under which optimisations currently violate linearity).
+type system under which optimisations currently violate linearity.
 %
 Integrating Linear Core in the Glasgow Haskell Compiler is one of the ultimate
 goals motivating our work. Core's current type system ignores linearity due to
 its limitation in understanding semantic linearity, and our work fills this gap
 and would allow Core to be linearly typed all throughout.
 %
-A linearly typed Core preserving linearity throughout the optimisation pipeline
-of GHC both validates and informs optimisations, serving both as a validation
-of the correctness of the compiler (which already exists to great extent in
-Core preserving types, despite not preserving linearity), and as a means to
-make more performant programs.
+A linearly typed Core that preserves linearity throughout the optimisation
+pipeline of GHC both validates the correctness of the compiler, which is
+already achieved to a great extent by preserving (non-linear) types, and
+informs optimisations, allowing the compiler to generate more performant programs.
 
 Implementing Linear Core in GHC is a challenging endeavour, since we must account
 for all other Core features (e.g. strict constructor fields) and more
-optimisations.  Despite our initial attempt to do it described in
-Section~\ref{sec:merging-linear-core}, we leave this as future work.
+optimisations. Despite our initiative in this
+direction\footnote{https://gitlab.haskell.org/ghc/ghc/-/issues/23218}, we leave
+this as future work.
 
-\parawith{Generalizing Linear Core to Haskell}
-Linear types, despite its correctness compile-time guarantees, impose a burden on programmers in being a restrictive typing discipline....
-Linear Core is a small language designed in light of Core, the intermediate
-language of GHC, but it is a more flexible linear type system for lazily
-evaluated languages in that it accepts more programs as linear, giving
-programmers more flexibility... less restrictive which is usual bad thing of linear systmes (cite Linear Constraints)
-system
+\parawith{Generalizing Linear Core to Haskell.}
+Linear types, despite its compile-time correctness guarantees regarding
+resource management, impose a burden on programmers in being a restrictive
+typing discipline (witnessed, e.g., by Linear
+Constraints~\cite{cite:linearconstraints}). Linear Core eases the restrictions
+of linear typing by being more flexible in understanding linearity for lazily
+evaluated languages such as Haskell. In this sense, it is an avenue of future
+work to apply the ideas from Linear Core to the surface Haskell language.
 
 % \begin{itemize}
 % 
@@ -401,9 +340,63 @@ system
 
 % }}}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% {{{ Conclusions
+% {{{ Conclusion
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Conclusions}
+% We give up on this section and instead describe "syntax-directedness" in the implementation chapter
+%
+%
+% \section{Syntax Directed System}
+% 
+% \todo[inline]{In the other system we assume that the recursive lets are strongly connected, i.e. the expressions always}
+% 
+% \input{language-v4/SyntaxDirectedSystem}
+% 
+% \subsection{Inferring usage environments}
+% 
+% \todo[inline]{The difference between this and the previous section is a bit blurry}
+% 
+% \todo[inline]{There's one more concern: usage environments aren't readily
+% available, especially in recursive lets. We must perform inference of usage
+% environments before we can typecheck using them. This is how:}
+% 
+% \todo[inline]{Rather, we define a syntax directed type system that infers usage environments while checking...}
+% 
+
+\section{Conclusion}
+
+Optimising compilers with a typed and lazy intermediate language with linear
+types (of which GHC is the prime example) leverage laziness to heavily
+transform and rewrite programs into simpler forms.
+%
+However, these optimising transformations push the interaction between
+linearity and laziness to the limits where linearity can no longer be seen
+syntactically, despite being maintained semantically, in the sense that linear
+resources are still used exactly once when the optimised program is run.
+
+In this work we explored linearity in the presence of laziness by example
+through the interactions of linear types with lazy (recursive) let bindings and
+case expressions that evaluate their scrutinee to Weak Head Normal. Most
+example programs were linear semantically, but not syntactically.
+%
+We developed a linear type system, Linear Core, for an intermediate language
+akin to GHC Core, with laziness and linearity. In contrast to GHC Core's type
+system, or any other linear type system (to the best of our knowledge), our
+type system understands semantic linearity, and (anecdotally) accepts as
+well-typed all but one of the programs explored in the semantic linearity
+examples.
+%
+Crucially, we proved soundness of the type system, and proved multiple
+optimising transformations preserve linearity, despite most violating linearity
+in other linear type systems. Additionally, we implemented Linear Core as a GHC
+plugin to further explore its suitability in the intermediate language of an
+optimising compiler.
+
+Concluding, Linear Core is a suitable type system for linear, lazy,
+intermediate languages of optimising compilers such as GHC, as it understands
+linearity in the presence of laziness s.t. optimisations preserve types and
+linearity, and further unblocks optimisations influenced by linearity, e.g.
+inlining and call-by-name $\beta$-reduction for applications of (semantically)
+linear functions.
 
 % }}}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

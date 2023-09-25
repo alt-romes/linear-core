@@ -212,7 +212,7 @@ to existing type systems by enforcing that certain \emph{resources} (e.g.~a
 file handle) must be used \emph{exactly once}.
 %
 In programming languages with a linear type system, not using certain resources
-or using them twice are flagged as type errors. Linear types can thus be used
+or using them twice is flagged as a type error. Linear types can thus be used
 to, e.g., statically guarantee that socket descriptors or heap-allocated memory
 is freed exactly once (leaks and double-frees become type
 errors), or guarantee channel-based communication protocols are
@@ -388,10 +388,11 @@ resulting in programs completely different from the original, especially due to
 the flexibility laziness provides a compiler in the optimisations it may
 perform without changing the program semantics.
 %
-Crucially, the resulting program is still linear, since optimisations don't
-destroy linearity, however, the linear type system doesn't accept the resulting
-programs as linear. The optimisations transform programs that are linear into
-ones that don't \emph{look} linear, but remain linear \emph{semantically}.
+Crucially, since optimisations don't destroy linearity, the resulting program
+is still linear, however, the linear type system fails to recognize the
+resulting programs as linear. The optimisations transform programs that are
+linear into ones that don't \emph{look} linear, but remain linear
+\emph{semantically}.
 %
 For example, let $x$ be a linear resource in the two following programs, where
 the latter results from inlining $y$ in the let body of the former. Despite the
@@ -431,11 +432,6 @@ In detail, our contributions are:
 %
 \begin{itemize}
 
-\item We review background concepts necessary to understand our work, in
-Chapter~\ref{sec:background}. Namely, linear type systems and linear types in
-Haskell, evaluation strategies, the Core type system ($System~F_C$), and
-multiple optimising transformations applied by GHC in its compilation pipeline.
-
 \item We explain and provide insights into \emph{semantic} linearity in
 contrast to \emph{syntactic} linearity, in Haskell, by example
 ($\S$~\ref{sec:linearity-semantically}).
@@ -456,10 +452,16 @@ it accepts the intermediate programs resulting from (laziness-abusing)
 transformations in linearity-heavy Haskell libraries, such as
 \texttt{linear-base} ($\S$~\ref{sec:discuss:implementation}).
 
-\item Finally, we discuss related and future work (highlighting so-called
-\emph{multiplicity coercions}) in the remainder of Chapter~\ref{sec:discussion}.
-
 \end{itemize}
+%
+Additionally, we review background concepts fundamental for our work in
+Chapter~\ref{sec:background} (namely, linear type systems and linear types in
+Haskell, evaluation strategies, Core's type system, and multiple optimising
+transformations applied by GHC in its compilation pipeline);
+%
+and discuss related and future work (highlighting so-called \emph{multiplicity
+coercions}) in the Chapter~\ref{sec:discussion}.
+
 
 % This observation lies at the core of our work
 

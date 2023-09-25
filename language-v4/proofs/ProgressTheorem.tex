@@ -67,10 +67,10 @@ By structural induction on the (only) typing derivation
     (4) $\overline{\cdot, z{:}_{\cdot}; \cdot \sigma \vdash_{alt} \rho_i\to e_i :^z_\cdot \sigma \Rightarrow \varphi}$ \` by inversion of $CaseWHNF$ or $CaseNotWHNF$\\
     (5) $e~\textrm{is a value or}~\exists e'.~e \longrightarrow e'$ \` by induction hypothesis (2) \\
     Subcase $e$ is a value\\
-    TODO: this should rather be whether $e$ is in WHNF,\\
-    and there should be a better connection between values and WHNF explicit.\\
+    % TODO: this should rather be whether $e$ is in WHNF,\\
+    % and there should be a better connection between values and WHNF explicit.\\
     (6) $e_1 = K~\overline{e}$ \` by canonical forms lemma \\
-    (7) $e$ is in WHNF\` by (6) (TODO: match correctly value and WHNF)\\
+    (7) $e$ is in WHNF\` by (6)\\ % (TODO: match correctly value and WHNF)\\
     (8) $\overline{\rho_i \to e_i}$ is a complete pattern \` by coverage checker\\
     (9) $\ccase{K~\ov{e}}{z{:}_{\cdot}\sigma~\{\overline{\rho_i \to e_i}\}} \longrightarrow e_i\overline{[e/x]}[K~\overline{e}/z]$\\\` by case reduction on pattern or wildcard\\
     Subcase $\exists e'.~e \longrightarrow e'$\\

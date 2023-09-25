@@ -404,100 +404,101 @@ introduce Generalized Algebraic Data Types (GADTs) and create a list type
 indexed by size for which we can write a completely safe \texttt{head} function
 by expressing that the size of the list must be at least one, at the type level.
 
-\subsection{Generalized Algebraic Data Types\label{sec:background-gadts}}
-
-\textbf{GADTs}~\cite{Cheney2003FirstClassPT,10.1145/1159803.1159811,cite:outsideinx} are an advanced Haskell feature
-that allows users to define data types as they would common algebraic data
-types, with the added abilitiy to give explicit type signatures for the data
-constructors where the result type may differ in the type parameters (e.g., we
-might have two constructors of the same data type \texttt{T~a} return values of
-type \texttt{T~Bool} and \texttt{T~Int}).
-%
-This allows for additional type invariants to be represented with GADTs through
-their type parameters, which restricts the use of specific constructors and
-their subsequent deconstruction through pattern matching.
-%
-% TODO: Rewrite this bit below
-Pattern matching against GADTs can introduce local type refinements, i.e.
-refine the type information used for typechecking individual case alternatives.
-We develop the length-indexed lists example without discussing the type system
-and type inference details of GADTs as desribed in~\cite{cite:outsideinx}.
-% which we later explore in~\ref{related-work-gadts}.
-
-% First, we define the natural numbers inductively: a natural number is either
-% zero (\texttt{Z}) or a successor (\texttt{S}) of another natural number (e.g.
-% the successor of the successor of zero is a natural number). The following
-% definition creates the \texttt{Nat} type, the \texttt{Z} and \texttt{S} data
-% constructors which construct values, \emph{and} the \texttt{Z} and \texttt{S}
-% \emph{type} constructors which construct types.
-% %
-% % The latter two exist because of the \emph{DataKinds} language feature which
-% % promotes term-level constructors to type-level constructors.
-% 
-% \begin{code}
-%     data Nat = Z | S Nat
-%   \end{code}
-
-We define the data type in GADT syntax for length-index lists which
-takes two type parameters. The first type parameter is the length of the list
-and the type of the type parameter (i.e. the kind of the first type parameter)
-is \texttt{Nat}. To construct a type of kind \texttt{Nat} we can only use the
-type constructors \texttt{Z} and \texttt{S}. The second type parameter is the
-type of the values contained in the list, and any type is valid, hence the
-\texttt{Type} kind.
-
-\begin{code}
-    data Vec (n :: Nat) (a :: Type) where
-        Nil :: Vec Z a
-        Cons :: a -> Vec m a -> Vec (S m) a
-\end{code}
-
-The length-indexed list is defined inductively as either an empty list \emph{of
-size zero}, or the construction of a list by appending a new element to an
-existing list \emph{of size $m$} whose final size is $m+1$ (\texttt{S m}). The
-list \texttt{Cons~'a'~(Cons~'b'~Nil)} has type \texttt{Vec~(S~(S~Z))~Char}
-because \texttt{Nil} has type \texttt{Vec~Z~Char} and \texttt{Cons~'a'~Nil} has
-type \texttt{Vec~(S~Z)~Char}.
-GADTs make possible different data constructors being parametrized over
-different type parameters as we do with \texttt{Vec}'s size parameter being
-different depending on the constructor that constructs the list.
-
-To define the safe \texttt{head} function, we must specify the type of the input
-list taking into account that the size must not be zero. To that effect, the
-function takes as input a \texttt{Vec (S n) a}, that is, a vector with size
-(n+1) for all possible n's. This definition makes a call to \texttt{head} on a list of type
-\texttt{Vec Z a} (an empty list) a compile-time type error.
-
-\begin{code}
-    head :: Vec (S n) a -> a
-    head (Cons x xs) = x
-\end{code}
-
-Pattern matching on the \texttt{Nil} constructor is not needed, despite it
-being a constructor of \texttt{Vec}. The argument type doesn't match the type
-of the \texttt{Nil} constructor ($\texttt{S~n} \neq \texttt{Z}$), so the
-corresponding pattern case alternative is innacessible because the typechecker
-does not allow calling \texttt{head} on \texttt{Nil} (once again, its type,
-\texttt{Vec~Z~a}, does not match the input type of \texttt{head},
-\texttt{Vec~(S~n)~a}).
-
-In practice, the idea of using more expressive types to enforce invariants at
-compile time, that is illustrated by this simple example, can be taken much
-further, e.g., to implement type-safe artificial neural
-networks~\cite{cite:practicaldependenttypesinhaskell},
-enforce size compatibility in operations between matrices and
-vectors~\cite{cite:hmatrix}, to
-implement red-black trees guaranteeing its invariants at compile-time, or to
-implement a material system in a game engine~\cite{cite:ghengin}.
-% TODO: cite: https://blog.jle.im/entry/practical-dependent-types-in-haskell-1.html
-% TODO: haskell-servant?
-
-Linear types are, similarly, an extension to Haskell's type system that makes it
-even more expressive, by providing a finer control over the usage of certain
-resources at the type level.
-\todo[inline]{As we'll see after introducing linear
-haskell and multiplicities, GADTs/local equality evidence and multiplicity
-polymorphism interact in a non-trivial manner, and the way }
+% Unfortunate we have to comment this! We lose a reference to Ghengin :)
+%%% \subsection{Generalized Algebraic Data Types\label{sec:background-gadts}}
+%%% 
+%%% \textbf{GADTs}~\cite{Cheney2003FirstClassPT,10.1145/1159803.1159811,cite:outsideinx} are an advanced Haskell feature
+%%% that allows users to define data types as they would common algebraic data
+%%% types, with the added abilitiy to give explicit type signatures for the data
+%%% constructors where the result type may differ in the type parameters (e.g., we
+%%% might have two constructors of the same data type \texttt{T~a} return values of
+%%% type \texttt{T~Bool} and \texttt{T~Int}).
+%%% %
+%%% This allows for additional type invariants to be represented with GADTs through
+%%% their type parameters, which restricts the use of specific constructors and
+%%% their subsequent deconstruction through pattern matching.
+%%% %
+%%% % TODO: Rewrite this bit below
+%%% Pattern matching against GADTs can introduce local type refinements, i.e.
+%%% refine the type information used for typechecking individual case alternatives.
+%%% We develop the length-indexed lists example without discussing the type system
+%%% and type inference details of GADTs as desribed in~\cite{cite:outsideinx}.
+%%% % which we later explore in~\ref{related-work-gadts}.
+%%% 
+%%% % First, we define the natural numbers inductively: a natural number is either
+%%% % zero (\texttt{Z}) or a successor (\texttt{S}) of another natural number (e.g.
+%%% % the successor of the successor of zero is a natural number). The following
+%%% % definition creates the \texttt{Nat} type, the \texttt{Z} and \texttt{S} data
+%%% % constructors which construct values, \emph{and} the \texttt{Z} and \texttt{S}
+%%% % \emph{type} constructors which construct types.
+%%% % %
+%%% % % The latter two exist because of the \emph{DataKinds} language feature which
+%%% % % promotes term-level constructors to type-level constructors.
+%%% % 
+%%% % \begin{code}
+%%% %     data Nat = Z | S Nat
+%%% %   \end{code}
+%%% 
+%%% We define the data type in GADT syntax for length-index lists which
+%%% takes two type parameters. The first type parameter is the length of the list
+%%% and the type of the type parameter (i.e. the kind of the first type parameter)
+%%% is \texttt{Nat}. To construct a type of kind \texttt{Nat} we can only use the
+%%% type constructors \texttt{Z} and \texttt{S}. The second type parameter is the
+%%% type of the values contained in the list, and any type is valid, hence the
+%%% \texttt{Type} kind.
+%%% 
+%%% \begin{code}
+%%%     data Vec (n :: Nat) (a :: Type) where
+%%%         Nil :: Vec Z a
+%%%         Cons :: a -> Vec m a -> Vec (S m) a
+%%% \end{code}
+%%% 
+%%% The length-indexed list is defined inductively as either an empty list \emph{of
+%%% size zero}, or the construction of a list by appending a new element to an
+%%% existing list \emph{of size $m$} whose final size is $m+1$ (\texttt{S m}). The
+%%% list \texttt{Cons~'a'~(Cons~'b'~Nil)} has type \texttt{Vec~(S~(S~Z))~Char}
+%%% because \texttt{Nil} has type \texttt{Vec~Z~Char} and \texttt{Cons~'a'~Nil} has
+%%% type \texttt{Vec~(S~Z)~Char}.
+%%% GADTs make possible different data constructors being parametrized over
+%%% different type parameters as we do with \texttt{Vec}'s size parameter being
+%%% different depending on the constructor that constructs the list.
+%%% 
+%%% To define the safe \texttt{head} function, we must specify the type of the input
+%%% list taking into account that the size must not be zero. To that effect, the
+%%% function takes as input a \texttt{Vec (S n) a}, that is, a vector with size
+%%% (n+1) for all possible n's. This definition makes a call to \texttt{head} on a list of type
+%%% \texttt{Vec Z a} (an empty list) a compile-time type error.
+%%% 
+%%% \begin{code}
+%%%     head :: Vec (S n) a -> a
+%%%     head (Cons x xs) = x
+%%% \end{code}
+%%% 
+%%% Pattern matching on the \texttt{Nil} constructor is not needed, despite it
+%%% being a constructor of \texttt{Vec}. The argument type doesn't match the type
+%%% of the \texttt{Nil} constructor ($\texttt{S~n} \neq \texttt{Z}$), so the
+%%% corresponding pattern case alternative is innacessible because the typechecker
+%%% does not allow calling \texttt{head} on \texttt{Nil} (once again, its type,
+%%% \texttt{Vec~Z~a}, does not match the input type of \texttt{head},
+%%% \texttt{Vec~(S~n)~a}).
+%%% 
+%%% In practice, the idea of using more expressive types to enforce invariants at
+%%% compile time, that is illustrated by this simple example, can be taken much
+%%% further, e.g., to implement type-safe artificial neural
+%%% networks~\cite{cite:practicaldependenttypesinhaskell},
+%%% enforce size compatibility in operations between matrices and
+%%% vectors~\cite{cite:hmatrix}, to
+%%% implement red-black trees guaranteeing its invariants at compile-time, or to
+%%% implement a material system in a game engine~\cite{cite:ghengin}.
+%%% % TODO: cite: https://blog.jle.im/entry/practical-dependent-types-in-haskell-1.html
+%%% % TODO: haskell-servant?
+%%% 
+%%% Linear types are, similarly, an extension to Haskell's type system that makes it
+%%% even more expressive, by providing a finer control over the usage of certain
+%%% resources at the type level.
+%%% \todo[inline]{As we'll see after introducing linear
+%%% haskell and multiplicities, GADTs/local equality evidence and multiplicity
+%%% polymorphism interact in a non-trivial manner, and the way }
 
 % TODO:
 % Is it outside the scope of this report to discuss the merits and disadvantages
@@ -542,9 +543,9 @@ paraphrasing Linear Haskell~\cite{cite:linearhaskell}:
         consumed once.
 \end{itemize}
 
-\todo[pink, inline]{Either hint at a the importance of the definition of
-consuming values and expressions here, or be very clear about it in the Linear
-Core section}
+% \todo[pink, inline]{Either hint at a the importance of the definition of
+% consuming values and expressions here, or be very clear about it in the Linear
+% Core section}
 
 In Haskell, linear types are introduced through \emph{linearity on the function
 arrow}.
@@ -1508,8 +1509,9 @@ alternatives and, for example, out of a loop:
 \llet{t = expensive~x}{\lletrec{go~y = \ccase{x}{z~\{(a,b) \to \dots t \dots\}}}{\dots go \dots}}
 \end{array}
 \]
-In this example\todo{credit Simon?}, $expensive~x$ is now computed once, instead of once per loop iteration.
-
+In this example, $expensive~x$ is now computed once, instead of once per loop
+iteration.
+% (suggested by Simon P. Jones)
 
 
 \begin{figure}[ht]

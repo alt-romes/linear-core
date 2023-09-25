@@ -247,7 +247,7 @@ By structural induction on the $alt$ judgment.
 \end{tabbing}
 
 \item[Case:] $Alt0$
-    This is one of the most interesting proof cases, and particularly hard to prove.
+    This is one of the most interesting proof cases, and challenging to prove.
         \begin{itemize}
             \item The first insight is to divide the proof into two subcases, accounting
                 for when the scrutinee (and hence $\D_s$) contains the linear resource and when it does not.
@@ -268,7 +268,7 @@ By structural induction on the $alt$ judgment.
     (3) $\judg[\subst{\G}{\cdot}{\D_s,x}_z,\ov{\xo}][\subst{\D}{\cdot}{\D_s}]{e}{\vp}$\\
     (4) $e[e'/x] = e$\` since $x$ cannot occur in $e$ (erased from cx)\\
     (5) $\D[\cdot/\D_s] = (\D,\D')[\cdot/\D_s,\D']$   \` by cong. of subst.\\
-    (6) $\G[\cdot/\D_s,x]_z[\D'/x] = \G[\D'/x][\cdot/\D_s,\D']_z$\` by cong. of subst. and more\\
+    (6) $\G[\cdot/\D_s,x]_z[\D'/x] = \G[\D'/x][\cdot/\D_s,\D']_z$\` by cong. of subst.\\% and more\\
     (7) $\forall x,\D,\D',\G:x\notin\Delta \land \Delta'\not\subset\D \land \G;\D \vdash e :\s \Longrightarrow \G[\D'/x];\D \vdash e : \s$\` by Weaken\\
     \` and variables in $\G$ cannot occur in $e$ if they mention $x$ nor if they mention $\D'$ \\
     % (6) $\G[\cdot/\D_s,x]_z = \G[\D'/x][\cdot/\D_s,\D']_z$\` by cong. of subst.\\

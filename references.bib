@@ -778,3 +778,29 @@ author = {John Maraist and Martin Odersky and David N. Turner and Philip Wadler}
 abstract = {Girard described two translations of intuitionistic logic into linear logic, one where A → B maps to (!A) –○ B, and another where it maps to !(A –○ B). We detail the action of these translations on terms, and show that the first corresponds to a call-by-name calculus, while the second corresponds to call-by-value. We further show that if the target of the translation is taken to be an affine calculus, where ! controls contraction but weakening is allowed everywhere, then the second translation corresponds to a call-by-need calculus, as recently defined by Ariola, Felleisen, Maraist, Odersky and Wadler. Thus the different calling mechanisms can be explained in terms of logical translations, bringing them into the scope of the Curry-Howard isomorphism.}
 }
 
+
+@misc{cite:minicore,
+   author={Bernardy, J. and Eisenberg, R. and Boespflug, M. and Newton, R. and Jones, S. Peyton and Spiwack, A.},
+   title={Linear Mini-Core},
+   howpublished = {\url{https://gitlab.haskell.org/ghc/ghc/-/wikis/uploads/355cd9a03291a852a518b0cb42f960b4/minicore.pdf}},
+   year = {2020}
+}
+
+@article{cite:linearconstraints,
+author = {Spiwack, Arnaud and Kiss, Csongor and Bernardy, Jean-Philippe and Wu, Nicolas and Eisenberg, Richard A.},
+title = {Linearly Qualified Types: Generic Inference for Capabilities and Uniqueness},
+year = {2022},
+issue_date = {August 2022},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+volume = {6},
+number = {ICFP},
+url = {https://doi.org/10.1145/3547626},
+doi = {10.1145/3547626},
+abstract = {A linear parameter must be consumed exactly once in the body of its function. When declaring resources such as file handles and manually managed memory as linear arguments, a linear type system can verify that these resources are used safely. However, writing code with explicit linear arguments requires bureaucracy. This paper presents linear constraints, a front-end feature for linear typing that decreases the bureaucracy of working with linear types. Linear constraints are implicit linear arguments that are filled in automatically by the compiler. We present linear constraints as a qualified type system,together with an inference algorithm which extends GHC's existing constraint solver algorithm. Soundness of linear constraints is ensured by the fact that they desugar into Linear Haskell.},
+journal = {Proc. ACM Program. Lang.},
+month = {aug},
+articleno = {95},
+numpages = {28},
+keywords = {linear types, linear logic, constraints, Haskell, qualified types, inference, GHC}
+}

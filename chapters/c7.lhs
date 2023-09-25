@@ -1070,33 +1070,34 @@ unrestrictedly, and therefore the case binder may also be used unrestrictedly.
 %       in case x of z { K a b -> t; K2 w -> w }
 %\end{code}
 
-\subsection{Generalizing linearity in function of evaluation\label{sec:generalizing-evaluation-consuming}}
-
-\todo[inline]{Deixar isto para último, dificil generalizar, se necessario cortar}
-
-Indeed, as hinted towards in the previous section, there's a deep connection
-between \emph{evaluation} and \emph{consuming resources}.
-
-Definition X.Y: A linear resource is consumed when it is either fully evaluated
-(NF) to a value, or when it is returned s.t. an application of that function
-being fully evaluated would fully evaluate the resource to a value. Or something like that.
-%
-Note how this generalizes Linear Haskell's definition of consuming a resource: $\dots$
-
-\begin{itemize}
-\item We could almost say that eventually everything all linear
-resources must be evaluated to NF to be consumed, or returned by a function
-s.t. a continuation of that function has to evaluate the result to NF., or something.
-
-\item Discuss our own generalized (call-by-value, call-by-name, etc)
-definition of consuming resources by evaluation. Something like, if an
-expression is fully evaluated, all linear resources that expression depends on
-to compute a result are consumed, or something...
-
-\item How does this relate to strictness? Reference the section of Linear
-Haskell about linearity and strictness, and basically revisit what they say.
-
-\end{itemize}
+% ROMES: We don't have time to do this I think
+%%%\subsection{Generalizing linearity in function of evaluation\label{sec:generalizing-evaluation-consuming}}
+%%%
+%%%\todo[inline]{Deixar isto para último, dificil generalizar, se necessario cortar}
+%%%
+%%%Indeed, as hinted towards in the previous section, there's a deep connection
+%%%between \emph{evaluation} and \emph{consuming resources}.
+%%%
+%%%Definition X.Y: A linear resource is consumed when it is either fully evaluated
+%%%(NF) to a value, or when it is returned s.t. an application of that function
+%%%being fully evaluated would fully evaluate the resource to a value. Or something like that.
+%%%%
+%%%Note how this generalizes Linear Haskell's definition of consuming a resource: $\dots$
+%%%
+%%%\begin{itemize}
+%%%\item We could almost say that eventually everything all linear
+%%%resources must be evaluated to NF to be consumed, or returned by a function
+%%%s.t. a continuation of that function has to evaluate the result to NF., or something.
+%%%
+%%%\item Discuss our own generalized (call-by-value, call-by-name, etc)
+%%%definition of consuming resources by evaluation. Something like, if an
+%%%expression is fully evaluated, all linear resources that expression depends on
+%%%to compute a result are consumed, or something...
+%%%
+%%%\item How does this relate to strictness? Reference the section of Linear
+%%%Haskell about linearity and strictness, and basically revisit what they say.
+%%%
+%%%\end{itemize}
   
 
 % }}}
@@ -1236,11 +1237,9 @@ expression.
 %a linear lambda calculus with algebraic datatypes, case
 %expressions, recursive let bindings, and multiplicity abstractions. The 
 
-\todo[inline]{The operational semantics! How shall I discuss this?}
-
 The (small-step) operational semantics of Linear Core are given by
 Figure~\ref{fig:linear-core-operational-semantics}. We use call-by-name
-semantics for our Linear Core as it captures the non-strict semantics in which
+semantics for Linear Core as it captures the non-strict semantics in which
 our type system understands linearity, while being simpler to reason about than
 call-by-need operational semantics which is traditionally modelled with a
 mutable heap to store \emph{thunks} and the values they are overwritten with.
@@ -1248,7 +1247,7 @@ Furthermore, linear function applications, even in a \emph{call-by-need} system,
 usually reduced \emph{call-by-name} as the function argument is guaranteed to
 be used exactly once (thus avoiding unnecessarily allocating memory on the heap
 for a redundant \emph{thunk}).
-
+%
 Specifically, function application is reduced by the standard
 \emph{call-by-name} $\beta$-reduction that substitutes the expression whole by
 occurrences of the lambda argument in its body, case expressions evaluate their
@@ -1267,18 +1266,26 @@ diverges from $\lambda^q_\to$ primarily when typing lets and case expressions
 and alternatives, in its purpose to typecheck semantic linearity.
 %, and secondarily in only treating multiplicity polymorphism superficially.
 %
-\todo{And our treatment of multiplicity
-polymorphism completely ignores algebraic treatment of multiplicities with
-semiring operations!!! Would it be sufficient to add a rule for application of
-variable multiplicity functions?}
+% \todo{And our treatment of multiplicity
+% polymorphism completely ignores algebraic treatment of multiplicities with
+% semiring operations!!! Would it be sufficient to add a rule for application of
+% variable multiplicity functions?}
 %
 Otherwise, the base rules of the calculus for, multiplicity and term,
 abstraction and application are quite similar. In this section we present the
-linear calculi with typing rules that share much in common with $\lambda^q_\to$, and
-in the subsequent ones the rules encoding the novel insights from Linear Core
-explored by example in Section~\ref{sec:linearity-semantically}. The full type
-system is given by Figure~\ref{fig:linear-core-typing-rules}, with auxiliary
-judgements given by Figure~\ref{fig:linear-core-other-judgements}.
+linear calculi with typing rules that share much in common with
+$\lambda^q_\to$, and in the subsequent ones the rules encoding the novel
+insights from Linear Core explored by example in
+Section~\ref{sec:linearity-semantically}.
+%
+We note, however, that we handle multiplicity polymorphism differently from
+Linear Haskell in ignoring the multiplicities semiring and instead
+conservatively treating all multiplicity polymorphic functions as
+linear.
+%
+The full type system is given by
+Figure~\ref{fig:linear-core-typing-rules}, with auxiliary judgements given by
+Figure~\ref{fig:linear-core-other-judgements}.
 
 \TypingRules
 \TypingRulesOther
@@ -1350,8 +1357,10 @@ Typing linear and unrestricted function applications separately is less general
 than a typing rule for any multiplicity $\pi$ that scales per the multiplicity
 ring the resources used by the argument, however, since our goal of semantic
 linearity not benefiting much from it, keeping the simple approach allows us to have
-the linear and unrestricted environments separate.\todo{We might only need multiplicities for the
-case-of-case definition as it exists in ghc?, even then couldn't we do semiring scaling without variables? Also, dislike sentence}
+the linear and unrestricted environments separate.
+% \todo{We might only need multiplicities for the case-of-case definition as it
+% exists in ghc?, even then couldn't we do semiring scaling without variables?
+% Also, dislike sentence}
 
 Multiplicity abstractions ($\Lambda p.~e$) introduce a multiplicity variable
 $p$ to the unrestricted context as well, since we don't impose usage
@@ -1390,7 +1399,7 @@ key ideas of our work, encoded as rules.
 
 \subsection{Usage environments\label{sec:usage-environments}}
 
-A \emph{usage environment} $\Delta$ is the means to encode the powerful idea
+A \emph{usage environment} $\Delta$ is the means to encode the idea
 that lazy bindings don't consume the resources required by the bound expression
 when defined, but rather when themselves are fully consumed. Specifically, we
 annotate so-called $\Delta$-bound variables with a \emph{usage environment} to
@@ -1398,11 +1407,11 @@ denote that consuming these variables equates to consuming the resources in the
 usage environment $\D$ they are annotated with, where a usage environment is
 essentially a multiset of linear resources. $\Delta$-bound variables are
 introduced by a handful of constructs, namely, (recursive) let binders, case
-binders, and case pattern variables. In the following example, (as per the insights into
-semantic linearity developed in Section~\ref{sec:semantic-linearity-examples}),
-only were we to evaluate and consume the let-bound variable $u$ in the let-body $e$ would we use the linear resources
-required to type-check its body, $x$ and $y$. Accordingly, the
-usage environment of let-bound $u$ would be $\{x,y\}$:
+binders, and case pattern variables. In the following example, as per the insights into
+semantic linearity developed in Section~\ref{sec:semantic-linearity-examples},
+the resources required to typecheck the body of the binder $u$, $x$ and $y$,
+are only used if the let-var $u$ is consumed in the let-body $e$.
+Accordingly, the usage environment of let-bound $u$ is $\{x,y\}$:
 \[
 f = \lambda \xl.~\lambda \y[1].~\llet{u = (x,y)}{e}
 \]
@@ -1607,7 +1616,7 @@ were fully evaluated the whole expression would also be in normal form).
 Accordingly, sub-expressions might depend on linear resources that will
 be further consumed when they are evaluated.
 %
-As will be made clear in later sections, we need to devise a special typing
+As will be made clear in later sections, we need to devise a specialized typing
 judgement discipline for scrutinees that is able to distinguish between terms
 in WHNF and terms that are not in WHNF.
 %
@@ -1652,12 +1661,12 @@ scrutinee as before.
 We highlight that when evaluating a case expression, computation only
 effectively happens when a scrutinee not in WHNF is evaluated to WHNF. In the
 latter two cases, evaluation continues in the alternative by substituting in
-the appropriate scrutinee expressions, but without having computed anything
-(the scrutinee was already in weak head normal form!).
+the appropriate scrutinee expressions, but without having performed any computation
+(the scrutinee was already in weak head normal form).
 %In short, no computation happens if the scrutinee is already in WHNF.
 
-In terms of linearity, if no computation happens then no resources are
-consumed. Therefore, resources used to typecheck a scrutinee not in
+In terms of linearity, resources are consumed only if evaluation happens.
+Therefore, resources used to typecheck a scrutinee not in
 WHNF will be consumed, making said resources unavailable in the case
 alternatives. In contrast, when the scrutinee is already in WHNF, linear
 resources required to typecheck it are still made available in the alternatives.
@@ -1701,11 +1710,9 @@ constructor arguments.
 \subsubsection{Branching on WHNF-ness}
 
 The dichotomy between evaluation (hence resource usage) of a case expression
-whose scrutinee is in weak head normal form or otherwise leads to one of our
+whose scrutinee is in weak head normal form, or otherwise, leads to one of our
 key insights: we must \emph{branch on weak head normal formed-ness} to
 typecheck case expressions.
-
-\todo[inline]{Add example comparing}
 
 When the scrutinee is already in weak head normal form, the resources are
 unused and thus made available to the alternatives. However, alternatives may
@@ -1714,6 +1721,8 @@ referring to the corresponding constructor argument. Using the case binder
 entails using all the resources required by the scrutinee, and using a pattern
 variable implies using the resources of the corresponding constructor
 argument.
+
+\todo[inline]{Add example comparing, pequenino}
 
 Linear resources must be used exactly once, but there are three competing ways
 to use the resources from the scrutinee in a case alternative: directly, via
@@ -2063,13 +2072,15 @@ resources $\D$, for any $\D$.
 
 \subsection{Assumptions}
 
-We use two main assumptions in our proofs, which are quite dual.
+We use two main assumptions in our proofs, which are dual.
 %
 First, a program well-typed with a linear variable ($\xl$) is equivalently
 well-typed if that same linear variable were instead $\D$-bound ($\xD$) with
 usage environment $\D$, $\D$ were available in the linear context instead of
-the linear variable, and occurrences of $x$ are substituted by $\D$ in the
-usage environments of other $\D$-vars in $\G$.
+the linear variable.
+% , and occurrences of $x$ were substituted by $\D$ in the
+% usage environments of other $\D$-vars in $\G$.
+%
 % First, we state that a linear variable $\xl$ can be replaced by a $\D$-bound
 % variable as long as the context
 %
@@ -2085,7 +2096,7 @@ of the fragment-using $\D$-vars).
 
 \DeltaLinearRelationLemma
 
-% Intuitively, these two assumptions state that occurrences of a linear variable 
+% Intuitively, a linear variable 
 
 We additionally state that unrestricted resources are equivalent to $\D$-bound
 variables with an empty ($\cdot$) usage environment:
@@ -2330,8 +2341,8 @@ variable $x$.
 
 \todo[inline]{Maybe this shouldn't be a theorem since we don't prove it neither is it true}
 
-\noindent This is exactly backwards from what the binder swap transformation
-does in hope of eliminating multiple uses of $x$ so to inline it. However, by
+\noindent This is exactly reverse from what the binder swap transformation
+does in hope of eliminating multiple uses of $x$ so as to inline it. However, by
 using the scrutinee $x$ instead of the case binder, we might be able to float
 out expressions from the alternative using the case binder. For example, we
 might float an expensive computation involving $z$ out of the case alternative,
@@ -2376,7 +2387,7 @@ mutual exclusion with the case binder and pattern variables)
 % This idea would be encoded by a possible rule like $$\TypeCaseVar$$
 %
 Even though, on its own, it makes intuitive sense that this example indeed uses
-$x$ linearly, when considered as part of complete type system, allowing this
+$x$ linearly, when considered as part of a complete type system, allowing this
 expression to be linear makes the system unsound.
 
 We recall that $\beta$-reduction reduces an application of a linear function
@@ -2401,13 +2412,13 @@ swap is an optimisation that creates ill-typed expressions from well-typed
 ones, so it is deemed an invalid optimisation that doesn't preserve types in
 our system.
 
-The reverse binder swap not a problem in the GHC simplifier because of the
+The reverse binder swap is not a problem in the GHC simplifier because of the
 weaker notion of linearity understood by occurrence analysis. Occurrence
 analysis is a static analysis pass which can be used to determine whether a
 lambda application can be $\beta$-reduced call-by-name, and $\ccase{x}{\_ \to
-x}$ is \emph{not} seen as using $x$ linearly by it. Thus, $\beta$-reduction is
-done with call-by-need on such an expression. If the above example were reduced
-with call-by-need:
+x}$ is \emph{not} seen as using $x$ linearly by the analysis. Thus,
+$\beta$-reduction is done with call-by-need on such an expression. If the above
+example were reduced with call-by-need:
 \[
 \begin{array}{l}
 (\lambda x.~\ccase{x}{\_ \to x})~(use~y)\\
@@ -2448,15 +2459,15 @@ linearity when further optimised.
 % In this case, it is not a matter of syntatic vs semantic linearity
 % }
 
-\todo[inline]{
-Mention, from ``Call-by-name, call-by-value, call-by-need and the linear lambda calculus'':
-The call-by-name calculus is not entirely suitable for reasoning about
-functional programs in lazy languages, because the beta rule may copy the
-argument of a function any number of times. The call-by-need calculus uses a
-diferent notion of reduction, observationally equivalent to the call-by-name
-calculus. But call-by-need, like call-by-value, guarantees that the argument
-to a function is not copied before it is reduced to a value.
-}
+% \todo[inline]{
+% Mention, from ``Call-by-name, call-by-value, call-by-need and the linear lambda calculus'':
+% The call-by-name calculus is not entirely suitable for reasoning about
+% functional programs in lazy languages, because the beta rule may copy the
+% argument of a function any number of times. The call-by-need calculus uses a
+% diferent notion of reduction, observationally equivalent to the call-by-name
+% calculus. But call-by-need, like call-by-value, guarantees that the argument
+% to a function is not copied before it is reduced to a value.
+% }
 
 % It's also interesting to note that reverse-binder-swap preserves linearity under pure call-by-need but not under call-by-name, because
 % (In the sense that if EVEN linear functions reduce call-by-need rather than call-by-name, then it would preserve optimisations)
@@ -2490,63 +2501,88 @@ to a function is not copied before it is reduced to a value.
 
 % }}}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% {{{ Conclusion
+% {{{ Linear Core as a GHC Plugin; Introduction
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% We give up on this section and instead describe "syntax-directedness" in the implementation chapter
+
+\section{Linear Core as a GHC Plugin\label{sec:discuss:implementation}}
+
+In this section, we discuss an implementation of Linear Core as a core plugin
+for the Glasgow Haskell Compiler which typechecks linearity of the Core
+resulting from desugaring and from each optimisation pass. The prototype
+implementation of Linear Core as a plugin successfully validates linearity of
+Core throughout compilation of linearity-heavy libraries, namely
+\texttt{linear-base} and \texttt{linear-smc}. Additionally, we discuss the
+implementation of the Linear Core type system directly in the Glasgow Haskell Compiler.
+
+\todo[inline]{A implementação existe; link para o github; validei o linear-base
+(excepto multiplicty coercions, e tive successo pq a implementação validou);
+validei os exemplos do inicio escrevendo Core à mão; Syntax-directedness
+}
+
+
+This section discusses the implementation of Linear Core as a GHC Plugin, with
+a dash of painful history in the attempt of implementing Linear Core directly
+into GHC.
+
+Discuss a bit syntax-directedness non existent in the system and that our implementation slightly tweaks it to be more syntax directed or something
+
+Talk about using our plugin on linear-base and other code bases... If I can get
+a few more case studies it would be pretty good. But then it's imperative to
+also use -dlinear-lint and make sure my plugin rejects a few of the examples
+
+% Introduction...
+
+\subsection{Consuming tagged resources as needed}
+
+As discussed in Section~\ref{}, constructor pattern bound linear variables are
+put in the context with a \emph{tagged} usage environment with the resources of
+the scrutinee. In a \emph{tagged} usage environment environment, all resources
+are tagged with a constructor and an index into the many fields of the
+constructor.
+
+In practice, a resource might have more than one tag. For example, in the following
+program, after the first pattern match, |a| and |b| have, respectively, usage
+environments $\{\lctag{x}{K_1}\}$ and $\{\lctag{x}{K_2}\}$:
+\begin{code}
+f x = case x of
+       K a b -> case a of
+        Pair n p -> (n,p)
+\end{code}
+However, in the following alternative, |n| has usage environment
+$\{\lctag{\lctag{x}{K_1}}{Pair_1}\}$ and |p| has
+$\{\lctag{\lctag{x}{K_1}}{Pair_2}\}$. To typecheck
+|(n,p)|, one has to $Split$ |x| first on |K| and then on |Pair|, in order for
+the usage environments to match.
+
+In our implementation, we split resources on demand (and don't directly allow
+splitting linear resources), i.e. when we use a tagged resource we split the
+linear resource in the linear environment (if available), but never split otherwise.
 %
+Namely, starting on the innermost tag (the closest to the variable name), we
+substitute the linear resource for its split fragments, and then we iteratively
+further split those fragments if there are additional tags.
 %
-% \section{Syntax Directed System}
-% 
-% \todo[inline]{In the other system we assume that the recursive lets are strongly connected, i.e. the expressions always}
-% 
-% \input{language-v4/SyntaxDirectedSystem}
-% 
-% \subsection{Inferring usage environments}
-% 
-% \todo[inline]{The difference between this and the previous section is a bit blurry}
-% 
-% \todo[inline]{There's one more concern: usage environments aren't readily
-% available, especially in recursive lets. We must perform inference of usage
-% environments before we can typecheck using them. This is how:}
-% 
-% \todo[inline]{Rather, we define a syntax directed type system that infers usage environments while checking...}
-% 
+We note that it is safe to destructively split the resource (i.e. removing the
+original and only leaving the split fragments) because we only split resources
+when we need to consume a fragment, and as soon as one fragment is consumed
+then using the original ``whole'' variable would violate linearity.
 
-\section{Conclusion}
+In the example, if |n| is used, we have to use its usage environment, which in
+turn entails using $\lctag{\lctag{x}{K_1}}{Pair_1}$, which has two tags. In this order, we:
+\begin{itemize}
+\item Split $x$ into $\lctag{x}{K_1}$ and $\lctag{x}{K_2}$
+\item Split $\lctag{x}{K_1}$ and $\lctag{x}{K_2}$ into
+  \begin{itemize}
+  \item $\lctag{\lctag{x}{K_1}}{Pair_1}$ and $\lctag{\lctag{x}{K_1}}{Pair_2}$
+  \item Leave $\lctag{x}{K_2}$ untouched, as we only split on demand, and we aren't using a fragment of $\lctag{x}{K_2}$.
+  \end{itemize}
+\item Consume $\lctag{\lctag{x}{K_1}}{Pair_1}$, the usage environment of $n$, by removing it from the typing environment.
+\end{itemize}
 
-\todo[inline]{Se calhar esta secção quase dá como capitulo final, e removo
-daqui. Pq não sei mt bem o que vou escrever na outra que não seja isto...}
-
-In an optimising compiler with a typed and lazy intermediate language with
-linear types (of which GHC is the prime example), laziness is leveraged to
-heavily transform and rewrite the original programs into simpler forms.
-However, these optimisations push the interaction between linearity and
-laziness to the limits where linearity can no longer be seen syntactically,
-despite being maintained semantically, in the sense that linear resources are
-still used exactly once when the optimised program is run.
-
-In this chapter we explored linearity in the presence of laziness by example
-through the interactions of linear types with lazy (recursive) let bindings and
-case expressions that evaluate their scrutinee to Weak Head Normal. Most
-example programs were linear semantically, but not syntactically.
-
-We developed a linear type system, Linear Core, for an intermediate language
-akin to GHC Core, with laziness and linearity. In contrast to GHC Core's type
-system, or any other linear type system (to the best of our knowledge), our
-type system understands semantic linearity, and anecdotally accepts as
-well-typed all but one of the programs explored in the semantic linearity
-examples.
-%
-Crucially, we proved soundness of the type system, and proved multiple
-optimising transformations preserve linearity in it, despite most violating
-linearity in other linear type systems.
-
-Concluding, Linear Core is a suitable type system for linear, lazy,
-intermediate languages of optimising compilers such as GHC, as it understands
-linearity in the presence of laziness s.t. optimisations preserve types and
-linearity, and further unblocks optimisations influenced by linearity, e.g.
-inlining and call-by-name $\beta$-reduction for applications of (semantically)
-linear functions.
+%%%\subsection{Merging Linear Core into GHC\label{sec:merging-linear-core}}
+%%%
+%%%Describe the ticket for linear Core, the pending MRs, and the difficulty in
+%%%even annotating the bind site across optimisations regardless of multiplicities.
 
 % }}}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
