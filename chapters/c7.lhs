@@ -977,7 +977,7 @@ evaluating the scrutinee.
 Finally, we discuss the special case of a case expression scrutinizing a
 variable $x$:
 \[
-fvar = \lambda x.~\ccase{x}{\_ \to x}
+\lambda x.~\ccase{x}{\_ \to x}
 \]
 It might seem as though the program is linear:
 \begin{itemize}
@@ -989,9 +989,9 @@ consumed exactly once.
 \end{itemize}
 However, in practice, it depends on the evaluation strategy. If linear function
 applications are $\beta$-reduced \emph{call-by-name} (a common practice, as
-linear functions use their argument exactly once), and $fvar$ is considered
-linear, then an application might duplicate linear resources during evaluation.
-For example:
+linear functions use their argument exactly once), and the above function is
+considered linear, then an application might duplicate linear resources during
+evaluation. For example:
 \[
 \begin{array}{l}
 (\lambda x.~\ccase{x}{\_ \to x})~(free~x)\\
@@ -1243,7 +1243,7 @@ Figure~\ref{fig:linear-core-operational-semantics}. We use call-by-name
 semantics for our Linear Core as it captures the non-strict semantics in which
 our type system understands linearity, while being simpler to reason about than
 call-by-need operational semantics which is traditionally modelled with a
-mutable to store \emph{thunks} and the values they are overwritten with.
+mutable heap to store \emph{thunks} and the values they are overwritten with.
 Furthermore, linear function applications, even in a \emph{call-by-need} system, are
 usually reduced \emph{call-by-name} as the function argument is guaranteed to
 be used exactly once (thus avoiding unnecessarily allocating memory on the heap
@@ -2063,20 +2063,29 @@ resources $\D$, for any $\D$.
 
 \subsection{Assumptions}
 
-We use two key assumptions in our proofs, which really state two dual sides of
-an equivalence.
-
+We use two main assumptions in our proofs, which are quite dual.
+%
 First, a program well-typed with a linear variable ($\xl$) is equivalently
 well-typed if that same linear variable were instead $\D$-bound ($\xD$) with
-usage environment $\D$, and $\D$ were available in the linear context instead
-of the linear variable.
-
-First, we state that a linear variable $\xl$ can be replaced by a $\D$-bound
-variable as long as the context
-
+usage environment $\D$, $\D$ were available in the linear context instead of
+the linear variable, and occurrences of $x$ are substituted by $\D$ in the
+usage environments of other $\D$-vars in $\G$.
+% First, we state that a linear variable $\xl$ can be replaced by a $\D$-bound
+% variable as long as the context
+%
 \LinearDeltaRelationLemma
+%
+\noindent Second, a program well-typed with resources $\D$ and $\D$-bound
+variable ($\xD$) is equivalently well-typed, as long as $\D$ is consumed
+through the use of $x$, if $x$ is moved to the linear context, resources $\D$
+are removed from the linear context, and occurrences of $\D$ whole in usage
+environments are substituted by $x$ (occurrences of fragments of $\D$ in usage
+environments are unimportant since $\D$ was consumed whole by $x$, not by any
+of the fragment-using $\D$-vars).
 
 \DeltaLinearRelationLemma
+
+% Intuitively, these two assumptions state that occurrences of a linear variable 
 
 We additionally state that unrestricted resources are equivalent to $\D$-bound
 variables with an empty ($\cdot$) usage environment:

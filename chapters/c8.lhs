@@ -98,7 +98,7 @@ turn entails using $\lctag{\lctag{x}{K_1}}{Pair_1}$, which has two tags. In this
 \item Consume $\lctag{\lctag{x}{K_1}}{Pair_1}$, the usage environment of $n$, by removing it from the typing environment.
 \end{itemize}
 
-\subsection{Merging Linear Core into GHC}
+\subsection{Merging Linear Core into GHC\label{sec:merging-linear-core}}
 
 Describe the ticket for linear Core, the pending MRs, and the difficulty in
 even annotating the bind site across optimisations regardless of multiplicities.
@@ -111,21 +111,22 @@ even annotating the bind site across optimisations regardless of multiplicities.
 
 % TODO: A brief introduction to the related work section?
 
-\subsection{Formalization of Core}\todo{terrible paragraph name, and terrible paragraph}
+% \subsection{Formalization of Core}\todo{terrible paragraph name, and terrible paragraph}
+% 
+% As such, there exists no formal definition of Core that
+% accounts for linearity. In this context, we intend to introduce a linearly typed
+% System $F_C$ with multiplicity annotations and typing rules to serve
+% as a basis for a linear Core. Critically, this Core linear language
+% must account for call-by-need evaluation semantics and be valid in
+% light of Core-to-Core optimising transformations.
+
+% \parawith{System FC}
 
 %System $F_C$~\cite{cite:systemfc} (Section~\ref{sec:core}) does not
 %account for linearity in its original design, and, to the best of our
 %knowledge, no extension to System $F_C$ with linearity and non-strict
 %semantics exists.
 %
-As such, there exists no formal definition of Core that
-accounts for linearity. In this context, we intend to introduce a linearly typed
-System $F_C$ with multiplicity annotations and typing rules to serve
-as a basis for a linear Core. Critically, this Core linear language
-must account for call-by-need evaluation semantics and be valid in
-light of Core-to-Core optimising transformations.
-
-% \parawith{System FC}
 
 % \begin{itemize}
 % \item SystemFC tal como está não tem linearidade de todo
@@ -250,45 +251,20 @@ The work~\cite{cite:call-by-name-value-and-need-linear-lambda-calculus}...
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Future Work\label{sec:future-work}}
 
-Our work ...
+In this section we highlight promising topics for further research. Briefly,
+these include \emph{multiplicity coercions}, optimisations leveraging
+linearity, resource inference for usage environments, and ultimately using
+Linear Core in a mature optimising compiler with lazy evaluation and linear
+types -- the Glasgow Haskell Compiler. Lastly, we discuss the
+% we hypothesize Linear($X$), a linear system parametrized on the evaluation strategy, and the
+generalization of Linear Core to the surface Haskell language.
 
-\begin{itemize}
-
-\item Linear(X), a linear type system defined by the underlying definition of evaluation (which in turn implies how consuming a resource is defined)
-
-\item Implementation in Core
-
-\item Generalization to source level language, being more permissive in the
-handling of resources imposes less burden on the programmer
-
-\item It's harder to typecheck linearity like this in the source level because
-of the interaction with other source features, but seems feasible and an
-improvement to the usability of linear types. It allows more lazy functional
-programming idioms with linear types (also because laziness and strictness is less well defined as in Core, bc opts)
-
-\item Beautiful inference algorithm for recursive usage environments -- insight
-that looks like inference for recursive function principle types, but haven't
-figured it out -- connection to type inference / hindley milner
-
-\item We kind of ignore the multiplicity semiring. We should discuss
-how we don't do ring operations ... but that's kind of wrong.
-
-% \item We know the case binder to ALWAYS be in WHNF, perhaps there could
-% be some annotation on the case binder s.t. we know nothing happens when we
-% scrutinize it as a single variable
-
-\item Mechanizing the system and metatheory
-
-\end{itemize}
-
-\subsubsection{Multiplicity Coercions}
-
-\todo[inline]{Relate to levity polymorphism and runtime rep coercions (Sam)}
-
+\parawith{Multiplicity Coercions}
 Linear Core doesn't have type equality coercions, a flagship feature of GHC
 Core's type system. Coercions, briefly explained in Section~\ref{sec:core},
 allow the Core intermediate language to encode a panoply of Haskell source
-type-level features such as GADTs (briefly discussed in~\ref{sec:background-gadts}), type families or newtypes.
+type-level features such as GADTs (briefly discussed
+in~\ref{sec:background-gadts}), type families or newtypes.
 
 In Linear Haskell, multiplicities are introduced as annotations to function
 arrows which specify the linearity of the function. In practice,
@@ -329,6 +305,99 @@ usages of the linear resources match the multiplicity.
 Studying the interaction between coercions and multiplicities is a main avenue
 of future work for Linear Core. In GHC, multiplicity coercions are tracked by
 issue $19517$\footnote{https://gitlab.haskell.org/ghc/ghc/-/issues/19517}.
+\todo[inline]{Relate to levity polymorphism and runtime rep coercions (Sam)}
+
+\parawith{Optimisations leveraging linearity}
+We only briefly mentioned how linearity can inform optimisations to produce
+more performant programs. We leave exploring optimisations unblocked by
+preserving linearity in the intermediate language with Linear Core as future
+work. Linearity influenced optimising transformations have been also discussed
+by Linear Haskell~\cite{cite:linearhaskell} and
+in~\cite{cite:let-floating,peytonjones1997a}. An obvious candidate is
+\emph{inlining}, which is applied based on heuristics from information provided
+by the \emph{cardinality analysis} pass that counts occurrences of bound
+variables.  Linearity, in being user-provided annotations regarding the usage
+of resources in the body of a function, can be used to inform non-heuristically
+the inliner~\cite{cite:linearhaskell}. Additionally, we argue that in Linear
+Core accepting more programs as linear there are more chances to (ab)use
+linearity, in contrast to a linear type system which does not account for lazy
+evaluation and thus rejects more programs.
+
+\parawith{Usage environment resource inference}
+In Section~\ref{sec:linearity-semantically}, we explained that the linear
+resources used by a group of recursive bindings aren't obvious and must be
+consistent with each other (i.e. considering the mutually-recursive calls) as
+though the resources used by each binder are the solution to a set determined
+by the recursive bindings group.  In Section~\ref{sec:main:linear-core}, we
+further likened the challenge of determining usage environments for a recursive
+group of bindings to a unification problem as that solved by the Hindley-Milner
+type inference algorithm~\cite{hindleymilner} based on generating and solving
+constraints. Even though these are useful observations, our implementation of
+Linear Core uses a naive algorithm to determine the usage environments, thereby
+leaving as future work the design of a principled algorithm to determine the
+usage environments of recursive group of bindings.
+
+\parawith{Linear Core in the Glasgow Haskell Compiler}
+Linear Core is suitable as the intermediate language of an optimising compiler
+for a linear and lazy language such as Haskell Core, in that optimising
+transformations in Linear Core preserve types \emph{and} linearity since Linear
+Core understands (semantic) in the presence of laziness, unlike Core's current
+type system (under which optimisations currently violate linearity).
+%
+Integrating Linear Core in the Glasgow Haskell Compiler is one of the ultimate
+goals motivating our work. Core's current type system ignores linearity due to
+its limitation in understanding semantic linearity, and our work fills this gap
+and would allow Core to be linearly typed all throughout.
+%
+A linearly typed Core preserving linearity throughout the optimisation pipeline
+of GHC both validates and informs optimisations, serving both as a validation
+of the correctness of the compiler (which already exists to great extent in
+Core preserving types, despite not preserving linearity), and as a means to
+make more performant programs.
+
+Implementing Linear Core in GHC is a challenging endeavour, since we must account
+for all other Core features (e.g. strict constructor fields) and more
+optimisations.  Despite our initial attempt to do it described in
+Section~\ref{sec:merging-linear-core}, we leave this as future work.
+
+\parawith{Generalizing Linear Core to Haskell}
+Linear types, despite its correctness compile-time guarantees, impose a burden on programmers in being a restrictive typing discipline....
+Linear Core is a small language designed in light of Core, the intermediate
+language of GHC, but it is a more flexible linear type system for lazily
+evaluated languages in that it accepts more programs as linear, giving
+programmers more flexibility... less restrictive which is usual bad thing of linear systmes (cite Linear Constraints)
+system
+
+% \begin{itemize}
+% 
+% \item Linear(X), a linear type system defined by the underlying definition of
+% evaluation (which in turn implies how consuming a resource is defined)
+% 
+% \item Implementation in Core
+% 
+% \item Generalization to source level language, being more permissive in the
+% handling of resources imposes less burden on the programmer
+% 
+% \item It's harder to typecheck linearity like this in the source level because
+% of the interaction with other source features, but seems feasible and an
+% improvement to the usability of linear types. It allows more lazy functional
+% programming idioms with linear types (also because laziness and strictness is less well defined as in Core, bc opts)
+% 
+% \item Beautiful inference algorithm for recursive usage environments -- insight
+% that looks like inference for recursive function principle types, but haven't
+% figured it out -- connection to type inference / hindley milner
+% 
+% \item We kind of ignore the multiplicity semiring. We should discuss
+% how we don't do ring operations ... but that's kind of wrong.
+% 
+% % \item We know the case binder to ALWAYS be in WHNF, perhaps there could
+% % be some annotation on the case binder s.t. we know nothing happens when we
+% % scrutinize it as a single variable
+% 
+% \item Mechanizing the system and metatheory
+% 
+% \end{itemize}
+
 
 % }}}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
