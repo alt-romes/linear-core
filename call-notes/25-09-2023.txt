@@ -1,0 +1,24 @@
+Mostrar primeiro a regra como ela está (notando que não é a regra final)
+Depois apresentar as coisas
+Depois voltar e mostrar a regra completa
+
+Notar no split que tmb dá para as outras vars irrelevant
+
+Mostrar exemplos apenas, dizer que estão bem tipificados no Linear core
+
+Implementação
+* Mover Implementation to previous Chapter
+* Dizer que existe
+* Validar
+Possivel omitir "merging into GHC", não faz parte do trabalho ter algo que não acabamos
+
+
+Related Work:
+* Linear Haskell
+* Linear Mini core não está publicado mas é parte desta ideia
+* Aquilo codifica outra coisa
+
+Provas
+Mudar aquele "congruence?" para a assumption
+
+
