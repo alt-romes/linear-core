@@ -1715,14 +1715,21 @@ key insights: we must \emph{branch on weak head normal formed-ness} to
 typecheck case expressions.
 
 When the scrutinee is already in weak head normal form, the resources are
-unused and thus made available to the alternatives. However, alternatives may
-use the case binder, referring to the whole scrutinee, and pattern variables,
-referring to the corresponding constructor argument. Using the case binder
-entails using all the resources required by the scrutinee, and using a pattern
-variable implies using the resources of the corresponding constructor
-argument.
-
-\todo[inline]{Add example comparing, pequenino}
+unused and thus available in the alternatives. For example, consider a case
+expression with a scrutinee in weak head normal form and another whose scrutinee is not:
+\[
+\begin{array}{ccc}
+(1)~\lambda x.~\ccase{K~x}{\_ \to x} &  & (2)~\lambda x.~\ccase{free~x}{\_ \to x}
+\end{array}
+\]
+The first function uses $x$ linearly, while the second does not.
+%
+Alternatives may also use the case binder, referring to the whole scrutinee
+(and all resources used to type the scrutinee), and pattern variables,
+referring to constructor arguments, where each consumes the resources of the
+corresponding constructor argument when itself is used.
+% Using the case binder entails using all the resources required by the scrutinee, and using a pattern
+% variable implies using the resources of the corresponding constructor argument.
 
 Linear resources must be used exactly once, but there are three competing ways
 to use the resources from the scrutinee in a case alternative: directly, via
@@ -1735,7 +1742,10 @@ in a scrutinee that is already in WHNF are only properly consumed when all
 (linear) fields of the pattern are used -- agreeing with the definition of
 consuming resources given in Linear Haskell.
 %
-We type a case expression whose scrutinee is in weak head normal form with:
+We type a case expression whose scrutinee is in weak head normal form
+with\footnote{This isn't the final rule for case expression whose scrutinee is
+in WHNF, but the main intuition is herein conveyed. After introducing the rule for
+cases with scrutinees \emph{not} in WHNF, we revise this rule.}:
 \[
 \TypeCaseWHNF
 \]
@@ -2501,18 +2511,20 @@ linearity when further optimised.
 
 % }}}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% {{{ Linear Core as a GHC Plugin; Introduction
+% {{{ Linear Core as a GHC Plugin
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \section{Linear Core as a GHC Plugin\label{sec:discuss:implementation}}
 
-In this section, we discuss an implementation of Linear Core as a core plugin
-for the Glasgow Haskell Compiler which typechecks linearity of the Core
-resulting from desugaring and from each optimisation pass. The prototype
-implementation of Linear Core as a plugin successfully validates linearity of
-Core throughout compilation of linearity-heavy libraries, namely
-\texttt{linear-base} and \texttt{linear-smc}. Additionally, we discuss the
-implementation of the Linear Core type system directly in the Glasgow Haskell Compiler.
+In this section, we discuss our prototype implementation of Linear Core as a
+Core plugin for the Glasgow Haskell Compiler. The Linear Core Plugin typechecks
+linearity in all Core programs produced both by the desugarer and after each
+optimisation pass.
+%
+The plugin successfully validates linearity of Core throughout compilation of
+linearity-heavy libraries, namely \texttt{linear-base} and \texttt{linear-smc}.
+Additionally, we discuss the implementation of the Linear Core type system
+directly in the Glasgow Haskell Compiler.
 
 \todo[inline]{A implementação existe; link para o github; validei o linear-base
 (excepto multiplicty coercions, e tive successo pq a implementação validou);

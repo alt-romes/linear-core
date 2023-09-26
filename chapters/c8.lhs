@@ -1,6 +1,6 @@
 %include polycode.fmt
 %format ⊸ = "\lolli"
-\chapter{Discussion\label{sec:discussion}}
+\chapter{Conclusion\label{sec:discussion}}
 
 Linear Core is an intermediate language with a type system system that
 understands (semantic) linearity in the presence of laziness, suitable for
@@ -25,7 +25,7 @@ Core which we left out our system), and conclude.
 
 In this section we discuss related work, namely, Linear
 Haskell~\cite{cite:linearhaskell}, Linear Mini-Core~\cite{cite:minicore}, and
-literature on linearity-influenced optimising
+linearity-influenced optimising
 transformations~\cite{cite:let-floating,peytonjones1997a,cite:linearhaskell}.
 
 % TODO: A brief introduction to the related work section?
@@ -269,7 +269,7 @@ though the resources used by each binder are the solution to a set determined
 by the recursive bindings group.  In Section~\ref{sec:main:linear-core}, we
 further likened the challenge of determining usage environments for a recursive
 group of bindings to a unification problem as that solved by the Hindley-Milner
-type inference algorithm~\cite{hindleymilner} based on generating and solving
+type inference algorithm~\cite{10.1145/582153.582176} based on generating and solving
 constraints. Even though these are useful observations, our implementation of
 Linear Core uses a naive algorithm to determine the usage environments, thereby
 leaving as future work the design of a principled algorithm to determine the

@@ -454,7 +454,7 @@ transformations in linearity-heavy Haskell libraries, such as
 
 \end{itemize}
 %
-Additionally, we review background concepts fundamental for our work in
+Additionally, we review background concepts fundamental to our work in
 Chapter~\ref{sec:background} (namely, linear type systems and linear types in
 Haskell, evaluation strategies, Core's type system, and multiple optimising
 transformations applied by GHC in its compilation pipeline);

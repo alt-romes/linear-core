@@ -20,5 +20,5 @@ Related Work:
 
 Provas
 Mudar aquele "congruence?" para a assumption
-
+Meter case of case em appendix
 
