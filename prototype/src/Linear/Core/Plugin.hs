@@ -28,6 +28,7 @@ import Data.Text (Text)
 import qualified Data.Text as T
 -- import Prettyprinter
 
+import qualified GHC.Utils.Outputable as Ppr
 import GHC.Core.TyCon
 import GHC.Core.TyCo.Rep
 import GHC.Types.Var
@@ -71,7 +72,7 @@ linearCorePass guts = do
        -- the fail_ thing was an attempt to allow the plugin to continue on
        -- functions marked for failing, but that feature isn't finished
        then fatalErrorMsg (ppr errs)
-       else Trace.pprTraceM "[FAILED] Linear typechecking failed when it shouldn't!" (ppr errs)
+       else Trace.pprTraceM "[FAILED]" (ppr errs Ppr.$$ ppr prog)
 
   return guts -- unchanged guts, after validating them.
 

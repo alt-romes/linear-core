@@ -1,4 +1,5 @@
 {-# LANGUAGE MultiWayIf #-}
+{-# LANGUAGE ViewPatterns #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE BlockArguments #-}
 {-# LANGUAGE OverloadedStrings #-}
@@ -28,6 +29,7 @@ module Linear.Core.Monad
   where
 
 import Prelude hiding (drop)
+import qualified Data.Set as S
 import Control.Monad
 import Data.String
 import Control.Monad.State
@@ -43,6 +45,8 @@ import Linear.Core.Multiplicities
 import GHC.Driver.Ppr (showPprUnsafe)
 import qualified Data.Map as M
 import qualified GHC.Utils.Panic as Ppr
+import qualified Data.List as L
+import Data.Either (fromRight)
 
 -- | Computations that thread through a linear context from which resources must
 -- be used exactly once, and resources of other multiplicities that can be
@@ -62,7 +66,7 @@ import qualified GHC.Utils.Panic as Ppr
 --   than once if it has been split, and each multiplicity will be different
 --   from each other
 -- * The Writer, [Var], records all the variables that were used in a
--- computation, including the unrestricted variables.
+-- computation, including the unrestricted variables (now [(Var, Mult)] because we record fragment uses).
 --   * One can trivially determine the linear variables used in a computation by
 --   taking the \setminus between the state before the computation and the state
 --   after the computation, because linear resources disappear from the context
@@ -76,8 +80,12 @@ import qualified GHC.Utils.Panic as Ppr
 -- * The Reader, Bool, determines whether to record all variables used in the writer env.
 --    * This bool will only be true when recordNonLinear sets in order to record variables.
 --    * This ensures we only collect variables within recordNonLinear, after which we wipe the writer
-newtype LinearCoreT m a = LinearCoreT { unLC :: RWST (IsDryRun, AllowIrrelevant, BindingName) [Var] LCState (ExceptT String m) a }
+newtype LinearCoreT m a = LinearCoreT { unLC :: RWST (IsDryRun, AllowIrrelevant, BindingName)
+                                                     [(Var, Mult)]
+                                                     LCState
+                                                     (ExceptT String m) a }
   deriving (Functor, Applicative, Monad, MonadState LCState, MonadReader (IsDryRun,AllowIrrelevant,BindingName))
+-- should have been a state machine based impl
 
 -- | We track the name of the top-level binding to use in Error Messages
 type BindingName = String
@@ -145,7 +153,6 @@ use = flip use' [] where
             <> "\nLC State:\n"
             <> showPprUnsafe lcstate
 
-
       -- Resource is LambdaBound and hasn't been neither consumed nor split
       Just (Left (LambdaBound mult))
 
@@ -160,24 +167,25 @@ use = flip use' [] where
             -- so it is simply consumed
             [] ->
               if isDryRun
-                 then tell [key]
+                 then tell [(key, mult)]
                  else do
-                   -- pprTraceM "Using lambda bound" (Ppr.ppr key Ppr.<+> Ppr.ppr mult)
+                   pprTraceM "Using lambda bound" (Ppr.ppr key Ppr.<+> Ppr.ppr mult)
                    modify (M.delete key)
 
             -- We are trying to use a fragment of this resource, so we split it
             -- as necessary according to the tag stack until we can consume the
             -- given tag (in the form of a tagstack)
             tags -> do
-              splits <- splitAsNeededThenConsume allowsIrrelevant tags mult
+              (splits, consumed_frag) <- splitAsNeededThenConsume allowsIrrelevant tags mult
               -- pprTraceM "Splitting key at tags" (Ppr.ppr key Ppr.<+> Ppr.ppr tags Ppr.<+> Ppr.ppr splits)
-              case NE.nonEmpty splits of
-                    Nothing
-                      | isDryRun  -> tell [key]
-                      | otherwise -> do
+              if isDryRun
+                 then tell [(key, consumed_frag)]
+                 else case NE.nonEmpty splits of
+                    Nothing -> do
                         -- pprTraceM "Using lambda bound split" (Ppr.ppr key)
                         modify (M.delete key) -- we split the fragment and consumed the only one
-                    Just splits'  -> modify (M.insert key (Right splits')) -- we keep the remaining fragments
+                    Just splits'  -> do
+                      modify (M.insert key (Right splits')) -- we keep the remaining fragments
 
         -- Resource is unrestricted
         | otherwise -> do
@@ -211,15 +219,15 @@ use = flip use' [] where
           -- non-matching tagged fragments untouched.
           tags -> do
 
-            splits <- join <$> mapM (splitAsNeededThenConsume allowsIrrelevant tags) (NE.toList mults)
+            (join -> splits, consumed_ms) <- mapAndUnzipM (splitAsNeededThenConsume allowsIrrelevant tags) (NE.toList mults)
             -- pprTraceM "Split key at tags" (Ppr.ppr key Ppr.<+> Ppr.ppr tags Ppr.<+> Ppr.ppr splits)
-            case NE.nonEmpty splits of
-                Nothing
-                  | isDryRun  -> tell [key] -- Again, we don't consume things when dry run
-                  | otherwise -> do
+            if isDryRun
+               then tell (map (key,) consumed_ms) -- Again, we don't consume things when dry run
+               else case NE.nonEmpty splits of
+                Nothing -> do
                     -- pprTraceM "Using last lambda bound split" (Ppr.ppr key)
                     modify (M.delete key) -- OK, we only had one fragment left and consumed it
-                Just splits'  -> modify (M.insert key (Right splits'))   -- we keep the remaining fragments
+                Just splits' -> modify (M.insert key (Right splits'))   -- we keep the remaining fragments
 
 
 -- | Extend a computation that threads linear resources with a resource that
@@ -230,36 +238,45 @@ use = flip use' [] where
 --
 -- If the resource was already in the context it also fails.
 extend :: forall m a. Monad m
-       => Var -> IdBinding -> LinearCoreT m a -> LinearCoreT m a
-extend key value computation = LinearCoreT do
+       => BindSite -- ^ for error messages
+       -> Var -> IdBinding -> LinearCoreT m a -> LinearCoreT m a
+extend bindsite key value computation = LinearCoreT do
   gets (M.lookup key) >>= \case
-    Just _ -> throwError $ fromString $ "Tried to extend a computation with a resource that was already in the environment: " ++ showPprUnsafe key ++ "."
+    Just vl -> do
+      case vl of
+        Left (DeltaBound (UsageEnv [])) ->
+          -- We override each local top-level binding when we typecheck them individually
+          return ()
+        _ -> do
+          throwError $ fromString $
+            "Tried to extend a computation with a resource that was already in the environment: " ++ showPprUnsafe (key,value) ++ "; Binder: " ++ show bindsite
     Nothing -> do
-      modify (M.insert key (Left value))
-      result <- unLC computation
-      (isDryRun, _, _) <- ask
-      wasConsumed key >>= \case
-        Nothing -> return result
-        Just ms
-          | either isBindingLinear (const True) ms
-          , not isDryRun -- When doing a dry run, don't fail, even if the resource isn't consumed
-          -> do
-            throwError $ fromString $
-               "The linear resource " ++ showPprUnsafe key ++ " wasn't fully consumed in the computation extended with it. [" ++ showPprUnsafe ms ++ "]"
-          | otherwise
-          -> do
-            -- Non linear resource needs to be deleted from scope, or otherwise would escape
-            modify (M.delete key)
-            return result
+      return ()
+  modify (M.insert key (Left value))
+  result <- unLC computation
+  (isDryRun, _, _) <- ask
+  wasConsumed key >>= \case
+    Nothing -> return result
+    Just ms
+      | either isBindingLinear (const True) ms
+      , not isDryRun -- When doing a dry run, don't fail, even if the resource isn't consumed
+      -> do
+        throwError $ fromString $
+           "The linear resource " ++ showPprUnsafe key ++ " wasn't fully consumed in the computation extended with it. [" ++ showPprUnsafe ms ++ "]; Binder: " ++ show bindsite
+      | otherwise
+      -> do
+        -- Non linear resource needs to be deleted from scope, or otherwise would escape
+        modify (M.delete key)
+        return result
   where
     -- Returns 'Nothing' if it was consumed, and Just m otherwise
     wasConsumed :: forall m'. MonadState LCState m' => Var -> m' (Maybe (Either IdBinding (NonEmpty Mult)))
     wasConsumed x = gets (M.lookup x)
 
 -- | 'extend' multiple variables
-extends :: Monad m => [(Var, IdBinding)] -> LinearCoreT m a -> LinearCoreT m a
-extends [] comp = comp
-extends ((v,b):bs) comp = extend v b $ extends bs comp
+extends :: Monad m => BindSite -> [(Var, IdBinding)] -> LinearCoreT m a -> LinearCoreT m a
+extends _ [] comp = comp
+extends bsite ((v,b):bs) comp = extend bsite v b $ extends bsite bs comp
 
 -- | 'drop' resources listed in a usage environment from the available resources in the computation
 drop :: Monad m => UsageEnv -> LinearCoreT m a -> LinearCoreT m a
@@ -270,8 +287,31 @@ drop (UsageEnv env) comp = do
   -- LinearCoreT (put prev)
 
   -- Remove resources ocurring in the given usage env from the available resources, then run the computation
-  _ <- modify (M.\\ M.fromList env)
+  _ <- modify (flip (M.differenceWith diffgo) (M.fromList env))
   comp
+    where
+      -- For keys being dropped that still exist in the environment, 
+      diffgo :: Either IdBinding (NonEmpty Mult)
+             -> Mult
+             -> Maybe (Either IdBinding (NonEmpty Mult))
+      diffgo (Left (LambdaBound _)) (extractTags -> []) = Nothing
+      diffgo (Left (LambdaBound m)) (extractTags -> tags)
+        = Just (case splitAsNeededThenConsume @(Either String) AllowIrrelevant tags m of
+                 Left s -> error s
+                 Right (ms,_) -> Right (NE.fromList ms)
+               )
+      diffgo (Left (DeltaBound _)) _ = error "We shouldn't be dropping a delta var?"
+      diffgo (Right _) (extractTags -> []) = error "unexpected extract tags = []"
+      diffgo (Right mults) (extractTags -> tags) = Just $ Right $ NE.fromList $
+        L.concatMap (\m ->
+          if | extractTags m == tags
+             -> []
+             | extractTags m `L.isPrefixOf` tags
+             -> fst . fromRight undefined $
+               splitAsNeededThenConsume AllowIrrelevant tags m
+             | otherwise
+             -> [m]
+            ) (NE.toList mults)
 
 -- | Runs a computation that threads linear resources and fails if the
 -- computation consumed any resource at all (i.e. fails if the input and output
@@ -301,10 +341,27 @@ record computation = LinearCoreT do
   prev :: LCState <- get
   result <- unLC computation
   after <- get
-  let diff = prev M.\\ after
+  let diff = M.differenceWith diffgo prev after
   diffMults <- extractDiffMults diff
   return (result, UsageEnv diffMults)
     where
+      diffgo :: Either IdBinding (NonEmpty Mult)
+             -> Either IdBinding (NonEmpty Mult)
+             -> Maybe (Either IdBinding (NonEmpty Mult))
+      diffgo (Left _) (Left _)  = Nothing -- for left bindings, equal keys means something wasn't used (thus not relevant in the diff)
+      diffgo (Left (LambdaBound m)) (Right (NE.toList -> ne)) = Just (Right $ NE.fromList $ makeFullSplitsOn m ne L.\\ ne)
+      diffgo (Left (DeltaBound _)) (Right _) = error "How would that happen? DB"
+      diffgo (Right _) (Left _) = error "How would that happen?"
+      diffgo (Right (NE.toList -> ne1)) (Right (NE.toList -> ne2)) = Just (Right $ NE.fromList (ne1 L.\\ ne2))
+      
+      -- Takes an (original) mult and a list of mults that remain after consuming fragments of the original mult.
+      -- Returns the mults (fragments) that were effectively consumed.
+      makeFullSplitsOn :: Mult -> [Mult] -> [Mult]
+      makeFullSplitsOn orig = go [orig] where
+        go :: [Mult] -> [Mult] -> [Mult]
+        go origs [] = origs
+        go origs (r:remains) = go (concatMap (splitResourceAtTagStack (extractTags r)) origs) remains
+
       extractDiffMults :: forall m. MonadError String m => M.Map Var (Either IdBinding (NonEmpty Mult)) -> m [(Var, Mult)]
       extractDiffMults diffs = concat <$>
         traverse (\case (_, Left (DeltaBound _)) -> throwError "record: Non linear things disappeared from the context?"
@@ -320,7 +377,8 @@ record computation = LinearCoreT do
 dryRun :: Monad m => LinearCoreT m a -> LinearCoreT m (a, M.Map Var Int)
 dryRun comp = LinearCoreT do
   -- We listen to a local computation in which recording flag is true
-  (a, w) <- listen $ local (\(_,irr,n) -> (True,irr,n)) (unLC comp)
+  (a, S.toList . S.fromList . map fst -> w) <- listen $ local (\(_,irr,n) -> (True,irr,n)) (unLC comp)
+      --- ^ we take only unique ocurrences of the whole var I guess...
 
   -- Make a usage environment from the number of times some variable is used.
   let w' = M.fromListWith (+) (map (,1) w)
@@ -340,10 +398,16 @@ makeEnvResourcesIrrelevant (UsageEnv vs) = do
       Just (Left (LambdaBound m))
         | mult == m -> pure (var, Left (LambdaBound (makeMultIrrelevant m)))
         | otherwise
-        -> Ppr.pprPanic "makeEnvResourcesIrrelevant: differing mults" (Ppr.text "expected" Ppr.<+> Ppr.ppr var Ppr.<+> Ppr.text "to have mult" Ppr.<+> Ppr.ppr mult Ppr.<+> Ppr.text "but instead got" Ppr.<+> Ppr.ppr m)
+        -> do
+          -- We might reach this situation if the resource being consumed has
+          -- been split and its usage environment reflects this; but we restored the state (hence re-put the unsplit resource)
+          -- Simply, we split the resource again, and make it irrelevant
+          pure (var, Right $ NE.fromList $ map makeMultIrrelevant $ splitResourceAtTagStack (extractTags mult) m)
       Just (Left (DeltaBound env')) -> pure (var, Left (DeltaBound $ makeIrrelevant env'))
       Just (Right mults) -> pure (var, Right $ NE.map (\x -> if x == mult then makeMultIrrelevant x else x) mults)
-  put (lcstate0 <> M.fromList lcstate1)
+  -- pprTraceM "mkEnvResIrr lcstate0" (Ppr.ppr lcstate0)
+  pprTraceM "mkEnvResIrr lcstate1" (Ppr.ppr lcstate1)
+  put (M.fromList lcstate1 <> lcstate0)
 
 -- | Run a list of monadic computation ala 'mapM' but restoring the typing environment
 -- for each individual action

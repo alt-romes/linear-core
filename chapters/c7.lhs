@@ -1108,7 +1108,7 @@ unrestrictedly, and therefore the case binder may also be used unrestrictedly.
 
 In this section, we develop a linear calculus $\lambda_\Delta^\pi$, dubbed \emph{Linear Core}, that 
 combines the linearity-in-the-arrow and multiplicity polymorphism introduced by
-Linear Haskell~\cite{linearhaskell} with all the key features from GHC's Core
+Linear Haskell~\cite{cite:linearhaskell} with all the key features from GHC's Core
 language, except for type equality coercions\footnote{We explain a main avenue of
 future work, multiplicity coercions, in Section~\ref{sec:future-work}}.
 %
@@ -1128,7 +1128,7 @@ Besides type safety, we prove that multiple optimising Core-to-Core
 transformations preserve linearity in Linear Core. These same transformations
 don't preserve linearity under Core's current type system. As far as we know,
 we are the first to prove optimisations preserve types in a non-strict linear
-language?
+language.\todo{Deixo esta frase?}
 
 The first key idea for typing linearity semantically is to delay \emph{consuming a
 resource} to when a computation that depends on that resource is effectively
@@ -1145,7 +1145,7 @@ consuming'' the scrutinee resources.
 % 
 We also note that despite the focus on GHC Core, the fundamental ideas for
 understanding linearity in a call-by-need calculus can be readily applied to
-other call-by-need languages.
+other non-strict languages.
 
 We present Linear Core's syntax and type system iteratively, starting with the
 judgements and base linear calculi rules for multiplicity and term lambdas plus
@@ -1211,7 +1211,7 @@ i.e. there is always at least one pattern which matches the scrutinized expressi
 \]
 Linear Core takes the idea of annotating lets with usage environments from the
 unpublished Linear Mini-Core document by Arnaud Spiwack et.
-all~\cite{cite:linear-mini-core}, which first tentatively tackled Core's
+all~\cite{cite:minicore}, which first tentatively tackled Core's
 linearity issues. We discuss this work in more detail in
 Section~\ref{sec:linear-mini-core}.
 
@@ -1239,7 +1239,7 @@ expression.
 
 The (small-step) operational semantics of Linear Core are given by
 Figure~\ref{fig:linear-core-operational-semantics}. We use call-by-name
-semantics for Linear Core as it captures the non-strict semantics in which
+evaluation for Linear Core as it captures the non-strict semantics in which
 our type system understands linearity, while being simpler to reason about than
 call-by-need operational semantics which is traditionally modelled with a
 mutable heap to store \emph{thunks} and the values they are overwritten with.
@@ -1248,43 +1248,40 @@ usually reduced \emph{call-by-name} as the function argument is guaranteed to
 be used exactly once (thus avoiding unnecessarily allocating memory on the heap
 for a redundant \emph{thunk}).
 %
-Specifically, function application is reduced by the standard
-\emph{call-by-name} $\beta$-reduction that substitutes the expression whole by
-occurrences of the lambda argument in its body, case expressions evaluate their
-scrutinee to WHNF and substitute the result by the case binder and possibly
-constructor arguments for pattern-bound bound variables matching on that same
-constructor.
+Specifically, function applications are reduced by the standard
+\emph{call-by-name} $\beta$-reduction, substituting the argument whole by
+occurrences of the lambda binder in its body, case expressions evaluate their
+scrutinee to WHNF, substituting the result by the case binder and constructor
+arguments for pattern-bound bound variables matching on that same constructor.
 
 \input{language-v4/OperationalSemantics}
 
 \subsection{Typing Foundations\label{sec:base-calculi}}
 
-Linear Core ($\lambda^\pi_\Delta$) is a linear lambda calculus akin to Linear Haskell's
-$\lambda^q_\to$ in that both have multiplicity polymorphism, (recursive) let
-bindings, case expressions and algebraic data types. $\lambda^\pi_\Delta$
-diverges from $\lambda^q_\to$ primarily when typing lets and case expressions
-and alternatives, in its purpose to typecheck semantic linearity.
+Linear Core ($\lambda^\pi_\Delta$) is a linear lambda calculus akin to Linear
+Haskell's $\lambda^q_\to$ in that both have multiplicity polymorphism,
+(recursive) let bindings, case expressions, and algebraic data types.
+$\lambda^\pi_\Delta$ diverges from $\lambda^q_\to$ primarily when typing lets,
+case expressions, and alternatives (in its purpose to type semantic linearity).
 %, and secondarily in only treating multiplicity polymorphism superficially.
 %
-% \todo{And our treatment of multiplicity
-% polymorphism completely ignores algebraic treatment of multiplicities with
-% semiring operations!!! Would it be sufficient to add a rule for application of
-% variable multiplicity functions?}
+% \todo{And our treatment of multiplicity polymorphism completely ignores
+% algebraic treatment of multiplicities with semiring operations!!! Would it be
+% sufficient to add a rule for application of variable multiplicity functions?}
 %
 Otherwise, the base rules of the calculus for, multiplicity and term,
-abstraction and application are quite similar. In this section we present the
-linear calculi with typing rules that share much in common with
-$\lambda^q_\to$, and in the subsequent ones the rules encoding the novel
-insights from Linear Core explored by example in
-Section~\ref{sec:linearity-semantically}.
+abstraction and application are quite similar. In this subsection, we present
+the linear calculi's typing rules that share much in common with
+$\lambda^q_\to$, and, in the subsequent subsections, the rules encoding the
+novel insights from Linear Core in typing semantic linearity, that were
+explored by example in Section~\ref{sec:linearity-semantically}.
 %
 We note, however, that we handle multiplicity polymorphism differently from
 Linear Haskell in ignoring the multiplicities semiring and instead
-conservatively treating all multiplicity polymorphic functions as
-linear.
+conservatively treating all multiplicity polymorphic functions as linear.
 %
-The full type system is given by
-Figure~\ref{fig:linear-core-typing-rules}, with auxiliary judgements given by
+The full type system is given by Figure~\ref{fig:linear-core-typing-rules},
+with auxiliary judgements given by
 Figure~\ref{fig:linear-core-other-judgements}.
 
 \TypingRules
@@ -1304,32 +1301,32 @@ duplicated for sub-derivations and may unrestrictedly exist in the variable
 rules.
 % TODO: Likely rewrite that
 %
-The judgement reads ``expression $e$ has type
-$\s \to \vp$ under the unrestricted environment $\G$ and linear environment $\D$'':
+The main typing judgement reads ``expression $e$ has type $\s \to \vp$ under
+the unrestricted environment $\G$ and linear environment $\D$'':
 \[
 \G;\D \vdash e : \s \to \vp
 \]
-Occurrences of unrestricted variables from $\G$ are well-typed if the linear
+Occurrences of unrestricted variables from $\G$ are well-typed as long as the linear
 environment is empty, while occurrences of linear variables are only well-typed
-when they're the only resource available in the linear context.
+when the variable being typed is the only resource available in the linear context.
 \[
 \begin{array}{cc}
 \TypeVarOmega & \TypeLinearVar
 \end{array}
 \]
 In both cases, the linear context must contain exactly what is required to
-prove the terminal case, whereas the unrestricted context may contain arbitrary
+prove the proposition, whereas the unrestricted context may contain arbitrary
 variables.
 %
 Variables in contexts are annotated with their type and multiplicity, so
 $\x[\pi]$ is a variable named $x$ of type $\s$ and multiplicity $\pi$.
 
 Linear functions are introduced via the function type ($\s \to_\pi \vp$) with
-$\pi = 1$, i.e. a function of type $\s \to_1 \vp$ (or $\s \lolli \vp$)
-introduces a linear resource in the linear environment $\D$.
+$\pi = 1$, i.e. a function of type $\s \to_1 \vp$ (or, equivalently, $\s \lolli \vp$)
+introduces a linear resource of type $\s$ in the linear environment $\D$ to then type an expression of type $\varphi$.
 %
-Unrestricted functions are introduced via the same function type with $\pi =
-\omega$, and the $\lambda$-bound variable is added to $\G$:
+Unrestricted functions are introduced via the function type ($\s \to_\pi \vp$) with $\pi =
+\omega$, and the $\lambda$-bound variable is introduced in $\G$:
 \[
 \begin{array}{cc}
 \TypeLamIntroL & \TypeLamIntroW
@@ -1346,32 +1343,29 @@ duplicated and available whole to both sub-derivations.
 An unrestricted function, unlike a linear one, consumes its argument
 unrestrictedly (zero or more times). Therefore, in an unrestricted function
 application, allowing any linear resources to occur in the argument expression
-would entail possibly consuming those resources not linearly, since the
+entails consuming those resources unrestrictedly, since the
 variable binding the argument expression could be discarded or used more than
-once in the function body. Thus, arguments to unrestricted functions must also
+once in the function body. Thus, argument expressions to unrestricted functions must also
 be unrestricted, i.e. no linear variables can be used to type them.
 \[
 \TypeLamElimW
 \]
 Typing linear and unrestricted function applications separately is less general
-than a typing rule for any multiplicity $\pi$ that scales per the multiplicity
-ring the resources used by the argument, however, since our goal of semantic
-linearity not benefiting much from it, keeping the simple approach allows us to have
-the linear and unrestricted environments separate.
+than typing applications of functions of any multiplicity $\pi$ by scaling (per the multiplicity
+semiring) the multiplicities of the resources used to type the argument by $\pi$, however, our objective of typing semantic
+linearity does not benefit much from doing so, and by keeping the simple approach we can have
+the linear and unrestricted environments be separate.
 % \todo{We might only need multiplicities for the case-of-case definition as it
 % exists in ghc?, even then couldn't we do semiring scaling without variables?
 % Also, dislike sentence}
 
 Multiplicity abstractions ($\Lambda p.~e$) introduce a multiplicity variable
-$p$ to the unrestricted context as well, since we don't impose usage
-restrictions on multiplicity variables, and introduce expressions of type
-$\forall p.~\dots$, i.e. terms universally quantified over a multiplicity
-variable. We note that, in the body of the abstraction, function types annotated
-with a $p$ variable and data type fields with multiplicity $p$ are equivalent
-to linear functions and linear fields -- if $p$ can be instantiated at both
-$\omega$ and $1$, it must be well-typed for both instantiations, which is only
-true if multiplicity-polymorphic functions and fields are treated as linear
-functions and fields.
+$p$ (in the unrestricted context), and construct expressions of type
+$\forall p.~\dots$, i.e. a type universally quantified over a multiplicity
+variable $p$. We note that, in the body of the abstraction, function types annotated
+with a $p$ variable and datatype fields with multiplicity $p$ are typed as
+thought they are linear functions and linear fields, because $p$ can be
+instantiated at both $\omega$ and $1$ (so types using $p$ must be well-typed at both instantiations).
 \[
 \TypeMultLamIntro
 \]
@@ -1382,7 +1376,7 @@ $\s[\pi/p]$.
 \[
 \TypeMultLamElim
 \]
-The rule additionally requires that $\pi$ must be \emph{well-formed} in order
+The rule additionally requires that $\pi$ be \emph{well-formed} in order
 for the expression to be well-typed, using the judgement $\G \vdash_{mult}
 \pi$, where well-formedness is given by $\pi$ either being $1$, $\omega$, or an
 in-scope  multiplicity variable in $\G$.
@@ -1391,39 +1385,39 @@ in-scope  multiplicity variable in $\G$.
 \]
 
 These rules conclude the foundations of our linear calculi. In subsequent
-sections we type-check (recursive) let bindings and case expressions,
+subsections we type (recursive) let bindings and case expressions,
 accounting for semantic linearity as per the insights construed in
 Section~\ref{sec:linearity-semantically}, effectively distilling them into the
-key ideas of our work, encoded as rules.
+key ideas of our work -- encoded as rules.
 
 
 \subsection{Usage environments\label{sec:usage-environments}}
 
-A \emph{usage environment} $\Delta$ is the means to encode the idea
-that lazy bindings don't consume the resources required by the bound expression
-when defined, but rather when themselves are fully consumed. Specifically, we
-annotate so-called $\Delta$-bound variables with a \emph{usage environment} to
-denote that consuming these variables equates to consuming the resources in the
-usage environment $\D$ they are annotated with, where a usage environment is
-essentially a multiset of linear resources. $\Delta$-bound variables are
-introduced by a handful of constructs, namely, (recursive) let binders, case
-binders, and case pattern variables. In the following example, as per the insights into
-semantic linearity developed in Section~\ref{sec:semantic-linearity-examples},
-the resources required to typecheck the body of the binder $u$, $x$ and $y$,
-are only used if the let-var $u$ is consumed in the let-body $e$.
-Accordingly, the usage environment of let-bound $u$ is $\{x,y\}$:
+A \emph{usage environment} $\Delta$ is the means to encode the idea that lazy
+bindings don't consume the resources required by the bound expression when
+defined, but rather when the bindings themselves are fully consumed.
+Specifically, we annotate so-called $\Delta$-bound variables with a \emph{usage
+environment} to denote that consuming these variables equates to consuming the
+resources in the usage environment $\D$ they are annotated with, where a usage
+environment is essentially a multiset of linear resources. $\Delta$-bound
+variables are introduced by a handful of constructs, namely, (recursive) let
+binders, case binders, and case pattern variables. In the following example, as
+per the insights into semantic linearity developed in
+Section~\ref{sec:semantic-linearity-examples}, the resources required to
+typecheck the body of the binder $u$, $x$ and $y$, are only used if the let-var
+$u$ is consumed in the let-body $e$.  Accordingly, the usage environment of
+the let-bound $u$ is $\{x,y\}$:
 \[
 f = \lambda \xl.~\lambda \y[1].~\llet{u = (x,y)}{e}
 \]
 Furthermore, usage environments guarantee that using a $\Delta$-bound variable
-is mutually exclusive with directly using the resources it is annotated with.
-In practice, using the $\Delta$-bound variable consumes all linear resources
-listed in its usage environment, meaning they are no longer available for
-direct usage. Dually, using the linear resources directly means they are no
-longer available to consume through the usage environment of the $\Delta$-bound
-variable.
+is mutually exclusive with directly using the resources it is annotated with --
+using the $\Delta$-bound variable consumes all linear resources listed in its
+usage environment, meaning they are no longer available for direct usage.
+Dually, using the linear resources directly means they are no longer available
+to consume through the usage environment of the $\Delta$-bound variable.
 
-Finally, we note how usage environments bear a strong resemblance to the linear
+Finally, we note that usage environments bear a strong resemblance to the linear
 typing environments to the right of the semicolon in the main typing judgement,
 i.e. the environment with the linear resources required to type an expression.
 %
@@ -1466,8 +1460,10 @@ that variable.
 
 $\D$-variables are always introduced in $\Gamma$ since they can be discarded
 and duplicated, despite multiple occurrences of the same $\Delta$-variable not
-possibly being well-typed since, ultimately, said occurrences would imply
-non-linear usage of resources that must be used linearly.
+possibly being well-typed as, ultimately, it would imply non-linear usage of
+linear resources.
+% multiple occurrences of the same
+% $\D$-variable imply non-linear usage of resources that must be used linearly.
 
 
 \subsubsection{Lazy let bindings}
@@ -1483,10 +1479,10 @@ more than once, violating (semantic) linearity -- the binder has to be used in
 mutual exclusion with the linear resources required to type the expression it
 binds, and either \emph{must} be used, or we'd be discarding resources.
 
-Indeed, usage environments exactly encode mutual exclusivity between
+Indeed, usage environments allow us to encode mutual exclusivity between
 alternative ways of consuming linear resources (between $\D$-vars and direct
 resource usage). Let-bound variables are the canonical example of a
-$\Delta$-bound variable, that is, variables that bind expressions in which
+$\Delta$-bound variable, that is, let-variables bind expressions in which
 the resources required to type them are consumed lazily rather than eagerly.
 %
 Effectively, annotating let-bound variables with a usage environment $\D$
@@ -1505,7 +1501,7 @@ environment to type the let body $e'$, alongside the unrestricted $x$ binding
 annotated with the usage environment $\D$. Ultimately, the resources being
 available in $e'$ reflects the fact that typing a lazily bound expression
 doesn't consume resources, and the binding $x$ being $\D$-bound reflects that
-its usage entails consuming the resources $\D$ the expression $e$ depends on.
+its usage entails consuming the resources $\D$ the expression $e$ it binds depends on.
 % \todo[inline]{Let bindings are hard, if they are used then we use resources. If
 % they don't get used then we use no resources! In practice, resources that show
 % up in the body of the let must be used, be it by using the let binder, or by
@@ -1525,24 +1521,31 @@ recursive let bindings are always assumed to be strongly connected, that is,
 all the bindings in a recursive let group are mutually recursive in the sense
 that they all (transitively) depend on one another.
 
-As before, recursive let bindings bind expressions \emph{lazily}, so they
-introduce a $\D$-variable for each binding, and the resources required to type the
+As before, recursive let bindings bind expressions \emph{lazily}, so they similarly
+introduce a $\D$-variable for each binding, and resources required to type the
 let-bindings are still available in the body of the let, to later be consumed
-via $\D$-variables, or directly if the let-bindings are unused.
+via $\D$-variables or directly, if the let-bindings are unused.
 %
 However, as shown by example in Section
-\ref{sec:semantic-linearity-examples:recursive-lets}, we must consider that
-recursive uses of a binder in its definition consume all resources otherwise
+\ref{sec:semantic-linearity-examples:recursive-lets}, we must consider how
+recursive uses of a binder in its own definition entails consuming all resources otherwise
 required to type the binder's body.
 %, i.e. a least upper bound.
 %
 Extrapolating to a strongly-connected group of recursive bindings, (mutually)
-recursive uses of other binders entail potentially consuming all resources
-required to type said other binders. By definition, other binders in turn
-use the original binder and thus all the resources otherwise required to type it.
-Therefore, we conclude the least upper bound of resources required to type a
-mutually recursive group of let bindings to be the same for any such group that
-is strongly-connected.
+recursive uses of binders entail consuming all resources
+required to type those binders. By definition, those binders in turn
+recursively use binders that used them, and thus all the resources otherwise
+required to type them.
+%
+Ultimately, all binders in a strongly-connected group of mutually recursive let
+bindings have to be typed with the same linear resources (which are the least
+upper bound of resources needed to type the bodies of all binders, accounting
+for uses of mutually-recursive binders).
+%
+% Therefore, we conclude the least upper bound of resources required to type a
+% mutually recursive group of let bindings to be the same for any such group that
+% is strongly-connected.
 
 The typing rule for recursive groups of bindings leverages our assumption that
 all recursive let bindings are strongly connected and exactly the observation
@@ -1550,8 +1553,8 @@ that every binder in a strongly connected group of recursive bindings is typed
 with the same linear context. Consequently, all bindings of the recursive group
 are introduced as $\D$-vars with the same $\D$ environment -- using any one of
 the bindings in a recursive group entails consuming all resources required to
-type that same group (that's why we can use the same linear resources to type
-each binder):
+type that same group, which is also why we can use the same linear resources to
+type each binder:
 \[
 \TypeLetRec
 \]
@@ -1566,21 +1569,22 @@ In practice, determining this typing environment $\D$ amounts to finding a
 least upper bound of the resources needed to type each mutually-recursive
 binding that (transitively) uses all binders in the recursive group.
 %
-We propose an algorithm for inferring usage environments of recursive bindings
-in Section~\ref{sec:impl:recursive-alg} orthogonally to the theory developed in
-this section.
+We propose a naive algorithm for inferring usage environments of recursive
+bindings in Section~\ref{sec:discuss:implementation} orthogonally to the theory
+developed in this section.
 %
-The algorithm is a simple $O(n^2)$ traversal over the so-called \emph{naive usage
+The algorithm is a $O(n^2)$ traversal over the so-called \emph{naive usage
 environments} used to type each binding.
-
-Since inference of usage environments for recursive binding groups bears some
+%
+Inference of usage environments for recursive binding groups bears some
 resemblance to the inference of principle types for recursive bindings
 traditionally achieved through the Hindley–Milner inference
-algorithm~\cite{hindleymilner}, there might be an opportunity to develop a
-better algorithm leveraging existing inference techniques.
+algorithm~\cite{DBLP:conf/popl/DamasM82}, there might be an opportunity to
+develop a better algorithm leveraging existing inference techniques.
 %
 Despite being a seemingly useful observation, we leave exploring a potential
-connection with type inference algorithms as future work.
+connection between inference of usage environments and type inference
+algorithms as future work.
 
 % We present a naive algorithm for inferring usage environments of recursive bindings in
 % Section~\ref{sec:impl:recursive-alg} and leave exploring this potential
@@ -1588,15 +1592,15 @@ connection with type inference algorithms as future work.
 
 \subsection{Case Expressions\label{sec:lc-case-exps}}
 
-Case expressions \emph{drive evaluation}, thus they are key to realize a type
-system that understands linearity in the presence of lazy evaluation.
+Case expressions \emph{drive evaluation} --
+% thus they are key to realize a type system that understands linearity in the presence of lazy evaluation.
 %
 %However, the evaluation of case expressions is considerably nuanced,
 %
 %In lazy let bindings, computations  can be a case
 %expression can effectively consume resources rather than just 
 %
-A case expression \emph{evaluates its scrutinee} to weak head normal form
+a case expression \emph{evaluates its scrutinee} to weak head normal form
 (WHNF), \emph{then} selects the case alternative corresponding to the pattern
 matching the weak head normal form of the scrutinee\footnote{In our calculus, the
 alternatives are always exhaustive, i.e. there always exists at least one
@@ -1607,22 +1611,22 @@ either be:
 \item A lambda expression $\lambda x.~e$,
 \item or a datatype constructor application $K~\ov{e}$
 \end{itemize}
-In both cases, the sub-expressions $e$ occurring in the lambda body or as
-constructor arguments needn't be evaluated for the lambda or constructor
+In both cases, the sub-expressions $e$ or $\ov{e}$ occurring in the lambda body
+or as constructor arguments needn't be evaluated for the lambda or constructor
 application to be in weak head normal form (if otherwise all sub-expressions
-were fully evaluated the whole expression would also be in normal form).
+were fully evaluated the whole expression would also be in \emph{normal form}).
 % (that is why it is called \emph{weak} head normal form).
-
-Accordingly, sub-expressions might depend on linear resources that will
-be further consumed when they are evaluated.
+%
+Accordingly, these sub-expressions might still depend on linear resources to be
+well-typed (these resources will be consumed when the expression is evaluated).
 %
 As will be made clear in later sections, we need to devise a specialized typing
-judgement discipline for scrutinees that is able to distinguish between terms
+judgement for scrutinees that is able to distinguish between terms
 in WHNF and terms that are not in WHNF.
 %
-Following the discussion of typing expressions in weak head normal form, we
+Following the discussion on expressions in weak head normal form, we
 present a typing judgement $\G;\D \Vdash e : \s \gtrdot \ov{\D_i}$ for
-expressions in WHNF, and rules for the two possible forms above:
+expressions in WHNF, and a rule for each of the forms given above:
 \[
     \TypeWHNFCons
 \qquad
@@ -1633,14 +1637,14 @@ applies to expressions in weak head normal form, and (2) it ``outputs'' (to the 
 disjoint set of linear environments ($\ov{\D_i}$), where each environment corresponds to the
 linear resources used by a sub-expression of the WHNF expression.
 %
-To typecheck a constructor application $K~\ov{e_\omega e_i}$, where $e_\omega$
+To type a constructor application $K~\ov{e_\omega e_i}$, where $e_\omega$
 are unrestricted arguments and $e_i$ the linear arguments of the
 constructor, we split the resources $\D$ into a disjoint set of resources
 $\ov{\D_i}$ required to type each linear argument individually and return exactly
 that split of the resources; the unrestricted $e_\omega$ expressions must be
-typed on an empty linear environment. A lambda expression is typechecked with
+typed on an empty linear environment. A lambda expression is typed with
 the main typing judgement and trivially ``outputs'' the whole $\D$ environment,
-as there is always just a single sub-expression in lambdas (the lambda body).
+as there is always only a single sub-expression in lambdas (the lambda body).
 
 Recall that the operational semantics encode the evaluation of case expressions as:
 %
@@ -1651,29 +1655,30 @@ $\ccase{e}{z~\{\_ \to e_i\}} \longrightarrow e_i[e/z]$\`where $e$ is in WHNF\\
 \end{tabbing}
 %
 When a scrutinee $K~\ov{e}$ matches a constructor pattern $K~\ov{\x[\pi]}$,
-evaluation proceeds in the case alternative expression corresponding to that
+evaluation proceeds in the case alternative corresponding to the matching
 pattern, with occurrences of $\ov{x}$ being substituted by $\ov{e}$, and
 occurrences of the case binder $z$ substituted by the whole scrutinee
 $K~\ov{e}$. Constructors and lambda expressions otherwise match the wildcard
-pattern whose alternative is evaluated only substituting the case binder by the
-scrutinee as before. 
+pattern whose alternative body is evaluated only substituting the case binder by the
+scrutinee. 
 
 We highlight that when evaluating a case expression, computation only
-effectively happens when a scrutinee not in WHNF is evaluated to WHNF. In the
-latter two cases, evaluation continues in the alternative by substituting in
-the appropriate scrutinee expressions, but without having performed any computation
-(the scrutinee was already in weak head normal form).
+effectively happens when a scrutinee not in WHNF is evaluated to WHNF. When the
+scrutinee is already in WHNF, evaluation continues in the alternative by
+substituting in the appropriate scrutinee expressions, but without having
+performed any computation.
+% (the scrutinee was already in weak head normal form).
 %In short, no computation happens if the scrutinee is already in WHNF.
-
+%
 In terms of linearity, resources are consumed only if evaluation happens.
-Therefore, resources used to typecheck a scrutinee not in
-WHNF will be consumed, making said resources unavailable in the case
-alternatives. In contrast, when the scrutinee is already in WHNF, linear
-resources required to typecheck it are still made available in the alternatives.
-These linear resources used by an expression in WHNF are exactly those which
-occur to the right of $\gtrdot$ in the WHNF judgement shown above -- they
-correspond to the resources required to typecheck the lambda body or the
-constructor arguments.
+Therefore, resources used to type a scrutinee not in
+WHNF will be consumed when the case is evaluated, making said resources unavailable in the case
+alternatives. Conversely, when the scrutinee is already in WHNF, linear
+resources required to type the scrutinee are still available in the alternatives.
+The linear resources used by an expression in WHNF are exactly those which
+occur to the right of $\gtrdot$ in the WHNF judgement shown above
+(corresponding to the resources required to typecheck the lambda body or the
+constructor arguments).
 
 %Recalling that patterns are either a wildcard that matches anything or data
 %constructors parametrised by variables to bind the constructor arguments in the
@@ -1712,11 +1717,16 @@ constructor arguments.
 The dichotomy between evaluation (hence resource usage) of a case expression
 whose scrutinee is in weak head normal form, or otherwise, leads to one of our
 key insights: we must \emph{branch on weak head normal formed-ness} to
-typecheck case expressions.
-
+type case expressions.
+%
 When the scrutinee is already in weak head normal form, the resources are
-unused and thus available in the alternatives. For example, consider a case
-expression with a scrutinee in weak head normal form and another whose scrutinee is not:
+unused upon evaluation and thus available in the alternatives.
+%
+When it is not, resources will be consumed and cannot be used in the
+alternative.
+%
+To illustrate, consider a case expression with a scrutinee in weak head normal
+form and another whose scrutinee is not:
 \[
 \begin{array}{ccc}
 (1)~\lambda x.~\ccase{K~x}{\_ \to x} &  & (2)~\lambda x.~\ccase{free~x}{\_ \to x}
@@ -1724,22 +1734,21 @@ expression with a scrutinee in weak head normal form and another whose scrutinee
 \]
 The first function uses $x$ linearly, while the second does not.
 %
-Alternatives may also use the case binder, referring to the whole scrutinee
-(and all resources used to type the scrutinee), and pattern variables,
-referring to constructor arguments, where each consumes the resources of the
-corresponding constructor argument when itself is used.
+Alternatives may also use the case binder or pattern variables, referring to, respectively,
+the whole scrutinee (and all resources used to type the scrutinee) or
+constructor arguments (and the resources to type each argument).
 % Using the case binder entails using all the resources required by the scrutinee, and using a pattern
 % variable implies using the resources of the corresponding constructor argument.
 
-Linear resources must be used exactly once, but there are three competing ways
-to use the resources from the scrutinee in a case alternative: directly, via
+Linear resources must be used exactly once, but there are three \emph{competing} ways
+to use the resources from a scrutinee in WHNF in a case alternative: directly, via
 the case binder, or by using \emph{all} the pattern-bound variables.
 %
 Recall how $\D$-variables can encode mutual exclusivity between alternative
 ways of consuming resources -- it follows that case binders and pattern-bound
 variables are another instance of $\D$-bound variables. Intuitively, resources
 in a scrutinee that is already in WHNF are only properly consumed when all
-(linear) fields of the pattern are used -- agreeing with the definition of
+(linear) fields of the pattern are used, satisfying the definition of
 consuming resources given in Linear Haskell.
 %
 We type a case expression whose scrutinee is in weak head normal form
@@ -1752,15 +1761,15 @@ cases with scrutinees \emph{not} in WHNF, we revise this rule.}:
 First, we assert this rule is only applicable to expressions in weak head
 normal form. Second, we use the typing judgement for expressions in WHNF
 previously introduced to determine the split of resources amongst the scrutinee
-sub-expressions. Finally, we typecheck all case alternatives with the same context, using the
+sub-expressions. Finally, we type all case alternatives with the same context, using the
 $\vdash_{alt}$ judgement. Specifically:
 \begin{itemize}
 \item We introduce the case binder $z$ in the environment as a $\D$-bound
-variable whose usage environment is all linear resources used to type the
+variable whose usage environment is the linear resources used to type the
 scrutinee
-\item We make all the resources used to type the scrutinee $\ov{\D_i}$ available in the linear typing environment.
-\item We annotate the judgement with the disjoint set of linear resources used
-to typecheck the scrutinee sub-expressions $\ov{\D_i}$
+\item We make all the resources $\ov{\D_i}$ used to type the scrutinee available in the linear typing environment.
+\item We annotate the \emph{alt} judgement with the disjoint set of linear resources $\ov{\D_i}$ used
+to typecheck the scrutinee sub-expressions
 \item We annotate the judgement with the name of the case binder $z$ and use
 the $\Mapsto$ arrow in the judgement -- this is of most importance when typing
 the alternative itself, and will be motivated together with the alternative
@@ -1768,88 +1777,99 @@ judgement below
 \end{itemize}
 
 The alternative judgement $\G;\D \vdash_{alt} \rho \to e :^z_\D \s \Rightarrow
-\vp$ is used to type case alternatives. Notably, there are three applicable
-arrows in the judgement:
+\vp$ is used to type case alternatives, but it encompasses three
+``sub-judgements``, distinguished by the arrow that is used:
 for alternatives of case expressions whose scrutinee is in WHNF ($\Mapsto$),
-case expressions in which the scrutinee is not in WHNF ($\Rrightarrow$), and for
-alternatives agnostic to the WHNF-ness of the scrutinee ($\Rightarrow$), with
-$\Rightarrow$ also generalizing the other two.
-
-Following the $Case_{WHNF}$ rule in which we use the $\Mapsto$ alternative
-judgement, the rule for type checking a case alternative whose pattern is a
-constructor with $N > 0$ linear components is:
+for case expressions in which the scrutinee is not in WHNF ($\Rrightarrow$),
+and for alternatives agnostic to the WHNF-ness of the scrutinee
+($\Rightarrow$), with $\Rightarrow$ also generalizing the other two.
+%
+Following the $Case_\textrm{WHNF}$ rule in which we use the $\Mapsto$ alternative
+judgement, the rule for typing a case alternative whose pattern is a
+constructor with $n > 0$ linear components is:
 \[
 \TypeAltNWHNF
 \]
-The rule states that for such a pattern when matching a scrutinee already in
+The rule states that for such a pattern matching a scrutinee already in
 WHNF, we introduce the linear components of the pattern as $\D$-bound variables
 whose usage environment matches the linear resources required to type the
-corresponding constructor argument in the scrutinee, which come annotated in
+corresponding constructor argument in the scrutinee, which comes annotated in
 the judgement ($\ov{\D_i}$). Unrestricted fields of the constructor are
 introduced as unrestricted variables. We note that the typing environment $\D$
-always contains the resources $\ov{\D_i}$ when we invoke the alternative
+always contains the resources $\ov{\D_i}$ in uses of the alternative
 judgement.
 
 Secondly, the rule for alternatives that match on the wildcard pattern:
 \[
 \TypeAltWild
 \]
-To type a wildcard alternative we simply typecheck the expression with the main
-judgement, ignoring all annotations on the judgement. Recalling that the case
+To type a wildcard alternative we simply type the expression with the main
+judgement, ignoring all annotations on the judgement; recalling that the case
 binder was already introduced in the environment with the appropriate usage
 environment by the case expression, rather than in the case alternative rule.
 
 Finally, consider an alternative matching on a case constructor without any
 linear components. According to the definition of consuming a resource from
-Linear Haskell, an expression matching such a pattern has fully consumed all
-linear resources it was typed with. Indeed, matching on a constructor without
-linear arguments entails that all the scrutinee resources have been fully
-consumed, and thus are no longer available.
-
-Considering that case expressions
-introduce the linear resources of the scrutinee in the typing environment of
-all alternatives, and in the usage environment of the case binder, we must
-reactively update the typing environments after learning we're matching on such
-a pattern.
+Linear Haskell, the linear resources of a scrutinee matching such a pattern are
+fully consumed in the body of the corresponding alternative, since the
+scrutinee must have been evaluated to a form that does not have any linear
+components.
 %
-The $Alt0$ essentially encodes this insight, and is applicable for both
-scrutinees that are, or not, in WHNF (hence the $\Rightarrow$ arrow), when the
-constructor pattern has no linear fields:
+This definition agrees with the intuition we have developed by example in the
+previous section, and with the typing rule we devised for alternatives matching
+constructors without linear components.
+
+% Indeed, matching on a constructor without
+% linear arguments entails that all the scrutinee resources have been fully
+% consumed, and thus are no longer available.
+
+Taking into account that case expressions introduce the linear resources of the
+scrutinee in the typing environment of all alternatives, and in the usage
+environment of the case binder, we must reactively update the typing
+environments after matching on such a pattern.
+%
+The $Alt0$ rule essentially encodes this insight, and is applicable regardless
+of the WHNF-ness of the scrutinee (hence the $\Rightarrow$ arrow), as long as
+the constructor pattern has no linear fields:
 %
 \[
 \TypeAltZero
 \]
 The rule deletes the annotated scrutinee environment $\D_s$ from two select environments:
 \begin{itemize}
+
 \item The linear typing environment, effectively deleting the resources from
 the scrutinee made available here by the case expressions (written
 $\D[\cdot/\D_s]$, a substitution of the scrutinee typing environment by the
 empty linear environment $\cdot$).
+
 \item The usage environment of the case binder $z$, written $\G[\cdot/\D_s]_z$
-to denote replacing the usage environment of the variable $z$ available in $\G$, which
+to denote replacing the usage environment of the variable $z$ in $\G$, which
 is necessarily $\D_s$ (since we always annotate the judgement with the
 environment of the scrutinee), by the empty environment.
+
 \end{itemize}
 %
-The rule faithfully encodes the notion that such an expression is unrestricted,
-in the sense that all linear resources have already been consumed to produce it
-and the result is something that can be freely discarded or duplicated.
+The rule faithfully encodes the notion that an expression matching such a
+pattern is unrestricted when evaluated to WHNF, implying that all linear
+resources have been consumed to produce it, and the result is something that
+can be freely discarded or duplicated.
 %
-It ensures that when we match on an unrestricted pattern we don't need to
-consume scrutinee resources any longer. Otherwise, for example,
+It ensures that when we match on an unrestricted pattern we no longer need to
+consume the scrutinee resources. Otherwise, for example,
 $\ccase{K_1~x}{\{K_2 \to K_2,K_1~y \to K_1~y\}}$ would not be well-typed since
-we aren't consuming the resource $x$ in the first branch.
+the resource $x$ is not consumed in the first branch.
 %
-Furthermore, the case binder referring the unrestricted expression can then be
-used unrestrictedly since its usage environment becomes empty.
+Furthermore, since the case binder in such an alternative refers to the
+unrestricted expression, the case binder too may be used unrestrictedly, which
+we allow by making its usage environment empty.
 
 It might seem as though deleting the resources from the environment in this
 rule is important to guarantee a resource is not used after it is consumed.
 %
-However, let us consider two discrete situations -- matches on unrestricted
-patterns (patterns with no linear components) in a case expression whose
-scrutinee is in WHNF, and matching unrestricted patterns on a case expression
-whose scrutinee is \emph{not} in WHNF:
+However, let us consider two discrete situations -- pattern matches in a case
+expression whose scrutinee is in WHNF, and matches on a case expression whose
+scrutinee is \emph{not} in WHNF:
 %
 \begin{itemize}
 \item When the scrutinee is in WHNF, it is either an unrestricted expression
@@ -1857,27 +1877,40 @@ against which any match will only introduce unrestricted variables, or an
 expression that depends on linear resources. The first case trivially allows
 any resource from the scrutinee in the alternatives as well. The second is
 further divided:
-\begin{itemize}
+\begin{enumerate}
+
 \item The pattern is unrestricted while the
 scrutinee is not, so entering this branch is impossible as long as the case
 expression is well-typed; by contradiction, the linear resources from the
 scrutinee could occur unrestrictedly in that branch, since from falsity
-anything follows (\emph{ex falso quodlibet})
-\item The pattern is linear and matches the scrutinee, in which case the $AltN_{\textrm{WHNF}}$ is applicable instead of $Alt0$
-\item Lastly, the pattern could be linear but not match the scrutinee, thus is typed as though the scrutinee were not in WHNF
-\end{itemize}
+anything follows (\emph{ex falso quodlibet}).
+%
+For uniformity, however, we type such alternatives as we do alternatives for
+scrutinees that are not in WHNF.
+
+\item The pattern is linear and matches the scrutinee, in which case the
+$AltN_{\textrm{WHNF}}$ is applicable instead of $Alt0$.
+
+\item The pattern is linear but does not match the scrutinee, so, just as in
+1., any resource could theoretically be used in such alternatives, however,
+for uniformity, it is also typed as though the scrutinee were not in WHNF.
+
+\end{enumerate}
 
 \item However, if the scrutinee is not in WHNF, the resources occurring in the
-scrutinee will be consumed when evaluation occurs, possibly resulting in an
-unrestricted expression in WHNF -- the resources originally consumed must
-certainly not occur in the alternative body (e.g. $x$ cannot occur in the
-alternative in $\ccase{close~x}{\{K_1 \to x\}}$). In fact, the resources from a
-scrutinee that is not in weak head normal form cannot occur in any of the
-alternatives, even ones matching on constructors with linear components, as the
-resources may have been consumed when evaluating the expression to weak head
-normal form. We will guarantee resources from a scrutinee that is not in weak
-head normal form cannot occur in any case alternative in our rule for typing
-case expressions not in WHNF, which we introduce below.
+scrutinee will be consumed when evaluation occurs. Therefore, the resources
+consumed by the scrutinee must certainly not occur in the alternative body
+(e.g. $x$ cannot occur in the alternative in $\ccase{close~x}{\{K_1 \to x\}}$)
+-- regardless of the alternatives' patterns
+%
+% In fact, the resources from a scrutinee that is not in weak head normal form
+% cannot occur in any of the alternatives, even ones matching on constructors
+% with linear components, as the resources may have been consumed when evaluating
+% the expression to weak head normal form.
+%
+We will guarantee resources from a scrutinee that is not in weak head normal
+form cannot occur/directly be used in any case alternative, in our rule for
+typing cases not in WHNF, which we introduce below.
 
 \end{itemize}
 
@@ -1887,47 +1920,59 @@ case expressions not in WHNF, which we introduce below.
 
 \subsubsection{Proof irrelevant resources}
 
-\todo[inline]{Itemize os dois componentes de consumir case expressions (tem de ser consumido, mas não pode ser usado diretamente)}
+% \todo[inline]{O que é que eu vou fazer aqui? O que falta é conseguir tratar uma
+% case expression de forma flexivel o suficiente. Explorar o scrutinee estar em
+% WHNF ou não, agora é preciso usar essas ideias em typing rules.  Só preciso de
+% dizer que para tipificar o caso em que não está em WHNF de forma rigorosa num
+% sistema de tipos: Manter resources in scope pq é preciso consumir; Mas não
+% podem ser usadas diretamente}
 
-\todo[inline]{O que é que eu vou fazer aqui? O que falta é conseguir tratar uma
-case expression de forma flexivel o suficiente. Explorar o scrutinee estar em
-WHNF ou não, agora é preciso usar essas ideias em typing rules.  Só preciso de
-dizer que para tipificar o caso em que não está em WHNF de forma rigorosa num
-sistema de tipos: Manter resources in scope pq é preciso consumir; Mas não
-podem ser usadas diretamente}
-
-Resources used by a scrutinee that is not in weak head normal form must
-definitely not be used in the case alternatives, since they have been used in
-the evaluation of the scrutinee, as shown in the example above.
+Resources used in a scrutinee that is not in weak head normal form must
+definitely not be used in the case alternatives
+% since they have been used in the evaluation of the scrutinee, as shown in
+% the example above.
 %
 However, it is not sufficient to evaluate the scrutinee to weak head normal
 form to \emph{fully} consume all resources used in the scrutinee, since
 sub-expressions such as constructor arguments will be left unevaluated. To
-\emph{fully} consume all resources occurring in the scrutinee, the scrutinee must be
-evaluated to normal form, s.t. all linear components of an expression in
-WHNF are also fully evaluated (as witnessed by the $Alt0$ rule).
+\emph{fully} consume all resources occurring in the scrutinee, the scrutinee
+must be evaluated to normal form or s.t. all linear components of the scrutinee
+are fully evaluated, as witnessed by the $Alt0$ rule. In short, for a case
+expression whose scrutinee is not in WHNF:
 % We tackle this in due time, in the proof irrelevance section.
+\begin{itemize}
 
-In alternatives of a case where the scrutinee is not in
-WHNF, we must also consume the result of evaluating the scrutinee to WHNF, but the
-scrutinee resources must definitely not be available for consumption. In
-practice, the result of evaluating the scrutinee must be consumed by using
-either the case binder or all the linear components of a constructor pattern,
-except for patterns matching an unrestricted pattern, which are handled with
-the $Alt0$ rule. For WHNF scrutinees, we encode mutual exclusivity between
-consuming resources directly, with the case binder, or through linear pattern
-variables, by introducing the latter two as $\D$-bound variables.  In essence,
-for the counterpart not-WHNF scrutinees, either the case binder or linear
-pattern-bound variables \emph{must} still be used to guarantee the evaluation
-result is consumed (thus their usage environment cannot be empty), but the
-scrutinee resources cannot be used directly.
+\item The scrutinee resources must \emph{not} be used directly in the case alternatives;
+\item But the result of evaluating the scrutinee to WHNF must still be
+consumed, as all sub-expressions of the scrutinee remain unevaluated and must
+be consumed.
+\item Since the scrutinee resources cannot be consumed directly, they must be
+consumed indirectly through $\D$-variables, namely, either the case binder, or
+the linear pattern-bound variables introduced in the alternative.
+
+\end{itemize}
+
+% In alternatives of a case where the scrutinee is not in
+% WHNF, we must also consume the result of evaluating the scrutinee to WHNF, but the
+% scrutinee resources must definitely not be available for consumption. In
+% practice, the result of evaluating the scrutinee must be consumed by using
+% either the case binder or all the linear components of a constructor pattern,
+% except for patterns matching an unrestricted pattern, which are handled with
+% the $Alt0$ rule. For WHNF scrutinees, we encode mutual exclusivity between
+% consuming resources directly, with the case binder, or through linear pattern
+% variables, by introducing the latter two as $\D$-bound variables.  In essence,
+% for the counterpart not-WHNF scrutinees, either the case binder or linear
+% pattern-bound variables \emph{must} still be used to guarantee the evaluation
+% result is consumed (thus their usage environment cannot be empty), but the
+% scrutinee resources cannot be used directly.
 
 We introduce \emph{proof irrelevant} resources, denoted as linear resources
-within square brackets $[\D]$, to encode linear resources that cannot
-be directly used (the $Var$ rule is not applicable). Proof irrelevant linear resources are
-linear resources in all other senses, meaning they must be used \emph{exactly
-once}. However, since proof irrelevant resources cannot be forgotten neither used
-directly, they have to be consumed \emph{indirectly} -- by $\D$-bound variables.
+within square brackets $[\D]$, to encode linear resources that cannot be
+directly used (the $Var$ rule is not applicable). Proof irrelevant resources
+are linear resources in all other senses, meaning they must be used
+\emph{exactly once}. However, since proof irrelevant resources cannot be
+forgotten neither used directly, they have to be consumed \emph{indirectly} --
+by $\D$-bound variables.
 
 To type a case expression whose scrutinee is in weak head normal form, we
 type the scrutinee with linear resources $\D$ and type the case
@@ -1957,21 +2002,23 @@ judgement annotation, are made irrelevant.
 
 \subsubsection{Splitting and tagging fragments}
 
-Intuitively, in case alternatives whose scrutinee is not in weak head normal
-form (and for scrutinees in WHNF which don't match the case alternative) the
-proof-irrelevant resources introduced by the case expression must be
-fully consumed, either via the case binder $z$,
-% which is annotated with all proof-irrelevant resources used in the scrutinee,
-or by using all linear pattern-bound variables.
+Intuitively, in case alternatives whose scrutinee is not in weak head normal form,
+% (and for scrutinees in WHNF which don't match the case alternative)
+the proof-irrelevant resources introduced by the case expression must be fully
+consumed, either via the case binder $z$, or by using all linear pattern-bound
+variables (for uniformity, we also treat alternatives that do not match a
+scrutinee in WHNF this way).
 
 However, unlike with scrutinees in WHNF, the resources used by a
 scrutinee not in WHNF do not necessarily match those used by each
-sub-expression of the expression evaluated to WHNF. Therefore, there is no
-direct mapping between the usage environments of the linear pattern-bound
-variables and the resources used in the scrutinee.\todo{WAIT, there never was!
-Only when the K matches the scrutinee. Maybe we need a separate judgement for
-typing other constructors, which would be standalone and show up in this
-section too?}
+sub-expression of the expression evaluated to WHNF. \todo{Even if there was we must type not WHNF exprs agnostically or something?}
+%
+Therefore, there is no direct mapping between the usage environments of the
+linear pattern-bound variables and the resources used in the scrutinee.
+% \todo{WAIT, there never was!
+% Only when the K matches the scrutinee. Maybe we need a separate judgement for
+% typing other constructors, which would be standalone and show up in this
+% section too?}
 
 We introduce \emph{tagged resources} to guarantee all linearly-bound pattern
 variables are jointly used to consume all resources occurring in the
@@ -1980,23 +2027,28 @@ resources $[\D_s]$ used to type a scrutinee, and a pattern
 $K~\ov{x_\omega},\ov{y_i}$ with $i$ linear components, we assign a usage
 environment $\D_i$ to each linear pattern variable where, $\D_i$ is obtained from the
 scrutinee environment tagged with the constructor name and linear-variable
-index $\lctag{\D_s}{K_i}$. The tag consists of a constructor name $K$ and an
-index $i$ identifying the position of the pattern variable among all bound
-variables in that pattern.
+index $\lctag{\D_s}{K_i}$, and $\y[\D_i]$ is introduced in $\G$.
 \[
 \TypeAltNNotWHNF
 \]
+The tag consists of a constructor name $K$ and an index $i$ identifying the
+position of the pattern variable among all bound variables in that pattern.
+%
 The key idea is that a linear resource $x$ can be split into $n$ resources at a
 given constructor, where $n$ is the number of positional linear arguments of
-the constructor:
+the constructor.
+%
+This is given by the rule:
 \[
 \TypeVarSplit
 \]
 By assigning to each linear pattern variable a fragment of the scrutinee
-resources with a tag, we guarantee that all linear pattern variables must be
+resources with a tag, we guarantee that all linear pattern variables are
 simultaneously used to consume all the scrutinee resources, since for any of
-them to be used, we need to use the $Split$ rule and will require the rest of
-the fragments to be consumed through the other linear pattern-bound vars.
+scrutinee resources to be used by a linear pattern-bound var be used, the
+resources must be $Split$ for the fragments corresponding to that $\D$-var to
+be consumed, and, consequently, the remaining fragments have to be consumed
+through the other linear pattern-bound variables.
 
 \todo[inline]{Exemplo}
 
@@ -2008,9 +2060,10 @@ the fragments to be consumed through the other linear pattern-bound vars.
 
 \subsection{Linear Core Examples}
 
-Linear Mini-Core~\cite{cite:linear-mini-core} lists examples of Core programs
-where semantic linearity must be understood in order for them to be well-typed.
-In this section, we type those examples in Linear Core ($\lambda^\pi_\Delta$).
+Linear Mini-Core~\cite{cite:minicore} lists examples of Core programs where
+semantic linearity must be understood in order for them to be well-typed. In
+this section, we show those examples in Linear Core ($\lambda^\pi_\Delta$),
+briefly explaining why they are indeed well-typed.
 
 \subsubsection{Equations}
 

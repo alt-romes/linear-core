@@ -17,6 +17,12 @@
 \usetikzlibrary{trees}	% this is to allow the fork right path
 \usepackage{mdframed}
 
+%%%%% font stack: acmart
+%%% \RequirePackage[T1]{fontenc}
+%%% \RequirePackage[tt=false,type1=true]{libertine}
+%%% \RequirePackage[varqu]{zi4}
+%%% \RequirePackage[libertine]{newtxmath}
+
 \newtheorem{theorem}{Theorem}
 \newtheorem{lemma}{Lemma}%[theorem]
 \newtheorem{sublemma}{Lemma}[lemma]
@@ -74,7 +80,7 @@
 \newcommand{\ccase}[2]{\mathsf{case}~#1~\mathsf{of}~#2}
 
 \title{Type-checking Linearity in Core\\ or: Semantic Linearity for a Lazy Optimising Compiler}
-\author{Rodrigo Mesquita \\ Bernardo Toninho}
+\author{Rodrigo Mesquita \\ Adviser: Bernardo Toninho}
 
 
 \makeglossaries

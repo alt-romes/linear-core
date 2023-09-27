@@ -1,4 +1,4 @@
-{-# LANGUAGE GHC2021, ViewPatterns, DerivingVia, GeneralizedNewtypeDeriving, OverloadedRecordDot, LambdaCase, MultiWayIf #-}
+{-# LANGUAGE GHC2021, DerivingVia, GeneralizedNewtypeDeriving, LambdaCase, UnicodeSyntax, ScopedTypeVariables, ViewPatterns #-}
 module Linear.Core.Multiplicities where
 
 import Control.Monad.Except
@@ -11,12 +11,16 @@ import qualified Data.List as L
 import qualified GHC.Core.Multiplicity as C
 import qualified GHC.Core.Type as C
 import qualified GHC.Plugins
-import Control.Monad
 import Data.Bifunctor
+import Data.Maybe
+import GHC.Prelude (pprTrace, pprTraceM)
 
 --------------------------------------------------------------------------------
 ----- Id Binding ---------------------------------------------------------------
 --------------------------------------------------------------------------------
+
+data BindSite = LetBinder | LetRecBinder | LetRecBinderDry | LambdaBinder | CaseBinder | PatternBinder
+  deriving Show
 
 data IdBinding = LambdaBound Mult    -- lambdas
                | DeltaBound UsageEnv -- both let and case binders (including pattern variables)
@@ -87,44 +91,76 @@ removeTag m = m
 -- specified by the tag.
 --
 -- Returns the resource fragments that were split as needed, except for the
--- fragment that was consumed. (Returns [] if the last resource was consumed)
+-- fragment that was consumed, and the fragment that was consumed.
+-- (Returns ([],_) if the last resource was consumed)
 --
 -- Irrelevant-ness of the multiplicities (both input and output) must be
 -- handled outside of this function, here they are split just like relevant ones
-splitAsNeededThenConsume :: MonadError String m
-                         => AllowIrrelevant -> [Tag] -> Mult -> m [Mult]
-splitAsNeededThenConsume allowsIrrelevant tagstack m
-  | DisallowIrrelevant <- allowsIrrelevant
-  , isIrrelevant m = throwError "Tried to use an irrelevant result when not allowed"
+splitAsNeededThenConsume :: ∀ m. MonadError String m
+                         => AllowIrrelevant -> [Tag] -> Mult -> m ([Mult], Mult)
+splitAsNeededThenConsume ir ts' m'' = do
+  res <- second fromJust <$> splitAsNeededThenConsume' ir ts' m''
+  pprTraceM "splitAsNeededThenConsume input:" (ppr ts' <+> ppr m'')
+  pprTraceM "splitAsNeededThenConsume out:" (ppr res)
+  return res
+    where
+  splitAsNeededThenConsume' :: MonadError String m
+                           => AllowIrrelevant -> [Tag] -> Mult -> m ([Mult], Maybe Mult)
+  -- If there is no tag left then this is the resource we are looking for, so we
+  -- consume it. We know this is the resource we need because we only recurse
+  -- after splitting on the index we're looking for. If it's the last tag we're
+  -- done, otherwise we keep splitting.
+  splitAsNeededThenConsume' allowsIrrelevant [] m
+    | DisallowIrrelevant <- allowsIrrelevant
+    , isIrrelevant m = throwError "Tried to use an irrelevant result when not allowed"
+    | otherwise = pure ([], Just m)
 
-  | extractTags m == tagstack
-  = pure [] -- consume successfully since the mult tags matches exactly the tagstack
+  splitAsNeededThenConsume' allowsIrrelevant tagstack m
+    | DisallowIrrelevant <- allowsIrrelevant
+    , isIrrelevant m = throwError "Tried to use an irrelevant result when not allowed"
 
-splitAsNeededThenConsume allowsIrrelevant (Tag con i:ts) m
-  = join <$> traverse (\case
-                 m'@(Tagged (Tag _ i') _)
-                    -- From the resources we split, this has the index we are
-                    -- looking for, so we keep splitting inside
-                    | i' == i -> splitAsNeededThenConsume allowsIrrelevant ts m'
+    | extractTags m == tagstack
+    = pure ([], Just m) -- consume successfully since the mult tags matches exactly the tagstack
 
-                    -- Otherwise, the resource we need isn't down this path, so
-                    -- we can stop splitting here
-                    | otherwise -> pure [m']
-                 _ -> error "impossible, splitResourceAt guarantees returned resource is tagged"
-              )
-              (splitResourceAt con m)
--- If there is no tag left then this is the resource we are looking for, so we
--- consume it. We know this is the resource we need because we only recurse
--- after splitting on the index we're looking for. If it's the last tag we're
--- done, otherwise we keep splitting.
-splitAsNeededThenConsume allowsIrrelevant [] m
-  | DisallowIrrelevant <- allowsIrrelevant
-  , isIrrelevant m = throwError "Tried to use an irrelevant result when not allowed"
-  | otherwise = pure []
+  splitAsNeededThenConsume' allowsIrrelevant (Tag con i:ts) m@(extractTags -> Tag con' i':_)
+    | con == con' && i == i'
+    = splitAsNeededThenConsume' allowsIrrelevant ts m
+
+  splitAsNeededThenConsume' allowsIrrelevant (Tag con i:ts) m
+    =
+      let res :: m [([Mult], Maybe Mult)]
+          res = traverse @_ @_ @Mult @([Mult], Maybe Mult) (\case
+                   m'@(Tagged (Tag _ i') _)
+                      -- From the resources we split, this has the index we are
+                      -- looking for, so we keep splitting inside
+                      | i' == i -> splitAsNeededThenConsume' allowsIrrelevant ts m'
+
+                      -- Otherwise, the resource we need isn't down this path, so
+                      -- we can stop splitting here
+                      | otherwise -> pure ([m'], Nothing)
+                   _ -> error "impossible, splitResourceAt guarantees returned resource is tagged"
+                )
+                (splitResourceAt con m)
+       in foldl (\(acc_ms, acc_consumed) (splits, m_consumed) ->
+                    (acc_ms Prelude.<> splits, case (acc_consumed, m_consumed) of
+                      (Nothing, Nothing) -> Nothing
+                      (Just cm, Nothing) -> Just cm
+                      (Nothing, Just cm) -> Just cm
+                      (Just  _, Just  _) -> error "Bolas! More than one fragment consumed while splitting and consuming!"
+                    )
+                ) ([], Nothing) <$> res
 
 -- | Splits a resource according to a constructor's number of linear fields
 splitResourceAt :: GHC.Plugins.DataCon -> Mult -> [Mult]
 splitResourceAt con mult = map (\i -> Tagged (Tag con i) mult) [1..numberOfLinearFields con]
+
+-- | Splits a resource at a tagstack, basically generating a fragment matching
+-- each tag, (recursively) splitting as many times as necessary
+splitResourceAtTagStack :: [Tag] -> Mult -> [Mult]
+splitResourceAtTagStack []     m    = [m]
+splitResourceAtTagStack (Tag c i:ts) mult = do
+  let res = splitResourceAt c mult
+   in concatMap (\(m', i') -> if i == i' then splitResourceAtTagStack ts m' else [m']) (zip res [1..])
 
 numberOfLinearFields :: GHC.Plugins.DataCon -> Int
 numberOfLinearFields = length . filter (not . GHC.Plugins.isManyTy . scaledMult) . GHC.Plugins.dataConOrigArgTys
@@ -145,7 +181,7 @@ makeIrrelevant (UsageEnv ue) = UsageEnv $ L.map (second makeMultIrrelevant) ue
 
 makeMultIrrelevant :: Mult -> Mult
 makeMultIrrelevant (Relevant m)   = Irrelevant m
-makeMultIrrelevant (Irrelevant m) = Irrelevant m
+makeMultIrrelevant (Irrelevant m) = Irrelevant m -- TODO: Oops. We should /not/ normalise this; we need nested irrelevantness, witnessed by the soundness proof
 makeMultIrrelevant (Tagged t m) = Tagged t (makeMultIrrelevant m)
 
 lookupUE :: Var -> UsageEnv -> Usage

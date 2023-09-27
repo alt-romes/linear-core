@@ -103,6 +103,7 @@ checkBind (NonRec b e)
        return (NonRec (LCVar b.id Nothing) e')
 
 checkBind (Rec bs) = do
+  pprTraceM "extending with" (ppr bs)
   let (ids,rhss) = unzip bs
   inScope :: LCState <- get
   -- We extend the rhss typechecking with the recursive bindings as if they
@@ -110,19 +111,21 @@ checkBind (Rec bs) = do
   -- Because we do a dryRun, we won't crash if they are.
   -- Then we use the naiveUsageEnv (the ones computed with the recursive
   -- bindings as linear variables) and compute the real usage environment.
-  (_rhss', naiveUsages) <- unzip . fst <$> dryRun (extends (L.map (\(LCVar b (Just _d)) -> (b,LambdaBound (Relevant OneTy))) ids)
-                                                 (traverse (dryRun . checkExpr) rhss))
+  (_rhss', naiveUsages) <- unzip . fst <$> dryRun
+    (extends LetRecBinderDry
+         (L.map (\(LCVar b (Just _d)) -> (b, LambdaBound (Relevant OneTy))) ids)
+         (traverse (dryRun . checkExpr) rhss))
   let recUsages = computeRecUsageEnvs (zip (L.map (.id) ids) naiveUsages)
       -- Repeated ocurrences of linear variables will be represented as many
       -- times as they occur in the recursive bindings in the usage
       -- environments with a linear multiplicity.
       -- In practice, when recursive binders are used, we'll try to use the linear variables more than once, if they exist more than once
-  recUes <- mapM (\i -> reconstructUe i.id recUsages inScope) ids
+  recUes <- mapM (\i -> extends LetRecBinder (L.map (\id' -> (id'.id, DeltaBound emptyUE)) ids) $ reconstructUe i.id recUsages inScope) ids
   -- pprTraceM "Has checked naiveUsages" (ppr recUsages $$ ppr recUes)
   let ids' = L.zipWith (\i b -> LCVar i.id (deltaBinding b)) ids recUes
 
   -- Must typecheck rhss' again with the correct recursive usage environments
-  rhss' <- extends (zipWith (\id' ue -> (id'.id, DeltaBound ue)) ids recUes) (traverse checkExpr rhss)
+  rhss' <- extends LetRecBinder (zipWith (\id' ue -> (id'.id, DeltaBound ue)) ids recUes) (traverse checkExpr rhss)
   return (Rec (zip ids' rhss'))
 
 checkExpr :: LCExpr -> LinearCoreM LCExpr
@@ -138,17 +141,17 @@ checkExpr expr = case expr of
     -> App <$> checkExpr e1 <*> checkExpr e2
   Lam b e 
     -- We use make type variables unrestricted in the environment (fromMaybe)
-    -> Lam b <$> extend b.id (fromMaybe (LambdaBound (Relevant ManyTy)) (multBinding b.id)) (checkExpr e)
+    -> Lam b <$> extend LambdaBinder b.id (fromMaybe (LambdaBound (Relevant ManyTy)) (multBinding b.id)) (checkExpr e)
   Let bind@(NonRec _b _) body
     -> do
       bind'@(NonRec (LCVar b (Just delta')) _) <- restoringState $ checkBind bind
       Let bind'
-          <$> extend b delta' (checkExpr body)
+          <$> extend LetBinder b delta' (checkExpr body)
   Let bind@(Rec _bs) body
     -> do
       bind'@(Rec (unzip -> (bs, _))) <- restoringState $ checkBind bind
       Let bind'
-          <$> extends (L.map (\(LCVar b (Just d)) -> (b,d)) bs) (checkExpr body)
+          <$> extends LetRecBinder (L.map (\(LCVar b (Just d)) -> (b,d)) bs) (checkExpr body)
   casee@(Case e b ty alts)
     -- Expression is in WHNF (See Note [exprIsHNF] and #23771, function is really "exprIsWHNF")
     | exprIsHNF (unconvertExpr e)
@@ -157,19 +160,21 @@ checkExpr expr = case expr of
       Case e'
            (LCVar b.id (deltaBinding ue))
            ty
-       <$> withSameEnvMap (extend b.id (DeltaBound ue) . checkAlt ue) alts
+       <$> withSameEnvMap (extend CaseBinder b.id (DeltaBound ue) . checkAlt ue) alts
     | otherwise
     -- Expression is definitely not in WHNF (or do we really mean HNF?)
     -> pprTrace "Case expression" (ppr casee) $ do
 
+      -- We restore the resources here because we make them irrelevant in the env. afterwards
       (e', ue) <- restoringState $ record $ checkExpr e
-      -- pprTraceM "Making irrelevant usage environment" (ppr ue)
+      let irrUe = makeIrrelevant ue
+      pprTraceM "Make irrelevant usage environment:" (ppr irrUe)
       makeEnvResourcesIrrelevant ue
       -- pprTraceM "Done irr" Ppr.empty
       Case e'
-           (LCVar b.id (deltaBinding ue))
+           (LCVar b.id (deltaBinding irrUe))
            ty
-       <$> withSameEnvMap (extend b.id (DeltaBound ue) . checkAlt (makeIrrelevant ue)) alts
+       <$> withSameEnvMap (extend CaseBinder b.id (DeltaBound irrUe) . checkAlt irrUe) alts
 
   Tick t e  -> Tick t <$> checkExpr e
   Cast e co -> Cast <$> checkExpr e <*> pure co
@@ -196,7 +201,7 @@ checkAlt ue a@(Alt (DataAlt con) args rhs)
   | all (isManyTy . scaledMult) (dataConOrigArgTys con)
   = pprTrace "ALT0 con" (ppr a Ppr.<> Ppr.text ". (UE):" Ppr.<> ppr ue) $ do
           -- Add unrestricted binders
-  rhs' <- extends (L.map (\arg -> (arg.id, LambdaBound (Relevant ManyTy))) args)
+  rhs' <- extends PatternBinder (L.map (\arg -> (arg.id, LambdaBound (Relevant ManyTy))) args)
           -- Drop from the environment the fully used resources
           $ Linear.Core.Monad.drop ue
           $ checkExpr rhs
@@ -218,12 +223,12 @@ checkAlt ue alt@(Alt (DataAlt con) args rhs) = pprTrace "ALTN con" (ppr alt) $ d
   -- Add the tag the usage environment with the linear resources with this constructor and an index for each
   -- It will ensure that when we consume the resources by using this environment, we'll just split the resource according to the tag.
   let linear_args' = L.zipWith (\a i -> (a.id, deltaBindingTagged con i ue)) linear_args [1..]
-  -- pprTraceM "Linear args in ALTN con:" (ppr linear_args')
+  pprTraceM "Linear args in ALTN con:" (ppr linear_args')
 
           -- First, extend computation with unrestricted resources
-  rhs' <- extends (L.map ((, LambdaBound (Relevant ManyTy)) . (.id)) unrestricted_args)
+  rhs' <- extends PatternBinder (L.map ((, LambdaBound (Relevant ManyTy)) . (.id)) unrestricted_args)
           -- Then, with linear resources
-          $ extends linear_args'
+          $ extends PatternBinder linear_args'
           $ checkExpr rhs
 
   return (Alt (DataAlt con) (unrestricted_args ++ L.map (uncurry LCVar . second Just) linear_args') rhs')
