@@ -1756,7 +1756,7 @@ with\footnote{This isn't the final rule for case expression whose scrutinee is
 in WHNF, but the main intuition is herein conveyed. After introducing the rule for
 cases with scrutinees \emph{not} in WHNF, we revise this rule.}:
 \[
-\TypeCaseWHNF
+\TypeCaseWHNFIntermediate
 \]
 First, we assert this rule is only applicable to expressions in weak head
 normal form. Second, we use the typing judgement for expressions in WHNF
@@ -2058,6 +2058,11 @@ through the other linear pattern-bound variables.
 % mixing of pattern variables bound at different alternatives (e.g.~$\lambda
 % x~y.~\ccase{(x,y)}{(a,b)\to\ccase{(a,b)}{(z,w)\to(a,w)}}$).
 
+Finally, ...
+\[
+\TypeCaseWHNF
+\]
+
 \subsection{Linear Core Examples}
 
 Linear Mini-Core~\cite{cite:minicore} lists examples of Core programs where
@@ -2067,7 +2072,9 @@ briefly explaining why they are indeed well-typed.
 
 \subsubsection{Equations}
 
-The Linear Haskell function
+The Linear Haskell function is compiled in Linear Core as\\
+%
+\begin{minipage}{0.47\textwidth}
 \begin{code}
 data C = Red | Green | Blue
 f :: C ⊸ C ⊸ C
@@ -2075,7 +2082,8 @@ f Red q = q
 f p Green = p
 f Blue q = q
 \end{code}
-is compiled in Linear Core as
+\end{minipage}
+\begin{minipage}{0.47\textwidth}
 \[
 \begin{array}{ll}
 \lambda p{:}_1C~q{:}_1C.~\ccase{p}{p2{:}_{\{p\}}C \\
@@ -2083,21 +2091,18 @@ is compiled in Linear Core as
 ; \_ \to \ccase{q}{q2{:}_{\{q\}}C\\
   \{Green \to p2\\
   ; \_ \to \ccase{p2}{p3{:}_{\{p\}}C \\
-  \{Blue \to q2\}} \}} \\
-\}}
+  \{Blue \to q2\}} \}} \}}
 \end{array}
 \]
-...
+\end{minipage}
 
 \subsubsection{Unrestricted Fields}
 
 The following is well-typed:
-\begin{code}
-data Foo where
-  Foo :: A ⊸ B -> C
-
-f = \x -> case x of z { Foo a b -> (z, b) }
-\end{code}
+Let $\datatype{K}{K : A \lolli B \to C}$, and $f$:
+\[
+\lambda \xl.~\ccase{x}{\var[z][x]~\{ K~a~b \to (z, b) \}}
+\]
 
 \subsubsection{Wildcard}
 

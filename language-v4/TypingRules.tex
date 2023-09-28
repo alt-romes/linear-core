@@ -78,11 +78,22 @@
     {\judg[\G][\D,\D']{\lletrec{\ov{\var[x_i][\D][\s_i] = e_i}}{e'}}{\vp}}
 }
 
-\newcommand{\TypeCaseWHNF}{
+\newcommand{\TypeCaseWHNFIntermediate}{
     \mprset{flushleft}
     \infer[($\textrm{Case}_\textrm{WHNF}$)]
     {\textrm{e is in \emph{WHNF}} \\ \G;\D \Vdash e:\s \gtrdot \ov{\D_i}
     \\ \ov{\G,\var[z][\ov{\D_i}];\ov{\D_i},\D' \vdash_{alt} \rho\to e' :^z_{\ov{\D_i}} \s \Mapsto \vp}}
+    {\judg[\G][\D,\D']{\ccase{e}{\var[z][\ov{\D_i}]~\{\ov{\rho \to e'}\}}}{\vp}}
+}
+
+\newcommand{\TypeCaseWHNF}{
+    \mprset{flushleft}
+    \infer[($\textrm{Case}_\textrm{WHNF}$)]
+    {\textrm{e is in \emph{WHNF}} \and \G;\D \Vdash e:\s \gtrdot \ov{\D_i}
+    \\ e~\textrm{matches}~\rho_i
+    \\ \G,\var[z][\ov{\D_i}];\ov{\D_i},\D' \vdash_{alt} \rho\to e' :^z_{\ov{\D_i}} \s \Mapsto \vp
+    \\ \ov{\judg[\G,z{:}_{\irr{\D}}\s][\irr{\D},\D']{\rho\to e'}{\s \Rrightarrow \vp}[alt][\irr{\D}][z]}
+    }
     {\judg[\G][\D,\D']{\ccase{e}{\var[z][\ov{\D_i}]~\{\ov{\rho \to e'}\}}}{\vp}}
 }
 
@@ -101,7 +112,8 @@
     \infer[($\textrm{Case}_\textrm{Not WHNF}$)]
     {\textrm{e is not in \emph{WHNF}} \\
     \judg{e}{\s}
-    \\ \ov{\judg[\G,z{:}_{\irr{\D}}\s][\irr{\D},\D']{\rho\to e'}{\s \Rrightarrow \vp}[alt][\irr{\D}][z]}}
+    \\ \ov{\judg[\G,z{:}_{\irr{\D}}\s][\irr{\D},\D']{\rho\to e'}{\s \Rrightarrow \vp}[alt][\irr{\D}][z]}
+    }
     {\splitjudg{\ccase{e}{\z[\irr{\D}]~\{\ov{\rho \to e'}\}}}{\vp}}
     % TODO: Add that [d1] entails moving all delta usages to [delta] usages in all vars i d1
 }

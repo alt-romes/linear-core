@@ -17,11 +17,11 @@
 \usetikzlibrary{trees}	% this is to allow the fork right path
 \usepackage{mdframed}
 
-%%%%% font stack: acmart
-%%% \RequirePackage[T1]{fontenc}
-%%% \RequirePackage[tt=false,type1=true]{libertine}
-%%% \RequirePackage[varqu]{zi4}
-%%% \RequirePackage[libertine]{newtxmath}
+% font stack: acmart
+% \RequirePackage[T1]{fontenc}
+% \RequirePackage[tt=false,type1=true]{libertine}
+% \RequirePackage[varqu]{zi4}
+% \RequirePackage[libertine]{newtxmath}
 
 \newtheorem{theorem}{Theorem}
 \newtheorem{lemma}{Lemma}%[theorem]
