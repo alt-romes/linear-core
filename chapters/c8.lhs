@@ -103,7 +103,7 @@ Linear Core overcomes the limitations of Core's linear type system derived from
 Linear Haskell by understanding semantic linearity in the presence of laziness,
 and provably accepts multiple Core-to-Core passes. Linear Core, ultimately, can
 also be seen as a system that validates the programs written in Linear Haskell
-then compiled by GHC, by guaranteeing (through typing) that linear resources
+and are compiled by GHC, by guaranteeing (through typing) that linear resources
 are still used exactly once throughout the optimising transformations.
 
 \subsection{Linear Mini-Core\label{sec:linear-mini-core}}

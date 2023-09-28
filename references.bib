@@ -726,6 +726,13 @@ isbn="978-3-540-68528-9"
    year = {2022}
 }
 
+@misc{cite:linear-core-plugin,
+   author={Mesquita, Rodrigo},
+   title={Linear Core: Theory and a GHC Plugin},
+   howpublished = {\url{https://github.com/alt-romes/linear-core}},
+   year = {2023}
+}
+
 @misc{cite:ghc-source,
    author={The Glasgow Haskell Compiler contributors},
    title={Glasgow Haskell Compiler / GHC Source},
@@ -824,3 +831,20 @@ series = {POPL '82}
 
 @article{engeler_1984, title={H. P. Barendregt. The lambda calculus. Its syntax and semantics. Studies in logic and foundations of mathematics, vol. 103. North-Holland Publishing Company, Amsterdam, New York, and Oxford, 1981, xiv 615 pp.}, volume={49}, DOI={10.2307/2274112}, number={1}, journal={The Journal of Symbolic Logic}, publisher={Cambridge University Press}, author={Engeler, E.}, year={1984}, pages={301–303}}
 
+@inproceedings{10.1145/3331545.3342599,
+author = {Pickering, Matthew and Wu, Nicolas and N\'{e}meth, Boldizs\'{a}r},
+title = {Working with Source Plugins},
+year = {2019},
+isbn = {9781450368131},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+url = {https://doi.org/10.1145/3331545.3342599},
+doi = {10.1145/3331545.3342599},
+abstract = {A modern compiler calculates and constructs a large amount of information about the programs it compiles. Tooling authors want to take advantage of this information in order to extend the compiler in interesting ways. Source plugins are a mechanism implemented in the Glasgow Haskell Compiler (GHC) which allow inspection and modification of programs as they pass through the compilation pipeline. This paper is about how to write source plugins. Due to their nature—they are ways to extend the compiler—at least basic knowledge about how the compiler works is critical to designing and implementing a robust and therefore successful plugin. The goal of the paper is to equip would-be plugin authors with inspiration about what kinds of plugins they should write and most importantly with the basic techniques which should be used in order to write them.},
+booktitle = {Proceedings of the 12th ACM SIGPLAN International Symposium on Haskell},
+pages = {85–97},
+numpages = {13},
+keywords = {plugins, tools, metaprogramming},
+location = {Berlin, Germany},
+series = {Haskell 2019}
+}

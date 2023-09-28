@@ -2162,20 +2162,31 @@ f = \x -> case x of z { Foo a -> (z, a) }
 
 \section{Linear Core as a GHC Plugin\label{sec:discuss:implementation}}
 
-In this section, we discuss our prototype implementation of Linear Core as a
-Core plugin for the Glasgow Haskell Compiler. The Linear Core Plugin typechecks
-linearity in all Core programs produced both by the desugarer and after each
-optimisation pass.
+We implemented Linear Core as a \emph{Core plugin} for the Glasgow Haskell Compiler.
 %
-The plugin successfully validates linearity of Core throughout compilation of
-linearity-heavy libraries, namely \texttt{linear-base} and \texttt{linear-smc}.
-Additionally, we discuss the implementation of the Linear Core type system
-directly in the Glasgow Haskell Compiler.
+GHC plugins allow developers to inspect and modify programs being compiled by
+GHC, at different stages of the compilation
+pipeline~\cite{10.1145/3331545.3342599}.
+%
+In particular, for any given Haskell module, our Core plugin runs for (and
+receives as input) every intermediate program produced in the compilation
+process, i.e. from desugaring and after each optimising transformation.
 
-\todo[inline]{A implementação existe; link para o github; validei o linear-base
-(excepto multiplicty coercions, e tive successo pq a implementação validou);
-validei os exemplos do inicio escrevendo Core à mão; Syntax-directedness
-}
+The plugin implements a typechecker for Linear Core: given a Core program, the
+GHC Linear Core plugin~\cite{cite:linear-core-plugin} will typecheck the
+linearity of all expressions bound in that program, failing if a linear
+resource is not used \emph{exactly once} according to the
+$(\lambda^\pi_\Delta)$ system.
+%
+Most notably, the plugin successfully validates linearity throughout the
+(optimising) compilation of linearity-heavy libraries, namely
+\texttt{linear-base} and \texttt{linear-smc}, except in expressions whose
+linearity depends on so-called \emph{multiplicity coercions}, which are a main
+avenue of future work ($\S$~\ref{sec:future-work}).
+% Additionally, we discuss the implementation of the Linear Core type system
+% directly in the Glasgow Haskell Compiler.
+
+\todo[inline]{ validei os exemplos do inicio escrevendo Core à mão; Syntax-directedness }
 
 
 This section discusses the implementation of Linear Core as a GHC Plugin, with
