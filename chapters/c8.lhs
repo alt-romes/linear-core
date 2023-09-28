@@ -116,11 +116,11 @@ introduces usage environments for let-bound variables with the same goal of
 Linear Core of specifying a linear type system for Core that accepts the
 optimising transformations.
 
-We draw from Linear Mini-Core's the rule for non-recursive let
-expressions and how let-bound variables are annotated with a usage environment,
-however, our work further explores the interaction of laziness with linearity
-in depth, and diverges in rules for typing other constructs, notably, case
-expressions and case alternatives. Furthermore, we prove soundness of our
+We draw from Linear Mini-Core's the rule for non-recursive let expressions and
+how let-bound variables are annotated with a usage environment, however, our
+work further explores the interaction of laziness with linearity in depth, and
+diverges in rules for typing other constructs, notably, case expressions and
+case alternatives. Furthermore, unlike Mini-Core, we prove type safety of our
 system and that multiple optimising transformations, when applied to Linear
 Core programs, preserve linearity as understood by the system.
 
@@ -206,7 +206,7 @@ In Linear Haskell, multiplicities are introduced as annotations to function
 arrows which specify the linearity of the function. In practice,
 multiplicities are simply types of kind |Multiplicity|, where |One| and |Many|
 are the type constructors of the kind |Multiplicity|; multiplicity polymorphism
-follows from (any kind) type polymorphism, where multiplicity variables are
+follows from type polymorphism, where multiplicity variables are
 just type variables. Encoding multiplicities as types allows Haskell programs
 to leverage features available for types to naturally extend to multiplicities
 as well.
@@ -231,12 +231,12 @@ dep SFalse _ = 0
 \end{code}
 \end{limitation}
 %
-In theory, this example is linear and should be accepted. However, in practice,
-the example is rejected by the GHC's Core type checker. Critically, Core doesn't
-currently understand so-called \emph{multiplicity coercions}. Even though after
-matching on |STrue| we have access to a coercion from the function multiplicity
-$m$ to $1$ ($m \sim 1$), we cannot use this coercion to determine whether the
-usages of the linear resources match the multiplicity.
+This example is linear and should be accepted. However, the example is rejected
+by the GHC's Core type checker. Critically, Core doesn't currently understand
+so-called \emph{multiplicity coercions}. Even though after matching on |STrue|
+we have access to a coercion from the function multiplicity $m$ to $1$ ($m \sim
+1$), we cannot use this coercion to determine whether the usages of the linear
+resources match the multiplicity.
 %
 Studying the interaction between coercions and multiplicities is a main avenue
 of future work for Linear Core.
@@ -254,12 +254,11 @@ by Linear Haskell~\cite{cite:linearhaskell} and
 in~\cite{cite:let-floating,peytonjones1997a}. An obvious candidate is
 \emph{inlining}, which is applied based on heuristics from information provided
 by the \emph{cardinality analysis} pass that counts occurrences of bound
-variables.  Linearity, in being user-provided annotations regarding the usage
-of resources in the body of a function, can be used to inform non-heuristically
+variables.  Linearity can be used to non-heuristically inform
 the inliner~\cite{cite:linearhaskell}. Additionally, we argue that in Linear
-Core accepting more programs as linear there are more chances to (ab)use
-linearity, in contrast to a linear type system which does not account for lazy
-evaluation and thus rejects more programs.
+Core accepting more programs as linear there are more chances to use linearity,
+in contrast to a linear type system which does not account for lazy evaluation
+and thus rejects more programs.
 
 \parawith{Usage environment resource inference.}
 In Section~\ref{sec:linearity-semantically}, we explained that the linear
@@ -278,12 +277,12 @@ usage environments of recursive group of bindings.
 \parawith{Linear Core in the Glasgow Haskell Compiler.}
 Linear Core is suitable as the intermediate language of an optimising compiler
 for a linear and lazy language such as Haskell Core, in that optimising
-transformations in Linear Core preserve types \emph{and} linearity since Linear
+transformations in Linear Core preserve types \emph{and} linearity, since Linear
 Core understands (semantic) in the presence of laziness, unlike Core's current
 type system under which optimisations currently violate linearity.
 %
 Integrating Linear Core in the Glasgow Haskell Compiler is one of the ultimate
-goals motivating our work. Core's current type system ignores linearity due to
+goals of our work. Core's current type system ignores linearity due to
 its limitation in understanding semantic linearity, and our work fills this gap
 and would allow Core to be linearly typed all throughout.
 %
@@ -299,7 +298,7 @@ direction\footnote{https://gitlab.haskell.org/ghc/ghc/-/issues/23218}, we leave
 this as future work.
 
 \parawith{Generalizing Linear Core to Haskell.}
-Linear types, despite its compile-time correctness guarantees regarding
+Linear types, despite their compile-time correctness guarantees regarding
 resource management, impose a burden on programmers in being a restrictive
 typing discipline (witnessed, e.g., by Linear
 Constraints~\cite{cite:linearconstraints}). Linear Core eases the restrictions
@@ -381,9 +380,8 @@ example programs were linear semantically, but not syntactically.
 We developed a linear type system, Linear Core, for an intermediate language
 akin to GHC Core, with laziness and linearity. In contrast to GHC Core's type
 system, or any other linear type system (to the best of our knowledge), our
-type system understands semantic linearity, and (anecdotally) accepts as
-well-typed all but one of the programs explored in the semantic linearity
-examples.
+type system understands semantic linearity, and can thus correctly type a wider
+range of linear programs, as those explored in the semantic linearity examples.
 %
 Crucially, we proved soundness of the type system, and proved multiple
 optimising transformations preserve linearity, despite most violating linearity

@@ -1128,7 +1128,7 @@ Besides type safety, we prove that multiple optimising Core-to-Core
 transformations preserve linearity in Linear Core. These same transformations
 don't preserve linearity under Core's current type system. As far as we know,
 we are the first to prove optimisations preserve types in a non-strict linear
-language.\todo{Deixo esta frase?}
+language.
 
 The first key idea for typing linearity semantically is to delay \emph{consuming a
 resource} to when a computation that depends on that resource is effectively
@@ -1751,13 +1751,16 @@ in a scrutinee that is already in WHNF are only properly consumed when all
 (linear) fields of the pattern are used, satisfying the definition of
 consuming resources given in Linear Haskell.
 %
-We type a case expression whose scrutinee is in weak head normal form
-with\footnote{This isn't the final rule for case expression whose scrutinee is
-in WHNF, but the main intuition is herein conveyed. After introducing the rule for
-cases with scrutinees \emph{not} in WHNF, we revise this rule.}:
+% We type a case expression whose scrutinee is in weak head normal form with
+This suggests the following rule:
 \[
 \TypeCaseWHNFIntermediate
 \]
+which captures the key intuitions of typing case expressions whose scrutinees are in WHNF.
+However, as will be made clear when we discuss matching on alternatives ...\todo{fix}, our treatment of such a case expression is
+slightly more involved.
+
+%
 First, we assert this rule is only applicable to expressions in weak head
 normal form. Second, we use the typing judgement for expressions in WHNF
 previously introduced to determine the split of resources amongst the scrutinee
@@ -1865,7 +1868,7 @@ unrestricted expression, the case binder too may be used unrestrictedly, which
 we allow by making its usage environment empty.
 
 It might seem as though deleting the resources from the environment in this
-rule is important to guarantee a resource is not used after it is consumed.
+rule is necessary to guarantee a resource is not used after it is consumed.
 %
 However, let us consider two discrete situations -- pattern matches in a case
 expression whose scrutinee is in WHNF, and matches on a case expression whose
@@ -1885,32 +1888,32 @@ expression is well-typed; by contradiction, the linear resources from the
 scrutinee could occur unrestrictedly in that branch, since from falsity
 anything follows (\emph{ex falso quodlibet}).
 %
-For uniformity, however, we type such alternatives as we do alternatives for
-scrutinees that are not in WHNF.
+For uniformity, we type such alternatives as those for scrutinees that are not in WHNF.
 
 \item The pattern is linear and matches the scrutinee, in which case the
 $AltN_{\textrm{WHNF}}$ is applicable instead of $Alt0$.
 
-\item The pattern is linear but does not match the scrutinee, so, just as in
-1., any resource could theoretically be used in such alternatives, however,
-for uniformity, it is also typed as though the scrutinee were not in WHNF.
+\item The pattern is linear but does not match the scrutinee and so, the same
+reasoning as (1) above applies: any resource could theoretically be used in
+such alternatives, however, for uniformity, it is also typed as though the
+scrutinee were not in WHNF.
 
 \end{enumerate}
 
 \item However, if the scrutinee is not in WHNF, the resources occurring in the
 scrutinee will be consumed when evaluation occurs. Therefore, the resources
-consumed by the scrutinee must certainly not occur in the alternative body
+used in the scrutinee cannot occur in the alternative body
 (e.g. $x$ cannot occur in the alternative in $\ccase{close~x}{\{K_1 \to x\}}$)
--- regardless of the alternatives' patterns
+-- regardless of the pattern.
 %
 % In fact, the resources from a scrutinee that is not in weak head normal form
 % cannot occur in any of the alternatives, even ones matching on constructors
 % with linear components, as the resources may have been consumed when evaluating
 % the expression to weak head normal form.
 %
-We will guarantee resources from a scrutinee that is not in weak head normal
-form cannot occur/directly be used in any case alternative, in our rule for
-typing cases not in WHNF, which we introduce below.
+We guarantee resources from a scrutinee that is not in weak head normal form
+cannot occur/directly be used in any case alternative, in our rule for typing
+cases not in WHNF, which we introduce below.
 
 \end{itemize}
 
@@ -2000,6 +2003,17 @@ judgement annotation, are made irrelevant.
 % \todo[inline]{The case binder and pattern variables will consume the scrutinee
 % resources, be those irrelevant or relevant resources}
 
+Finally, ...
+\begin{itemize}
+\item Em WHNF dá para determinar qual dos padrões faz match
+\item Esse tem de ser tratado de forma especial
+\item Os restantes trato de forma especial também pq nunca vão ser aplicados
+\item Note that unusal to type WHNF specifically, this happens in the language of an optimising compiler
+\end{itemize}
+\[
+\TypeCaseWHNF
+\]
+
 \subsubsection{Splitting and tagging fragments}
 
 Intuitively, in case alternatives whose scrutinee is not in weak head normal form,
@@ -2011,7 +2025,7 @@ scrutinee in WHNF this way).
 
 However, unlike with scrutinees in WHNF, the resources used by a
 scrutinee not in WHNF do not necessarily match those used by each
-sub-expression of the expression evaluated to WHNF. \todo{Even if there was we must type not WHNF exprs agnostically or something?}
+sub-expression of the expression evaluated to WHNF.
 %
 Therefore, there is no direct mapping between the usage environments of the
 linear pattern-bound variables and the resources used in the scrutinee.
@@ -2050,18 +2064,13 @@ resources must be $Split$ for the fragments corresponding to that $\D$-var to
 be consumed, and, consequently, the remaining fragments have to be consumed
 through the other linear pattern-bound variables.
 
-\todo[inline]{Exemplo}
+\todo[inline]{Exemplo; consider X, z e introd na alternaveice como Y e pat vars como Zs...}
 
 % Using tags for fragments instead of fractions (e.g. $\D_s*i/n$) is necessary
 % to guarantee we cannot use the same variable multiple times to consume
 % multiple fractions of the resource. It also has the added benefit of allowing
 % mixing of pattern variables bound at different alternatives (e.g.~$\lambda
 % x~y.~\ccase{(x,y)}{(a,b)\to\ccase{(a,b)}{(z,w)\to(a,w)}}$).
-
-Finally, ...
-\[
-\TypeCaseWHNF
-\]
 
 \subsection{Linear Core Examples}
 
@@ -2406,8 +2415,6 @@ binder $z$ in case alternatives by the scrutinee, when the scrutinee is a
 variable $x$.
 
 \ReverseBinderSwapTheorem
-
-\todo[inline]{Maybe this shouldn't be a theorem since we don't prove it neither is it true}
 
 \noindent This is exactly reverse from what the binder swap transformation
 does in hope of eliminating multiple uses of $x$ so as to inline it. However, by
