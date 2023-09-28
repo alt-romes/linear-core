@@ -87,10 +87,8 @@
 }
 
 \newcommand{\TypeCaseWHNF}{
-    \mprset{flushleft}
     \infer[($\textrm{Case}_\textrm{WHNF}$)]
-    {\textrm{e is in \emph{WHNF}} \and \G;\D \Vdash e:\s \gtrdot \ov{\D_i}
-    \\ e~\textsf{matches}~\rho_j
+    {\textrm{e is in \emph{WHNF}} \and \G;\D \Vdash e:\s \gtrdot \ov{\D_i} \and e~\textsf{matches}~\rho_j
     \\ \G,\var[z][\ov{\D_i}];\ov{\D_i},\D' \vdash_{alt} \rho_j \to e' :^z_{\ov{\D_i}} \s \Mapsto \vp
     \\ \ov{\judg[\G,z{:}_{\irr{\D}}\s][\irr{\D},\D']{\rho\to e'}{\s \Rrightarrow \vp}[alt][\irr{\D}][z]}
     }
@@ -225,7 +223,7 @@
 \[
 \begin{array}{c}
     \judgment{\judg{e}{\s}}
-\\[0.5cm]
+\\[0.4cm]
     \TypeMultLamIntro
 \qquad
     \TypeMultLamElim
@@ -255,9 +253,9 @@
     \TypeCaseNotWHNF
 % Ouch, nope, not the case var
 %    \TypeCaseVar
-\\[0.75cm]
+\\[0.6cm]
     \judgment{\judg{\rho \to e}{\sigma \Rightarrow \varphi}[alt][\Delta_s][z]}
-\\[0.5cm]
+\\[0.4cm]
     \TypeAltNWHNF
 \quad
     \TypeAltNNotWHNF
@@ -265,12 +263,6 @@
     \TypeAltZero
 \qquad
     \TypeAltWild
-\\[0.75cm]
-    \judgment{\G; \D \Vdash e : \s \gtrdot \ov{\D_i}}
-\\[0.5cm]
-    \TypeWHNFCons
-\qquad
-    \TypeWHNFLam
 \end{array}
 \]
 \end{framed}
@@ -286,9 +278,15 @@
 \[
 \begin{array}{c}
     \judgment{\Gamma \vdash_{mult} \pi}
-\\[1em]
+\\[0.4cm]
     \TypeWellFormedMult
-\\[1em]
+\\[0.6cm]
+    \judgment{\G; \D \Vdash e : \s \gtrdot \ov{\D_i}}
+\\[0.4cm]
+    \TypeWHNFCons
+\qquad
+    \TypeWHNFLam
+\\[0.6cm]
 \begin{array}{cc}
 \judgment{\Gamma \vdash decl : \Gamma'} & \judgment{\Gamma \vdash pgm : \sigma}\\
 \\[0.05em]

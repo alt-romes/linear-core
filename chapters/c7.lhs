@@ -275,14 +275,14 @@
 A linear type system statically guarantees that linear resources are
 \emph{consumed} exactly once. Consequently, whether a program is well-typed
 under a linear type system intrinsically depends on the precise definition of
-\emph{consuming} a resource. Even though \emph{consuming} a resource is commonly regarded
-as synonymous with \emph{using} a resource, i.e. with the syntactic occurrence
-of the resource in the program, that is not always the case.
+\emph{consuming} a resource. Even though \emph{consuming} a resource is
+commonly regarded as synonymous with the \emph{syntactic occurrence} of the resource
+in the program, that is not always the case.
 %
-In fact, this section highlights the distinction between using resources
-syntactically and semantically as a principal limitation of linear type systems
-for (especially) non-strict languages, with examples motivated by the
-constructs available in GHC Core and how they're evaluated.
+In fact, this chapter highlights the distinction between using resources
+\emph{syntactically} and \emph{semantically} as a principal limitation of
+linear type systems for non-strict languages, with examples motivated by the
+constructs available in GHC Core and how they are evaluated.
 
 % and we show how a linear type system found on
 % \emph{consuming resources semantically} rather than \emph{using resources
@@ -1104,7 +1104,7 @@ unrestrictedly, and therefore the case binder may also be used unrestrictedly.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % {{{ Linear Core
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\chapter{A Type System for Semantic Linearity in Core\label{sec:main:linear-core}}
+\chapter{A Type System for\\Semantic Linearity in Core\label{sec:main:linear-core}}
 
 In this chapter, we develop a linear calculus $\lambda_\Delta^\pi$, dubbed \emph{Linear Core}, that 
 combines the linearity-in-the-arrow and multiplicity polymorphism introduced by
@@ -1756,16 +1756,13 @@ This suggests the following rule:
 \[
 \TypeCaseWHNFIntermediate
 \]
-which captures the key intuitions of typing case expressions whose scrutinees are in WHNF.
-However, as will be made clear when we discuss matching on alternatives ...\todo{fix}, our treatment of such a case expression is
-slightly more involved.
-
-%
 First, we assert this rule is only applicable to expressions in weak head
 normal form. Second, we use the typing judgement for expressions in WHNF
 previously introduced to determine the split of resources amongst the scrutinee
 sub-expressions. Finally, we type all case alternatives with the same context, using the
-$\vdash_{alt}$ judgement. Specifically:
+$\vdash_{alt}$ judgement. 
+%
+Specifically:
 \begin{itemize}
 \item We introduce the case binder $z$ in the environment as a $\D$-bound
 variable whose usage environment is the linear resources used to type the
@@ -1778,6 +1775,11 @@ the $\Mapsto$ arrow in the judgement -- this is of most importance when typing
 the alternative itself, and will be motivated together with the alternative
 judgement below
 \end{itemize}
+%
+Despite the key intuitions of typing a case expressions whose scrutinee is in
+WHNF being conveyed by this rule, our treatment of such a case expression is
+slightly more involved, as will be presented after discussing cases of
+scrutinees not in WHNF.
 
 The alternative judgement $\G;\D \vdash_{alt} \rho \to e :^z_\D \s \Rightarrow
 \vp$ is used to type case alternatives, but it encompasses three
@@ -2003,16 +2005,31 @@ judgement annotation, are made irrelevant.
 % \todo[inline]{The case binder and pattern variables will consume the scrutinee
 % resources, be those irrelevant or relevant resources}
 
-Finally, ...
-\begin{itemize}
-\item Em WHNF dá para determinar qual dos padrões faz match
-\item Esse tem de ser tratado de forma especial
-\item Os restantes trato de forma especial também pq nunca vão ser aplicados
-\item Note that unusal to type WHNF specifically, this happens in the language of an optimising compiler
-\end{itemize}
+Finally, we recall the $Case_\textrm{WHNF}$ rule presented before and highlight
+its flaw: the $\G;\D \vdash_{alt} \rho \to e :^z_{\D_s} \s \Mapsto \vp$
+judgement is only well-defined for patterns $\rho$ matching the WHNF form of
+the scrutinee, as the distribution of resources per constructor components only
+makes sense for the constructor pattern matching the scrutinee. Essentially, if
+the scrutinee is in WHNF the matching alternative is easily determined, and
+must be treated with the specialized $\Mapsto$ judgement.
+%
+Alternatives not matching the scrutinee, as mentioned in the discussion of the
+$Alt0$ rule, could use resources arbitrarily as they will never be executed,
+however, we uniformly treat non-matching alternatives as if the scrutinee were
+in not in WHNF. The rule for typing case alternatives whose scrutinee is in
+WHNF is thus given by:
 \[
 \TypeCaseWHNF
 \]
+We note that it might seem unusual to specialize a rule for expressions in
+WHNF, as programs scrutinizing an expression in WHNF are rarely written by a
+developer. Yet, our system is designed to be suitable for optimising compilers
+in which intermediate programs commonly scrutinize expressions in WHNF.
+%
+Foreshadowing, branching on WHNF-ness is essential in our system, for without
+it the preservation of types in the case-reduction substituting the case binder
+and pattern variables in the alternative is not possible to prove as the
+$\D$-substitution lemma cannot be used.
 
 \subsection{Splitting and tagging fragments}
 
@@ -2063,8 +2080,14 @@ scrutinee resources to be used by a linear pattern-bound var be used, the
 resources must be $Split$ for the fragments corresponding to that $\D$-var to
 be consumed, and, consequently, the remaining fragments have to be consumed
 through the other linear pattern-bound variables.
-
-\todo[inline]{Exemplo; consider X, z e introd na alternaveice como Y e pat vars como Zs...}
+%
+For instance, in $\lambda x.~\ccase{x}{z~\{K~a~b\to (a,b)\}}$, where $x$ is a
+linear variable, the case alternatives are typed with $\irr{x}$ (proof
+irrelevant $x$), $z$ is introduced as $\z[\irr{x}]$, and the pattern variables
+are introduced as $\var[a][\lctag{\irr{x}}{K_1}]$ and
+$\var[b][\lctag{\irr{x}}{K_2}]$, assuming both components of $K$ are linear.
+%
+We note how $Split$ can be applied both to relevant and proof irrelevant linear resources in $\D$.
 
 % Using tags for fragments instead of fractions (e.g. $\D_s*i/n$) is necessary
 % to guarantee we cannot use the same variable multiple times to consume

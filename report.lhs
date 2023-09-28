@@ -106,8 +106,6 @@
 \todostyle{blue}{color=blue}   % For todos without a home
 \todostyle{pink}{color=pink} % For foreshadowing things, or for saying them later on instead
 \todo[blue, inline]{We need to handle EmptyCase}
-\todo[blue, inline]{And discuss how we didn't handle multiplicity coercions}
-\todo[blue, inline]{Consider dropping some bits about GADTs?}
 \todo[inline, inline]{Symbol to stand for both $1$ and $p$, and notation to make proof
 irrelevant stuff in the types so we can also refer to relevant and irrelevant
 at the same time with some symbol (e.g. for Split)}
@@ -232,21 +230,21 @@ among other correctness properties~\cite{10.1145/3373718.3394765,10.1145/3527313
 
 % TODO: Chegar mais rápido ao que vou fazer? Aqui?
 
-Consider the following C-like program in which allocated memory is freed twice.
+Consider the following program in which allocated memory is freed twice.
 % We know this to be the dreaded double-free error which will crash the program at runtime.
 Regardless of the \emph{double-free} error, a C-like type system will accept this
 program without any issue:
+% \centering
 \begin{code}
 let p = malloc(4);
 in free(p);
    free(p);
 \end{code}
-
 Under the lens of a linear type system, consider the variable $p$ to be a
 linear resource created by the call to \texttt{malloc}. Since $p$ is linear, it
 must be used \emph{exactly once}.  However, the program above uses $p$ twice,
-in the two different calls to \texttt{free}. With a linear type system, the
-program above \emph{does not typecheck}! In this sense, linear typing
+in the two calls to \texttt{free}. With a linear type system, the
+program above does not typecheck! In this sense, linear typing
 effectively ensures the program does not compile with a double-free error.
 % TODO: Do I need this:
 In Section~\ref{sec:linear-types} we give a formal account of linear types and
@@ -265,17 +263,17 @@ Rust~\cite{10.1145/2692956.2663188}, a language whose
 ownership types build on linear types to guarantee memory safety
 without garbage collection or reference counting, and, more recently,
 Haskell~\cite{cite:linearhaskell}, a pure, functional, and
-\emph{lazy} general purpose programming language.\todo{It's the language we focus on}
+\emph{lazy} general purpose programming language.
 % TODO: Extend above: it's the language of our focus
-
+%
 % Besides Haskell's supporting linear
 % types according to the said paper, Idris 2\cite{} supports linear types in a
 % dependently typed setting, Clean\cite{} has uniqueness types which are closely
 % related to linear types, and Rust\cite{} has ownership types which build from
 % linear types. 
-
-Linearity in Haskell stands out from linearity in other languages
-due to the following reasons:
+%
+Linearity in Haskell stands out from linearity in other languages for the
+following reasons essential to our work:
 
 \begin{itemize}
     % \item Linear types were only added to the language roughly \emph{31 years
@@ -299,18 +297,18 @@ due to the following reasons:
         Core programs is very efficient and doing so serves as a sanity check to the
         correction of the source transformations. If the resulting optimised
         Core program fails to typecheck, the optimising
-        transformations (are very likely to) have introduced an error
-        in the resulting program. We present Core (and its formal
-        basis, System~$F_C$~\cite{cite:systemfc}) in Section~\ref{sec:core}.
+        transformations are very likely to have introduced an error
+        in the resulting program. We present Core and its formal
+        basis, System~$F_C$~\cite{cite:systemfc}, in Section~\ref{sec:core}.
         % TODO: \item values in rust are linear by default while non-linear is
         % the haskell default?
 
     \item Both Haskell and its intermediate language Core are \emph{lazily}
         evaluated, i.e. expressions in Haskell are only evaluated when needed,
-        unlike expressions in Idris or Rust that are \emph{eagerly} evaluated.
+        unlike C or Rust, which are \emph{eagerly} evaluated.
         %
         Laziness allows an optimising compiler to aggressively transform the source
-        program without changing its semantics, and indeed, GHC heavily transforms
+        program without changing its semantics and, indeed, GHC heavily transforms
         Core by leveraging its laziness.
         %
         However, lazy evaluation interacts non-trivially with linearity.
