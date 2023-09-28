@@ -11,112 +11,112 @@
 \input{language-v4/TheoremsAndLemmas}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% {{{ Chapter: A Type System for Semantic Linearity in Core; Introduction
+% {{{ Deleted Intro: A Type System for Semantic Linearity in Core; Introduction
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\chapter{A Type System for Semantic Linearity in Core}
-
-A linear type system statically guarantees that linear resources are consumed
-\emph{exactly once}.
-%
-Even though linear types exist 
-Linear Haskell brings the promises of linear types to the Haskell.
-%, and is available in the Glasgow Haskell Compiler (GHC) starting from version 9.0.
-%
-With linear types, programmers can create powerful abstractions that enforce
-certain resources are used linearly, such as file handles or allocated
-memory.
-%
-
-
-\begin{itemize}
-\item Linear types are unique in Haskell because of laziness! (amongst some other things)
-
-\item For example: trivial linear haskell program
-
-\item GHC desugars Linear Haskell into an intermediate language called Core, a
-System FC, and then applies multiple so-called Core-to-Core optimising
-transformations in succession.
-
-\item For example: some simple inlining
-
-\item Linear functions are likewise optimised by the compiler but, crucially,
-the optimisations must preserve linearity! It would indeed be disastrous if the
-compiler discarded or duplicated resources such as a file handle or some allocated memory.
-
-\item From the above example, consider |x| linear. It might seem as though |x|
-is being used twice, but since Core's evaluation strategy is call-by-need, we
-will only evaluate the let when the value is required, and since after
-optimisation it is never used, we'll never compute the value and thus never use the resource
-
-\item In essence, in a lazy language such as Haskell, there's a mismatch
-between syntactic and semantic linearity, with the former referring to
-syntactic occurrences of a linear resource in the program text, and the latter
-to whether the program consumes the resource exactly once in a semantic sense,
-accounting for the evaluation strategy such as in the let example above.
-
-\item The problem: Core is not aware of this. Its linear type system is still
-very naive, in that it doesn't understand semantic linearity, and will reject
-most transformed linear programs, since often transformations turn programs
-that are syntactically linear to programs that are only semantically linear.
-
-\item Despite using Core's type system to validate the implementation
-of the optimising transformations preserve types (and all their combinations),
-we don't use the Core's linear type system to validate whether the
-optimisations and their implementation preserves \emph{linearity}. We
-only \emph{think} that the current optimisations preserve linearity, but we
-don't check it.
-
-\item Understanding semantic linearity isn't trivial, and, in fact, we aren't
-aware of any linear type system that accounts for non-strict evaluation
-semantics besides our own.
-
-\item We develop a linear type system for Core that understands semantic
-linearity. We prove the usual preservation and progress theorems with it, and
-then prove that multiple optimisations preserve types With it, we can accept
-all intermediate programs GHC produces while applying Core-to-core optimising
-transformations.
-
-\item We implemented a GHC plugin that validates every Core program produced by
-the optimising pipeline using our type system
-
-\item Contributions (ref section for each):
-\begin{itemize}
-\item We explain and build intuition for semantic linearity in Core programs by example
-\item We present a linear type system for call-by-need Core which understands
-all axis of semantic linearity we previously exposed; and we prove type
-safety of that system
-\item We prove that multiple Core-to-core optimising transformations preserve linearity +
-types under the type system; and discuss 
-\item We develop a GHC plugin that checks all intermediate Core programs using
-our type system
-\end{itemize}
-
-\item Somewhere add a stronger case for controlling program optimisations (see 7.1 of Linear Haskell) with linearity
-\item Somewhere say we build on linear haskell?
-
-\end{itemize}
-
-\todo[inline]{The introduction needs a lot of motivation!}
-
-\todo[inline]{
-    Inicío deve motivar o leitor, e temos de explicar qual é o problema da
-    linearidade sintatica em Haskell (vs semantica), e a interação disso com o
-    call-by-need/lazy evaluation. Quase como se fosse um paper.
-}
-
-\todo[inline]{Compiler optimizations put programs in a state where linearity
-mixed with call-by-need is pushed to the limits. That is, the compiler
-preserves linearity, but in a non-trivial semantic way.}
-
-\todo[inline]{We present a system that can understand linearity in the presence
-of lazy evaluation, and validate multiple GHC core-to-core optimizations in
-this system, showing they can preserve types in our system where in the current
-implemented Core type system they don't preserve linearity.}
-
-\todo[inline]{Note that programmers won't often write these programs in which
-let binders are unused, or where we pattern match on a known constructor -- but
-these situations happen all the time in the intermediate representation of an
-optimising compiler $\dots$}
+%%%%%\chapter{A Type System for Semantic Linearity in Core}
+%%%%%
+%%%%%A linear type system statically guarantees that linear resources are consumed
+%%%%%\emph{exactly once}.
+%%%%%%
+%%%%%Even though linear types exist 
+%%%%%Linear Haskell brings the promises of linear types to the Haskell.
+%%%%%%, and is available in the Glasgow Haskell Compiler (GHC) starting from version 9.0.
+%%%%%%
+%%%%%With linear types, programmers can create powerful abstractions that enforce
+%%%%%certain resources are used linearly, such as file handles or allocated
+%%%%%memory.
+%%%%%%
+%%%%%
+%%%%%
+%%%%%\begin{itemize}
+%%%%%\item Linear types are unique in Haskell because of laziness! (amongst some other things)
+%%%%%
+%%%%%\item For example: trivial linear haskell program
+%%%%%
+%%%%%\item GHC desugars Linear Haskell into an intermediate language called Core, a
+%%%%%System FC, and then applies multiple so-called Core-to-Core optimising
+%%%%%transformations in succession.
+%%%%%
+%%%%%\item For example: some simple inlining
+%%%%%
+%%%%%\item Linear functions are likewise optimised by the compiler but, crucially,
+%%%%%the optimisations must preserve linearity! It would indeed be disastrous if the
+%%%%%compiler discarded or duplicated resources such as a file handle or some allocated memory.
+%%%%%
+%%%%%\item From the above example, consider |x| linear. It might seem as though |x|
+%%%%%is being used twice, but since Core's evaluation strategy is call-by-need, we
+%%%%%will only evaluate the let when the value is required, and since after
+%%%%%optimisation it is never used, we'll never compute the value and thus never use the resource
+%%%%%
+%%%%%\item In essence, in a lazy language such as Haskell, there's a mismatch
+%%%%%between syntactic and semantic linearity, with the former referring to
+%%%%%syntactic occurrences of a linear resource in the program text, and the latter
+%%%%%to whether the program consumes the resource exactly once in a semantic sense,
+%%%%%accounting for the evaluation strategy such as in the let example above.
+%%%%%
+%%%%%\item The problem: Core is not aware of this. Its linear type system is still
+%%%%%very naive, in that it doesn't understand semantic linearity, and will reject
+%%%%%most transformed linear programs, since often transformations turn programs
+%%%%%that are syntactically linear to programs that are only semantically linear.
+%%%%%
+%%%%%\item Despite using Core's type system to validate the implementation
+%%%%%of the optimising transformations preserve types (and all their combinations),
+%%%%%we don't use the Core's linear type system to validate whether the
+%%%%%optimisations and their implementation preserves \emph{linearity}. We
+%%%%%only \emph{think} that the current optimisations preserve linearity, but we
+%%%%%don't check it.
+%%%%%
+%%%%%\item Understanding semantic linearity isn't trivial, and, in fact, we aren't
+%%%%%aware of any linear type system that accounts for non-strict evaluation
+%%%%%semantics besides our own.
+%%%%%
+%%%%%\item We develop a linear type system for Core that understands semantic
+%%%%%linearity. We prove the usual preservation and progress theorems with it, and
+%%%%%then prove that multiple optimisations preserve types With it, we can accept
+%%%%%all intermediate programs GHC produces while applying Core-to-core optimising
+%%%%%transformations.
+%%%%%
+%%%%%\item We implemented a GHC plugin that validates every Core program produced by
+%%%%%the optimising pipeline using our type system
+%%%%%
+%%%%%\item Contributions (ref section for each):
+%%%%%\begin{itemize}
+%%%%%\item We explain and build intuition for semantic linearity in Core programs by example
+%%%%%\item We present a linear type system for call-by-need Core which understands
+%%%%%all axis of semantic linearity we previously exposed; and we prove type
+%%%%%safety of that system
+%%%%%\item We prove that multiple Core-to-core optimising transformations preserve linearity +
+%%%%%types under the type system; and discuss 
+%%%%%\item We develop a GHC plugin that checks all intermediate Core programs using
+%%%%%our type system
+%%%%%\end{itemize}
+%%%%%
+%%%%%\item Somewhere add a stronger case for controlling program optimisations (see 7.1 of Linear Haskell) with linearity
+%%%%%\item Somewhere say we build on linear haskell?
+%%%%%
+%%%%%\end{itemize}
+%%%%%
+%%%%%\todo[inline]{The introduction needs a lot of motivation!}
+%%%%%
+%%%%%\todo[inline]{
+%%%%%    Inicío deve motivar o leitor, e temos de explicar qual é o problema da
+%%%%%    linearidade sintatica em Haskell (vs semantica), e a interação disso com o
+%%%%%    call-by-need/lazy evaluation. Quase como se fosse um paper.
+%%%%%}
+%%%%%
+%%%%%\todo[inline]{Compiler optimizations put programs in a state where linearity
+%%%%%mixed with call-by-need is pushed to the limits. That is, the compiler
+%%%%%preserves linearity, but in a non-trivial semantic way.}
+%%%%%
+%%%%%\todo[inline]{We present a system that can understand linearity in the presence
+%%%%%of lazy evaluation, and validate multiple GHC core-to-core optimizations in
+%%%%%this system, showing they can preserve types in our system where in the current
+%%%%%implemented Core type system they don't preserve linearity.}
+%%%%%
+%%%%%\todo[inline]{Note that programmers won't often write these programs in which
+%%%%%let binders are unused, or where we pattern match on a known constructor -- but
+%%%%%these situations happen all the time in the intermediate representation of an
+%%%%%optimising compiler $\dots$}
 
 % ROMES:TODO:
 %Since the publication of Linear Haskell~\cite{cite:linearhaskell} and its
@@ -251,26 +251,26 @@ optimising compiler $\dots$}
 %performant programs. Valid linearity annotations in Core could potentially
 %inform and define more optimizations.
 
-\todo[inline]{Continue introduction}
-
-Our contributions are (to rewrite):
-\begin{itemize}
-\item We expose a connection between the definition of \emph{consuming} a
-resource in a linear type system and with the fundamental definition of
-\emph{evaluation/progress} and the evaluation strategy of a language, making
-the \emph{consuming} more precise across languages (in fact, generalizing the
-definition of consuming a resource from Linear Haskell).
-% \item We present a linear type system that can leverage this connection to be
-% more flexible and allow more programs as linearly well-typed.
-% \item This type system is defined over a language capturing the linear essence of Core
-% \item We prove soundness and that Core optimisations preserve types in this system, where they previously were unable to
-\end{itemize}
+%%%%\todo[inline]{Continue introduction}
+%%%%
+%%%%Our contributions are (to rewrite):
+%%%%\begin{itemize}
+%%%%\item We expose a connection between the definition of \emph{consuming} a
+%%%%resource in a linear type system and with the fundamental definition of
+%%%%\emph{evaluation/progress} and the evaluation strategy of a language, making
+%%%%the \emph{consuming} more precise across languages (in fact, generalizing the
+%%%%definition of consuming a resource from Linear Haskell).
+%%%%% \item We present a linear type system that can leverage this connection to be
+%%%%% more flexible and allow more programs as linearly well-typed.
+%%%%% \item This type system is defined over a language capturing the linear essence of Core
+%%%%% \item We prove soundness and that Core optimisations preserve types in this system, where they previously were unable to
+%%%%\end{itemize}
 
 % }}}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % {{{ Linearity, Semantically
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Linearity, Semantically\label{sec:linearity-semantically}}
+\chapter{Linearity, Semantically\label{sec:linearity-semantically}}
 
 A linear type system statically guarantees that linear resources are
 \emph{consumed} exactly once. Consequently, whether a program is well-typed
@@ -371,7 +371,7 @@ linear resources required by computations are \emph{eagerly consumed}.
 % 
 % Or maybe just drop this section altogether
 
-\subsection{Semantic Linearity by Example\label{sec:semantic-linearity-examples}}
+\section{Semantic Linearity by Example\label{sec:semantic-linearity-examples}}
 
 Aligned with our original motivation of typechecking linearity in GHC Core such
 that optimising transformations preserve linearity, and with the goal
@@ -398,7 +398,7 @@ A \colorbox{noway}{\nowaycolorname} background indicates that the program
 simply isn't linear, not even semantically, i.e. the program effectively
 discards or duplicates linear resources.
 
-\subsubsection{Let bindings}
+\subsection{Let bindings}
 We start our discussion with non-strict (non-recursive) let bindings, i.e. let bindings whose
 body is evaluated only when the binding is needed, rather than when declared.
 In Core, a let binding entails the creation of a \emph{thunk} that suspends the
@@ -556,7 +556,7 @@ do). We'll later see how we can encode this principle of mutual exclusivity
 between let bindings and their dependencies using so called \emph{usage
 environments}, in Section~\ref{sec:usage-environments}.
 
-\subsubsection{Recursive let bindings\label{sec:semantic-linearity-examples:recursive-lets}}
+\subsection{Recursive let bindings\label{sec:semantic-linearity-examples:recursive-lets}}
 Second, we look into recursive let bindings. For the most part,
 recursive let bindings behave as non-recursive let bindings, i.e. we must use them \emph{at
 most once} because, when evaluated, the linear resources used in the binders
@@ -725,7 +725,7 @@ algorithm for simpler programs. In our work, the core type system isn't
 concerned with deriving said solution, but we present a simple algorithm for
 inferring it with our implementation.
 
-\subsubsection{Case expressions}
+\subsection{Case expressions}
 
 Finally, we discuss semantic linearity for case expressions, which have been
 purposefully left for last as the key ingredient that brings together the
@@ -1104,9 +1104,9 @@ unrestrictedly, and therefore the case binder may also be used unrestrictedly.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % {{{ Linear Core
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Linear Core\label{sec:main:linear-core}}
+\chapter{A Type System for Semantic Linearity in Core\label{sec:main:linear-core}}
 
-In this section, we develop a linear calculus $\lambda_\Delta^\pi$, dubbed \emph{Linear Core}, that 
+In this chapter, we develop a linear calculus $\lambda_\Delta^\pi$, dubbed \emph{Linear Core}, that 
 combines the linearity-in-the-arrow and multiplicity polymorphism introduced by
 Linear Haskell~\cite{cite:linearhaskell} with all the key features from GHC's Core
 language, except for type equality coercions\footnote{We explain a main avenue of
@@ -1117,7 +1117,7 @@ algebraic datatypes, case expressions, recursive let bindings, and multiplicity
 polymorphism.
 
 Linear Core makes much more precise the various insights discussed in the
-previous section by crystallizing them together in a linear type system for which we
+previous chapter by crystallizing them together in a linear type system for which we
 prove soundness via the usual preservation and progress theorems. Crucially,
 the Linear Core type system accepts all the \emph{semantically linear} example
 programs (highlighted with \colorbox{notyet}{\notyetcolorname})
@@ -1167,7 +1167,7 @@ scrutinee, proof irrelevant resources, and tagged variables
 %iterativamente. Podemos começar com as triviais e avançar para os dois pontos
 %mais difíceis : Lets e Cases}
 
-\subsection{Language Syntax and Operational Semantics}
+\section{Language Syntax and Operational Semantics}
 
 The complete syntax of Linear Core is given by Figure~\ref{fig:full-linear-core-syntax}.
 % Figure~\ref{fig:linear-core-types} and Figure~\ref{fig:linear-core-terms}.
@@ -1256,7 +1256,7 @@ arguments for pattern-bound bound variables matching on that same constructor.
 
 \input{language-v4/OperationalSemantics}
 
-\subsection{Typing Foundations\label{sec:base-calculi}}
+\section{Typing Foundations\label{sec:base-calculi}}
 
 Linear Core ($\lambda^\pi_\Delta$) is a linear lambda calculus akin to Linear
 Haskell's $\lambda^q_\to$ in that both have multiplicity polymorphism,
@@ -1270,9 +1270,9 @@ case expressions, and alternatives (in its purpose to type semantic linearity).
 % sufficient to add a rule for application of variable multiplicity functions?}
 %
 Otherwise, the base rules of the calculus for, multiplicity and term,
-abstraction and application are quite similar. In this subsection, we present
+abstraction and application are quite similar. In this section, we present
 the linear calculi's typing rules that share much in common with
-$\lambda^q_\to$, and, in the subsequent subsections, the rules encoding the
+$\lambda^q_\to$, and, in the subsequent sections, the rules encoding the
 novel insights from Linear Core in typing semantic linearity, that were
 explored by example in Section~\ref{sec:linearity-semantically}.
 %
@@ -1385,13 +1385,13 @@ in-scope  multiplicity variable in $\G$.
 \]
 
 These rules conclude the foundations of our linear calculi. In subsequent
-subsections we type (recursive) let bindings and case expressions,
+sections we type (recursive) let bindings and case expressions,
 accounting for semantic linearity as per the insights construed in
 Section~\ref{sec:linearity-semantically}, effectively distilling them into the
 key ideas of our work -- encoded as rules.
 
 
-\subsection{Usage environments\label{sec:usage-environments}}
+\section{Usage environments\label{sec:usage-environments}}
 
 A \emph{usage environment} $\Delta$ is the means to encode the idea that lazy
 bindings don't consume the resources required by the bound expression when
@@ -1427,7 +1427,7 @@ expressions. Yet, this distinction is slightly blurred after introducing how
 typing environments can be moved to usage environments, or otherwise occurs in
 rules relating the two.
 
-\subsubsection{\texorpdfstring{$\D$}{Delta}-bound variables}
+\subsection{\texorpdfstring{$\D$}{Delta}-bound variables}
 
 A $\Delta$-bound variable $u$ is a variable annotated with a usage environment $\Delta$. Crucially, for any $\Delta$-bound variable $u$:
 %
@@ -1466,7 +1466,7 @@ linear resources.
 % $\D$-variable imply non-linear usage of resources that must be used linearly.
 
 
-\subsubsection{Lazy let bindings}
+\subsection{Lazy let bindings}
 
 In Section~\ref{sec:semantic-linearity-examples}, we discussed how linear
 resources used in let-bound expressions are only consumed when the same let-bound
@@ -1512,7 +1512,7 @@ its usage entails consuming the resources $\D$ the expression $e$ it binds depen
 % be consumed to some extent when we force the computation -- also foreshadowing
 % that evaluation to WHNF doesn't necessarily consume all resources}
 
-\subsubsection{Recursive let bindings}
+\subsection{Recursive let bindings}
 
 Recursive let bindings are very similar to non-recursive ones, the main
 exception being that the recursive bindings may be defined in terms of
@@ -1590,7 +1590,7 @@ algorithms as future work.
 % Section~\ref{sec:impl:recursive-alg} and leave exploring this potential
 % connection as future work.
 
-\subsection{Case Expressions\label{sec:lc-case-exps}}
+\section{Case Expressions\label{sec:lc-case-exps}}
 
 Case expressions \emph{drive evaluation} --
 % thus they are key to realize a type system that understands linearity in the presence of lazy evaluation.
@@ -1712,7 +1712,7 @@ constructor arguments).
 %     the linear components of that pattern.
 % }
 
-\subsubsection{Branching on WHNF-ness}
+\subsection{Branching on WHNF-ness}
 
 The dichotomy between evaluation (hence resource usage) of a case expression
 whose scrutinee is in weak head normal form, or otherwise, leads to one of our
@@ -1921,7 +1921,7 @@ cases not in WHNF, which we introduce below.
 % rules, one that fires when the scrutinee is in WHNF, the other when it isn't.}
 
 
-\subsubsection{Proof irrelevant resources}
+\subsection{Proof irrelevant resources}
 
 % \todo[inline]{O que é que eu vou fazer aqui? O que falta é conseguir tratar uma
 % case expression de forma flexivel o suficiente. Explorar o scrutinee estar em
@@ -2014,7 +2014,7 @@ Finally, ...
 \TypeCaseWHNF
 \]
 
-\subsubsection{Splitting and tagging fragments}
+\subsection{Splitting and tagging fragments}
 
 Intuitively, in case alternatives whose scrutinee is not in weak head normal form,
 % (and for scrutinees in WHNF which don't match the case alternative)
@@ -2072,14 +2072,14 @@ through the other linear pattern-bound variables.
 % mixing of pattern variables bound at different alternatives (e.g.~$\lambda
 % x~y.~\ccase{(x,y)}{(a,b)\to\ccase{(a,b)}{(z,w)\to(a,w)}}$).
 
-\subsection{Linear Core Examples}
+\section{Linear Core Examples}
 
 Linear Mini-Core~\cite{cite:minicore} lists examples of Core programs where
 semantic linearity must be understood in order for them to be well-typed. In
 this section, we show those examples in Linear Core ($\lambda^\pi_\Delta$),
 briefly explaining why they are indeed well-typed.
 
-\subsubsection{Equations}
+\paragraph{Equations}
 
 The Linear Haskell function is compiled in Linear Core as\\
 %
@@ -2105,7 +2105,7 @@ f Blue q = q
 \]
 \end{minipage}
 
-\subsubsection{Unrestricted Fields}
+\paragraph{Unrestricted Fields}
 
 The following is well-typed:
 Let $\datatype{K}{K : A \lolli B \to C}$, and $f$:
@@ -2113,14 +2113,14 @@ Let $\datatype{K}{K : A \lolli B \to C}$, and $f$:
 \lambda \xl.~\ccase{x}{\var[z][x]~\{ K~a~b \to (z, b) \}}
 \]
 
-\subsubsection{Wildcard}
+\paragraph{Wildcard}
 
 The following is ill-typed:
 \begin{code}
 f = \x -> case x of z { _ -> True }
 \end{code}
 
-\subsubsection{Duplication}
+\paragraph{Duplication}
 
 The following is ill-typed:
 \begin{code}
@@ -2131,9 +2131,96 @@ f = \x -> case x of z { Foo a -> (z, a) }
 
 % }}}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% {{{ Linear Core as a GHC Plugin
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Linear Core as a GHC Plugin\label{sec:discuss:implementation}}
+
+In this section, we discuss our prototype implementation of Linear Core as a
+Core plugin for the Glasgow Haskell Compiler. The Linear Core Plugin typechecks
+linearity in all Core programs produced both by the desugarer and after each
+optimisation pass.
+%
+The plugin successfully validates linearity of Core throughout compilation of
+linearity-heavy libraries, namely \texttt{linear-base} and \texttt{linear-smc}.
+Additionally, we discuss the implementation of the Linear Core type system
+directly in the Glasgow Haskell Compiler.
+
+\todo[inline]{A implementação existe; link para o github; validei o linear-base
+(excepto multiplicty coercions, e tive successo pq a implementação validou);
+validei os exemplos do inicio escrevendo Core à mão; Syntax-directedness
+}
+
+
+This section discusses the implementation of Linear Core as a GHC Plugin, with
+a dash of painful history in the attempt of implementing Linear Core directly
+into GHC.
+
+Discuss a bit syntax-directedness non existent in the system and that our implementation slightly tweaks it to be more syntax directed or something
+
+Talk about using our plugin on linear-base and other code bases... If I can get
+a few more case studies it would be pretty good. But then it's imperative to
+also use -dlinear-lint and make sure my plugin rejects a few of the examples
+
+% Introduction...
+
+\subsection{Consuming tagged resources as needed}
+
+As discussed in Section~\ref{}, constructor pattern bound linear variables are
+put in the context with a \emph{tagged} usage environment with the resources of
+the scrutinee. In a \emph{tagged} usage environment environment, all resources
+are tagged with a constructor and an index into the many fields of the
+constructor.
+
+In practice, a resource might have more than one tag. For example, in the following
+program, after the first pattern match, |a| and |b| have, respectively, usage
+environments $\{\lctag{x}{K_1}\}$ and $\{\lctag{x}{K_2}\}$:
+\begin{code}
+f x = case x of
+       K a b -> case a of
+        Pair n p -> (n,p)
+\end{code}
+However, in the following alternative, |n| has usage environment
+$\{\lctag{\lctag{x}{K_1}}{Pair_1}\}$ and |p| has
+$\{\lctag{\lctag{x}{K_1}}{Pair_2}\}$. To typecheck
+|(n,p)|, one has to $Split$ |x| first on |K| and then on |Pair|, in order for
+the usage environments to match.
+
+In our implementation, we split resources on demand (and don't directly allow
+splitting linear resources), i.e. when we use a tagged resource we split the
+linear resource in the linear environment (if available), but never split otherwise.
+%
+Namely, starting on the innermost tag (the closest to the variable name), we
+substitute the linear resource for its split fragments, and then we iteratively
+further split those fragments if there are additional tags.
+%
+We note that it is safe to destructively split the resource (i.e. removing the
+original and only leaving the split fragments) because we only split resources
+when we need to consume a fragment, and as soon as one fragment is consumed
+then using the original ``whole'' variable would violate linearity.
+
+In the example, if |n| is used, we have to use its usage environment, which in
+turn entails using $\lctag{\lctag{x}{K_1}}{Pair_1}$, which has two tags. In this order, we:
+\begin{itemize}
+\item Split $x$ into $\lctag{x}{K_1}$ and $\lctag{x}{K_2}$
+\item Split $\lctag{x}{K_1}$ and $\lctag{x}{K_2}$ into
+  \begin{itemize}
+  \item $\lctag{\lctag{x}{K_1}}{Pair_1}$ and $\lctag{\lctag{x}{K_1}}{Pair_2}$
+  \item Leave $\lctag{x}{K_2}$ untouched, as we only split on demand, and we aren't using a fragment of $\lctag{x}{K_2}$.
+  \end{itemize}
+\item Consume $\lctag{\lctag{x}{K_1}}{Pair_1}$, the usage environment of $n$, by removing it from the typing environment.
+\end{itemize}
+
+%%%\subsection{Merging Linear Core into GHC\label{sec:merging-linear-core}}
+%%%
+%%%Describe the ticket for linear Core, the pending MRs, and the difficulty in
+%%%even annotating the bind site across optimisations regardless of multiplicities.
+
+% }}}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % {{{ Metatheory
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Metatheory\label{sec:main:metatheory}}
+\chapter{Metatheory\label{sec:main:metatheory}}
 
 The $\lambda^\pi_\D$ system is sound: well-typed programs in Linear Core do not
 get \emph{stuck}. Besides type safety ($\S$~\ref{sec:type-safety-meta}), we
@@ -2147,7 +2234,7 @@ Additionally, we state our assumptions that outline an isomorphism between
 using a linear variable $\xl$ and a $\D$-variable $\xD$ that consumes existing
 resources $\D$, for any $\D$.
 
-\subsection{Assumptions}
+\section{Assumptions}
 
 We use two main assumptions in our proofs, which are dual.
 %
@@ -2180,7 +2267,7 @@ variables with an empty ($\cdot$) usage environment:
 
 \DeltaUnrestrictedRelationLemma
 
-\subsection{Irrelevance}
+\section{Irrelevance}
 
 As discussed above, proof irrelevant resources are resources that can only be
 consumed indirectly, and are used to type case expressions whose scrutinee is
@@ -2219,7 +2306,7 @@ the proof irrelevant resources both in the typing environment and in the usage
 environments containing them, the expression remains well-typed.
 % (being somewhat akin to congruence).
 
-\subsection{Type safety\label{sec:type-safety-meta}}
+\section{Type safety\label{sec:type-safety-meta}}
 
 We prove type safety of the Linear Core system via the standard type
 preservation and progress results. As is customary, we make use of multiple
@@ -2249,7 +2336,7 @@ in WHNF remains well-typed after the scrutinee is evaluated to WHNF.
 \noindent Progress states that the evaluation of a well-typed term does not block:
 Similarly, progress is proved by induction on typing.
 
-\subsubsection{Substitution Lemmas}
+\subsection{Substitution Lemmas}
 
 The preservation and progress theorems depend on multiple substitution lemmas,
 one for each kind of variable, as is standard.
@@ -2352,7 +2439,7 @@ The proofs for preservation, progress, irrelevance, and for the substitution lem
 %If $\Gamma, \Delta \vdash K~\ov{e}$ and $K{:}\ov{\sigma\to\pi}~T~\ov{p} \in \Gamma$ and $\hasnolinearvars{\Gamma}$
 %then $\ov{\Gamma, \Delta_i \vdash e_i : \sigma_i}$
 
-\subsection{Optimisations preserve linearity\label{sec:optimisations-preserve-types-meta}}
+\section{Optimisations preserve linearity\label{sec:optimisations-preserve-types-meta}}
 
 One of the primary goals of the Linear Core type system is being suitable for
 intermediate representations of optimising compilers for lazy languages with
@@ -2373,30 +2460,30 @@ the right hand side (rhs) that we prove to be well-typed.
 For each transformation, we describe the intuition behind the transformation
 preserving linearity in our system.
 
-\subsubsection{Inlining}
+\subsection{Inlining}
 
 % To the best of our knowledge, there is no linear type system for which inlining
 % preserves linearity\footnote{https://github.com/ghc-proposals/ghc-proposals/blob/master/proposals/0111-linear-types.rst\#id90}
 
 \input{language-v4/proofs/optimizations/Inlining}
 
-\subsubsection{\texorpdfstring{$\beta$}{Beta}-reduction}
+\subsection{\texorpdfstring{$\beta$}{Beta}-reduction}
 
 \input{language-v4/proofs/optimizations/BetaReduction}
 
-\subsubsection{Case of known constructor}
+\subsection{Case of known constructor}
 
 \input{language-v4/proofs/optimizations/CaseOfKnownConstructor}
 
-\subsubsection{Let floating}
+\subsection{Let floating}
 
 \input{language-v4/proofs/optimizations/LetFloating}
 
-\subsubsection{\texorpdfstring{$\eta$}{Eta}-conversions}
+\subsection{\texorpdfstring{$\eta$}{Eta}-conversions}
 
 \input{language-v4/proofs/optimizations/EtaConvs}
 
-\subsubsection{Binder Swap}
+\subsection{Binder Swap}
 
 The binder swap transformation applies to case expressions whose scrutinee is a
 single variable $x$, and it substitutes occurrences of $x$ in the case
@@ -2408,7 +2495,7 @@ usage environment is empty because $x$ is unrestricted).
 
 \input{language-v4/proofs/optimizations/BinderSwap}
 
-\subsubsection{Reverse Binder Swap Considered Harmful}
+\subsection{Reverse Binder Swap Considered Harmful}
 
 The reverse binder swap transformation substitutes occurrences of the case
 binder $z$ in case alternatives by the scrutinee, when the scrutinee is a
@@ -2570,96 +2657,9 @@ linearity when further optimised.
 %         case x_v of _ -> x_v
 % \end{code}
 
-\subsubsection{Case of Case}
+\subsection{Case of Case}
 
 \input{language-v4/proofs/optimizations/CaseOfCase}
-
-% }}}
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% {{{ Linear Core as a GHC Plugin
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-\section{Linear Core as a GHC Plugin\label{sec:discuss:implementation}}
-
-In this section, we discuss our prototype implementation of Linear Core as a
-Core plugin for the Glasgow Haskell Compiler. The Linear Core Plugin typechecks
-linearity in all Core programs produced both by the desugarer and after each
-optimisation pass.
-%
-The plugin successfully validates linearity of Core throughout compilation of
-linearity-heavy libraries, namely \texttt{linear-base} and \texttt{linear-smc}.
-Additionally, we discuss the implementation of the Linear Core type system
-directly in the Glasgow Haskell Compiler.
-
-\todo[inline]{A implementação existe; link para o github; validei o linear-base
-(excepto multiplicty coercions, e tive successo pq a implementação validou);
-validei os exemplos do inicio escrevendo Core à mão; Syntax-directedness
-}
-
-
-This section discusses the implementation of Linear Core as a GHC Plugin, with
-a dash of painful history in the attempt of implementing Linear Core directly
-into GHC.
-
-Discuss a bit syntax-directedness non existent in the system and that our implementation slightly tweaks it to be more syntax directed or something
-
-Talk about using our plugin on linear-base and other code bases... If I can get
-a few more case studies it would be pretty good. But then it's imperative to
-also use -dlinear-lint and make sure my plugin rejects a few of the examples
-
-% Introduction...
-
-\subsection{Consuming tagged resources as needed}
-
-As discussed in Section~\ref{}, constructor pattern bound linear variables are
-put in the context with a \emph{tagged} usage environment with the resources of
-the scrutinee. In a \emph{tagged} usage environment environment, all resources
-are tagged with a constructor and an index into the many fields of the
-constructor.
-
-In practice, a resource might have more than one tag. For example, in the following
-program, after the first pattern match, |a| and |b| have, respectively, usage
-environments $\{\lctag{x}{K_1}\}$ and $\{\lctag{x}{K_2}\}$:
-\begin{code}
-f x = case x of
-       K a b -> case a of
-        Pair n p -> (n,p)
-\end{code}
-However, in the following alternative, |n| has usage environment
-$\{\lctag{\lctag{x}{K_1}}{Pair_1}\}$ and |p| has
-$\{\lctag{\lctag{x}{K_1}}{Pair_2}\}$. To typecheck
-|(n,p)|, one has to $Split$ |x| first on |K| and then on |Pair|, in order for
-the usage environments to match.
-
-In our implementation, we split resources on demand (and don't directly allow
-splitting linear resources), i.e. when we use a tagged resource we split the
-linear resource in the linear environment (if available), but never split otherwise.
-%
-Namely, starting on the innermost tag (the closest to the variable name), we
-substitute the linear resource for its split fragments, and then we iteratively
-further split those fragments if there are additional tags.
-%
-We note that it is safe to destructively split the resource (i.e. removing the
-original and only leaving the split fragments) because we only split resources
-when we need to consume a fragment, and as soon as one fragment is consumed
-then using the original ``whole'' variable would violate linearity.
-
-In the example, if |n| is used, we have to use its usage environment, which in
-turn entails using $\lctag{\lctag{x}{K_1}}{Pair_1}$, which has two tags. In this order, we:
-\begin{itemize}
-\item Split $x$ into $\lctag{x}{K_1}$ and $\lctag{x}{K_2}$
-\item Split $\lctag{x}{K_1}$ and $\lctag{x}{K_2}$ into
-  \begin{itemize}
-  \item $\lctag{\lctag{x}{K_1}}{Pair_1}$ and $\lctag{\lctag{x}{K_1}}{Pair_2}$
-  \item Leave $\lctag{x}{K_2}$ untouched, as we only split on demand, and we aren't using a fragment of $\lctag{x}{K_2}$.
-  \end{itemize}
-\item Consume $\lctag{\lctag{x}{K_1}}{Pair_1}$, the usage environment of $n$, by removing it from the typing environment.
-\end{itemize}
-
-%%%\subsection{Merging Linear Core into GHC\label{sec:merging-linear-core}}
-%%%
-%%%Describe the ticket for linear Core, the pending MRs, and the difficulty in
-%%%even annotating the bind site across optimisations regardless of multiplicities.
 
 % }}}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
