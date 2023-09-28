@@ -105,10 +105,10 @@
 
 \todostyle{blue}{color=blue}   % For todos without a home
 \todostyle{pink}{color=pink} % For foreshadowing things, or for saying them later on instead
-\todo[blue, inline]{We need to handle EmptyCase}
-\todo[inline, inline]{Symbol to stand for both $1$ and $p$, and notation to make proof
-irrelevant stuff in the types so we can also refer to relevant and irrelevant
-at the same time with some symbol (e.g. for Split)}
+% \todo[blue, inline]{We need to handle EmptyCase}
+% \todo[inline, inline]{Symbol to stand for both $1$ and $p$, and notation to make proof
+% irrelevant stuff in the types so we can also refer to relevant and irrelevant
+% at the same time with some symbol (e.g. for Split)}
 
 %%%%%%%%%% End TODOs %%%%%%%%%%%%%
 

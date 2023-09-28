@@ -658,12 +658,9 @@ $f$ and $g$ ($m$ will unify with $1$ and $\omega$ at the call sites).
 
 \section{Evaluation Strategies\label{sec:background:evaluation-strategies}}
 
-\todo[inline]{Edit first draft. Acho que ainda está confuso}
-\todo[inline]{Cite Ariola's work, Plotkins? Who to cite for call-by-value?}
-
 Unlike most mainstream programming languages, Haskell has so called
 \emph{non-strict} evaluation semantics due to its \emph{lazy} evaluation
-strategy, also known as \emph{call-by-need}.
+strategy, also known as \emph{call-by-need}~\cite{engeler_1984}.
 \emph{Call-by-need} evaluation dictates that an expression is only evaluated
 when it is needed (so no work is done to evaluate expressions that are unused
 at runtime), and the values that are indeed evaluated are memoized and shared
@@ -675,7 +672,7 @@ let f res = if expr then res * res else 0
 in f (factorial 2500)
 \end{code}
 In contrast, mainstream languages commonly use an \emph{eager} evaluation
-strategy called \emph{call-by-value}, in which expressions are eagerly
+strategy called \emph{call-by-value}~\cite{engeler_1984}, in which expressions are eagerly
 evaluated to a value. In the above example, under \emph{call-by-value},
 |factorial 2500| would always be evaluated and passed as a value, regardless of
 being used in the body. It is out of the scope of this work to discuss the
@@ -685,7 +682,7 @@ merits and tradeoffs of eager vs. lazy evaluation.
 % A fun trick is defining lazy sorting algorithms that will only sort as many
 % elements as you need from the start of the list.
 
-A third option is the \emph{call-by-name} evaluation strategy. In
+A third option is the \emph{call-by-name} evaluation strategy~\cite{engeler_1984}. In
 \emph{call-by-name}, expressions are only evaluated when needed, however, there
 is no sharing. In the above example, it would only evaluate |factorial 2500|
 \emph{twice} if |expr| were |True|. Despite being similar to
@@ -762,8 +759,8 @@ language \emph{non-strict} semantics, where the order in which expressions are
 evaluated is undefined, since they are evaluated only when needed.
 %
 Consequently, in non-strict semantics, using $\bot$ only results in a
-non-termination if $\bot$ is evaluated, which isn't necessary for the program
-to reach a result (i.e. $g(\bot)$ is not necessarily $\bot$).
+non-termination if $\bot$ is evaluated, which may not be necessary for the
+program to reach a result (i.e. $g(\bot) \neq \bot$, in general).
 
 % entail non-termination -- a program does not terminate if a non-terminating
 % computation is evaluated, which is not guaranteed (i.e. in \emph{call-by-name}

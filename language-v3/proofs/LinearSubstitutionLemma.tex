@@ -211,8 +211,7 @@ By structural induction on the first derivation.
     (5) $\ov{\judg[\G][\irr{\D,\xl},\D''][\irr{\d},\d'',\zr{\irr{\D,\xl}}{\s'}]{\rho\to e''}{\s' \Longrightarrow \vp}[alt][\irr{\D,\xl}]}$\`by inv.\\
     (6) $\judg[\G][\D,\D'][\subst{\d}{\D'}{x}, \d']{e[e'/x]}{\vp}$\`by i.h.\\
     (7) $\ov{\judg[\G][\irr{\D,\D'},\D''][\d'',\subst{\irr{\d}}{\irr{\D'}}{\irr{x}},\zr{\D,\D'}{\s'}]{\rho\to e''[e'/x]}{\s' \Longrightarrow \vp}[alt][\D,\D']}$\\
-    \` by subst. of p. irr. vars in alt.\\
-    \` or, simply, congruence?\\
+    \` by Irrelevance\\
     (8) $\judg[\G][\D,\D',\D''][\subst{(\d,\d'')}{\D'}{x},\d']{\ccase{e[e'/x]}{\z[\D,\D'][\s']~\{\ov{\rho\to e''[e'/x]}\}}}{\vp}$\\
   Subcase $x$ occurs in $\ov{e''}$\\
     (2) $\judg[\G][\D,\D'',\xl][\d,\d'']{\ccase{e}{\z[\irr{\D}][\s']~\{\ov{\rho\to e''}\}}}{\vp}$\\

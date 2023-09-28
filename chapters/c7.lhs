@@ -2005,19 +2005,20 @@ judgement annotation, are made irrelevant.
 % \todo[inline]{The case binder and pattern variables will consume the scrutinee
 % resources, be those irrelevant or relevant resources}
 
-Finally, we recall the $Case_\textrm{WHNF}$ rule presented before and highlight
-its flaw: the $\G;\D \vdash_{alt} \rho \to e :^z_{\D_s} \s \Mapsto \vp$
-judgement is only well-defined for patterns $\rho$ matching the WHNF form of
-the scrutinee, as the distribution of resources per constructor components only
-makes sense for the constructor pattern matching the scrutinee. Essentially, if
-the scrutinee is in WHNF the matching alternative is easily determined, and
-must be treated with the specialized $\Mapsto$ judgement.
+Finally, we recall the tentative $Case_\textrm{WHNF}$ rule presented before and
+highlight its flaw: the $\G;\D \vdash_{alt} \rho \to e :^z_{\D_s} \s \Mapsto
+\vp$ judgement is only well-defined for patterns $\rho$ matching the WHNF form
+of the scrutinee, as the distribution of resources per constructor components
+only makes sense for the constructor pattern matching the scrutinee.
+Essentially, if the scrutinee is in WHNF the matching alternative is easily
+determined, and must be treated with the specialized $\Mapsto$ judgement, which
+only applies to the matching constructor.
 %
 Alternatives not matching the scrutinee, as mentioned in the discussion of the
 $Alt0$ rule, could use resources arbitrarily as they will never be executed,
 however, we uniformly treat non-matching alternatives as if the scrutinee were
-in not in WHNF. The rule for typing case alternatives whose scrutinee is in
-WHNF is thus given by:
+not in WHNF. The rule for typing case alternatives whose scrutinee is in WHNF
+is thus given by:
 \[
 \TypeCaseWHNF
 \]
@@ -2026,10 +2027,10 @@ WHNF, as programs scrutinizing an expression in WHNF are rarely written by a
 developer. Yet, our system is designed to be suitable for optimising compilers
 in which intermediate programs commonly scrutinize expressions in WHNF.
 %
-Foreshadowing, branching on WHNF-ness is essential in our system, for without
-it the preservation of types in the case-reduction substituting the case binder
-and pattern variables in the alternative is not possible to prove as the
-$\D$-substitution lemma cannot be used.
+Foreshadowing, type preservation for the case-reduction substituting the case
+binder and pattern variables in the alternative is not possible to prove
+without branching on WHNF-ness, since otherwise the $\D$-substitution is not
+well-defined.
 
 \subsection{Splitting and tagging fragments}
 
@@ -2096,6 +2097,8 @@ We note how $Split$ can be applied both to relevant and proof irrelevant linear 
 % x~y.~\ccase{(x,y)}{(a,b)\to\ccase{(a,b)}{(z,w)\to(a,w)}}$).
 
 \section{Linear Core Examples}
+
+\todo[inline]{If I have no time...}
 
 Linear Mini-Core~\cite{cite:minicore} lists examples of Core programs where
 semantic linearity must be understood in order for them to be well-typed. In

@@ -95,7 +95,7 @@ which presents its own challenges.
 Nonetheless, while the Linear Haskell work keeps Core unchanged, its
 implementation in GHC does modify and extend Core with linearity/multiplicity
 annotations. Core's type system is unable to type \emph{semantic} linearity of
-programs (in contrast to \emph{syntactic} linearity), which result in Core
+programs (in contrast to \emph{syntactic} linearity), which results in Core
 rejecting linear programs resulting from optimising transformations that
 leverage the non-strict semantics of Core.
 %
@@ -103,8 +103,8 @@ Linear Core overcomes the limitations of Core's linear type system derived from
 Linear Haskell by understanding semantic linearity in the presence of laziness,
 and provably accepts multiple Core-to-Core passes. Linear Core, ultimately, can
 also be seen as a system that validates the programs written in Linear Haskell
-and compiled by GHC by guaranteeing (through typing) that linear resources are
-still used exactly once throughout the optimising transformations.
+then compiled by GHC, by guaranteeing (through typing) that linear resources
+are still used exactly once throughout the optimising transformations.
 
 \subsection{Linear Mini-Core\label{sec:linear-mini-core}}
 
