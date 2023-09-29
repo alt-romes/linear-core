@@ -586,6 +586,8 @@ coercions}) in Chapter~\ref{sec:discussion}, which concludes the document.
 
 \chapter{Type Safety Proofs}
 
+\todo[inline]{Re-state theorems and lemmas}
+
 \section{Type Preservation\label{sec:proof:type-preservation}}
 
 \input{language-v4/proofs/TypePreservationTheorem}

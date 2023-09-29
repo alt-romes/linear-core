@@ -348,8 +348,9 @@ above example and for programs in general, should be defined in function of the
 language's evaluation strategy.
 %
 We turn our focus to \emph{linearity} under \emph{call-by-need}, not only
-because GHC Core is \emph{call-by-need}, but also because the distinction between
-semantically and syntactically consuming a resource is only exposed under non-strict (i.e.~lazy) semantics.
+because GHC Core is \emph{call-by-need}, but also because the distinction
+between semantically and syntactically consuming a resource is only exposed
+under \emph{non-strict} semantics.
 %
 Indeed, under \emph{call-by-value}, syntactic occurrences of a linear resource
 directly correspond to semantically using that resource\footnote{With the minor exception
@@ -428,7 +429,7 @@ f1 use x =
 The linear resource |x| is used exactly once, since it is used exactly once in
 the body of the binding and the binding is used exactly once in the let body.
 %
-According to Linear Haskell's core calculus ~$\lambda_{\to}^{q}$~\cite{cite:linear-haskell}, let
+According to Linear Haskell's core calculus~$\lambda_{\to}^{q}$~\cite{cite:linearhaskell}, let
 bound variables are annotated with a multiplicity which is multiplied (as per
 the multiplicities semiring) with the multiplicities of the variables that are
 free in the binder's body.
@@ -2439,10 +2440,11 @@ directly).
 
 \WHNFConvSoundness
 
-\noindent Intuitively, the lemma holds since proof irrelevant resources must be used
-through the case binder or pattern-bound variables. If we consistently replace
-the proof irrelevant resources both in the typing environment and in the usage
-environments containing them, the expression remains well-typed.
+\noindent Intuitively, the lemma holds since proof irrelevant resources can
+only be used through the case binder or pattern-bound variables. If we
+consistently replace the proof irrelevant resources both in the typing
+environment and in the usage environments containing them, the expression
+remains well-typed.
 % (being somewhat akin to congruence).
 %
 The proof is given in Section~\ref{sec:proof:irrelevance}.
