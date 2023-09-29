@@ -192,8 +192,8 @@ To utilize an unrestricted value $M$, we must bind it to $u$ with $\llet{\bang u
 = M}{N}$ which can then be used in $N$ unrestrictedly, because $u$ extends the
 unrestricted context rather than the linear context as we have seen thus far.
 
-In section~\ref{sec:linear-haskell} we describe how linear types are defined in
-Haskell, a programming language more featureful than the linearly typed lambda
+In Section~\ref{sec:linear-haskell}, we describe how linear types are defined in
+Haskell, a programming language more \emph{featureful} than the linearly typed lambda
 calculus. We will see that the theoretical principles underlying the linear
 lambda calculus and linear Haskell are the same, and by studying them in this
 minimal setting we can understand them at large.

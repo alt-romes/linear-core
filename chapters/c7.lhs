@@ -1105,6 +1105,7 @@ unrestrictedly, and therefore the case binder may also be used unrestrictedly.
 % {{{ Linear Core
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \chapter{A Type System for\\Semantic Linearity in Core\label{sec:main:linear-core}}
+\chaptermark{A Type System for Semantic Linearity in Core}
 
 In this chapter, we develop a linear calculus $\lambda_\Delta^\pi$, dubbed \emph{Linear Core}, that 
 combines the linearity-in-the-arrow and multiplicity polymorphism introduced by
@@ -2162,91 +2163,191 @@ f = \x -> case x of z { Foo a -> (z, a) }
 
 \section{Linear Core as a GHC Plugin\label{sec:discuss:implementation}}
 
-We implemented Linear Core as a \emph{Core plugin} for the Glasgow Haskell Compiler.
-%
 GHC plugins allow developers to inspect and modify programs being compiled by
-GHC, at different stages of the compilation
-pipeline~\cite{10.1145/3331545.3342599}.
+GHC, at different stages of compilation~\cite{10.1145/3331545.3342599}.
 %
-In particular, for any given Haskell module, our Core plugin runs for (and
-receives as input) every intermediate program produced in the compilation
-process, i.e. from desugaring and after each optimising transformation.
+In particular, for any given Haskell module, Core plugins run for (and receives
+as input) every intermediate program produced in the compilation process, i.e.
+from desugaring and after each optimising transformation.
+%
+To substantiate our claim that Linear Core is suitable for the intermediate
+language of an optimising compiler, we implemented Linear Core as a \emph{Core
+plugin} for the Glasgow Haskell Compiler.
 
-The plugin implements a typechecker for Linear Core: given a Core program, the
-GHC Linear Core plugin~\cite{cite:linear-core-plugin} will typecheck the
+The GHC Linear Core plugin~\cite{cite:linear-core-plugin} implements a
+typechecker for Linear Core: given a Core program, our plugin typechecks the
 linearity of all expressions bound in that program, failing if a linear
-resource is not used \emph{exactly once} according to the
+resource is not used \emph{exactly once} according to semantic linearity of the
 $(\lambda^\pi_\Delta)$ system.
 %
 Most notably, the plugin successfully validates linearity throughout the
 (optimising) compilation of linearity-heavy libraries, namely
 \texttt{linear-base} and \texttt{linear-smc}, except in expressions whose
-linearity depends on so-called \emph{multiplicity coercions}, which are a main
-avenue of future work ($\S$~\ref{sec:future-work}).
+linearity depends on so-called \emph{multiplicity coercions}, which are an
+avenue of future work ($\S$~\ref{sec:future-work}) exploring the intersection
+of Linear Core with type equality coercions. Furthermore, the implementation
+accepts all example programs from Chapter~\ref{sec:linearity-semantically}
+deemed well-typed by Linear Core, which are marked with a
+\colorbox{notyet}{\notyetcolorname} background.
+
 % Additionally, we discuss the implementation of the Linear Core type system
 % directly in the Glasgow Haskell Compiler.
 
-\todo[inline]{ validei os exemplos do inicio escrevendo Core à mão; Syntax-directedness }
+% This section discusses the implementation of Linear Core as a GHC Plugin, with
+% a dash of painful history in the attempt of implementing Linear Core directly
+% into GHC.
 
-
-This section discusses the implementation of Linear Core as a GHC Plugin, with
-a dash of painful history in the attempt of implementing Linear Core directly
-into GHC.
-
-Discuss a bit syntax-directedness non existent in the system and that our implementation slightly tweaks it to be more syntax directed or something
-
-Talk about using our plugin on linear-base and other code bases... If I can get
-a few more case studies it would be pretty good. But then it's imperative to
-also use -dlinear-lint and make sure my plugin rejects a few of the examples
-
-% Introduction...
-
-\subsection{Consuming tagged resources as needed}
-
-As discussed in Section~\ref{}, constructor pattern bound linear variables are
-put in the context with a \emph{tagged} usage environment with the resources of
-the scrutinee. In a \emph{tagged} usage environment environment, all resources
-are tagged with a constructor and an index into the many fields of the
-constructor.
-
-In practice, a resource might have more than one tag. For example, in the following
-program, after the first pattern match, |a| and |b| have, respectively, usage
-environments $\{\lctag{x}{K_1}\}$ and $\{\lctag{x}{K_2}\}$:
-\begin{code}
-f x = case x of
-       K a b -> case a of
-        Pair n p -> (n,p)
-\end{code}
-However, in the following alternative, |n| has usage environment
-$\{\lctag{\lctag{x}{K_1}}{Pair_1}\}$ and |p| has
-$\{\lctag{\lctag{x}{K_1}}{Pair_2}\}$. To typecheck
-|(n,p)|, one has to $Split$ |x| first on |K| and then on |Pair|, in order for
-the usage environments to match.
-
-In our implementation, we split resources on demand (and don't directly allow
-splitting linear resources), i.e. when we use a tagged resource we split the
-linear resource in the linear environment (if available), but never split otherwise.
+The implementation of Linear Core as a typechecker does not follow directly
+from the description of the type system because Linear Core is not
+\emph{syntax-directed}. Specifically, the most challenging features are:
+splitting linear resources amongst sub-derivations and consuming fragments of
+resources through pattern-bound variables.
 %
-Namely, starting on the innermost tag (the closest to the variable name), we
-substitute the linear resource for its split fragments, and then we iteratively
-further split those fragments if there are additional tags.
+We use the following techniques to tackle the \emph{non-syntax-directedness} of
+Linear Core, thus making the system more suitable to implement:
 %
-We note that it is safe to destructively split the resource (i.e. removing the
-original and only leaving the split fragments) because we only split resources
-when we need to consume a fragment, and as soon as one fragment is consumed
-then using the original ``whole'' variable would violate linearity.
-
-In the example, if |n| is used, we have to use its usage environment, which in
-turn entails using $\lctag{\lctag{x}{K_1}}{Pair_1}$, which has two tags. In this order, we:
 \begin{itemize}
-\item Split $x$ into $\lctag{x}{K_1}$ and $\lctag{x}{K_2}$
-\item Split $\lctag{x}{K_1}$ and $\lctag{x}{K_2}$ into
-  \begin{itemize}
-  \item $\lctag{\lctag{x}{K_1}}{Pair_1}$ and $\lctag{\lctag{x}{K_1}}{Pair_2}$
-  \item Leave $\lctag{x}{K_2}$ untouched, as we only split on demand, and we aren't using a fragment of $\lctag{x}{K_2}$.
-  \end{itemize}
-\item Consume $\lctag{\lctag{x}{K_1}}{Pair_1}$, the usage environment of $n$, by removing it from the typing environment.
+
+\item Instead of non-deterministically splitting linear resources amongst
+sub-derivations, we thread input/output linear resources through each
+derivation using the resource management for linear logic described
+by~\cite{DBLP:journals/tcs/CervesatoHP00}.
+% \todo{Escrever uma regra?}
+
+% In a case expression whose scrutinee is not in WHNF,
+\item Pattern variables bound in a case alternative, for a scrutinee not in WHNF,
+are introduced as $\D$-variables with usage environment $\lctag{irr{\D}}{K_i}$,
+where $\D$ are the scrutinee resources and $K_i$ the tag of that pattern
+variable. To use the resources through the pattern-bound $\D$-vars, they must
+be first $Split$ into fragments.
+
+We consume tagged fragments of a resource \emph{as needed}, i.e., when a resource,
+whose usage environment has a fragmented resource with tag $K_j$, is used, we $Split$
+the matching resource according to the constructor $K$ and consume the fragment
+$K_j$, rather than eagerly determining which resources need to be fragmented to
+do so.
+%
+We note that it is safe to destructively fragment the resource, i.e. removing
+the whole resource and only leaving the split fragments, because resources are
+only $Split$ when a fragment is needed and, consequently, if a fragment is
+consumed, using the ``whole'' resource as well violates linearity.
+
 \end{itemize}
+%
+Furthermore, our implementation must infer the usage environments of binders in
+a recursive let group before using them to typecheck the let body. We use a
+naive $O(n^2)$ algorithm to determine these usage environments, but discuss an
+avenue of further research regarding this inference challenge in
+Section~\ref{sec:future-work}.
+
+The usage environments of a recursive group of binders (that is not necessarily
+strongly-connected) is computed in two separate passes.
+%
+First, we calculate a \emph{naive environment} by recording the linear
+resources semantically used in the binder bodies, while counting \emph{uses}
+(not syntactic occurrences) of the mutually recursive let variables.
+%
+Second, the binder names and corresponding \emph{naive environment} (mapping
+each linear resource to $1$ and the recursive variables to the $n$ number of
+times they are \emph{used}) in Cartesian pairs are given as input to
+Algorithm~\ref{computeRecUsages}, which computes the actual usage environment
+of each binder.
+%
+% TODO: I should probably use the re-computed usageEnvs instead of the naiveUsageEnvs.
+% I'm pretty sure it might fail in some inputs if I keep using the naiveUsageEnvs.
+\begin{algorithm}
+$usageEnvs \gets naiveUsageEnvs.map(fst)$\;
+\For{$(bind, U) \in naiveUsageEnvs$}{
+    \For{$V \in usageEnvs$}{
+        $V \gets sup(V[bind]*U\setminus\{bind\}, V\setminus\{bind\})$
+    }
+}
+\caption{computeRecUsages\label{computeRecUsages}}
+\end{algorithm}
+%
+Intuitively, the algorithm, for each recursive binder, iterates over the
+(initially naive) usage environments and substitutes occurrences of the
+recursive binders by their corresponding usage environment,
+scaled up by the amount of times that recursive binder is used in the
+environment being updated. The result is the least upper bound of linear
+resources used by each strongly-connected group of mutually recursive bindings
+(for each binder of such a group), since all occurrences of the recursive
+binders in the usage environments will be substituted away by the corresponding
+recursive usage environments.
+%
+% The high-level description is:
+% \begin{itemize}
+%     \item Given a list of binders and their naive environment ($(f, F), (g, G),
+%     (h, H)$) in which each use of $f, g, h$ is mapped to a count $n$ in $F, G, H$
+
+%     \item For each pair of a letrec-bound variable and corresponding usage
+%     environment, update all bindings and their usage as described in the
+%     algorithm
+
+%     \item After iterating through all bound rec vars, all usage environments
+%         will be free of recursive bind usages, and hence describe the ``final'' usage environment
+% \end{itemize}
+%
+The algorithm complexity of computing a usage environment for $n$ recursive
+let binders is quadratic in $n$,
+% i.e. the algorithm has $O(n^2)$ complexity,
+but this is not an issue since it is uncommon to have more than a handful of
+binders in the same recursive let block.
+
+Finally, we present some results:
+\todo[inline]{Table with n core programs generated and validated vs failures due to multiplicity coercions}
+
+
+% Talk about using our plugin on linear-base and other code bases... If I can get
+% a few more case studies it would be pretty good. But then it's imperative to
+% also use -dlinear-lint and make sure my plugin rejects a few of the examples
+
+%%% \subsection{Consuming tagged resources as needed}
+%%% 
+%%% As discussed in Section~\ref{}, pattern-bound linear variables are
+%%% put in the context with a \emph{tagged} usage environment with the resources of
+%%% the scrutinee. In a \emph{tagged} usage environment environment, all resources
+%%% are tagged with a constructor and an index into the many fields of the
+%%% constructor.
+%%% 
+%%% In practice, a resource might have more than one tag. For example, in the following
+%%% program, after the first pattern match, |a| and |b| have, respectively, usage
+%%% environments $\{\lctag{x}{K_1}\}$ and $\{\lctag{x}{K_2}\}$:
+%%% \begin{code}
+%%% f x = case x of
+%%%        K a b -> case a of
+%%%         Pair n p -> (n,p)
+%%% \end{code}
+%%% However, in the following alternative, |n| has usage environment
+%%% $\{\lctag{\lctag{x}{K_1}}{Pair_1}\}$ and |p| has
+%%% $\{\lctag{\lctag{x}{K_1}}{Pair_2}\}$. To typecheck
+%%% |(n,p)|, one has to $Split$ |x| first on |K| and then on |Pair|, in order for
+%%% the usage environments to match.
+%%% 
+%%% In our implementation, we split resources on demand (and don't directly allow
+%%% splitting linear resources), i.e. when we use a tagged resource we split the
+%%% linear resource in the linear environment (if available), but never split otherwise.
+%%% %
+%%% Namely, starting on the innermost tag (the closest to the variable name), we
+%%% substitute the linear resource for its split fragments, and then we iteratively
+%%% further split those fragments if there are additional tags.
+%%% %
+%%% We note that it is safe to destructively split the resource (i.e. removing the
+%%% original and only leaving the split fragments) because we only split resources
+%%% when we need to consume a fragment, and as soon as one fragment is consumed
+%%% then using the original ``whole'' variable would violate linearity.
+%%% 
+%%% In the example, if |n| is used, we have to use its usage environment, which in
+%%% turn entails using $\lctag{\lctag{x}{K_1}}{Pair_1}$, which has two tags. In this order, we:
+%%% \begin{itemize}
+%%% \item Split $x$ into $\lctag{x}{K_1}$ and $\lctag{x}{K_2}$
+%%% \item Split $\lctag{x}{K_1}$ and $\lctag{x}{K_2}$ into
+%%%   \begin{itemize}
+%%%   \item $\lctag{\lctag{x}{K_1}}{Pair_1}$ and $\lctag{\lctag{x}{K_1}}{Pair_2}$
+%%%   \item Leave $\lctag{x}{K_2}$ untouched, as we only split on demand, and we aren't using a fragment of $\lctag{x}{K_2}$.
+%%%   \end{itemize}
+%%% \item Consume $\lctag{\lctag{x}{K_1}}{Pair_1}$, the usage environment of $n$, by removing it from the typing environment.
+%%% \end{itemize}
 
 %%%\subsection{Merging Linear Core into GHC\label{sec:merging-linear-core}}
 %%%

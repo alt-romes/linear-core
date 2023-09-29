@@ -7,9 +7,9 @@ understands (semantic) linearity in the presence of laziness, suitable for
 optimising compilers with these characteristics which leverage laziness and
 (possibly) linearity in its transformations.
 
-In this chapter, review the literature related to our own work, highlighting
+In this chapter, we review the literature related to our own work, highlighting
 Linear Core's novel contributions in light of the existing prominent works in
-the area, or how they otherwise compare,
+the area, or how they otherwise compare,\todo{review}
 % (including linearity in a lazy, evaluation models in terms of linearity, and
 % the Core system).
 %

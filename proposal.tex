@@ -301,7 +301,7 @@ themselves in their definition body is to perform the computation in two separat
 calculate a naive environment by emitting free variables multiplicities as usual
 while treating the recursive-let bound variables as free ones. Second, pass the
 variables names and their corresponding naive environment as input to
-algorithm~\ref{computeRecUsages} to get a final usage environment. Intuitively,
+Algorithm~\ref{computeRecUsages} to get a final usage environment. Intuitively,
 the algorithm, for each recursive binder, iterates over all (initially naive) usage
 environments and substitutes the recursive binder by the corresponding usage
 environment, scaled up by the amount of times that recursive binder is used in
