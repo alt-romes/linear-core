@@ -13,15 +13,15 @@ If $\cdot; \cdot \vdash e : \sigma$ then $e$ is a value or there exists $e'$ suc
 }
 
 \newcommand{\WHNFConvSoundness}{
-\begin{lemma}[Irrelevance]
-If $\Gamma, \z[\irr{\D}]; \irr{\Delta}, \D' \vdash_{alt} \rho \to e :^z_{\irr{\D}} \sigma \Rrightarrow \vp$\\
-then $\Gamma, \z[\D^\dag]; \D^\dag, \D' \vdash_{alt} \rho \to e :^z_{\D^\dag} \sigma \Rightarrow \vp$, for \emph{any} $\D^\dag$
+\begin{lemma}[Irrelevance]~\\
+If $\Gamma, \z[\irr{\D}]; \irr{\Delta}, \D' \vdash_{alt} \rho \to e :^z_{\irr{\D}} \sigma \Rrightarrow \vp$
+then $\Gamma, \z[\D^\dag]; \D^\dag, \D' \vdash_{alt} \rho \to e :^z_{\D^\dag} \sigma \Rightarrow \vp$,\\ for \emph{any} $\D^\dag$
 \end{lemma}
 }
 
 \newcommand{\DeltaLinearRelationLemma}{
 \begin{assumption}[$\D \Rightarrow 1$]
-A $\Delta$-variable can replace its usage environment $\D$ as a linear variable if $\D$ is decidedly consumed through it\\
+A $\Delta$-variable can replace its usage environment $\D$ as a linear variable if $\D$ is decidedly consumed through it.\\
 If $\G,\xD; \D,\D' \vdash e : \s$ and $\D$ is consumed through $\xD$ in $e$
 then $\G[x/\D]; \D',\xl \vdash e :\s$.
 \end{assumption}
@@ -29,7 +29,7 @@ then $\G[x/\D]; \D',\xl \vdash e :\s$.
 
 \newcommand{\LinearDeltaRelationLemma}{
 \begin{assumption}[$1 \Rightarrow \D$]
-A linear variable can be moved to the unrestricted context as a $\D$-var with usage environment $\D$ by introducing $\D$ in the linear resources\\
+A linear variable can be moved to the unrestricted context as a $\D$-var with usage environment $\D$ by introducing $\D$ in the linear resources.\\
 If $\G; \D',\xl \vdash e :\s$
 then $\G[\D/x],\xD; \D,\D' \vdash e : \s$.
 % and $\D$ is consumed through $\xD$ in $e$
@@ -45,7 +45,7 @@ $\G,\xo; \D \vdash e : \s$ iff $\G,\x[\cdot]; \D \vdash e : \s$
 
 
 \newcommand{\LinearSubstitutionLemma}{
-\begin{lemma}[Substitution of linear variables preserves typing]
+\begin{lemma}[Substitution of linear variables preserves typing]~\\
   If $\judg[\G][\D,\xl]{e}{\vp}$ and $\judg[\G][\D']{e}{\s}$
   then $\judg[\subst{\G}{\D'}{x}][\D,\D']{e[e'/x]}{\vp}$
 \end{lemma}
@@ -61,22 +61,22 @@ $\G,\xo; \D \vdash e : \s$ iff $\G,\x[\cdot]; \D \vdash e : \s$
 }
 
 \newcommand{\UnrestrictedSubstitutionLemma}{
-\begin{lemma}[Substitution of unrestricted variables preserves typing]
-\emph{If $\Gamma, x{:}_\omega\sigma; \Delta \vdash e : \varphi$ and $\Gamma; \cdot \vdash e' : \sigma$ then $\G,\D \vdash e[e'/x] : \varphi$.}
+\begin{lemma}[Substitution of unrestricted variables preserves typing]~\\
+If $\Gamma, x{:}_\omega\sigma; \Delta \vdash e : \varphi$ and $\Gamma; \cdot \vdash e' : \sigma$ then $\G,\D \vdash e[e'/x] : \varphi$
 \end{lemma}
 }
 
 \newcommand{\UnrestrictedSubstitutionAltsLemma}{
 \begin{sublemma}[Substitution of unrestricted variables on case alternatives
     preserves typing]
-If $\G, \xo; \D \vdash_{alt} \rho \to e :^z_{\Delta_s} \s' \Rightarrow \vp$ and $\G; \D \vdash e' : \s$ and
+If $\G, \xo; \D \vdash_{alt} \rho \to e :^z_{\Delta_s} \s' \Rightarrow \vp$ and $\G; \D \vdash e' : \s$
     then $\G; \D \vdash_{alt} \rho \to e[e'/x] :^z_{\Delta_s} \s' \Rightarrow \vp$
 \end{sublemma}
 }
 
 \newcommand{\DeltaSubstitutionLemma}{
 % usage environments only record linear variables.
-\begin{lemma}[Substitution of $\Delta$-variables preserves typing]
+\begin{lemma}[Substitution of $\Delta$-variables preserves typing]~\\
 If $\G,\xD; \D, \D' \vdash e : \varphi$ and $\G; \D \vdash e' : \sigma$ then $\G; \D, \D' \vdash e[e'/x] : \varphi$
 % TODO: Write a paragraph about why this lemma has to have the same delta in the subst.
 % Do we still need the $Delta = empty$ restriction?
@@ -89,7 +89,7 @@ If $\G,\xD; \D, \D' \vdash e : \varphi$ and $\G; \D \vdash e' : \sigma$ then $\G
 
 \newcommand{\DeltaSubstitutionAltsLemma}{
 \begin{sublemma}[Substitution of $\Delta$-bound variables on case alternatives
-    preserves typing]
+    preserves typing]~\\
 If $\G,\xD; \D,\D' \vdash_{alt} \rho \to e :^z_{\Delta_s} \s' \Rightarrow \vp$ and
     $\G; \D \vdash e' : \s$ and $\Delta_s \subseteq (\Delta,\Delta')$ then $\G; \D, \D' \vdash_{alt} \rho \to e[e'/x] :^z_{\Delta_s} \s' \Rightarrow \vp$
 \end{sublemma}
@@ -105,7 +105,7 @@ If $\G; \D \vdash (\lambda \x[\pi][\s].~e)~e' : \vp$ then $\G; \D \vdash e[e'/x]
 
 \newcommand{\BetaReductionSharingTheorem}{
 \begin{theorem}[$\beta$-reduction with sharing preserves types]~\\
-    If $\G; \D \vdash (\lambda \xo.~e)~e' : \vp$ then $\G; \D \vdash \llet{x = e'}{e} : \vp$
+    If $\G; \D \vdash (\lambda \xo.~e)~e' : \vp$ then $\G; \D \vdash \llet{x = e'}{e} : \vp$\\
     NB: We only apply this transformation when $x$ is unrestricted, otherwise beta-reduction without sharing is the optimization applied.
 \end{theorem}
 }

@@ -7,16 +7,16 @@ understands (semantic) linearity in the presence of laziness, suitable for
 optimising compilers with these characteristics which leverage laziness and
 (possibly) linearity in its transformations.
 
-In this chapter, we review the literature related to our own work, highlighting
-Linear Core's novel contributions in light of the existing prominent works in
-the area, or how they otherwise compare,\todo{review}
+In this chapter, we compare our contributions and Linear Core to related
+existing works in the literature,
 % (including linearity in a lazy, evaluation models in terms of linearity, and
 % the Core system).
 %
-consider further research deemed out of the scope of our work and of the Linear
-Core type system (notably, we discuss so-called \emph{multiplicity coercions}
-to handle the interaction between linearity and coercions, a key feature of
-Core which we left out our system), and conclude.
+consider further research
+% deemed out of the scope of this work and of the Linear Core type system
+(notably, so-called \emph{multiplicity coercions} to handle the
+interaction between linearity and \emph{coercions}, a key feature of Core which we
+left out our system), and conclude.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % {{{ Related Work

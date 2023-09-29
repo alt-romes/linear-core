@@ -308,8 +308,8 @@ following reasons essential to our work:
         unlike C or Rust, which are \emph{eagerly} evaluated.
         %
         Laziness allows an optimising compiler to aggressively transform the source
-        program without changing its semantics and, indeed, GHC heavily transforms
-        Core by leveraging its laziness.
+        program without changing its semantics and, indeed, the Glasgow Haskell
+        Compiler (GHC) heavily transforms Core by leveraging its laziness.
         %
         However, lazy evaluation interacts non-trivially with linearity.
         Intuitively, since expressions are not necessarily evaluated, an
@@ -586,19 +586,19 @@ coercions}) in Chapter~\ref{sec:discussion}, which concludes the document.
 
 \chapter{Type Safety Proofs}
 
-\section{Type Preservation}
+\section{Type Preservation\label{sec:proof:type-preservation}}
 
 \input{language-v4/proofs/TypePreservationTheorem}
 
-\section{Progress}
+\section{Progress\label{sec:proof:progress}}
 
 \input{language-v4/proofs/ProgressTheorem}
 
-\section{Irrelevance}
+\section{Irrelevance\label{sec:proof:irrelevance}}
 
 \input{language-v4/proofs/WHNFConvSoundness}
 
-\section{Substitution Lemmas}
+\section{Substitution Lemmas\label{sec:proof:substitution-lemmas}}
 
 \input{language-v4/proofs/LinearSubstitutionLemma}
 
@@ -606,9 +606,10 @@ coercions}) in Chapter~\ref{sec:discussion}, which concludes the document.
 
 \input{language-v4/proofs/DeltaSubstitutionLemma}
 
-\section{Assumptions}
+% Already given inline
+% \section{Assumptions}
 
-\input{language-v4/proofs/DeltaLinearLemma}
+% \input{language-v4/proofs/DeltaLinearLemma}
 
 % \chapter{Optimisations Preserve Types Proofs}
 % Should we keep this?

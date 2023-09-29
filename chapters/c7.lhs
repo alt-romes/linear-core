@@ -776,11 +776,12 @@ Haskell~\cite{cite:linearhaskell}:
         % consumed once.
 \end{itemize}
 That is, we can consume a linear resource by fully evaluating it, through case
-expressions. In section \ref{sec:generalizing-evaluation-consuming} we
-generalize the idea that consuming a resource is deeply tied to evaluation.
-Here, we continue building intuition for semantic linearity, first reviewing
-how case expressions evaluate expressions, and then exploring how they consume
-resources, by way of example.
+expressions.
+
+%%% In Section~\ref{sec:generalizing-evaluation-consuming} we generalize the idea
+%%% that consuming a resource is deeply tied to evaluation.  Here, we continue
+%%% building intuition for semantic linearity, first reviewing how case expressions
+%%% evaluate expressions, and then exploring how they consume resources, by way of example.
 
 In Core, case expressions are of the form $\ccase{e_s}{z~\{\ov{\rho_i \to e_i}\}}$,
 where $e_s$ is the case \emph{scrutinee}, $z$ is the case \emph{binder}, and
@@ -1104,7 +1105,7 @@ unrestrictedly, and therefore the case binder may also be used unrestrictedly.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % {{{ Linear Core
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\chapter{A Type System for\\Semantic Linearity in Core\label{sec:main:linear-core}}
+\chapter{A Type System for\\ Semantic Linearity in Core\label{sec:main:linear-core}}
 \chaptermark{A Type System for Semantic Linearity in Core}
 
 In this chapter, we develop a linear calculus $\lambda_\Delta^\pi$, dubbed \emph{Linear Core}, that 
@@ -1113,8 +1114,8 @@ Linear Haskell~\cite{cite:linearhaskell} with all the key features from GHC's Co
 language, except for type equality coercions\footnote{We explain a main avenue of
 future work, multiplicity coercions, in Section~\ref{sec:future-work}}.
 %
-Specifically, our core calculus is a linear lambda calculus with
-algebraic datatypes, case expressions, recursive let bindings, and multiplicity
+Specifically, our core calculus is a linear lambda calculus with algebraic
+datatypes, case expressions, recursive let bindings, and multiplicity
 polymorphism.
 
 Linear Core makes much more precise the various insights discussed in the
@@ -1877,7 +1878,7 @@ However, let us consider two discrete situations -- pattern matches in a case
 expression whose scrutinee is in WHNF, and matches on a case expression whose
 scrutinee is \emph{not} in WHNF:
 %
-\begin{itemize}
+\begin{enumerate}
 \item When the scrutinee is in WHNF, it is either an unrestricted expression
 against which any match will only introduce unrestricted variables, or an
 expression that depends on linear resources. The first case trivially allows
@@ -1918,7 +1919,7 @@ We guarantee resources from a scrutinee that is not in weak head normal form
 cannot occur/directly be used in any case alternative, in our rule for typing
 cases not in WHNF, which we introduce below.
 
-\end{itemize}
+\end{enumerate}
 
 % \todo[inline]{The trick here is to separate the case rules into two separate
 % rules, one that fires when the scrutinee is in WHNF, the other when it isn't.}
@@ -2443,6 +2444,8 @@ through the case binder or pattern-bound variables. If we consistently replace
 the proof irrelevant resources both in the typing environment and in the usage
 environments containing them, the expression remains well-typed.
 % (being somewhat akin to congruence).
+%
+The proof is given in Section~\ref{sec:proof:irrelevance}.
 
 \section{Type safety\label{sec:type-safety-meta}}
 
@@ -2458,7 +2461,7 @@ $\xo$, linear variables $\xl$, and $\D$-bound variables $\xD$.
 \noindent Type preservation states that a well-typed expression $e$ that
 evaluates to $e'$ remains well-typed under the same context:
 %
-The proof is done by structural induction on the reductions $e \longrightarrow
+The proof ($\S$~\ref{sec:proof:type-preservation}) is done by structural induction on the reductions $e \longrightarrow
 e'$ from the operational semantics. Most cases are straightforward and usually
 appeal to one or more of the substitution lemmas described below. The most
 interesting case is that of case expressions whose scrutinee can be further
@@ -2472,12 +2475,13 @@ in WHNF remains well-typed after the scrutinee is evaluated to WHNF.
 \ProgressTheorem
 %
 \noindent Progress states that the evaluation of a well-typed term does not block:
-Similarly, progress is proved by induction on typing.
+Similarly, progress is proved by induction on typing ($\S$~\ref{sec:proof:progress}).
 
 \subsection{Substitution Lemmas}
 
 The preservation and progress theorems depend on multiple substitution lemmas,
 one for each kind of variable, as is standard.
+% The proofs are given in Section~\ref{sec:proof:substitution-lemmas}.
 % The ... themselves diverge from their common formulation, because
 % $\D$-variables refer to linearly bound variables, so substitution must take into account
 
@@ -2560,7 +2564,8 @@ effect:
 
 \DeltaSubstitutionAltsLemma
 
-The proofs for preservation, progress, irrelevance, and for the substitution lemmas are available in full in the appendix.
+The proofs for substitution lemmas of linear, unrestricted, and
+$\D$-variables are available in Section~\ref{sec:proof:substitution-lemmas}.
 
 %TODO! Substitution of proof-irrelevant linear variables preserves typing. The
 %term always remains the same because $x$ cannot occur in any term, however, all
