@@ -165,10 +165,10 @@ By structural induction on the small-step reduction.
     Subcase $e'$ is not in WHNF\\
     (7) $\Gamma; \D, \D' \vdash \ccase{e'}{z{:}_{\Delta}\sigma~\{\rho_i\to e'_i\}} : \varphi$\` by $CaseNotWHNF$\\
     Subcase $e'$ is in WHNF\\
-    (7) $\ov{\G,\z[\ov{\D_i}][\s]; \ov{\D_i},\D' \vdash_{alt} \rho \to e'' :^z_{\ov{\D_i}} \s \Mapsto \vp}$\` for any $\ov{\D_i}$ by (5) and by \\\` soundness of not whnf wrt whnf lemma\\
-    (8) $\D = \ov{\D_i}$\` by $\ov{\D_i}$ can be anything\\
+    (7) $\G,\z[\ov{\D_i}][\s]; \ov{\D_i},\D' \vdash_{alt} \rho_j \to e'' :^z_{\ov{\D_i}} \s \Mapsto \vp$\` by $Irrelevance$ (5) for a matching $\rho_j$\\
+    (8) $\D = \ov{\D_i}$\` by $\ov{\D_i}$ can be any env. (7)\\
     (9) $\G; \D \Vdash e : \s \gtrdot \ov{\D_i}$ \`by (8) and rhs of $\gtrdot = \D$\\
-    (10) $\Gamma; \D, \D' \vdash \ccase{e'}{z{:}_{\Delta}\sigma~\{\rho_i\to e'_i\}} : \varphi$\` by $CaseWHNF$ (7,9)\\
+    (10) $\Gamma; \D, \D' \vdash \ccase{e'}{z{:}_{\Delta}\sigma~\{\rho_i\to e'_i\}} : \varphi$\` by $CaseWHNF$ (5,7,9)\\
 \end{tabbing}
 
 \end{description}

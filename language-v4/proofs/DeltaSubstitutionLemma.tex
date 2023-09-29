@@ -190,20 +190,26 @@ By structural induction on the first derivation.
     Subcase $\D$ occurs in $e$\\
     (2) $\G,\xD;\D,\D',\D'' \vdash \ccase{e}{\z[\D,\D'][\s']~\{\ov{\rho \to e''}\}} : \vp$\\
     (3) $e$ is in WHNF\\
-    (4) $\G,\xD;\D,\D' \vdash e : \s'$\\
-    (5) $\ov{\G,\xD,\z[\D,\D'][\s']; \D,\D',\D'' \vdash_{alt} \rho \to e'' :^z_{\D,\D'} : \s' \Rightarrow \vp}$\\
-    (6) $\G;\D,\D' \vdash e[e'/x] : \s'$\` by i.h.\\
-    (7) $\ov{\G,\z[\D,\D'][\s']; \D,\D',\D'' \vdash_{alt} \rho \to e''[e'/x] :^z_{\D,\D'} \s' \Rightarrow \vp}$\\\` by subst. of $\D$ vars on case alts\\
-    (8) $\G;\D,\D',\D'' \vdash \ccase{e[e'/x]}{\z[\D,\D'][\s']~\{\ov{\rho \to e''[e'/x]}\}} : \vp$\` by $CaseWHNF$\\
-    Subcase $\D$ does not occurs in $e$\\
+    (4) $\rho_j$ matches $e$\\
+    (5) $\G,\xD;\D,\D' \vdash e : \s'$\\
+    (6) $\G,\xD,\z[\D,\D'][\s']; \D,\D',\D'' \vdash_{alt} \rho_j \to e'' :^z_{\D,\D'} : \s' \Mapsto \vp$\\
+    (7) $\ov{\G,\xD,\z[\irr{\D,\D'}][\s']; [\D,\D'],\D'' \vdash_{alt} \rho \to e'' :^z_{\irr{\D,\D'}} \s'\Rrightarrow\vp}$\` by inv.\\
+    (8) $\G;\D,\D' \vdash e[e'/x] : \s'$\` by i.h.\\
+    (9) $\G,\z[\D,\D'][\s']; \D,\D',\D'' \vdash_{alt} \rho_j \to e''[e'/x] :^z_{\D,\D'} \s' \Rightarrow \vp$\` by subst. $\D$-vars alts.\\
+    (10) $\ov{\G,\z[\irr{\D,\D'}][\s']; [\D,\D'],\D'' \vdash_{alt} \rho \to e'' :^z_{\irr{\D,\D'}} \s'\Rrightarrow\vp}$\` by (7) and proof steps below\\\`from case $CaseNotWHNF$\\
+    (11) $\G;\D,\D',\D'' \vdash \ccase{e[e'/x]}{\z[\D,\D'][\s']~\{\ov{\rho \to e''[e'/x]}\}} : \vp$\` by $CaseWHNF$\\
+    Subcase $\D$ does not occur in $e$\\
     (2) $\G,\xD;\D,\D',\D'' \vdash \ccase{e}{\z[\D'][\s']~\{\ov{\rho \to e''}\}} : \vp$\\
     (3) $e$ is in WHNF\\
-    (4) $\G,\xD;\D' \vdash e : \s'$\\
-    (5) $\G;\D' \vdash e : \s'$\` by (admissible) $Weaken_\D$\\
-    (6) $e[e'/x] = e$\` by $x$ cannot occur in $e$\\
-    (7) $\ov{\G,\xD,\z[\D'][\s']; \D,\D',\D'' \vdash_{alt} \rho \to e'' :^z_{\D'} : \s' \Rightarrow \vp}$\\
-    (8) $\ov{\G,\z[\D'][\s']; \D,\D',\D'' \vdash_{alt} \rho \to e''[e'/x] :^z_{\D'} \s' \Rightarrow \vp}$\` by subst. of $\D$ vars on case alts\\
-    (9) $\G;\D,\D',\D'' \vdash \ccase{e[e'/x]}{\z[\D'][\s']~\{\ov{\rho \to e''[e'/x]}\}} : \vp$\` by $CaseWHNF$\\
+    (4) $\rho_j$ matches $e$\\
+    (5) $\G,\xD;\D' \vdash e : \s'$\\
+    (6) $\G;\D' \vdash e : \s'$\` by (admissible) $Weaken_\D$\\
+    (7) $e[e'/x] = e$\` by $x$ cannot occur in $e$\\
+    (8) $\G,\xD,\z[\D'][\s']; \D,\D',\D'' \vdash_{alt} \rho_j \to e'' :^z_{\D'} : \s' \Mapsto \vp$\\
+    (9) $\ov{\G,\xD,\z[\irr{\D'}][\s']; \D,[\D'],\D'' \vdash_{alt} \rho \to e'' :^z_{\irr{\D'}} \s'\Rrightarrow\vp}$\` by inv.\\
+    (10) $\G,\z[\D'][\s']; \D,\D',\D'' \vdash_{alt} \rho_j \to e''[e'/x] :^z_{\D'} \s' \Mapsto \vp$\` by subst. of $\D$ vars on alts\\
+    (11) $\ov{\G,\z[\irr{\D'}][\s']; \D,[\D'],\D'' \vdash_{alt} \rho \to e''[e'/x] :^z_{\irr{\D'}} \s'\Rrightarrow\vp}$\\\` by subst. of $\D$-vars in case alternatives\\
+    (12) $\G;\D,\D',\D'' \vdash \ccase{e[e'/x]}{\z[\D'][\s']~\{\ov{\rho \to e''[e'/x]}\}} : \vp$\` by $CaseWHNF$\\
     Subcase $\D$ is partially used in $e$\\
     This is like the subcase above, but consider $\D'$\\
     to contain some of part of $\D$ and $\D$ to refer to the other part only.
@@ -216,17 +222,17 @@ By structural induction on the first derivation.
     (2) $\G,\xD; \D, \D', \D'' \vdash \ccase{e}{\z[\irr{\D,\D'}][\s']~\{\ov{\rho\to e''}\}}$\\
     (3) $\G,\xD; \D, \D' \vdash e : \s'$\` by inv.\\
     (4) $\G; \D,\D' \vdash e[e'/x] : \s'$\` by i.h.\\
-    (5) $\ov{\G,\xD,\z[\irr{\D,\D'}][\s']; [\D,\D'],\D'' \vdash_{alt} \rho \to e'' :^z_{\irr{\D,\D'}} \s'\Rightarrow\vp}$\` by inv.\\
+    (5) $\ov{\G,\xD,\z[\irr{\D,\D'}][\s']; [\D,\D'],\D'' \vdash_{alt} \rho \to e'' :^z_{\irr{\D,\D'}} \s'\Rrightarrow\vp}$\` by inv.\\
     (6) $e''[e'/x] = e$\` by $x$ cannot occur in $\ov{e''}$ since $\D$ is not available (only $\irr{\D}$)\\
-    (7) $\ov{\G,\z[\irr{\D,\D'}][\s']; [\D,\D'],\D'' \vdash_{alt} \rho \to e'' :^z_{\irr{\D,\D'}} \s'\Rightarrow\vp}$\` by (admissible) $Weaken_\Delta$\\
+    (7) $\ov{\G,\z[\irr{\D,\D'}][\s']; [\D,\D'],\D'' \vdash_{alt} \rho \to e'' :^z_{\irr{\D,\D'}} \s'\Rrightarrow\vp}$\` by (admissible) $Weaken_\Delta$\\
     (8) $\G; \D, \D', \D'' \vdash \ccase{e[e'/x]}{\z[\irr{\D,\D'}][\s']~\{\ov{\rho\to e''}\}}$\`by $CaseNotWHNF$\\
     Subcase $\D$ does not occur in $e$\\
     (2) $\G,\xD; \D, \D', \D'' \vdash \ccase{e}{\z[\irr{\D'}][\s']~\{\ov{\rho\to e''}\}}$\\
     (3) $\G,\xD; \D' \vdash e : \s'$\` by inv.\\
     (4) $\G; \D' \vdash e : \s'$\` by weaken\\
     (5) $e[e'/x] = e$\` by x cannot occur in $e$\\
-    (5) $\ov{\G,\xD,\z[\irr{\D'}][\s']; \D,[\D'],\D'' \vdash_{alt} \rho \to e'' :^z_{\irr{\D'}} \s'\Rightarrow\vp}$\` by inv.\\
-    (7) $\ov{\G,\z[\irr{\D'}][\s']; \D,[\D'],\D'' \vdash_{alt} \rho \to e''[e'/x] :^z_{\irr{\D'}} \s'\Rightarrow\vp}$\\\` by subst. of $\D$-vars in case alternatives\\
+    (5) $\ov{\G,\xD,\z[\irr{\D'}][\s']; \D,[\D'],\D'' \vdash_{alt} \rho \to e'' :^z_{\irr{\D'}} \s'\Rrightarrow\vp}$\` by inv.\\
+    (7) $\ov{\G,\z[\irr{\D'}][\s']; \D,[\D'],\D'' \vdash_{alt} \rho \to e''[e'/x] :^z_{\irr{\D'}} \s'\Rrightarrow\vp}$\\\` by subst. of $\D$-vars in case alternatives\\
     (8) $\G; \D, \D', \D'' \vdash \ccase{e}{\z[\irr{\D,\D'}][\s']~\{\ov{\rho\to e''[e'/x]}\}}$\`by $CaseNotWHNF$\\
     Subcase $\D$ is partially used in $e$\\
     This is like the subcase above, but consider $\D'$\\
@@ -246,20 +252,20 @@ By structural induction on the $alt$ judgment.
 \item[Case:] $AltN_{WHNF}$ (trivial induction)
 \begin{tabbing}
   (1) $\G; \D \vdash e' : \s$\\
-  (2) $\G,\xD; \D,\D' \vdash_{alt} \konstructor~\to e \prescript{\dag}{}{:^z_{\ov{\D_i}^n}} \s' \Rightarrow \vp$\\
+  (2) $\G,\xD; \D,\D' \vdash_{alt} \konstructor~\to e \prescript{\dag}{}{:^z_{\ov{\D_i}^n}} \s' \Mapsto \vp$\\
   (3) $\G,\xD,\ov{\xo},\ov{y_i{:}_{\D_i}\s_i}; \D, \D' \vdash e : \vp$\` by inv.\\
   (4) $\G,\ov{\xo},\ov{y_i{:}_{\D_i}\s_i}; \D, \D' \vdash e[e'/x] : \vp$\` by i.h.\\
-  (5) $\G; \D,\D' \vdash_{alt} \konstructor~\to e[e'/x] \prescript{\dag}{}{:^z_{\ov{\D_i}^n}} \s' \Rightarrow \vp$\` by $AltN$\\
+  (5) $\G; \D,\D' \vdash_{alt} \konstructor~\to e[e'/x] \prescript{\dag}{}{:^z_{\ov{\D_i}^n}} \s' \Mapsto \vp$\` by $AltN$\\
 \end{tabbing}
 
 \item[Case:] $AltN_{Not WHNF}$ (trivial induction)
 \begin{tabbing}
   (1) $\G; \D \vdash e' : \s$\\
-  (2) $\G,\xD; \D,\D' \vdash_{alt} \konstructor~\to e \prescript{\ddag}{}{:^z_{\D_s}} \s' \Rightarrow \vp$\\
+  (2) $\G,\xD; \D,\D' \vdash_{alt} \konstructor~\to e \prescript{\ddag}{}{:^z_{\D_s}} \s' \Rrightarrow \vp$\\
   (3) $\ov{\D_i} = \ov{\lctag{\D_s}{K_j}}$\`by inv.\\
   (4) $\G,\xD,\ov{\xo},\ov{y_i{:}_{\D_i}\s_i}; \D, \D' \vdash e : \vp$\` by inv.\\
   (5) $\G,\ov{\xo},\ov{y_i{:}_{\D_i}\s_i}; \D, \D' \vdash e[e'/x] : \vp$\` by i.h.\\
-  (6) $\G; \D,\D' \vdash_{alt} \konstructor~\to e[e'/x] \prescript{\ddag}{}{:^z_{\D_s}} \s' \Rightarrow \vp$\` by $AltN$\\
+  (6) $\G; \D,\D' \vdash_{alt} \konstructor~\to e[e'/x] \prescript{\ddag}{}{:^z_{\D_s}} \s' \Rrightarrow \vp$\` by $AltN$\\
 \end{tabbing}
 
 \item[Case:] $Alt0$

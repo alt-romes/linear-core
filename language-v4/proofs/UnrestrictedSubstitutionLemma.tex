@@ -152,8 +152,8 @@ By structural induction on the first derivation.
     (3) $\G,\xo;\D \vdash e :\s$\\
     (4) $\G;\D \vdash e [e'/x] : \s'$\`by i.h.\\
     (5) $e$ is definitely not in WHNF\\
-    (6) $\ov{\G,\xo,\z[\irr{\D}][\s'];\irr{\D},\D' \vdash \rho \to e'' :_{\irr{\D}} \s' \Rightarrow \vp}$\\
-    (6) $\ov{\G,\z[\irr{\D}][\s'];\irr{\D},\D' \vdash \rho \to e''[e'/x] :_{\irr{\D}} \s' \Rightarrow \vp}$\`by unr. subst.  on alts lemma\\
+    (6) $\ov{\G,\xo,\z[\irr{\D}][\s'];\irr{\D},\D' \vdash \rho \to e'' :_{\irr{\D}} \s' \Rrightarrow \vp}$\\
+    (6) $\ov{\G,\z[\irr{\D}][\s'];\irr{\D},\D' \vdash \rho \to e''[e'/x] :_{\irr{\D}} \s' \Rrightarrow \vp}$\`by unr. subst.  on alts lemma\\
     (8) $\G;\D,\D' \vdash \ccase{e[e'/x]}{\z[\irr{\D}][\s']~\{\ov{\rho \to e''[e'/x]}\}} : \vp$\\
 \end{tabbing}
 
@@ -171,20 +171,20 @@ By structural induction on the $alt$ judgment.
 \item[Case:] $AltN_{WHNF}$ (trivial induction)
 \begin{tabbing}
     (1) $\G; \cdot \vdash e : \s$\\
-    (2) $\G,\xo;\D \vdash_{alt} \konstructor~\to e \prescript{\dag}{}{:^z_{\ov{\D_i}^n}} \s' \Rightarrow \vp$\\
+    (2) $\G,\xo;\D \vdash_{alt} \konstructor~\to e \prescript{\dag}{}{:^z_{\ov{\D_i}^n}} \s' \Mapsto \vp$\\
     (3) $\G,\xo,\ov{\xo},\ov{y_i{:}_{\D_i}\s_i}; \D \vdash e : \vp $\\
     (4) $\G,\ov{\xo},\ov{y_i{:}_{\D_i}\s_i}; \D \vdash e[e'/x] : \vp $\` by i.h.\\
-    (5) $\G;\D \vdash_{alt} \konstructor~\to e[e'/x] \prescript{\dag}{}{:^z_{\ov{\D_i}^n}} \s' \Rightarrow \vp$\` by $AltN$\\
+    (5) $\G;\D \vdash_{alt} \konstructor~\to e[e'/x] \prescript{\dag}{}{:^z_{\ov{\D_i}^n}} \s' \Mapsto \vp$\` by $AltN$\\
 \end{tabbing}
 
 \item[Case:] $AltN_{Not WHNF}$ (trivial induction)
 \begin{tabbing}
     (1) $\G; \cdot \vdash e : \s$\\
-    (2) $\G,\xo;\D \vdash_{alt} \konstructor~\to e \prescript{\ddag}{}{:^z_{\D_s}} \s' \Rightarrow \vp$\\
+    (2) $\G,\xo;\D \vdash_{alt} \konstructor~\to e \prescript{\ddag}{}{:^z_{\D_s}} \s' \Rrightarrow \vp$\\
     (3) $\ov{\D_i} = \ov{\lctag{\D_s}{K_j}}^n$\\
     (4) $\G,\xo,\ov{\xo},\ov{y_i{:}_{\D_i}\s_i}; \D \vdash e : \vp $\` by inv.\\
     (5) $\G,\ov{\xo},\ov{y_i{:}_{\D_i}\s_i}; \D \vdash e[e'/x] : \vp $\` by i.h.\\
-    (6) $\G;\D \vdash_{alt} \konstructor~\to e[e'/x] \prescript{\ddag}{}{:^z_{\D_s}} \s' \Rightarrow \vp$\` by $AltN$\\
+    (6) $\G;\D \vdash_{alt} \konstructor~\to e[e'/x] \prescript{\ddag}{}{:^z_{\D_s}} \s' \Rrightarrow \vp$\` by $AltN$\\
 \end{tabbing}
 
 \item[Case:] $Alt0$
