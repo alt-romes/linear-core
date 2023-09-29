@@ -13,7 +13,7 @@ in our type system.
 \section{Linear Types\label{sec:linear-types}}
 
 Much the same way type systems can statically eliminate various kinds of
-programs that would fail at runtime, such as a program that derreferences an
+programs that would fail at runtime, such as a program that dereferences an
 integer value rather than a pointer, linear type systems can guarantee that
 certain errors (regarding resource usage) are forbidden.
 
@@ -77,7 +77,7 @@ should only be used exactly once.
 In order to further give well defined semantics to a linear type system, we
 present a linearly typed lambda
 calculus~\cite{cite:linear-logic,cite:barberdill}, a very simple language with
-linear types, by defining what are syntatically valid programs through the
+linear types, by defining what are syntactically valid programs through the
 grammar in Fig.~\ref{fig:llcgrammar} and what programs are well typed through
 the typing rules in Fig.~\ref{fig:llcrules}. The language features functions
 and function application ($\lolli$), two flavours of pairs, additive ($\with$)
@@ -125,7 +125,7 @@ must be used exactly once.
 \end{figure}
 
 The function abstraction is typed according to the linear function introduction
-rule ($\lolli I$). The rule states that a a function abstraction, written
+rule ($\lolli I$). The rule states that a function abstraction, written
 $\lambda u. M$, is a linear function (i.e. has type $A \lolli B$) given the
 unrestricted context $\Gamma$ and the linear context $\Delta$, if the program $M$
 has type $B$ given the same unrestricted context $\Gamma$ and the linear context
@@ -303,7 +303,7 @@ variables). To make explicit the type of an expression, the \texttt{::} operator
 is used (e.g.  $\texttt{f~::~Int}\to \texttt{Bool}$ is read \texttt{f} \emph{has
 type} function from \texttt{Int} to \texttt{Bool}).
 
-Because Haskell is a pure programming language, input/ouptut side-effects are
+Because Haskell is a pure programming language, input/output side-effects are
 modelled at the type-level through the non-nullary\footnote{\texttt{IO} has kind $\texttt{Type}\to\texttt{Type}$, that is, it is
 only a type after another type is passed as a parameter (e.g.  \texttt{IO~Int},
 \texttt{IO~Bool}); \texttt{IO} by itself is a \emph{type constructor}}
@@ -315,7 +315,7 @@ computations using so-called monadic operators, which are like any other
 operators but grouped under the same abstraction.
 %
 Some of the example programs will look though as if they had statements, but,
-in reality, the sequential appearence is just syntatic sugar to an expression
+in reality, the sequential appearance is just syntactic sugar to an expression
 using monadic operators. The main take away is that computations that do I/O
 may be sequenced together with other operations that do I/O while retaining the
 lack of statements and the language purity guarantees.
@@ -523,7 +523,7 @@ The introduction of linear types to Haskell's type system is originally
 described in Linear Haskell~\cite{cite:linearhaskell}. While in
 Section~\ref{sec:related-work-linear-haskell} we discuss the reasoning and
 design choices behind retrofitting linear types to Haskell, here we focus on
-linear types solely as they exist in the language, and re-work the file handle
+linear types solely as they exist in the language, and rework the file handle
 example seen in the previous section to make sure it doesn't typecheck when the handle is forgotten.
 
 A linear function ($f :: A \lolli B$) guarantees that if ($f~x$) is consumed
@@ -556,7 +556,7 @@ whether it can be consumed \emph{unrestrictedly} (many times).
 As an example, consider the function $f$ below, which doesn't typecheck because
 it is a linear function (annotated with \texttt{1}) that consumes its argument
 more than once, and the function $g$, which is an unrestricted function
-(annoted with \texttt{Many}) that typechecks because its type allows the
+(annotated with \texttt{Many}) that typechecks because its type allows the
 argument to be consumed unrestrictedly.
 
 \begin{minipage}{0.47\textwidth}
@@ -676,7 +676,7 @@ strategy called \emph{call-by-value}~\cite{engeler_1984}, in which expressions a
 evaluated to a value. In the above example, under \emph{call-by-value},
 |factorial 2500| would always be evaluated and passed as a value, regardless of
 being used in the body. It is out of the scope of this work to discuss the
-merits and tradeoffs of eager vs. lazy evaluation.
+merits and trade-offs of eager vs. lazy evaluation.
 
 % Infinite data structures,...
 % A fun trick is defining lazy sorting algorithms that will only sort as many
@@ -686,7 +686,7 @@ A third option is the \emph{call-by-name} evaluation strategy~\cite{engeler_1984
 \emph{call-by-name}, expressions are only evaluated when needed, however, there
 is no sharing. In the above example, it would only evaluate |factorial 2500|
 \emph{twice} if |expr| were |True|. Despite being similar to
-\emph{call-by-need}, in practice, language implementors prefer
+\emph{call-by-need}, in practice, language implementers prefer
 \emph{call-by-need} over \emph{call-by-name} to achieve
 \emph{non-strict} semantics, because the latter duplicates a lot of work, while
 the former only does work once and then shares the result.
@@ -794,7 +794,7 @@ The subtleties of suspending computations (i.e.~creating \emph{thunks}) and
 relevant in the context of our work regarding linearity in Core, so we review laziness in that context:
 
 In Haskell and in its intermediate language Core, applying a function to an
-expression, in general\footnote{Optimisations such as ocurrence analysis, allow
+expression, in general\footnote{Optimisations such as occurrence analysis, allow
 us to substitute some expressions in a \emph{call-by-name}-style without
 creating a let binding if the argument is only used once in the body.}, results
 in a \textbf{let} binding that suspends the evaluation of the
@@ -854,7 +854,7 @@ resource exactly once as long as we run just one of them exactly once.
 % global type equality ... BoxI ~ Int" This is IMO quite misleading, as the
 % equality is of a different nature than for GADTs and TypeFamilies.
 
-Haskell is a large and expressive language with many syntatic constructs and
+Haskell is a large and expressive language with many syntactic constructs and
 features. However, the whole of Haskell can be desugared down to a minimal,
 explicitly typed, intermediate language called \textbf{Core}.
 %
@@ -894,7 +894,7 @@ both desugaring and optimising transformations must produce well-typed Core.
 \item Finally, Core's expressiveness serves as a sanity-check for
 all the extensions to the source language -- if we can desugar a
 feature into Core then the feature must be sound by reducibility.
-Effectively, any feature added to Haskell is only syntatic sugar if it can be
+Effectively, any feature added to Haskell is only syntactic sugar if it can be
 desugared to Core.
 \end{itemize}
 
@@ -927,8 +927,10 @@ explicit type-equality coercions that, like types, are erased at compile time
 (i.e. types and coercions alike don't incur any cost at run-time). The
 syntax of System
 $F_C$~\cite{cite:systemfc} terms is given in Figure~\ref{fig:systemfc-terms}, which
-corresponds exactly to the syntax of System $F$~\cite{Girard1972InterpretationFE,10.1007/3-540-06859-7_148} with term and (kind-annotated) type abstraction as
-well as term and type application, extended with algebraic data types, let-bound
+corresponds exactly to the syntax of System
+$F$~\cite{Girard1972InterpretationFE,10.1007/3-540-06859-7_148} with term and
+(kind-annotated) type abstraction as well as term and type application,
+extended with algebraic data types, let-bound
 expressions, pattern matching and coercions or casts.
 
 \begin{figure}[h]
