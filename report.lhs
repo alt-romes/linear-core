@@ -16,6 +16,7 @@
 \usepackage{tikz-qtree}
 \usetikzlibrary{trees}	% this is to allow the fork right path
 \usepackage{mdframed}
+\usepackage{thmtools, thm-restate}
 
 % font stack: acmart
 % \RequirePackage[T1]{fontenc}
@@ -24,8 +25,8 @@
 % \RequirePackage[libertine]{newtxmath}
 
 \newtheorem{theorem}{Theorem}
-\newtheorem{proposition}{Proposition}
-\newtheorem{lemma}{Lemma}%[theorem]
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{lemma}[theorem]{Lemma}%[theorem]
 \newtheorem{sublemma}{Lemma}[lemma]
 \newtheorem{assumption}{Assumption}
 
@@ -86,17 +87,17 @@
 
 \makeglossaries
 
-\newglossaryentry{GHC}
-{
-    name=GHC,
-    description={The Glorious Glasgow Haskell Compiler}
-}
+% \newglossaryentry{GHC}
+% {
+%     name=GHC,
+%     description={The Glorious Glasgow Haskell Compiler}
+% }
 
-\newglossaryentry{GADT}
-{
-    name=GADT,
-    description={Generalized Algebraic Data Types}
-}
+% \newglossaryentry{GADT}
+% {
+%     name=GADT,
+%     description={Generalized Algebraic Data Types}
+% }
 
 \begin{document}
 
@@ -175,6 +176,12 @@ o nosso sistema consegue tipificar.
 \xlistoffigures
 % \xlistoftables
 % \printglossaries
+
+\begingroup
+\pdfbookmark{\listtheoremname}{\listtheoremname}
+\listoftheorems
+\cleardoublepage
+\endgroup  
 
 \mainmatter
 
@@ -585,8 +592,6 @@ coercions}) in Chapter~\ref{sec:discussion}, which concludes the document.
 \appendix
 
 \chapter{Type Safety Proofs}
-
-\todo[inline]{Re-state theorems and lemmas}
 
 \section{Type Preservation\label{sec:proof:type-preservation}}
 
