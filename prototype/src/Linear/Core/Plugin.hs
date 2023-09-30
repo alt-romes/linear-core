@@ -68,11 +68,11 @@ linearCorePass guts = do
   case msgs of
     [] -> pure ()
     errs ->
-      if all (L.isPrefixOf "fail_" . showSDocUnsafe) errs
+      -- if all (L.isPrefixOf "fail_" . showSDocUnsafe) errs
        -- the fail_ thing was an attempt to allow the plugin to continue on
        -- functions marked for failing, but that feature isn't finished
-       then fatalErrorMsg (ppr errs)
-       else Trace.pprTraceM "[FAILED]" (ppr errs Ppr.$$ ppr prog)
+       -- then fatalErrorMsg (ppr errs)
+       Trace.pprTraceM "[FAILED]" (ppr errs Ppr.$$ ppr prog)
 
   return guts -- unchanged guts, after validating them.
 

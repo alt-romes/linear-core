@@ -103,7 +103,7 @@ checkBind (NonRec b e)
        return (NonRec (LCVar b.id Nothing) e')
 
 checkBind (Rec bs) = do
-  pprTraceM "extending with" (ppr bs)
+  -- pprTraceM "extending with" (ppr bs)
   let (ids,rhss) = unzip bs
   inScope :: LCState <- get
   -- We extend the rhss typechecking with the recursive bindings as if they
@@ -135,6 +135,7 @@ checkExpr expr = case expr of
   Type ty     -> return (Type ty)
   Coercion co -> return (Coercion co)
   App e1 e2
+    -- romes:todo: could also be mult. app, in which case we should substitute mults in body by arg mult
     | FunTy _ ManyTy _ _ <- exprType (unconvertExpr e1)
     -> App <$> checkExpr e1 <*> unrestricted (checkExpr e2)
     | otherwise -- Linear or variable multiplicity (still linear) arrow
@@ -170,12 +171,12 @@ checkExpr expr = case expr of
        <$> withSameEnvMap (extend CaseBinder b.id (DeltaBound ue) . checkAlt ue) alts
     | otherwise
     -- Expression is definitely not in WHNF (or do we really mean HNF?)
-    -> pprTrace "Case expression" (ppr casee) $ do
+    -> do -- pprTrace "Case expression" (ppr casee) $ do
 
       -- We restore the resources here because we make them irrelevant in the env. afterwards
       (e', ue) <- restoringState $ record $ checkExpr e
       let irrUe = makeIrrelevant ue
-      pprTraceM "Make irrelevant usage environment:" (ppr irrUe)
+      -- pprTraceM "Make irrelevant usage environment:" (ppr irrUe)
       makeEnvResourcesIrrelevant ue
       -- pprTraceM "Done irr" Ppr.empty
       Case e'
@@ -206,7 +207,7 @@ checkAlt _ (Alt (LitAlt _) _ _) = error "impossible"
 --- * ALT0
 checkAlt ue a@(Alt (DataAlt con) args rhs)
   | all (isManyTy . scaledMult) (dataConOrigArgTys con)
-  = pprTrace "ALT0 con" (ppr a Ppr.<> Ppr.text ". (UE):" Ppr.<> ppr ue) $ do
+  = do -- pprTrace "ALT0 con" (ppr a Ppr.<> Ppr.text ". (UE):" Ppr.<> ppr ue) $ do
           -- Add unrestricted binders
   rhs' <- extends PatternBinder (L.map (\arg -> (arg.id, LambdaBound (Relevant ManyTy))) args)
           -- Drop from the environment the fully used resources
@@ -222,10 +223,10 @@ checkAlt ue a@(Alt (DataAlt con) args rhs)
 -- We do lose the ability to make a linear pattern variable unrestricted if no resources were assigned to it, but that's probably never going to happen in the transformations.
 -- It's probably not worth it trying to be that smart, and we don't do substitution here (only checking). Even if we did substituttion things would likely work since all linear variables are used once, despite the theory not working
 -- TODO: Do the simple thing
-checkAlt ue alt@(Alt (DataAlt con) args rhs) = pprTrace "ALTN con" (ppr alt) $ do
+checkAlt ue alt@(Alt (DataAlt con) args rhs) = do -- pprTrace "ALTN con" (ppr alt) $ do
 
-  pprTraceM "Constructor type" (ppr (dataConRepType con))
-  pprTraceM "Constructor arguments:" (ppr args <+> ppr (dataConUnivTyVars con) <+> ppr (dataConExTyCoVars con) <+> ppr (dataConUnivAndExTyCoVars con) <+> ppr (dataConTheta con) <+> ppr (dataConOrigArgTys con) <+> ppr (dataConRepArgTys con))
+  -- pprTraceM "Constructor type" (ppr (dataConRepType con))
+  -- pprTraceM "Constructor arguments:" (ppr args <+> ppr (dataConUnivTyVars con) <+> ppr (dataConExTyCoVars con) <+> ppr (dataConUnivAndExTyCoVars con) <+> ppr (dataConTheta con) <+> ppr (dataConOrigArgTys con) <+> ppr (dataConRepArgTys con))
 
   let (unrestricted_args, linear_args) = bimap (L.map snd) (L.map snd) $
                                           L.partition (isManyTy . fst)
@@ -236,12 +237,12 @@ checkAlt ue alt@(Alt (DataAlt con) args rhs) = pprTrace "ALTN con" (ppr alt) $ d
                                                           -- see DataCon (eg type variables, coercions, constraints)
                                                           nonOrigArgsLength = length (dataConExTyCoVars con) + dataConRepArity con - dataConSourceArity con
 
-  pprTraceM "Unr args in ALTN con:" (ppr unrestricted_args)
+  -- pprTraceM "Unr args in ALTN con:" (ppr unrestricted_args)
 
   -- Add the tag the usage environment with the linear resources with this constructor and an index for each
   -- It will ensure that when we consume the resources by using this environment, we'll just split the resource according to the tag.
   let linear_args' = L.zipWith (\a i -> (a.id, deltaBindingTagged con i ue)) linear_args [1..]
-  pprTraceM "Linear args in ALTN con:" (ppr linear_args')
+  -- pprTraceM "Linear args in ALTN con:" (ppr linear_args')
 
           -- First, extend computation with unrestricted resources
   rhs' <- extends PatternBinder (L.map ((, LambdaBound (Relevant ManyTy)) . (.id)) unrestricted_args)

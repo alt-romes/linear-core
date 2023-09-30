@@ -169,7 +169,7 @@ use = flip use' [] where
               if isDryRun
                  then tell [(key, mult)]
                  else do
-                   pprTraceM "Using lambda bound" (Ppr.ppr key Ppr.<+> Ppr.ppr mult)
+                   -- pprTraceM "Using lambda bound" (Ppr.ppr key Ppr.<+> Ppr.ppr mult)
                    modify (M.delete key)
 
             -- We are trying to use a fragment of this resource, so we split it
@@ -243,16 +243,15 @@ extend :: forall m a. Monad m
 extend bindsite key value computation = LinearCoreT do
   didOverwrite <- gets (M.lookup key) >>= \case
     Just vl -> do
-      case vl of
-        Left (DeltaBound (UsageEnv [])) ->
-          -- We override each local top-level binding when we typecheck them individually
-          -- but return it, so it can be reset to (DeltaBound (UsageEnv [])) after the extension (otherwise it would be deleted)
-          return True
-        _ -> do
-          throwError $ fromString $
-            "Tried to extend a computation with a resource that was already in the environment: " ++ showPprUnsafe (key,value) ++ "; Binder: " ++ show bindsite
+      -- We override each local top-level binding when we typecheck them individually
+      -- but return it, so it can be reset to after the extension (otherwise it would be deleted)
+      -- Later: Some case binders in Core really seem to use the same name.
+      -- So we basically implement shadowing sort of (extend with new thing, but recall the old thing after extended computation)
+      return (Just vl)
+      --   throwError $ fromString $
+      --     "Tried to extend a computation with a resource that was already in the environment: " ++ showPprUnsafe (key,value) ++ "; Binder: " ++ show bindsite
     Nothing -> do
-      return False
+      return Nothing
   modify (M.insert key (Left value))
   result <- unLC computation
   (isDryRun, _, _) <- ask
@@ -269,11 +268,11 @@ extend bindsite key value computation = LinearCoreT do
         -- Non linear resource needs to be deleted from scope, or otherwise would escape
         modify (M.delete key)
         return result
-  if didOverwrite
-     then do
-       modify (M.insert key (Left $ DeltaBound (UsageEnv [])))
-       return res
-     else return res
+  case didOverwrite of
+    Nothing -> return res
+    Just vl -> do
+      modify (M.insert key vl)
+      return res
   where
     -- Returns 'Nothing' if it was consumed, and Just m otherwise
     wasConsumed :: forall m'. MonadState LCState m' => Var -> m' (Maybe (Either IdBinding (NonEmpty Mult)))
@@ -412,7 +411,7 @@ makeEnvResourcesIrrelevant (UsageEnv vs) = do
       Just (Left (DeltaBound env')) -> pure (var, Left (DeltaBound $ makeIrrelevant env'))
       Just (Right mults) -> pure (var, Right $ NE.map (\x -> if x == mult then makeMultIrrelevant x else x) mults)
   -- pprTraceM "mkEnvResIrr lcstate0" (Ppr.ppr lcstate0)
-  pprTraceM "mkEnvResIrr lcstate1" (Ppr.ppr lcstate1)
+  -- pprTraceM "mkEnvResIrr lcstate1" (Ppr.ppr lcstate1)
   put (M.fromList lcstate1 <> lcstate0)
 
 -- | Run a list of monadic computation ala 'mapM' but restoring the typing environment
