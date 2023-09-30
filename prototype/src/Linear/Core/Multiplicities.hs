@@ -100,8 +100,8 @@ splitAsNeededThenConsume :: ∀ m. MonadError String m
                          => AllowIrrelevant -> [Tag] -> Mult -> m ([Mult], Mult)
 splitAsNeededThenConsume ir ts' m'' = do
   res <- second fromJust <$> splitAsNeededThenConsume' ir ts' m''
-  pprTraceM "splitAsNeededThenConsume input:" (ppr ts' <+> ppr m'')
-  pprTraceM "splitAsNeededThenConsume out:" (ppr res)
+  -- pprTraceM "splitAsNeededThenConsume input:" (ppr ts' <+> ppr m'')
+  -- pprTraceM "splitAsNeededThenConsume out:" (ppr res)
   return res
     where
   splitAsNeededThenConsume' :: MonadError String m

@@ -12,7 +12,7 @@ module Linear.Core.Monad
   , use
   , extend
   , extends
-  , drop
+  , drop, dropEnvOf
   , unrestricted
   , record
   , dryRun
@@ -28,6 +28,7 @@ module Linear.Core.Monad
   )
   where
 
+import qualified GHC.Core.Type
 import Prelude hiding (drop)
 import qualified Data.Set as S
 import Control.Monad
@@ -114,7 +115,7 @@ instance Monad m => MonadFail (LinearCoreT m) where
 
 runLinearCoreT :: Monad m => M.Map Var IdBinding -> LinearCoreT m a -> m (Either String a)
 runLinearCoreT s comp = runExceptT $ do
-  (a, renv, _unrestrictedUsed) <- runRWST (unLC comp) (False, DisallowIrrelevant,"Please set the toplevel binding name when checking") (M.map Left s)
+  (a, renv, _unrestrictedUsed) <- runRWST (unLC comp) (False, DisallowIrrelevant,"MonadFail messages weren't improved in the end") (M.map Left s)
   -- All linear IdBindings must be consumed, and no fragments may remain
   if M.null $ M.filter (either isBindingLinear (const True)) renv
     then return a
@@ -284,16 +285,12 @@ extends _ [] comp = comp
 extends bsite ((v,b):bs) comp = extend bsite v b $ extends bsite bs comp
 
 -- | 'drop' resources listed in a usage environment from the available resources in the computation
-drop :: Monad m => UsageEnv -> LinearCoreT m a -> LinearCoreT m a
-drop (UsageEnv env) comp = do
-  -- Why did we do this prev thing?
-  -- prev <- LinearCoreT get
-  -- -- Restore resources
-  -- LinearCoreT (put prev)
+drop :: Monad m => UsageEnv -> LinearCoreT m ()
+drop (UsageEnv env) = do
 
   -- Remove resources ocurring in the given usage env from the available resources, then run the computation
-  _ <- modify (flip (M.differenceWith diffgo) (M.fromList env))
-  comp
+  modify (flip (M.differenceWith diffgo) (M.fromList env))
+
     where
       -- For keys being dropped that still exist in the environment, 
       diffgo :: Either IdBinding (NonEmpty Mult)
@@ -307,7 +304,7 @@ drop (UsageEnv env) comp = do
                )
       diffgo (Left (DeltaBound _)) _ = error "We shouldn't be dropping a delta var?"
       diffgo (Right _) (extractTags -> []) = error "unexpected extract tags = []"
-      diffgo (Right mults) (extractTags -> tags) = Just $ Right $ NE.fromList $
+      diffgo (Right mults) (extractTags -> tags) = fmap Right $ NE.nonEmpty $
         L.concatMap (\m ->
           if | extractTags m == tags
              -> []
@@ -317,6 +314,13 @@ drop (UsageEnv env) comp = do
              | otherwise
              -> [m]
             ) (NE.toList mults)
+
+dropEnvOf :: Monad m
+          => Var -- ^ The var to make unrestricted by "dropping all resources from it"
+          -> LinearCoreT m ()
+dropEnvOf v =
+  modify (M.insert v (Left (LambdaBound (Relevant GHC.Core.Type.ManyTy))))
+
 
 -- | Runs a computation that threads linear resources and fails if the
 -- computation consumed any resource at all (i.e. fails if the input and output

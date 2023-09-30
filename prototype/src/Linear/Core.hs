@@ -103,8 +103,8 @@ checkBind (NonRec b e)
        return (NonRec (LCVar b.id Nothing) e')
 
 checkBind (Rec bs) = do
-  -- pprTraceM "extending with" (ppr bs)
-  let (ids,rhss) = unzip bs
+  let (ids0,rhss) = unzip bs
+  pprTraceM "extending with" (ppr ids0)
   inScope :: LCState <- get
   -- We extend the rhss typechecking with the recursive bindings as if they
   -- were linear variables. This way, we record if they are used more than once.
@@ -113,20 +113,22 @@ checkBind (Rec bs) = do
   -- bindings as linear variables) and compute the real usage environment.
   (_rhss', naiveUsages) <- unzip . fst <$> dryRun
     (extends LetRecBinderDry
-         (L.map (\(LCVar b (Just _d)) -> (b, LambdaBound (Relevant OneTy))) ids)
+         (L.map (\(LCVar b (Just _d)) -> (b, LambdaBound (Relevant OneTy))) ids0)
          (traverse (dryRun . checkExpr) rhss))
-  let recUsages = computeRecUsageEnvs (zip (L.map (.id) ids) naiveUsages)
+  let recUsages = computeRecUsageEnvs (zip (L.map (.id) ids0) naiveUsages)
+
       -- Repeated ocurrences of linear variables will be represented as many
       -- times as they occur in the recursive bindings in the usage
       -- environments with a linear multiplicity.
       -- In practice, when recursive binders are used, we'll try to use the linear variables more than once, if they exist more than once
-  recUes <- mapM (\i -> extends LetRecBinder (L.map (\id' -> (id'.id, DeltaBound emptyUE)) ids) $ reconstructUe i.id recUsages inScope) ids
-  -- pprTraceM "Has checked naiveUsages" (ppr recUsages $$ ppr recUes)
-  let ids' = L.zipWith (\i b -> LCVar i.id (deltaBinding b)) ids recUes
+  recUes <- mapM (\i -> extends LetRecBinder (L.map (\id' -> (id'.id, DeltaBound emptyUE)) ids0) $ reconstructUe i.id recUsages inScope) ids0
+
+  let ids1 = L.zipWith (\i b -> LCVar i.id (deltaBinding b)) ids0 recUes
+  pprTraceM "Recursive bindings:" (ppr ids1)
 
   -- Must typecheck rhss' again with the correct recursive usage environments
-  rhss' <- extends LetRecBinder (zipWith (\id' ue -> (id'.id, DeltaBound ue)) ids recUes) (traverse checkExpr rhss)
-  return (Rec (zip ids' rhss'))
+  rhss' <- extends LetRecBinder (L.map (\(LCVar i (Just b)) -> (i,b)) ids1) (traverse checkExpr rhss)
+  return (Rec (zip ids1 rhss'))
 
 checkExpr :: LCExpr -> LinearCoreM LCExpr
 checkExpr expr = case expr of
@@ -168,7 +170,7 @@ checkExpr expr = case expr of
       Case e'
            (LCVar b.id (deltaBinding ue))
            ty
-       <$> withSameEnvMap (extend CaseBinder b.id (DeltaBound ue) . checkAlt ue) alts
+       <$> withSameEnvMap (extend CaseBinder b.id (DeltaBound ue) . checkAlt ue b.id) alts
     | otherwise
     -- Expression is definitely not in WHNF (or do we really mean HNF?)
     -> do -- pprTrace "Case expression" (ppr casee) $ do
@@ -182,37 +184,40 @@ checkExpr expr = case expr of
       Case e'
            (LCVar b.id (deltaBinding irrUe))
            ty
-       <$> withSameEnvMap (extend CaseBinder b.id (DeltaBound irrUe) . checkAlt irrUe) alts
+       <$> withSameEnvMap (extend CaseBinder b.id (DeltaBound irrUe) . checkAlt irrUe b.id) alts
 
   Tick t e  -> Tick t <$> checkExpr e
   Cast e co -> Cast <$> checkExpr e <*> pure co
 
 checkAlt :: UsageEnv -- ^ The scrutinee's usage environment
+         -> Var      -- ^ Case binder name
          -> LCAlt -> LinearCoreM LCAlt
 
 --- * ALT_
-checkAlt _ (Alt DEFAULT [] rhs) = do
+checkAlt _ _ (Alt DEFAULT [] rhs) = do
   rhs' <- checkExpr rhs
   return (Alt DEFAULT [] rhs')
 
-checkAlt _ (Alt DEFAULT _ _) = error "impossible"
+checkAlt _ _ (Alt DEFAULT _ _) = error "impossible"
 
 --- * ALT0
-checkAlt ue (Alt (LitAlt l) [] rhs) = do
-  rhs' <- Linear.Core.Monad.drop ue $ checkExpr rhs
+checkAlt ue zbind (Alt (LitAlt l) [] rhs) = do
+  rhs' <- Linear.Core.Monad.drop ue >> dropEnvOf zbind >> checkExpr rhs
   return (Alt (LitAlt l) [] rhs')
 
-checkAlt _ (Alt (LitAlt _) _ _) = error "impossible"
+checkAlt _ _ (Alt (LitAlt _) _ _) = error "impossible"
 
 --- * ALT0
-checkAlt ue a@(Alt (DataAlt con) args rhs)
+checkAlt ue zbind a@(Alt (DataAlt con) args rhs)
   | all (isManyTy . scaledMult) (dataConOrigArgTys con)
-  = do -- pprTrace "ALT0 con" (ppr a Ppr.<> Ppr.text ". (UE):" Ppr.<> ppr ue) $ do
-          -- Add unrestricted binders
+  = pprTrace "ALT0 con" (ppr a Ppr.<> Ppr.text ". (UE):" Ppr.<> ppr ue) $ do
+          -- Add unrestricted and coercion binders
   rhs' <- extends PatternBinder (L.map (\arg -> (arg.id, LambdaBound (Relevant ManyTy))) args)
           -- Drop from the environment the fully used resources
           $ Linear.Core.Monad.drop ue
-          $ checkExpr rhs
+          -- Drop from the binder environment the fully used resources to make it unrestricted
+          >> dropEnvOf zbind
+          >> checkExpr rhs
   return (Alt (DataAlt con) args rhs')
 
 --- * ALTN
@@ -223,7 +228,7 @@ checkAlt ue a@(Alt (DataAlt con) args rhs)
 -- We do lose the ability to make a linear pattern variable unrestricted if no resources were assigned to it, but that's probably never going to happen in the transformations.
 -- It's probably not worth it trying to be that smart, and we don't do substitution here (only checking). Even if we did substituttion things would likely work since all linear variables are used once, despite the theory not working
 -- TODO: Do the simple thing
-checkAlt ue alt@(Alt (DataAlt con) args rhs) = do -- pprTrace "ALTN con" (ppr alt) $ do
+checkAlt ue _z alt@(Alt (DataAlt con) args rhs) = pprTrace "ALTN con" (ppr alt) $ do
 
   -- pprTraceM "Constructor type" (ppr (dataConRepType con))
   -- pprTraceM "Constructor arguments:" (ppr args <+> ppr (dataConUnivTyVars con) <+> ppr (dataConExTyCoVars con) <+> ppr (dataConUnivAndExTyCoVars con) <+> ppr (dataConTheta con) <+> ppr (dataConOrigArgTys con) <+> ppr (dataConRepArgTys con))
@@ -260,15 +265,27 @@ checkAlt ue alt@(Alt (DataAlt con) args rhs) = do -- pprTrace "ALTN con" (ppr al
 -- | Reconstruct the usage environment for a given variable with
 --  1. The counts of usages in a group of recursive bindings
 --  2. The In Scope Variables and their corresponding bindings
-reconstructUe :: MonadFail m => Var -> [(Var, M.Map Var Int)] -> LCState -> m UsageEnv
+reconstructUe :: forall m. MonadFail m => Var -> [(Var, M.Map Var Int)] -> LCState -> m UsageEnv
 reconstructUe v usageMap inscope = do
   Just usages <- pure $ L.lookup v usageMap
-  return $ M.foldlWithKey go (UsageEnv []) usages
+  M.foldlWithKey go (return $ UsageEnv []) usages
   where
-    go :: UsageEnv -> Var -> Int -> UsageEnv
-    go (UsageEnv acc) var count = case M.lookup var inscope of
-      Nothing -> error "Var not in scope??"
-      Just binding -> UsageEnv $ go' var count binding ++ acc
+    go :: m UsageEnv -> Var -> Int -> m UsageEnv
+    go mue var count = do
+      UsageEnv acc  <- mue
+      case M.lookup var inscope of
+        Nothing ->
+          -- We might not find the variable in the inscope set if the variable is
+          -- bound by the recursive binder (the rec binder is a rec function)
+          if isId var && not (isManyTy (varMult var)) && count /= 1
+             then
+              fail "Used a linear variable bound in a recursive let binding group not linearly"
+             else
+              -- If all is well, we continue with the usage env acc, but don't
+              -- add this var to the u.e. of the recursive binder, as it is not a
+              -- free linear variable in the binder
+              return (UsageEnv acc)
+        Just binding -> return $ UsageEnv $ go' var count binding ++ acc
 
     go' :: Var -> Int -> Either IdBinding (NonEmpty Mult) -> [(Var, Mult)]
     go' var count (Left (LambdaBound mult)         ) = replicate count (var,mult)

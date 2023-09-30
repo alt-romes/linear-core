@@ -66,7 +66,8 @@ linearCorePass guts = do
 
   msgs <- Linear.Core.runLinearCore prog
   case msgs of
-    [] -> pure ()
+    [] -> do
+      Trace.pprTraceM "[SUCCESS]" (ppr ())
     errs ->
       -- if all (L.isPrefixOf "fail_" . showSDocUnsafe) errs
        -- the fail_ thing was an attempt to allow the plugin to continue on
@@ -74,6 +75,7 @@ linearCorePass guts = do
        -- then fatalErrorMsg (ppr errs)
        Trace.pprTraceM "[FAILED]" (ppr errs Ppr.$$ ppr prog)
 
+  -- We use a simple bash script to count SUCCESS and FAILED
   return guts -- unchanged guts, after validating them.
 
 --------------------------------------------------------------------------------
