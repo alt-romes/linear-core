@@ -242,7 +242,7 @@ extend :: forall m a. Monad m
        => BindSite -- ^ for error messages
        -> Var -> IdBinding -> LinearCoreT m a -> LinearCoreT m a
 extend bindsite key value computation = LinearCoreT do
-  didOverwrite <- gets (M.lookup key) >>= \case
+  didShadow <- gets (M.lookup key) >>= \case
     Just vl -> do
       -- We override each local top-level binding when we typecheck them individually
       -- but return it, so it can be reset to after the extension (otherwise it would be deleted)
@@ -254,7 +254,7 @@ extend bindsite key value computation = LinearCoreT do
     Nothing -> do
       return Nothing
   modify (M.insert key (Left value))
-  result <- unLC computation
+  result <- pass $ (,cleanboundf) <$> unLC computation
   (isDryRun, _, _) <- ask
   res <- wasConsumed key >>= \case
     Nothing -> return result
@@ -267,9 +267,11 @@ extend bindsite key value computation = LinearCoreT do
       | otherwise
       -> do
         -- Non linear resource needs to be deleted from scope, or otherwise would escape
+        -- (or this is a linear resource unused in a dry run)
         modify (M.delete key)
         return result
-  case didOverwrite of
+
+  case didShadow of
     Nothing -> return res
     Just vl -> do
       modify (M.insert key vl)
@@ -278,6 +280,14 @@ extend bindsite key value computation = LinearCoreT do
     -- Returns 'Nothing' if it was consumed, and Just m otherwise
     wasConsumed :: forall m'. MonadState LCState m' => Var -> m' (Maybe (Either IdBinding (NonEmpty Mult)))
     wasConsumed x = gets (M.lookup x)
+
+    -- extremely contrived but no time to do this well we remove all occurrences
+    -- of variables bound inside a dry run computation, since we only care about
+    -- recording free linear variables in the binders.
+    -- It might seem as we don't check if these variables are used linearly, but we do when we type the let binders a second time with the correct usage environments.
+    -- The dry run info (the writer state) is really only about recording stuff to construct the environments. Then we type as usual using those envs.
+    -- But only for lambda bound things... or otherwise we'd delete the same let binders we are trying to type out of the environment
+    cleanboundf = filter (\wr -> bindsite == LambdaBinder && fst wr /= key)
 
 -- | 'extend' multiple variables
 extends :: Monad m => BindSite -> [(Var, IdBinding)] -> LinearCoreT m a -> LinearCoreT m a
@@ -361,7 +371,7 @@ record computation = LinearCoreT do
       diffgo (Left (LambdaBound m)) (Right (NE.toList -> ne)) = Just (Right $ NE.fromList $ makeFullSplitsOn m ne L.\\ ne)
       diffgo (Left (DeltaBound _)) (Right _) = error "How would that happen? DB"
       diffgo (Right _) (Left _) = error "How would that happen?"
-      diffgo (Right (NE.toList -> ne1)) (Right (NE.toList -> ne2)) = Just (Right $ NE.fromList (ne1 L.\\ ne2))
+      diffgo (Right (NE.toList -> ne1)) (Right (NE.toList -> ne2)) = Right <$> NE.nonEmpty (ne1 L.\\ ne2)
       
       -- Takes an (original) mult and a list of mults that remain after consuming fragments of the original mult.
       -- Returns the mults (fragments) that were effectively consumed.
@@ -378,25 +388,29 @@ record computation = LinearCoreT do
                         (v, Right mults) -> pure $ map (v,) $ NE.toList mults
                 ) (M.toList diffs)
 
--- | Count the number of times linear variables in a computation are consumed.
--- This doesn't ever make the computation fail because of linearity because we
--- disable checking. It's a dry run, only useful to determine if certain things
--- are going to be used more than once (in particular for the recursive usage
--- environment inference algorithm)
+-- | Count the number of times *free* linear variables in a computation are
+-- consumed.  This doesn't ever make the computation fail because of linearity
+-- because we disable checking. It's a dry run, only useful to determine if
+-- certain things are going to be used more than once (in particular for the
+-- recursive usage environment inference algorithm)
 dryRun :: Monad m => LinearCoreT m a -> LinearCoreT m (a, M.Map Var Int)
 dryRun comp = LinearCoreT do
+  (isRecording, _, _) <- ask
+
   -- We listen to a local computation in which recording flag is true
-  (a, S.toList . S.fromList . map fst -> w) <- listen $ local (\(_,irr,n) -> (True,irr,n)) (unLC comp)
+  pass $ do
+    (a, S.toList . S.fromList . map fst -> w) <- listen $ local (\(_,irr,n) -> (True,irr,n)) (unLC comp)
+    -- Make a usage environment from the number of times some variable is used.
+    let w' = M.fromListWith (+) (map (,1) w)
+    let cleanf ww = if isRecording
+                     -- We're recording, so we keep everything written so far
+                     then ww
+                     -- We weren't recording when we called this action, which means we're done recording -- erase the writer state
+                     else []
+    return ((a,w'), cleanf)
+
       --- ^ we take only unique ocurrences of the whole var I guess...
 
-  -- Make a usage environment from the number of times some variable is used.
-  let w' = M.fromListWith (+) (map (,1) w)
-  (isRecording, _, _) <- ask
-  if isRecording
-     -- We're recording, so we keep everything written so far
-     then return (a, w')
-     -- We weren't recording when we called this action, which means we're done recording -- erase the writer state
-     else pass $ return ((a,w'), \_ -> [])
 
 makeEnvResourcesIrrelevant :: Monad m => UsageEnv -> LinearCoreT m ()
 makeEnvResourcesIrrelevant (UsageEnv vs) = do
@@ -425,7 +439,7 @@ withSameEnvMap f ls = do
   lcstate <- get
   (ls', states) <- mapAndUnzipM (\x -> put lcstate >> f x >>= \y -> gets (y,)) ls
   unless (allEq states) $
-    Ppr.pprPanic "withSameEnvMap: Not all eq!" (Ppr.ppr states)
+    throwError $ "withSameEnvMap: Not all eq!" ++ Ppr.showPprUnsafe states
   return ls'
 
 restoringState :: Monad m => LinearCoreT m a -> LinearCoreT m a

@@ -15,6 +15,7 @@ module Linear.Core
 
 -- import GHC.Driver.Config.Core.Lint
 import Control.Monad.State
+import Control.Monad.Except
 import Data.List as L
 import Data.List.NonEmpty (NonEmpty(..))
 import Data.Map.Internal as M
@@ -89,6 +90,7 @@ checkProgram :: LCProgram -> LinearCoreM LCProgram
 checkProgram prog = do
   -- pprTraceM "checkProgram" (ppr prog)
   traverse checkBind prog
+  -- ROMES:TODO: could put SUCCESS message here, for each bind
 
 -- ROMES:TODO: use isGlobalId and setTopLevelBindingName to set the binding
 -- name, s.t. functions started with "fail" don't crash the plugin
@@ -115,7 +117,9 @@ checkBind (Rec bs) = do
     (extends LetRecBinderDry
          (L.map (\(LCVar b (Just _d)) -> (b, LambdaBound (Relevant OneTy))) ids0)
          (traverse (dryRun . checkExpr) rhss))
+  pprTraceM "naiveUsages" (ppr naiveUsages)
   let recUsages = computeRecUsageEnvs (zip (L.map (.id) ids0) naiveUsages)
+  pprTraceM "recUsages" (ppr recUsages)
 
       -- Repeated ocurrences of linear variables will be represented as many
       -- times as they occur in the recursive bindings in the usage
@@ -265,7 +269,7 @@ checkAlt ue _z alt@(Alt (DataAlt con) args rhs) = pprTrace "ALTN con" (ppr alt) 
 -- | Reconstruct the usage environment for a given variable with
 --  1. The counts of usages in a group of recursive bindings
 --  2. The In Scope Variables and their corresponding bindings
-reconstructUe :: forall m. MonadFail m => Var -> [(Var, M.Map Var Int)] -> LCState -> m UsageEnv
+reconstructUe :: forall m. (MonadFail m, MonadError String m) => Var -> [(Var, M.Map Var Int)] -> LCState -> m UsageEnv
 reconstructUe v usageMap inscope = do
   Just usages <- pure $ L.lookup v usageMap
   M.foldlWithKey go (return $ UsageEnv []) usages
@@ -279,7 +283,7 @@ reconstructUe v usageMap inscope = do
           -- bound by the recursive binder (the rec binder is a rec function)
           if isId var && not (isManyTy (varMult var)) && count /= 1
              then
-              fail "Used a linear variable bound in a recursive let binding group not linearly"
+              throwError $ "Used a linear variable bound in a recursive let binding group not linearly: " ++ showPprUnsafe var ++ " ; " ++ showPprUnsafe (usageMap, inscope)
              else
               -- If all is well, we continue with the usage env acc, but don't
               -- add this var to the u.e. of the recursive binder, as it is not a

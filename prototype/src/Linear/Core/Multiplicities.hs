@@ -20,7 +20,7 @@ import GHC.Prelude (pprTrace, pprTraceM)
 --------------------------------------------------------------------------------
 
 data BindSite = LetBinder | LetRecBinder | LetRecBinderDry | LambdaBinder | CaseBinder | PatternBinder
-  deriving Show
+  deriving (Show, Eq)
 
 data IdBinding = LambdaBound Mult    -- lambdas
                | DeltaBound UsageEnv -- both let and case binders (including pattern variables)

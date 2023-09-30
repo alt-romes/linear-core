@@ -232,7 +232,7 @@
                                    ~ (con_aoe7 :: (Type -> Constraint)) :: Constraint)
                                   ~R# ((con_aoe7 :: (Type -> Constraint))
                                        ~ (Obj cat_aoe5 :: (Type -> Constraint)) :: Constraint)))
-                      wild_X1
+                      wild_X1 -- the issue was not making the binder unrestricted in these situations
                       (ipv_spa7 c_anm0))
            };
 
