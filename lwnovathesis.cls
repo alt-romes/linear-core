@@ -105,5 +105,6 @@
 
 % Colored links
 \usepackage{hyperref}
-\hypersetup{colorlinks=true,linkcolor=red, citecolor=magenta}
+\hypersetup{colorlinks=true, linkcolor=black, citecolor=magenta, breaklinks, pdfdisplaydoctitle}
+% Display document title as PDF title instead of file name
 
