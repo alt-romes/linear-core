@@ -143,10 +143,17 @@ checkExpr expr = case expr of
     -- We use make type variables unrestricted in the environment (fromMaybe)
     -> Lam b <$> extend LambdaBinder b.id (fromMaybe (LambdaBound (Relevant ManyTy)) (multBinding b.id)) (checkExpr e)
   Let bind@(NonRec _b _) body
+    | isId _b.id
     -> do
       bind'@(NonRec (LCVar b (Just delta')) _) <- restoringState $ checkBind bind
       Let bind'
           <$> extend LetBinder b delta' (checkExpr body)
+
+    -- We ignore multiplicity semiring and type abstractions, just check linearity
+    | otherwise
+    -> do
+      bind'@(NonRec (LCVar _ Nothing) _) <- restoringState $ checkBind bind
+      Let bind' <$> checkExpr body
   Let bind@(Rec _bs) body
     -> do
       bind'@(Rec (unzip -> (bs, _))) <- restoringState $ checkBind bind
@@ -217,8 +224,19 @@ checkAlt ue a@(Alt (DataAlt con) args rhs)
 -- TODO: Do the simple thing
 checkAlt ue alt@(Alt (DataAlt con) args rhs) = pprTrace "ALTN con" (ppr alt) $ do
 
+  pprTraceM "Constructor type" (ppr (dataConRepType con))
+  pprTraceM "Constructor arguments:" (ppr args <+> ppr (dataConUnivTyVars con) <+> ppr (dataConExTyCoVars con) <+> ppr (dataConUnivAndExTyCoVars con) <+> ppr (dataConTheta con) <+> ppr (dataConOrigArgTys con) <+> ppr (dataConRepArgTys con))
+
   let (unrestricted_args, linear_args) = bimap (L.map snd) (L.map snd) $
-                                          L.partition (isManyTy . scaledMult . fst) (zip (dataConOrigArgTys con) args)
+                                          L.partition (isManyTy . fst)
+                                                      (zip (L.map scaledMult (dataConOrigArgTys con)) (L.drop nonOrigArgsLength args)
+                                                      ++ L.map (ManyTy,) (L.take nonOrigArgsLength args)) -- then re-add the things we dropped as unrestricted things
+                                                        where
+                                                          -- We need to drop all things which we don't care about for in linearity.
+                                                          -- see DataCon (eg type variables, coercions, constraints)
+                                                          nonOrigArgsLength = length (dataConExTyCoVars con) + dataConRepArity con - dataConSourceArity con
+
+  pprTraceM "Unr args in ALTN con:" (ppr unrestricted_args)
 
   -- Add the tag the usage environment with the linear resources with this constructor and an index for each
   -- It will ensure that when we consume the resources by using this environment, we'll just split the resource according to the tag.

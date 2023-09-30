@@ -241,21 +241,22 @@ extend :: forall m a. Monad m
        => BindSite -- ^ for error messages
        -> Var -> IdBinding -> LinearCoreT m a -> LinearCoreT m a
 extend bindsite key value computation = LinearCoreT do
-  gets (M.lookup key) >>= \case
+  didOverwrite <- gets (M.lookup key) >>= \case
     Just vl -> do
       case vl of
         Left (DeltaBound (UsageEnv [])) ->
           -- We override each local top-level binding when we typecheck them individually
-          return ()
+          -- but return it, so it can be reset to (DeltaBound (UsageEnv [])) after the extension (otherwise it would be deleted)
+          return True
         _ -> do
           throwError $ fromString $
             "Tried to extend a computation with a resource that was already in the environment: " ++ showPprUnsafe (key,value) ++ "; Binder: " ++ show bindsite
     Nothing -> do
-      return ()
+      return False
   modify (M.insert key (Left value))
   result <- unLC computation
   (isDryRun, _, _) <- ask
-  wasConsumed key >>= \case
+  res <- wasConsumed key >>= \case
     Nothing -> return result
     Just ms
       | either isBindingLinear (const True) ms
@@ -268,6 +269,11 @@ extend bindsite key value computation = LinearCoreT do
         -- Non linear resource needs to be deleted from scope, or otherwise would escape
         modify (M.delete key)
         return result
+  if didOverwrite
+     then do
+       modify (M.insert key (Left $ DeltaBound (UsageEnv [])))
+       return res
+     else return res
   where
     -- Returns 'Nothing' if it was consumed, and Just m otherwise
     wasConsumed :: forall m'. MonadState LCState m' => Var -> m' (Maybe (Either IdBinding (NonEmpty Mult)))
