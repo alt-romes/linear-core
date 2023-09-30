@@ -116,14 +116,13 @@ heavily rewrite the source program, pushing the interaction of linearity and
 laziness to its limit, regardless of the original program typing linearity
 conservatively.
 %
-We present Linear Core, a type system that understands semantic linearity in
-the presence of laziness, suitable for the Core intermediate language of the
-Glasgow Haskell Compiler. We prove Linear Core is both type safe and that
-multiple optimising transformations preserve linearity in Linear Core while
-failing to do so in Core. We implemented Linear Core as a compiler plugin to
-validate the system against established libraries, including
+We present Linear Core, the first type system that understands semantic
+linearity in the presence of laziness, suitable for the Core intermediate
+language of the Glasgow Haskell Compiler. We prove Linear Core is both type
+safe and that multiple optimising transformations preserve linearity in Linear
+Core while failing to do so in Core. We have implemented Linear Core as a
+compiler plugin to validate the system against established libraries, including
 \texttt{linear-base}, in the heart of the compiler.
-
 
 %%% PREPARATION ABSTRACT %%%
 %Linear types were added both to Haskell and to its Core intermediate language,
@@ -153,6 +152,27 @@ validate the system against established libraries, including
 
 \renewcommand{\abstractname}{Resumo}
 \begin{abstract}
+Num sistema de tipos linear, recursos lineares têm de ser usados
+\emph{exatamente uma vez}. Usar um recurso linear costuma ser equivalente a uma
+ocorrência \emph{sintática} do mesmo no programa, no entanto, sob a perspectiva
+de avaliação \emph{lazy}, a linearidade pode ser também compreendida de forma
+\emph{semântica}, observando que uma ocorrência sintática de um recurso não
+significa necessariamente que esse recurso é usado quando o programa é
+avaliado.
+%
+Linearidade semântica é especialmente relevante em compiladores que optimizam
+linguagens com linearidade e \emph{laziness}: a \emph{laziness} permite ao
+compilador transformar consideravelmente o programa original, de forma que a
+interacção entre linearidade e \emph{laziness} é levada ao extremo,
+independentemente de como a linearidade foi tipificada no programa original.
+%
+Desenvolvemos o primeiro sistema de tipos (\emph{Linear Core}) que compreende
+linearidade semântica na presença de \emph{laziness}, um sistema adequado para
+a linguagem intermédia (\emph{Core}) do Glasgow Haskell Compiler. Provámos que
+o sistema é \emph{type safe} e que várias optimizações preservam linearidade no
+Linear Core, apesar de as mesmas não a preservarem no Core. Implementámos o
+Linear Core como um \emph{plugin} para o compilador, com o objectivo de validar
+o sistema em bibliotecas lineares populares, como a \emph{linear-base}.
 
 %%% PREPARATION ABSTRACT %%%
 %Tipos lineares foram integrados ambos no Haskell e na sua linguagem intermédia,
