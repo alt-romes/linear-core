@@ -103,55 +103,80 @@
 
 \abstractnum
 \begin{abstract}
-Linear types were added both to Haskell and to its Core intermediate language,
-which is used as an internal consistency tool to validate the transformations a
-Haskell program undergoes during compilation.
+Linear type systems guarantee linear resources are used \emph{exactly once}.
+Traditionally, using a resource is synonymous with its \emph{syntactic}
+occurrence in the program, however, under the lens of \emph{lazy} evaluation,
+linearity can be further understood \emph{semantically}, where a
+syntactic occurrence of a resource does not necessarily entail
+\emph{using} that resource when the program is evaluated.
 %
-However, the current Core type-checker rejects many linearly valid programs
-that originate from Core-to-Core optimising transformations. As such, linearity
-typing is effectively disabled, for otherwise disabling optimizations would be
-far more devastating.
+Semantic linearity is especially necessary in optimising compilers for
+languages combining linearity and laziness: optimisations leverage laziness to
+heavily rewrite the source program, pushing the interaction of linearity and
+laziness to its limit, regardless of the original program typing linearity
+conservatively.
 %
-% This dissertation presents an extension to Core's type system that accepts a
-The goal of our proposed dissertation is to develop an extension to Core's type
-system that accepts a larger amount of programs and verifies that optimising
-transformations applied to well-typed linear Core produce well-typed linear
-Core.
-%
-Our extension will be based on attaching variable \emph{usage environments} to
-binders, which augment the type system with more  fine-grained contextual
-linearity information, allowing the system to accept programs which seem to
-syntactically violate linearity but preserve linear resource usage. We will
-also develop a usage environment inference procedure and integrate the
-procedure with the type checker.  We will validate our proposal by showing a
-range of Core-to-Core transformations can be typed by our system.
+We present Linear Core, a type system that understands semantic linearity in
+the presence of laziness, suitable for the Core intermediate language of the
+Glasgow Haskell Compiler. We prove Linear Core is both type safe and that
+multiple optimising transformations preserve linearity in Linear Core while
+failing to do so in Core. We implemented Linear Core as a compiler plugin to
+validate the system against established libraries, including
+\texttt{linear-base}, in the heart of the compiler.
+
+
+%%% PREPARATION ABSTRACT %%%
+%Linear types were added both to Haskell and to its Core intermediate language,
+%which is used as an internal consistency tool to validate the transformations a
+%Haskell program undergoes during compilation.
+%%
+%However, the current Core type-checker rejects many linearly valid programs
+%that originate from Core-to-Core optimising transformations. As such, linearity
+%typing is effectively disabled, for otherwise disabling optimizations would be
+%far more devastating.
+%%
+%% This dissertation presents an extension to Core's type system that accepts a
+%The goal of our proposed dissertation is to develop an extension to Core's type
+%system that accepts a larger amount of programs and verifies that optimising
+%transformations applied to well-typed linear Core produce well-typed linear
+%Core.
+%%
+%Our extension will be based on attaching variable \emph{usage environments} to
+%binders, which augment the type system with more  fine-grained contextual
+%linearity information, allowing the system to accept programs which seem to
+%syntactically violate linearity but preserve linear resource usage. We will
+%also develop a usage environment inference procedure and integrate the
+%procedure with the type checker.  We will validate our proposal by showing a
+%range of Core-to-Core transformations can be typed by our system.
 \end{abstract}
 \cleardoublepage
 
 \renewcommand{\abstractname}{Resumo}
 \begin{abstract}
-Tipos lineares foram integrados ambos no Haskell e na sua linguagem intermédia,
-Core, que serve como uma ferramenta de consistência interna do compilador que
-valida as transformações feitas nos programas ao longo do processo de
-compilação.
-%
-No entanto, o sistema de tipos do Core rejeita programas lineares válidos que
-são produto de optimizações Core-to-Core, de tal forma que a validação da
-linearidade ao nível do sistema de tipos não consegue ser desempenhada com
-sucesso, sendo que a alternativa, não aplicar optimizações, tem resultados
-bastante mais indesejáveis.
-%
-O objetivo da dissertação que nos propomos a fazer é extender ao sistema de
-tipos do Core de forma a aceitar mais programas lineares, e verificar que as
-optimizações usadas não destroem a linearidade dos programas.
-%
-A nossa extensão parte de adicionar \emph{ambientes de uso} às variáveis,
-aumentando o sistema de tipos com informação de linearidade suficiente para
-aceitar programas que aparentemente violam linearidade sintaticamente, mas que
-a preservam a um nível semântico. Para além do sistema de tipos, vamos
-desenvolver um algoritmo de inferência de \emph{ambientes de uso}. Vamos
-validar a nossa proposta através do conjunto de transformações Core-to-Core que
-o nosso sistema consegue tipificar.
+
+%%% PREPARATION ABSTRACT %%%
+%Tipos lineares foram integrados ambos no Haskell e na sua linguagem intermédia,
+%Core, que serve como uma ferramenta de consistência interna do compilador que
+%valida as transformações feitas nos programas ao longo do processo de
+%compilação.
+%%
+%No entanto, o sistema de tipos do Core rejeita programas lineares válidos que
+%são produto de optimizações Core-to-Core, de tal forma que a validação da
+%linearidade ao nível do sistema de tipos não consegue ser desempenhada com
+%sucesso, sendo que a alternativa, não aplicar optimizações, tem resultados
+%bastante mais indesejáveis.
+%%
+%O objetivo da dissertação que nos propomos a fazer é extender ao sistema de
+%tipos do Core de forma a aceitar mais programas lineares, e verificar que as
+%optimizações usadas não destroem a linearidade dos programas.
+%%
+%A nossa extensão parte de adicionar \emph{ambientes de uso} às variáveis,
+%aumentando o sistema de tipos com informação de linearidade suficiente para
+%aceitar programas que aparentemente violam linearidade sintaticamente, mas que
+%a preservam a um nível semântico. Para além do sistema de tipos, vamos
+%desenvolver um algoritmo de inferência de \emph{ambientes de uso}. Vamos
+%validar a nossa proposta através do conjunto de transformações Core-to-Core que
+%o nosso sistema consegue tipificar.
 \end{abstract}
 \cleardoublepage
 
