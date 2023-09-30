@@ -30,9 +30,6 @@
 \newtheorem{sublemma}{Lemma}[lemma]
 \newtheorem{assumption}{Assumption}
 
-% Glossary
-\usepackage[toc]{glossaries}
-
 %%%%%%%%%%%%%%  Color-related things   %%%%%%%%%%%%%%
 
 %include polycode.fmt
@@ -84,20 +81,6 @@
 \title{Type-checking Linearity in Core\\ or: Semantic Linearity for a Lazy Optimising Compiler}
 \author{Rodrigo Mesquita \\ Adviser: Bernardo Toninho}
 
-
-\makeglossaries
-
-% \newglossaryentry{GHC}
-% {
-%     name=GHC,
-%     description={The Glorious Glasgow Haskell Compiler}
-% }
-
-% \newglossaryentry{GADT}
-% {
-%     name=GADT,
-%     description={Generalized Algebraic Data Types}
-% }
 
 \begin{document}
 

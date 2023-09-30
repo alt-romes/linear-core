@@ -16,7 +16,7 @@ $(DOCNAME).pdf: $(DOCNAME).tex $(DEPS)
 
 final: $(DOCNAME).tex $(DEPS)
 	pdflatex $(DOCNAME).tex
-	makeglossaries $(DOCNAME)
+	# makeglossaries $(DOCNAME)
 	bibtex 	 $(DOCNAME).aux
 	pdflatex $(DOCNAME).tex
 	pdflatex $(DOCNAME).tex
