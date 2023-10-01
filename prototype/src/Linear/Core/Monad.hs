@@ -387,7 +387,7 @@ diffResources = M.differenceWith diffgo
              -> Either IdBinding (NonEmpty Mult)
              -> Maybe (Either IdBinding (NonEmpty Mult))
       diffgo (Left _) (Left _)  = Nothing -- for left bindings, equal keys means something wasn't used (thus not relevant in the diff)
-      diffgo (Left (LambdaBound m)) (Right (NE.toList -> ne)) = Just (Right $ NE.fromList $ makeFullSplitsOn m ne L.\\ ne)
+      diffgo (Left (LambdaBound m)) (Right (NE.toList -> ne)) = Right <$> NE.nonEmpty ([m] `setDiffAwareOfSplits` ne) -- we might delete the resource if the split has just 1 position
       diffgo (Left (DeltaBound _)) (Right _) = error "How would that happen? DB"
       diffgo (Right _) (Left _) = error "How would that happen?"
       diffgo (Right (NE.toList -> ne1)) (Right (NE.toList -> ne2)) = Right <$> NE.nonEmpty (ne1 `setDiffAwareOfSplits` ne2)
@@ -406,15 +406,6 @@ diffResources = M.differenceWith diffgo
               Right (res,_wasconsumed) -> res ++ ys -- the one that was consumed is deleted, but not the remaining resources
           | otherwise
           = y : godelete x ys
-
-      -- Takes an (original) mult and a list of mults that remain after consuming fragments of the original mult.
-      -- Returns the mults (fragments) that were effectively consumed.
-      makeFullSplitsOn :: Mult -> [Mult] -> [Mult]
-      makeFullSplitsOn orig = go [orig]
-          where
-            go :: [Mult] -> [Mult] -> [Mult]
-            go origs [] = origs
-            go origs (r:remains) = go (concatMap (splitResourceAtTagStack (extractTags r)) origs) remains
 
 -- | Count the number of times *free* linear variables in a computation are
 -- consumed.  This doesn't ever make the computation fail because of linearity
@@ -442,6 +433,7 @@ dryRun comp = LinearCoreT do
 
 makeEnvResourcesIrrelevant :: Monad m => UsageEnv -> LinearCoreT m ()
 makeEnvResourcesIrrelevant (UsageEnv vs) = do
+  pprTraceM "Making resource irrelevant in case alternative" $! Ppr.empty
   lcstate0 <- get
   lcstate1 <- forM vs $ \(var,mult) -> do
     case M.lookup var lcstate0 of
@@ -452,13 +444,14 @@ makeEnvResourcesIrrelevant (UsageEnv vs) = do
         -> do
           -- We might reach this situation if the resource being consumed has
           -- been split and its usage environment reflects this; but we restored the state (hence re-put the unsplit resource)
-          -- Simply, we split the resource again, and make it irrelevant
-          pure (var, Right $ NE.fromList $ map makeMultIrrelevant $ splitResourceAtTagStack (extractTags mult) m)
+          -- We can simply keep the unsplit resource, as later uses of the split resource will split as needed again.
+          pure (var, Left (LambdaBound (makeMultIrrelevant m)))
       Just (Left (DeltaBound env')) -> pure (var, Left (DeltaBound $ makeIrrelevant env'))
       Just (Right mults) -> pure (var, Right $ NE.map (\x -> if x == mult then makeMultIrrelevant x else x) mults)
   -- pprTraceM "mkEnvResIrr lcstate0" (Ppr.ppr lcstate0)
   -- pprTraceM "mkEnvResIrr lcstate1" (Ppr.ppr lcstate1)
   put (M.fromList lcstate1 <> lcstate0)
+  pprTraceM "Made resources irrelevant in case alternative" $! Ppr.empty
 
 -- | Run a list of monadic computation ala 'mapM' but restoring the typing environment
 -- for each individual action

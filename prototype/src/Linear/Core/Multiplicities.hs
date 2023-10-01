@@ -181,14 +181,6 @@ splitAsNeededThenConsume ir ts' m'' = do
 splitResourceAt :: GHC.Plugins.DataCon -> Mult -> [Mult]
 splitResourceAt con mult = map (\i -> Tagged (Tag con i) mult) [1..numberOfLinearFields con]
 
--- | Splits a resource at a tagstack, basically generating a fragment matching
--- each tag, (recursively) splitting as many times as necessary
-splitResourceAtTagStack :: [Tag] -> Mult -> [Mult]
-splitResourceAtTagStack []     m    = [m]
-splitResourceAtTagStack (Tag c i:ts) mult = do
-  let res = splitResourceAt c mult
-   in concatMap (\(m', i') -> if i == i' then splitResourceAtTagStack ts m' else [m']) (zip res [1..])
-
 numberOfLinearFields :: GHC.Plugins.DataCon -> Int
 numberOfLinearFields = length . filter (not . GHC.Plugins.isManyTy . scaledMult) . GHC.Plugins.dataConOrigArgTys
 

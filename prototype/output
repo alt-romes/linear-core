@@ -7,3 +7,9 @@ In order, the following will be built (use -v for more details):
  - linear-core-prototype-0.1.0.0 (lib) (configuration changed)
  - linear-core-prototype-0.1.0.0 (exe:linear-core-prototype) (configuration changed)
 Configuring library for linear-core-prototype-0.1.0.0..
+Error: cabal-3.10.1.0: ghc-pkg dump failed: dieVerbatim: user error (Error:
+cabal-3.10.1.0: '/Users/romes/.ghcup/ghc/9.6.2/bin/ghc-pkg-9.6.2'
+exited with an error:
+ghc-pkg-9.6.2: interrupted
+)
+

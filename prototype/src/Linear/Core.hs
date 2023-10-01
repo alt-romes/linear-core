@@ -195,7 +195,7 @@ checkExpr expr = case expr of
             put lcs0 -- we restore the state for each alternative, not before (otherwise resources aren't consumed in the EmptyCase)
             makeEnvResourcesIrrelevant ue
             extend CaseBinder b.id (DeltaBound irrUe) $
-              checkAlt irrUe b.id (exprType (unconvertExpr e)) alt) alts
+              pprTrace "checking alt" Ppr.empty $ checkAlt irrUe b.id (exprType (unconvertExpr e)) alt) alts
 
   Tick t e  -> Tick t <$> checkExpr e
   Cast e co -> Cast <$> checkExpr e <*> pure co
