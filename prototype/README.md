@@ -258,5 +258,5 @@ Same thing for (eta1_X2):
 ```
 elim3 :: forall a. (a %1 -> a %1 -> a %1 -> [a]) %1 -> V 3 a %1 -> [a]
 ```
-
+1 Oct: The plugin seems to hang when linking, after validating all programs, for some reason I don't understand, but only on linear base...
 

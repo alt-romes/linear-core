@@ -8,6 +8,7 @@ import GHC.Core.Multiplicity (scaledMult)
 import GHC.Types.Var
 import GHC.Utils.Outputable
 import qualified Data.List as L
+import qualified GHC.Core.TyCon as C
 import qualified GHC.Core.Multiplicity as C
 import qualified GHC.Core.Type as C
 import qualified GHC.Plugins
@@ -190,6 +191,11 @@ splitResourceAtTagStack (Tag c i:ts) mult = do
 
 numberOfLinearFields :: GHC.Plugins.DataCon -> Int
 numberOfLinearFields = length . filter (not . GHC.Plugins.isManyTy . scaledMult) . GHC.Plugins.dataConOrigArgTys
+
+-- Returns True when all constructors of this datatype have 0 linear components
+allConstructorsAreUnrestricted :: C.Type -> Bool
+allConstructorsAreUnrestricted (C.TyConApp tc _) = all ((== 0) . numberOfLinearFields) $ C.tyConDataCons tc
+allConstructorsAreUnrestricted _ = False
 
 --------------------------------------------------------------------------------
 ----- Usage Environments -------------------------------------------------------

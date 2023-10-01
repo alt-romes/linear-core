@@ -13,6 +13,7 @@ module Linear.Core
   -- )
   where
 
+import Control.Monad
 -- import GHC.Driver.Config.Core.Lint
 import Control.Monad.State
 import Control.Monad.Except
@@ -205,8 +206,17 @@ checkAlt :: UsageEnv -- ^ The scrutinee's usage environment
          -> LCAlt -> LinearCoreM LCAlt
 
 --- * ALT_
-checkAlt _ _ _ (Alt DEFAULT [] rhs) = do
+checkAlt ue zbind s_ty (Alt DEFAULT [] rhs) = do
   rhs' <- checkExpr rhs
+
+  -- When we're matching on a resource s.t., regardless of the constructor,
+  -- there are no linear components, we can say in the DEFAULT alternative
+  -- the binder is unrestricted too, and the resources are fully consumed.
+  when (allConstructorsAreUnrestricted s_ty) $ do
+        -- Drop from the binder environment the fully used resources to make it unrestricted
+        Linear.Core.Monad.drop ue
+        dropEnvOf zbind
+
   return (Alt DEFAULT [] rhs')
 
 checkAlt _ _ _ (Alt DEFAULT _ _) = error "impossible"

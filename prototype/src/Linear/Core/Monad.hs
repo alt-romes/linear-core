@@ -22,7 +22,6 @@ module Linear.Core.Monad
   , setTopLevelBindingName
 
   -- * Utils
-  , pprDebugState
   , restoringState
   , LCState
   )
@@ -468,7 +467,7 @@ withSameEnvMap f ls = LinearCoreT do
   lcstate <- get
   (ls', states) <- mapAndUnzipM (\x -> put lcstate >> unLC (f x) >>= \y -> gets (y,)) ls
   unless (allEq states) $
-    throwError $ "withSameEnvMap: Not all eq!" ++ Ppr.showPprUnsafe states
+    throwError $ "withSameEnvMap: Not all eq!" ++ Ppr.showPprUnsafe (fmap (M.filter (\case Left (DeltaBound _) -> False; _ -> True)) states)
   return ls'
 
 restoringState :: Monad m => LinearCoreT m a -> LinearCoreT m a
@@ -487,6 +486,3 @@ allEq = allEq' Nothing where
   allEq' Nothing  (x:xs) = allEq' (Just x) xs
   allEq' (Just y) (x:xs) = x == y && allEq' (Just y) xs
   
-pprDebugState :: Monad m => LinearCoreT m ()
-pprDebugState = get >>= pprTraceM "Debug State" . Ppr.ppr
-
