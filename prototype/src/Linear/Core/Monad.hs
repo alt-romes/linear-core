@@ -140,12 +140,12 @@ use = flip use' [] where
     -- Lookup the variable in the environment
     mv <- gets (M.lookup key)
 
-    pprTraceM "Using var" (Ppr.ppr key Ppr.<+> Ppr.text "with mult" Ppr.<+>
-      Ppr.ppr mv Ppr.<+> Ppr.text "and tag environment" Ppr.<+> Ppr.ppr mtags
-      Ppr.<+> Ppr.text "; allowIrr: " Ppr.<+> Ppr.text (show allowsIrrelevant))
+    -- pprTraceM "Using var" (Ppr.ppr key Ppr.<+> Ppr.text "with mult" Ppr.<+>
+    --   Ppr.ppr mv Ppr.<+> Ppr.text "and tag environment" Ppr.<+> Ppr.ppr mtags
+    --   Ppr.<+> Ppr.text "; allowIrr: " Ppr.<+> Ppr.text (show allowsIrrelevant))
 
 
-    res <- case mv of
+    case mv of
 
       -- Variable has already been consumed (it should be guaranteed to be in scope since Core programs are well-typed)
       Nothing -> do
@@ -233,8 +233,8 @@ use = flip use' [] where
                     modify (M.delete key) -- OK, we only had one fragment left and consumed it
                 Just splits' -> modify (M.insert key (Right splits'))   -- we keep the remaining fragments
 
-    key_val <- gets (M.lookup key)
-    pprTraceM "Used var, remaining var in env is:" (Ppr.ppr key Ppr.<+> Ppr.ppr key_val)
+    -- key_val <- gets (M.lookup key)
+    -- pprTraceM "Used var, remaining var in env is:" (Ppr.ppr key Ppr.<+> Ppr.ppr key_val)
 
 
 -- | Extend a computation that threads linear resources with a resource that
@@ -305,31 +305,31 @@ drop :: Monad m => UsageEnv -> LinearCoreT m ()
 drop (UsageEnv env) = do
 
   -- Remove resources ocurring in the given usage env from the available resources, then run the computation
-  modify (flip (M.differenceWith diffgo) (M.fromList env))
+  modify (`diffResources` (M.fromListWith (\cases (Right ne1) (Right ne2) -> Right (ne1 <> ne2) ;  _ _ -> error "No left left, left right, or right left") $ L.map (\(v,m) -> if null (extractTags m) then (v, Left (LambdaBound m)) else (v, Right (NE.fromList [m]))) env))
 
-    where
-      -- For keys being dropped that still exist in the environment, 
-      diffgo :: Either IdBinding (NonEmpty Mult)
-             -> Mult
-             -> Maybe (Either IdBinding (NonEmpty Mult))
-      diffgo (Left (LambdaBound _)) (extractTags -> []) = Nothing
-      diffgo (Left (LambdaBound m)) (extractTags -> tags)
-        = Just (case splitAsNeededThenConsume @(Either String) AllowIrrelevant tags m of
-                 Left s -> error s
-                 Right (ms,_) -> Right (NE.fromList ms)
-               )
-      diffgo (Left (DeltaBound _)) _ = error "We shouldn't be dropping a delta var?"
-      diffgo (Right _) (extractTags -> []) = error "unexpected extract tags = []"
-      diffgo (Right mults) (extractTags -> tags) = fmap Right $ NE.nonEmpty $
-        L.concatMap (\m ->
-          if | extractTags m == tags
-             -> []
-             | extractTags m `L.isPrefixOf` tags
-             -> fst . fromRight undefined $
-               splitAsNeededThenConsume AllowIrrelevant tags m
-             | otherwise
-             -> [m]
-            ) (NE.toList mults)
+--     where
+--       -- For keys being dropped that still exist in the environment, 
+--       diffgo :: Either IdBinding (NonEmpty Mult)
+--              -> Mult
+--              -> Maybe (Either IdBinding (NonEmpty Mult))
+--       diffgo (Left (LambdaBound _)) (extractTags -> []) = Nothing
+--       diffgo (Left (LambdaBound m)) (extractTags -> tags)
+--         = Just (case splitAsNeededThenConsume @(Either String) AllowIrrelevant tags m of
+--                  Left s -> error s
+--                  Right (ms,_) -> Right (NE.fromList ms)
+--                )
+--       diffgo (Left (DeltaBound _)) _ = error "We shouldn't be dropping a delta var?"
+--       diffgo (Right _) (extractTags -> []) = error "unexpected extract tags = []"
+--       diffgo (Right mults) (extractTags -> tags) = fmap Right $ NE.nonEmpty $
+--         L.concatMap (\m ->
+--           if | extractTags m == tags
+--              -> []
+--              | extractTags m `L.isPrefixOf` tags
+--              -> fst . fromRight undefined $
+--                splitAsNeededThenConsume AllowIrrelevant tags m
+--              | otherwise
+--              -> [m]
+--             ) (NE.toList mults)
 
 dropEnvOf :: Monad m
           => Var -- ^ The var to make unrestricted by "dropping all resources from it"
@@ -366,10 +366,23 @@ record computation = LinearCoreT do
   prev   <- get
   result <- unLC computation
   after  <- get
-  let diff = M.differenceWith diffgo prev after
+  let diff = diffResources prev after
   diffMults <- extractDiffMults diff
   -- pprTraceM "prev after and diff" (Ppr.ppr diffMults)
   return (result, UsageEnv diffMults)
+    where
+      extractDiffMults :: forall m. MonadError String m => M.Map Var (Either IdBinding (NonEmpty Mult)) -> m [(Var, Mult)]
+      extractDiffMults diffs = concat <$>
+        traverse (\case (_, Left (DeltaBound _)) -> throwError "record: Non linear things disappeared from the context?"
+                        (v, Left (LambdaBound m)) -> pure [(v, m)]
+                        (v, Right mults) -> pure $ map (v,) $ NE.toList mults
+                ) (M.toList diffs)
+
+-- Return the a difference (akin to set difference) from two group of resources, accounting for splits
+-- e.g.
+-- e.g. [(x,One#(,)2)] `diffResources` [(x,One#(,)2#(#,#)2)] == [(x,One#(,)2#(#,#)1)]
+diffResources :: LCState -> LCState -> LCState
+diffResources = M.differenceWith diffgo
     where
       diffgo :: Either IdBinding (NonEmpty Mult)
              -> Either IdBinding (NonEmpty Mult)
@@ -388,31 +401,21 @@ record computation = LinearCoreT do
         godelete x (y:ys)
           | x == y
           = ys
-          | extractTags x `L.isPrefixOf` extractTags y 
-          = case splitAsNeededThenConsume AllowIrrelevant (extractTags y) x of
+          | extractTags y `L.isPrefixOf` extractTags x
+          = case splitAsNeededThenConsume AllowIrrelevant (extractTags x) y of
               Left string -> error string
-              Right (res,_wasconsumed) -> res
+              Right (res,_wasconsumed) -> res ++ ys -- the one that was consumed is deleted, but not the remaining resources
           | otherwise
           = y : godelete x ys
 
-      
       -- Takes an (original) mult and a list of mults that remain after consuming fragments of the original mult.
       -- Returns the mults (fragments) that were effectively consumed.
       makeFullSplitsOn :: Mult -> [Mult] -> [Mult]
-      makeFullSplitsOn orig ls = do
-        let res = go [orig] ls
-         in pprTrace "makeFullSplitsOn" (Ppr.ppr (orig,ls,res)) res
+      makeFullSplitsOn orig = go [orig]
           where
             go :: [Mult] -> [Mult] -> [Mult]
             go origs [] = origs
             go origs (r:remains) = go (concatMap (splitResourceAtTagStack (extractTags r)) origs) remains
-
-      extractDiffMults :: forall m. MonadError String m => M.Map Var (Either IdBinding (NonEmpty Mult)) -> m [(Var, Mult)]
-      extractDiffMults diffs = concat <$>
-        traverse (\case (_, Left (DeltaBound _)) -> throwError "record: Non linear things disappeared from the context?"
-                        (v, Left (LambdaBound m)) -> pure [(v, m)]
-                        (v, Right mults) -> pure $ map (v,) $ NE.toList mults
-                ) (M.toList diffs)
 
 -- | Count the number of times *free* linear variables in a computation are
 -- consumed.  This doesn't ever make the computation fail because of linearity
