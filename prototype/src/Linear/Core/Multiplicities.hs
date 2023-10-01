@@ -14,6 +14,10 @@ import qualified GHC.Plugins
 import Data.Bifunctor
 import Data.Maybe
 import GHC.Prelude (pprTrace, pprTraceM)
+import qualified GHC.Core.TyCo.Rep as C
+import qualified GHC.Core.DataCon as C
+import qualified Data.Map as M
+import GHC.Core.Type (isMultiplicityVar, isMultiplicityTy)
 
 --------------------------------------------------------------------------------
 ----- Id Binding ---------------------------------------------------------------
@@ -49,7 +53,7 @@ data Tag = Tag GHC.Plugins.DataCon Int
 -- when we're 'use'ing a $\Delta$-bound variable, in which case we internally
 -- switch to "AllowIrrelevant" since we know the variable being used is coming
 -- from a usage environment.
-data AllowIrrelevant = DisallowIrrelevant | AllowIrrelevant deriving Eq
+data AllowIrrelevant = DisallowIrrelevant | AllowIrrelevant deriving (Eq, Show)
 
 -- ROMES:TODO: This is an incorrect instance of equality for mults because of mult. vars.
 instance Eq Mult where
@@ -73,6 +77,28 @@ isIrrelevant :: Mult -> Bool
 isIrrelevant (Relevant _)   = False
 isIrrelevant (Irrelevant _) = True
 isIrrelevant (Tagged _ m)   = isIrrelevant m
+
+-- Create a multiplicity map from datacon and type of value using that datatype
+-- The map can then be used to lookup multiplicities of the dataConOrigArgTys
+--
+-- INVARIANT: DataCon constructs value of given type
+-- Returns the [Scaled Type] of dataConOrigArgTys, but the mults of each arg
+-- are instanced by the corresponding type parameter of the datatype
+uniDataConOrigArgTys :: C.DataCon -> C.Type -> [C.Scaled C.Type]
+uniDataConOrigArgTys con ty
+  | C.TyConApp _ args <- ty
+  =
+    let mapmult :: M.Map Var C.Mult
+        mapmult = M.fromList $ zip (C.dataConUnivTyVars con) args
+        res = L.map (\case
+                        C.Scaled m t
+                          | C.TyVarTy mtv <- m
+                          -> C.Scaled (fromMaybe m (M.lookup mtv mapmult)) t
+                          | otherwise -> C.Scaled m t
+                    ) (C.dataConOrigArgTys con)
+     in -- pprTrace "uniDataConOrigArgTys" (ppr con <+> ppr ty <+> ppr (C.dataConUnivTyVars con) <+> ppr (zip (filter isMultiplicityVar (C.dataConUnivTyVars con)) (filter isMultiplicityTy args)) <+> ppr args <+> ppr mapmult <+> ppr res)
+        res
+  | otherwise = C.dataConOrigArgTys con
 
 data Usage = Zero | LCM Mult
 

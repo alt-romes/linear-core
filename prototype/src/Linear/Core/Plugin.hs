@@ -67,7 +67,9 @@ linearCorePass guts = do
   msgs <- Linear.Core.runLinearCore prog
   case msgs of
     [] -> do
-      Trace.pprTraceM "[SUCCESS]" (ppr ())
+      -- print SUCCESS and amount of top-level binds in that program
+      Trace.pprTraceM "[SUCCESS]" $! ppr (length prog)
+      return ()
     errs ->
       -- if all (L.isPrefixOf "fail_" . showSDocUnsafe) errs
        -- the fail_ thing was an attempt to allow the plugin to continue on

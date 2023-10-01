@@ -90,7 +90,6 @@ checkProgram :: LCProgram -> LinearCoreM LCProgram
 checkProgram prog = do
   -- pprTraceM "checkProgram" (ppr prog)
   traverse checkBind prog
-  -- ROMES:TODO: could put SUCCESS message here, for each bind
 
 -- ROMES:TODO: use isGlobalId and setTopLevelBindingName to set the binding
 -- name, s.t. functions started with "fail" don't crash the plugin
@@ -170,50 +169,58 @@ checkExpr expr = case expr of
     -- Expression is in WHNF (See Note [exprIsHNF] and #23771, function is really "exprIsWHNF")
     | exprIsHNF (unconvertExpr e)
     -> do
-      (e', ue) <- restoringState $ record $ checkExpr e
+      lcs0 <- get
+      (e', ue) <- record $ checkExpr e
       Case e'
            (LCVar b.id (deltaBinding ue))
            ty
-       <$> withSameEnvMap (extend CaseBinder b.id (DeltaBound ue) . checkAlt ue b.id) alts
+       <$> withSameEnvMap (\alt -> do
+            put lcs0 -- we restore the state for each alternative, not before (otherwise resources aren't consumed in the EmptyCase)
+            extend CaseBinder b.id (DeltaBound ue) $
+              checkAlt ue b.id (exprType (unconvertExpr e)) alt) alts
     | otherwise
     -- Expression is definitely not in WHNF (or do we really mean HNF?)
     -> do -- pprTrace "Case expression" (ppr casee) $ do
 
       -- We restore the resources here because we make them irrelevant in the env. afterwards
-      (e', ue) <- restoringState $ record $ checkExpr e
+      lcs0 <- get
+      (e', ue) <- record $ checkExpr e
       let irrUe = makeIrrelevant ue
-      -- pprTraceM "Make irrelevant usage environment:" (ppr irrUe)
-      makeEnvResourcesIrrelevant ue
-      -- pprTraceM "Done irr" Ppr.empty
+      pprTraceM "Make irrelevant usage environment:" (ppr irrUe) 
       Case e'
            (LCVar b.id (deltaBinding irrUe))
            ty
-       <$> withSameEnvMap (extend CaseBinder b.id (DeltaBound irrUe) . checkAlt irrUe b.id) alts
+       <$> withSameEnvMap (\alt -> do
+            put lcs0 -- we restore the state for each alternative, not before (otherwise resources aren't consumed in the EmptyCase)
+            makeEnvResourcesIrrelevant ue
+            extend CaseBinder b.id (DeltaBound irrUe) $
+              checkAlt irrUe b.id (exprType (unconvertExpr e)) alt) alts
 
   Tick t e  -> Tick t <$> checkExpr e
   Cast e co -> Cast <$> checkExpr e <*> pure co
 
 checkAlt :: UsageEnv -- ^ The scrutinee's usage environment
          -> Var      -- ^ Case binder name
+         -> Type     -- ^ Scrutinee type
          -> LCAlt -> LinearCoreM LCAlt
 
 --- * ALT_
-checkAlt _ _ (Alt DEFAULT [] rhs) = do
+checkAlt _ _ _ (Alt DEFAULT [] rhs) = do
   rhs' <- checkExpr rhs
   return (Alt DEFAULT [] rhs')
 
-checkAlt _ _ (Alt DEFAULT _ _) = error "impossible"
+checkAlt _ _ _ (Alt DEFAULT _ _) = error "impossible"
 
 --- * ALT0
-checkAlt ue zbind (Alt (LitAlt l) [] rhs) = do
+checkAlt ue zbind _ (Alt (LitAlt l) [] rhs) = do
   rhs' <- Linear.Core.Monad.drop ue >> dropEnvOf zbind >> checkExpr rhs
   return (Alt (LitAlt l) [] rhs')
 
-checkAlt _ _ (Alt (LitAlt _) _ _) = error "impossible"
+checkAlt _ _ _ (Alt (LitAlt _) _ _) = error "impossible"
 
 --- * ALT0
-checkAlt ue zbind a@(Alt (DataAlt con) args rhs)
-  | all (isManyTy . scaledMult) (dataConOrigArgTys con)
+checkAlt ue zbind s_ty a@(Alt (DataAlt con) args rhs)
+  | all (isManyTy . scaledMult) (uniDataConOrigArgTys con s_ty)
   = pprTrace "ALT0 con" (ppr a Ppr.<> Ppr.text ". (UE):" Ppr.<> ppr ue) $ do
           -- Add unrestricted and coercion binders
   rhs' <- extends PatternBinder (L.map (\arg -> (arg.id, LambdaBound (Relevant ManyTy))) args)
@@ -232,21 +239,21 @@ checkAlt ue zbind a@(Alt (DataAlt con) args rhs)
 -- We do lose the ability to make a linear pattern variable unrestricted if no resources were assigned to it, but that's probably never going to happen in the transformations.
 -- It's probably not worth it trying to be that smart, and we don't do substitution here (only checking). Even if we did substituttion things would likely work since all linear variables are used once, despite the theory not working
 -- TODO: Do the simple thing
-checkAlt ue _z alt@(Alt (DataAlt con) args rhs) = pprTrace "ALTN con" (ppr alt) $ do
+checkAlt ue _z s_ty alt@(Alt (DataAlt con) args rhs) = pprTrace "ALTN con" (ppr alt) $ do
 
   -- pprTraceM "Constructor type" (ppr (dataConRepType con))
-  -- pprTraceM "Constructor arguments:" (ppr args <+> ppr (dataConUnivTyVars con) <+> ppr (dataConExTyCoVars con) <+> ppr (dataConUnivAndExTyCoVars con) <+> ppr (dataConTheta con) <+> ppr (dataConOrigArgTys con) <+> ppr (dataConRepArgTys con))
+  -- pprTraceM "Constructor arguments:" (ppr args <+> ppr (dataConUnivTyVars con) <+> ppr (dataConExTyCoVars con) <+> ppr (dataConUnivAndExTyCoVars con) <+> ppr (dataConTheta con) <+> ppr (zip3 (dataConOrigArgTys con) (scaledMult <$> dataConOrigArgTys con) (uniDataConOrigArgTys con s_ty)) <+> ppr (dataConRepArgTys con))
 
   let (unrestricted_args, linear_args) = bimap (L.map snd) (L.map snd) $
                                           L.partition (isManyTy . fst)
-                                                      (zip (L.map scaledMult (dataConOrigArgTys con)) (L.drop nonOrigArgsLength args)
+                                                      (zip (L.map scaledMult (uniDataConOrigArgTys con s_ty)) (L.drop nonOrigArgsLength args)
                                                       ++ L.map (ManyTy,) (L.take nonOrigArgsLength args)) -- then re-add the things we dropped as unrestricted things
                                                         where
                                                           -- We need to drop all things which we don't care about for in linearity.
                                                           -- see DataCon (eg type variables, coercions, constraints)
                                                           nonOrigArgsLength = length (dataConExTyCoVars con) + dataConRepArity con - dataConSourceArity con
 
-  -- pprTraceM "Unr args in ALTN con:" (ppr unrestricted_args)
+--   pprTraceM "Unr args in ALTN con:" (ppr unrestricted_args)
 
   -- Add the tag the usage environment with the linear resources with this constructor and an index for each
   -- It will ensure that when we consume the resources by using this environment, we'll just split the resource according to the tag.

@@ -140,7 +140,10 @@ use = flip use' [] where
     -- Lookup the variable in the environment
     mv <- gets (M.lookup key)
 
-    -- pprTraceM "Using var" (Ppr.ppr key Ppr.<+> Ppr.text "with mult" Ppr.<+> Ppr.ppr mv Ppr.<+> Ppr.text "and tag environment" Ppr.<+> Ppr.ppr mtags)
+    pprTraceM "Using var" (Ppr.ppr key Ppr.<+> Ppr.text "with mult" Ppr.<+>
+      Ppr.ppr mv Ppr.<+> Ppr.text "and tag environment" Ppr.<+> Ppr.ppr mtags
+      Ppr.<+> Ppr.text "; allowIrr: " Ppr.<+> Ppr.text (show allowsIrrelevant))
+
 
     case mv of
 
@@ -357,11 +360,12 @@ unrestricted computation = LinearCoreT do
 -- do so manually (e.g. using 'restoringResources')
 record :: Monad m => LinearCoreT m a -> LinearCoreT m (a, UsageEnv)
 record computation = LinearCoreT do
-  prev :: LCState <- get
+  prev   <- get
   result <- unLC computation
-  after <- get
+  after  <- get
   let diff = M.differenceWith diffgo prev after
   diffMults <- extractDiffMults diff
+  pprTraceM "prev after and diff" (Ppr.ppr diffMults)
   return (result, UsageEnv diffMults)
     where
       diffgo :: Either IdBinding (NonEmpty Mult)
@@ -435,9 +439,9 @@ makeEnvResourcesIrrelevant (UsageEnv vs) = do
 -- | Run a list of monadic computation ala 'mapM' but restoring the typing environment
 -- for each individual action
 withSameEnvMap :: Monad m => (a -> LinearCoreT m b) -> [a] -> LinearCoreT m [b]
-withSameEnvMap f ls = do
+withSameEnvMap f ls = LinearCoreT do
   lcstate <- get
-  (ls', states) <- mapAndUnzipM (\x -> put lcstate >> f x >>= \y -> gets (y,)) ls
+  (ls', states) <- mapAndUnzipM (\x -> put lcstate >> unLC (f x) >>= \y -> gets (y,)) ls
   unless (allEq states) $
     throwError $ "withSameEnvMap: Not all eq!" ++ Ppr.showPprUnsafe states
   return ls'
