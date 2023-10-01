@@ -105,7 +105,7 @@ checkBind (NonRec b e)
 
 checkBind (Rec bs) = do
   let (ids0,rhss) = unzip bs
-  pprTraceM "extending with" (ppr ids0)
+  -- pprTraceM "extending with" (ppr ids0)
   inScope :: LCState <- get
   -- We extend the rhss typechecking with the recursive bindings as if they
   -- were linear variables. This way, we record if they are used more than once.

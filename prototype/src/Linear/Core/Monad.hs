@@ -34,7 +34,7 @@ import qualified Data.Set as S
 import Control.Monad
 import Data.String
 import Control.Monad.State
-import GHC.Prelude (pprTraceM)
+import GHC.Prelude (pprTraceM, pprTrace)
 import qualified GHC.Utils.Outputable as Ppr
 import Control.Monad.RWS.CPS
 import Control.Monad.Except
@@ -145,7 +145,7 @@ use = flip use' [] where
       Ppr.<+> Ppr.text "; allowIrr: " Ppr.<+> Ppr.text (show allowsIrrelevant))
 
 
-    case mv of
+    res <- case mv of
 
       -- Variable has already been consumed (it should be guaranteed to be in scope since Core programs are well-typed)
       Nothing -> do
@@ -232,6 +232,9 @@ use = flip use' [] where
                     -- pprTraceM "Using last lambda bound split" (Ppr.ppr key)
                     modify (M.delete key) -- OK, we only had one fragment left and consumed it
                 Just splits' -> modify (M.insert key (Right splits'))   -- we keep the remaining fragments
+
+    key_val <- gets (M.lookup key)
+    pprTraceM "Used var, remaining var in env is:" (Ppr.ppr key Ppr.<+> Ppr.ppr key_val)
 
 
 -- | Extend a computation that threads linear resources with a resource that
@@ -365,7 +368,7 @@ record computation = LinearCoreT do
   after  <- get
   let diff = M.differenceWith diffgo prev after
   diffMults <- extractDiffMults diff
-  pprTraceM "prev after and diff" (Ppr.ppr diffMults)
+  -- pprTraceM "prev after and diff" (Ppr.ppr diffMults)
   return (result, UsageEnv diffMults)
     where
       diffgo :: Either IdBinding (NonEmpty Mult)
@@ -375,15 +378,34 @@ record computation = LinearCoreT do
       diffgo (Left (LambdaBound m)) (Right (NE.toList -> ne)) = Just (Right $ NE.fromList $ makeFullSplitsOn m ne L.\\ ne)
       diffgo (Left (DeltaBound _)) (Right _) = error "How would that happen? DB"
       diffgo (Right _) (Left _) = error "How would that happen?"
-      diffgo (Right (NE.toList -> ne1)) (Right (NE.toList -> ne2)) = Right <$> NE.nonEmpty (ne1 L.\\ ne2)
+      diffgo (Right (NE.toList -> ne1)) (Right (NE.toList -> ne2)) = Right <$> NE.nonEmpty (ne1 `setDiffAwareOfSplits` ne2)
+
+      -- e.g. [One#(,)2] `setDiffAwareOfSplits` [One#(,)2#(#,#)2] == [One#(,)2#(#,#)1]
+      setDiffAwareOfSplits :: [Mult] -> [Mult] -> [Mult]
+      setDiffAwareOfSplits = foldl (flip godelete) where
+        godelete :: Mult -> [Mult] -> [Mult]
+        godelete _ [] = []
+        godelete x (y:ys)
+          | x == y
+          = ys
+          | extractTags x `L.isPrefixOf` extractTags y 
+          = case splitAsNeededThenConsume AllowIrrelevant (extractTags y) x of
+              Left string -> error string
+              Right (res,_wasconsumed) -> res
+          | otherwise
+          = y : godelete x ys
+
       
       -- Takes an (original) mult and a list of mults that remain after consuming fragments of the original mult.
       -- Returns the mults (fragments) that were effectively consumed.
       makeFullSplitsOn :: Mult -> [Mult] -> [Mult]
-      makeFullSplitsOn orig = go [orig] where
-        go :: [Mult] -> [Mult] -> [Mult]
-        go origs [] = origs
-        go origs (r:remains) = go (concatMap (splitResourceAtTagStack (extractTags r)) origs) remains
+      makeFullSplitsOn orig ls = do
+        let res = go [orig] ls
+         in pprTrace "makeFullSplitsOn" (Ppr.ppr (orig,ls,res)) res
+          where
+            go :: [Mult] -> [Mult] -> [Mult]
+            go origs [] = origs
+            go origs (r:remains) = go (concatMap (splitResourceAtTagStack (extractTags r)) origs) remains
 
       extractDiffMults :: forall m. MonadError String m => M.Map Var (Either IdBinding (NonEmpty Mult)) -> m [(Var, Mult)]
       extractDiffMults diffs = concat <$>
