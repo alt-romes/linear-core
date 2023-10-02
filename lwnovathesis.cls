@@ -31,7 +31,6 @@
 
 % Use memoir as the base class, for documentation run `texdoc memoir`
 % The options set solve (4), (2), (1)
-% TODO: For the latex font, use 11pt or 10pt?
 % \LoadClass[a4paper,11pt,twoside,onecolumn,openright,draft]{memoir}
 \LoadClass[a4paper,11pt,twoside,onecolumn,openright,draft]{memoir}
 

@@ -79,7 +79,7 @@
 \newcommand{\lletrec}[2]{\mathsf{letrec}~#1~\mathsf{in}~#2}
 \newcommand{\ccase}[2]{\mathsf{case}~#1~\mathsf{of}~#2}
 
-\title{Type-checking Linearity in Core\\ or: Semantic Linearity for a Lazy Optimising Compiler}
+\title{Type-checking Linearity in Core:\\ Semantic Linearity for a Lazy Optimising Compiler}
 \author{Rodrigo Mesquita \\ Advisor: Bernardo Toninho}
 \date{ }
 
@@ -330,7 +330,6 @@ ownership types build on linear types to guarantee memory safety
 without garbage collection or reference counting, and, more recently,
 Haskell~\cite{cite:linearhaskell}, a pure, functional, and
 \emph{lazy} general purpose programming language.
-% TODO: Extend above: it's the language of our focus
 %
 % Besides Haskell's supporting linear
 % types according to the said paper, Idris 2\cite{} supports linear types in a
@@ -644,7 +643,7 @@ coercions}) in Chapter~\ref{sec:discussion}, which concludes the document.
 \include{chapters/c8.tex}
 
 \begin{SingleSpace}
-\bibliographystyle{abbrv}
+\bibliographystyle{plainyr}
 \bibliography{references}
 \end{SingleSpace}
 

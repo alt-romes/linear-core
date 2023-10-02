@@ -2374,11 +2374,11 @@ successful in accepting the vast majority of the thousands of intermediate
 programs produced by GHC when compiling libraries that make extensive use of
 linear types.
 %
-The programs rejected by Linear Core, in \texttt{linear-base}, besides
-validating that our implementation is faithful to the system in that,
-anecdotally, programs that should not be accepted are not, further provide
-great insight into the remaining details required to fully typecheck linearity
-in a mature optimising compiler, which seem to be arguably few.
+The programs rejected by the Linear Core plugin, in \texttt{linear-base},
+besides validating that our implementation is faithful to the
+$\lambda^\pi_\Delta$ system of insofar as programs that should not be accepted
+are deemed ill-typed, provide further insight into the remaining
+details required to fully typecheck linearity in a mature optimising compiler.
 
 
 % Talk about using our plugin on linear-base and other code bases... If I can get

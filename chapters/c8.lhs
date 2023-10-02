@@ -268,7 +268,7 @@ though the resources used by each binder are the solution to a set determined
 by the recursive bindings group.  In Section~\ref{sec:main:linear-core}, we
 further likened the challenge of determining usage environments for a recursive
 group of bindings to a unification problem as that solved by the Hindley-Milner
-type inference algorithm~\cite{10.1145/582153.582176} based on generating and solving
+type inference algorithm~\cite{DBLP:conf/popl/DamasM82} based on generating and solving
 constraints. Even though these are useful observations, our implementation of
 Linear Core uses a naive algorithm to determine the usage environments, thereby
 leaving as future work the design of a principled algorithm to determine the
