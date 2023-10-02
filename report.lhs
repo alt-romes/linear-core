@@ -86,18 +86,6 @@
 
 \begin{document}
 
-%%%%%%%%%%%%%% TODOs %%%%%%%%%%%%%
-\listoftodos
-
-\todostyle{blue}{color=blue}   % For todos without a home
-\todostyle{pink}{color=pink} % For foreshadowing things, or for saying them later on instead
-% \todo[blue, inline]{We need to handle EmptyCase}
-% \todo[inline, inline]{Symbol to stand for both $1$ and $p$, and notation to make proof
-% irrelevant stuff in the types so we can also refer to relevant and irrelevant
-% at the same time with some symbol (e.g. for Split)}
-
-%%%%%%%%%% End TODOs %%%%%%%%%%%%%
-
 \frontmatter
 
 \maketitle
@@ -165,8 +153,8 @@ linearity in the presence of laziness, suitable for the Core intermediate
 language of the Glasgow Haskell Compiler. We prove Linear Core is both type
 safe and that multiple optimising transformations preserve linearity in Linear
 Core while failing to do so in Core. We have implemented Linear Core as a
-compiler plugin to validate the system against established libraries, including
-\texttt{linear-base}, in the heart of the compiler.
+compiler plugin to validate the system against linearity-heavy libraries,
+including \texttt{linear-base}, in the heart of the compiler.
 
 \cleardoublepage
 
@@ -216,7 +204,7 @@ a linguagem intermédia (\emph{Core}) do Glasgow Haskell Compiler. Provamos que
 o sistema é \emph{type safe} e que várias optimizações preservam linearidade no
 Linear Core, apesar de as mesmas não a preservarem no Core. Implementamos o
 Linear Core como um \emph{plugin} para o compilador com o objectivo de validar
-o sistema em bibliotecas lineares populares, como a \emph{linear-base}.
+o sistema em bibliotecas lineares populares.
 \cleardoublepage
 
 %%% PREPARATION ABSTRACT %%%

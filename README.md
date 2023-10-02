@@ -1,21 +1,23 @@
-# Ideas
+# Linear Core
 
-Perhaps we should only emit the usage environment once per binding. That way,
-    if the binder is used, the binder's usage environment is consumed. If the
-    binder is not used, then we do not emit the usage environment. If the binder
-    is used twice, we only emit its usage environment once.
+Linear type systems guarantee linear resources are used *exactly once*.
+Traditionally, using a resource is synonymous with its *syntactic*
+occurrence in the program, however, under the lens of *lazy* evaluation,
+linearity can be further understood *semantically*, where a
+syntactic occurrence of a resource does not necessarily entail
+*using* that resource when the program is evaluated.
 
-```haskell
-let x = (y,z) in
-case e of
-    Pat1 -> ... x ...
-    Pat2 -> ... y ... z
-```
+Semantic linearity is especially necessary in optimising compilers for
+languages combining linearity and laziness: optimisations leverage laziness to
+heavily rewrite the source program, pushing the interaction of linearity and
+laziness to its limit, regardless of the original program typing linearity
+conservatively.
 
-Upon finding the let we don't emit anything. Upon finding `x` in the first
-branch we emit its usage environment (`y, z`). On the second branch, we emit
-once `y` and once `z`. If we used `x` we would re-emit both `y, z` again.
-However if we used `x` twice in the second branch we would still only emit `y, z`
-once from the usage of `x` and once `y` and `z` individually.
-
+We present Linear Core, the first type system that understands semantic
+linearity in the presence of laziness, suitable for the Core intermediate
+language of the Glasgow Haskell Compiler. We prove Linear Core is both type
+safe and that multiple optimising transformations preserve linearity in Linear
+Core while failing to do so in Core. We have implemented Linear Core as a
+compiler plugin to validate the system against established libraries, including
+`linear-base`, in the heart of the compiler.
 

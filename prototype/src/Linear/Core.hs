@@ -172,7 +172,7 @@ checkExpr expr = case expr of
       -- part 1/2 EXPERIENCE 1: Experiment in ignoring the preservation issue and simply
       -- accepting occurrences of linear variables in scrutinees and in their
       -- bodies
-       -- || (if | Var _ <- e -> True | otherwise -> False)
+       || (if | Var _ <- e -> True | otherwise -> False)
     -> do
       lcs0 <- get
       (e', ue) <- record $ checkExpr e

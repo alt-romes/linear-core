@@ -2298,16 +2298,83 @@ is quadratic in $n$,
 but this is not an issue since it is uncommon to have more than a handful of
 binders in the same recursive let block.
 
-Table~\ref{fig:core-plugin-res} presents the results of running the Linear Core GHC plugin on large established libraries focused around linear types.
+The results of running the Linear Core GHC plugin on large established
+libraries focused around linear types are given by
+Figure~\ref{fig:core-plugin-res}.
+%
+We compiled the libraries \texttt{linear-smc}, a library presented in the
+work~\cite{10.1145/3471874.3472980} with 7 linearity-heavy modules, and
+\texttt{linear-base}, the Haskell standard library for programming with linear
+types, comprised of over 100 modules, using our plugin.
+%
+We count the number of programs accepted by our implementation, where each
+top-level binding in a module counts as a program, and every such binding is
+typechecked once per optimisation pass. i.e., we typecheck all intermediate
+programs produced by GHC. The total amount of programs rejected by the
+typechecker are given in the ``Total Rejected'' column, but we distil these
+rejections into ``Unique Rejections'' by removing duplicate rejections (those
+of the same program and for the same linearity-violating reason, but occurring
+at different stages). We further categorize the unique rejections into ``Linear
+modulo Call-by-name'', ``Linear Rejected'', ``Not Linear Rejected'', and ``Unknown Rejected''.
+
+Programs ``linear modulo call-by-name'' are a class of programs
+which scrutinize a variable, but then uses the variable in the case
+alternatives of the case scrutinizing it. As will be made clear in
+Section~\ref{sec:reverse-binder-swap-considered-harmful}, these programs can be
+understood as linear as long as applications of linear functions binding these
+variables are \emph{not} reduced \emph{call-by-name}, because, in doing so,
+linear resources are duplicated. In Core, these programs are not seen as
+linear, and thus GHC does not not reduce them call-by-name.
+% We have a flag in our implementation to accept some of these programs...
+
+``Linear Rejected'' programs include different kinds of programs which are
+rejected by the Linear Core system, but are still semantically linear,
+regardless of them being possibly contrived. An example is a program to which a
+rewrite rule was applied, resulting in an application of unrestricted function
+to a linear resource in the first argument to |build|:
+\begin{code}
+take :: Int -> Replicator a %1 -> [a]
+take = \ (ds :: Int) (r :: Replicator b) ->
+     case ds of
+       1 -> build (\(c :: b -> a -> a) (n :: a) -> c (extract r) n)
+       ...
+\end{code}
+We know the linear resource are still used linearly because |build| will
+always instance the unrestricted function to $(:)$ (read \emph{Cons}), which is
+linear. Additionally, these include programs scrutinizing a value of a type of
+which all constructors have no linear components, but only matching on the
+default alternative, programs where common-sub-expression elimination
+substituted more than one occurrence of |Ur x| by |y|, in the body of
+scrutinizing |y| (a linear variable), and other programs affected by rewrite rules.
+%
+``Not Linear Rejected'' indicate programs that we do not understand as linear,
+semantically, and are simultaneously rejected by Linear Core and its
+implementation. An example, where the last component of |HashMap|, |wwz|,
+is linear, but is not being consumed in the case alternative matching on it:
+\begin{code}
+join
+$jssvi :: Ur Bool %1 -> Set Int %1 -> Ur (TestT IO ())
+$jssvi (a :: Ur Bool) (b :: Set Int)
+  = case a of
+    Ur ss -> case b  of
+      HashMap wwx wwy wwz ->
+        jump $w$jssAd ss
+\end{code}
+%
+Finally, ``Unknown Rejected'' programs are those whose validity we did not
+check. These include both programs accepted by Linear Core, but not by its
+implementation, and programs that are simply rejected by Linear Core, but which
+were not categorized.
 
 \input{prototype/core-plugin-results}
 
-\begin{itemize}
-\item Discuss results
-\item Alguns não validamos manualmente
-\end{itemize}
-\todo[inline]{Table with n core programs generated and validated vs failures due to multiplicity coercions}
-\todo[inline]{Discuss results}
+The results indicate Linear Core is successful in accepting the vast majority
+of the thousands of intermediate programs produced by GHC when compiling
+libraries that make extensive use of linear types.
+%
+The programs rejected by Linear Core, in \texttt{linear-base}, further provide
+great insight into the remaining details required to fully typecheck linearity
+in a mature optimising compiler, which seem to be arguably few.
 
 
 % Talk about using our plugin on linear-base and other code bases... If I can get
@@ -2653,7 +2720,7 @@ usage environment is empty because $x$ is unrestricted).
 
 \input{language-v4/proofs/optimizations/BinderSwap}
 
-\subsection{Reverse Binder Swap Considered Harmful}
+\subsection{Reverse Binder Swap Considered Harmful\label{sec:reverse-binder-swap-considered-harmful}}
 
 The reverse binder swap transformation substitutes occurrences of the case
 binder $z$ in case alternatives by the scrutinee, when the scrutinee is a

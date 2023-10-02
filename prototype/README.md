@@ -167,7 +167,7 @@ $j_ssvi :: Ur Bool %1 -> Set Int %1 -> Ur (TestT IO ())
 $j_ssvi (a_ssA2 :: Ur Bool) (b_ssA6 :: Set Int)
   = case a_ssA2 of wild_00 {
       Ur ww_ssA4 ->
-        case b_ssA6 `cast` Set Int ~R# HashMap Int () of wild_00 {
+        case b_ssA6  of wild_00 {
           HashMap ww_ssA8 ww_ssA9 ww_ssAa(%1) ->
           jump $w$j_ssAd ww_ssA4
         }

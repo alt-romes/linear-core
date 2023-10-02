@@ -307,30 +307,6 @@ drop (UsageEnv env) = do
   -- Remove resources ocurring in the given usage env from the available resources, then run the computation
   modify (`diffResources` (M.fromListWith (\cases (Right ne1) (Right ne2) -> Right (ne1 <> ne2) ;  _ _ -> error "No left left, left right, or right left") $ L.map (\(v,m) -> if null (extractTags m) then (v, Left (LambdaBound m)) else (v, Right (NE.fromList [m]))) env))
 
---     where
---       -- For keys being dropped that still exist in the environment, 
---       diffgo :: Either IdBinding (NonEmpty Mult)
---              -> Mult
---              -> Maybe (Either IdBinding (NonEmpty Mult))
---       diffgo (Left (LambdaBound _)) (extractTags -> []) = Nothing
---       diffgo (Left (LambdaBound m)) (extractTags -> tags)
---         = Just (case splitAsNeededThenConsume @(Either String) AllowIrrelevant tags m of
---                  Left s -> error s
---                  Right (ms,_) -> Right (NE.fromList ms)
---                )
---       diffgo (Left (DeltaBound _)) _ = error "We shouldn't be dropping a delta var?"
---       diffgo (Right _) (extractTags -> []) = error "unexpected extract tags = []"
---       diffgo (Right mults) (extractTags -> tags) = fmap Right $ NE.nonEmpty $
---         L.concatMap (\m ->
---           if | extractTags m == tags
---              -> []
---              | extractTags m `L.isPrefixOf` tags
---              -> fst . fromRight undefined $
---                splitAsNeededThenConsume AllowIrrelevant tags m
---              | otherwise
---              -> [m]
---             ) (NE.toList mults)
-
 dropEnvOf :: Monad m
           => Var -- ^ The var to make unrestricted by "dropping all resources from it"
           -> LinearCoreT m ()

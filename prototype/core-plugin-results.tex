@@ -1,9 +1,9 @@
 \begin{figure}[h]
 \centering{
-\begin{tabular}{c|c|c|c|c|c}
-    \thead{Library} & \thead{Total\\Accepted} & \thead{Total\\Rejected} & \thead{Unique\\Rejected} & \thead{Case-Var\\Rejected} & \thead{Unknown\\Rejected}\\
-    linear-smc & 19438 & 4 & 1 & 1 & 0\\
-    linear-base & 92308 & - & - & - & -\\
+\begin{tabular}{c|c|c|c|c|c|c|c}
+    \thead{Library} & \thead{Total\\Accepted} & \thead{Total\\Rejected} & \thead{Unique\\Rejected} & \thead{Linear modulo\\Call-by-name} & \thead{Linear\\Rejected} & \thead{$\lnot$ Linear\\Rejected} & \thead{Unknown\\Rejected}\\
+    linear-smc & 19438 & 4 & 1 & 1 & 0 & 0 & 0\\
+    linear-base & 91516 & 499 & 72 & 10 & 8 & 2 & 52\\
 \end{tabular}
 }
 \caption{Linear Core Plugin on Linear Libraries}
