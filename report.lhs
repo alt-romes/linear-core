@@ -123,14 +123,18 @@ Matthew Pickering, Sam Derbyshire, Andreas Klebinger, Sebastian Graf, and John
 Ericson, for sharing your expertise, exchanging exciting new ideas, and
 teaching me in the ways of the Glorious Glasgow Haskell Compiler.
 %
-% I'm very fortunate to have Simon Peyton Jones as a role-model and mentor
-% Prof. Mário emprestou-me dois livros do Pierce :P Prof Leitão for challenging me ...
+% I'm very thankful to Simon Peyton Jones, for his brilliance as a computer
+% scientist, writer, and speaker -- 
+%
+% From the department, I thank also professor João Leitão for challenging me,
+% and professor Mário Pereira, Prof. Mário emprestou-me dois livros do Pierce
+% :P Prof Leitão for challenging me ...
 
 I thank my dear friends, and, namely, David Neves, Miguel Costa, Francisco
-Pisco, André Costa, Guilherme Gil, Henrique Ferreira, and Tomás Santos, for
-great conversations and time well-spent (both working, and not working)
-together); and, of course, António Canteiro, whose prolonged deep friendship is
-irreplaceable.
+Pisco, André Costa, Guilherme Gil, Henrique Ferreira, Tomás Santos, and the
+Gabinete 248 crew, for great conversations and time well-spent (both working,
+and not working) together; and, of course, António Canteiro, whose prolonged
+deep friendship is irreplaceable.
 
 I'm deeply grateful for my father Miguel, mother Helena, sister Catarina and
 brother Tiago, my grandparents Augusto, Domingos, Eugénia, Conceição,
