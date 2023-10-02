@@ -135,17 +135,17 @@ Core programs, preserve linearity as understood by the system.
 % \subsection{Rust}
 % 
 % Rust has a core based on linear types. Describe Rust's architecture?
-% How do they handle linearity plus optimizations
+% How do they handle linearity plus optimisations
 % They probabluy don't typecheck linearity in Core
 
-\subsection{Linearity-influenced optimizations}
+\subsection{Linearity-influenced optimisations}
 
 Core-to-Core transformations appear in many works across the research
 literature~\cite{cite:let-floating,peytonjones1997a,santos1995compilation,peytonjones2002secrets,baker-finch2004constructed,maurer2017compiling,Breitner2016_1000054251,sergey_vytiniotis_jones_breitner_2017},
 all designed in the context of a typed language (Core) which does not have
 linear types. However,
 ~\cite{cite:let-floating,peytonjones1997a,cite:linearhaskell} observe that
-certain optimizations (in particular, let-floating and inlining) greatly
+certain optimisations (in particular, let-floating and inlining) greatly
 benefit from linearity analysis and, in order to improve those transformation,
 linear-type-inspired systems were created specifically for the purpose of the
 transformation.
@@ -153,7 +153,7 @@ transformation.
 By fully supporting linear types in Core, these optimising transformations
 could be informed by the language inherent linearity, and, consequently, avoid
 an ad-hoc or incomplete linear-type inference pass custom-built for
-optimizations. Additionally, the linearity information may potentially be used
+optimisations. Additionally, the linearity information may potentially be used
 to the benefit of optimising transformations that currently don't take any
 linearity into account.
 
@@ -278,8 +278,9 @@ usage environments of recursive group of bindings.
 Linear Core is suitable as the intermediate language of an optimising compiler
 for a linear and lazy language such as Haskell Core, in that optimising
 transformations in Linear Core preserve types \emph{and} linearity, since Linear
-Core understands (semantic) in the presence of laziness, unlike Core's current
-type system under which optimisations currently violate linearity.
+Core understands semantic linearity in the presence of laziness, unlike
+Core's current type system under which optimisations currently violate
+linearity.
 %
 Integrating Linear Core in the Glasgow Haskell Compiler is one of the ultimate
 goals of our work. Core's current type system ignores linearity due to
@@ -374,7 +375,7 @@ resources are still used exactly once when the optimised program is run.
 
 In this work we explored linearity in the presence of laziness by example
 through the interactions of linear types with lazy (recursive) let bindings and
-case expressions that evaluate their scrutinee to Weak Head Normal. Most
+case expressions that evaluate their scrutinee to Weak Head Normal Form. Most
 example programs were linear semantically, but not syntactically.
 %
 We developed a linear type system, Linear Core, for an intermediate language

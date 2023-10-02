@@ -39,9 +39,9 @@ Linear Haskell only describes an extension to the surface-level Haskell type
 system, not Core. Nonetheless, in practice, Core is linearity-aware.
 
 We want Core and its type system to give us guarantees about desugaring and
-optimizing transformations with regard to linearity just as Core does for types
+optimising transformations with regard to linearity just as Core does for types
 -- a linearly typed Core ensures that linearly-typed programs remain correct
-both after desugaring and across all GHC optimizing transformations,
+both after desugaring and across all GHC optimising transformations,
 i.e.~linearity is preserved when desugaring and optimisations should not
 destroy linearity.
 
@@ -54,7 +54,7 @@ destroy linearity.
 % This type
 % checker (called \emph{Lint}) gives us guarantees of correctness in face of all
 % the complex transformations a Haskell program undergoes, such as desugaring and
-% core-to-core optimization passes, because the linter is always run on the resulting code
+% core-to-core optimisation passes, because the linter is always run on the resulting code
 % before ultimately being compiled to (untyped) machine code.
 
 % System FC is the formal system in which the implementation of GHC's intermediate
@@ -129,12 +129,12 @@ violate syntatic linearity for other reasons other than let bindings are
 produced by Core transformations.
 
 % Therefore, the Core linear type-checker rejects various valid programs after
-% desugaring and optimizing transformations, because linearity is seemingly
+% desugaring and optimising transformations, because linearity is seemingly
 % violated.
 %
 The current solution to valid programs being rejected by Core's linear
 type-checker is to effectively disable the linear type-checker since,
-alternatively, disabling optimizing transformations which violate linearity
+alternatively, disabling optimising transformations which violate linearity
 incurs significant performance costs.
 %
 However, we believe that GHC's transformations are correct, and it is the
@@ -144,7 +144,7 @@ accommodate the resulting programs.
 Additionally, some Core-to-Core transformations such as let-floating and
 inlining already depend on custom linear type systems to produce more
 performant programs. Valid linearity annotations in Core could potentially
-inform and define more optimizations.
+inform and define more optimisations.
 
 % TODO: Unnecessary
 % In Section~\ref{typingUsageEnvs} we describe usage environments and how they
@@ -254,7 +254,7 @@ with a usage environment emits all mappings from variables to their
 corresponding multiplicities from that usage environment.
 
 \parawith{Let Binder} Regardless of the original Haskell programs desugared to Core,
-let bindings are always common in Core due to a myriad of optimizing
+let bindings are always common in Core due to a myriad of optimising
 transformations that create and manipulate let-bindings
 (Section~\ref{sec:ghcpipeline}).
 %
@@ -360,7 +360,7 @@ The type-checking and usage environment inference algorithm combine in the follo
 
 \parawith{Case Binder} In Core, all case expressions create a bound variable,
 the value of which is the evaluated case scrutinee. This case binder is used by
-some optimizations to refer to the value pattern matched on. If the case
+some optimisations to refer to the value pattern matched on. If the case
 scrutinee must be used linearly, we must consider how to type-check linearity
 when the case-binder is also used in the case alternatives.
 
@@ -429,7 +429,7 @@ In the dissertation, we will propose an extension to Core / System $F_C$'s type
 system and type-checking algorithm with additional linearity information (such
 as \emph{usage environments}) in order to accommodate linear programs in Core
 throughout the GHC pipeline (Section~\ref{sec:ghcpipeline}) stages of
-desugaring and optimization. This type-system entails augmenting Core's syntax
+desugaring and optimisation. This type-system entails augmenting Core's syntax
 to support additional linearity information and extending existing typing
 judgments and rules to account for linearity.
 
@@ -437,7 +437,7 @@ Furthermore, we will argue the soundness of our system, that is, our
 type-system must provably not accept any programs which aren't linear.
 
 Because we want to ensure our type system validates programs before and after
-optimizing transformations are applied, we will validate that each optimizing
+optimising transformations are applied, we will validate that each optimising
 transformation does not destroy linearity in programs wrt our type system.
 
 We will implement this extension to Core in GHC, the leading Haskell compiler.
@@ -449,10 +449,10 @@ progress continuously.
 Defining and implementing this type-system in GHC can be done iteratively
 because each binder can be handled separately. The typing rules for let
 bindings, recursive let bindings, and case bindings are distinct, and
-optimizing transformations seldom interact with all three at the same time.
+optimising transformations seldom interact with all three at the same time.
 %
 Consequently, we can interweave the formal specification, implementation in
-Core, and validation of individual optimizations and of our implementation.
+Core, and validation of individual optimisations and of our implementation.
 
 Throughout this, we will write the final dissertation document, using it as a
 driving force for the research which will cristalize our ideas and help
@@ -838,7 +838,7 @@ Core upstream.
 % novel typing rules we introduced above. Each example belongs to a subsection
 % that indicates after which transformation the linting failed.
 % 
-% \subsection{After the desugarer (before optimizations)}
+% \subsection{After the desugarer (before optimisations)}
 % 
 % The definition for $\$!$ in \textbf{linear-base}\cite{linearbase} fails to lint after the
 % desugarer (before any optimisation takes place) with \emph{Linearity failure in

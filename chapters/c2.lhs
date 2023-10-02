@@ -6,16 +6,16 @@ In this section we review the concepts required to understand our work. In
 short, we discuss linear types, the Haskell programming language, linear types
 as they exist in Haskell (dubbed Linear Haskell), evaluation strategies,
 Haskell's main intermediate language (Core) and its formal foundation (System
-$F_C$) and, finally, an overview of GHC's pipeline with explanations of
-multiple Core-to-Core optimising transformations that we prove type-preserving
-in our type system.
+$F_C$) and, finally, an overview of the Glasgow Haskell Compiler (GHC) pipeline
+with explanations of multiple Core-to-Core optimising transformations that we
+prove type-preserving in our type system.
 
 \section{Linear Types\label{sec:linear-types}}
 
 Much the same way type systems can statically eliminate various kinds of
 programs that would fail at runtime, such as a program that dereferences an
 integer value rather than a pointer, linear type systems can guarantee that
-certain errors (regarding resource usage) are forbidden.
+certain errors regarding resource usage are forbidden.
 
 In linear type systems~\cite{cite:linear-logic,cite:barberdill}, so called
 linear resources must be used \emph{exactly once}. Not using a linear resource
@@ -28,11 +28,11 @@ leaks and double frees is no longer a programmer's worry because the compiler
 can guarantee the resource is used exactly once, or \emph{linearly}.
 
 To understand how linear types are defined and used in practice, we present two
-examples of anonymous functions that receive a handle to work with (that must be
-closed before returning), we explore how the examples could be disregarded as
-incorrect, and work our way up to linear types from them. The first function
-ignores the received file handle and returns $\star$ (read unit), which is
-equivalent to C's \texttt{void}.
+examples of anonymous functions that receive a handle that must be closed
+before returning, explore how the examples could be disregarded as incorrect,
+and work our way up to linear types from them. The first function ignores the
+received file handle and returns $\star$ (read unit), which is equivalent to
+C's \texttt{void}:
 %
 \begin{mathpar}
     \lambda h.~\mathsf{return}~\star;
@@ -69,21 +69,20 @@ operator to denote a function that uses its argument exactly once: $A \lolli B$.
 Providing the more restrictive linear function signature $\texttt{Handle} \lolli
 \star$ to the example programs would make both of them fail to typecheck because
 they do not satisfy the linearity specification that the function argument
-should only be used exactly once.
+should be used exactly once.
 
 % Linear types are a powerful idea because they allow us to statically reason
 % about resources in our program. A so called linear resource ?
 
-In order to further give well defined semantics to a linear type system, we
-present a linearly typed lambda
-calculus~\cite{cite:linear-logic,cite:barberdill}, a very simple language with
-linear types, by defining what are syntactically valid programs through the
-grammar in Fig.~\ref{fig:llcgrammar} and what programs are well typed through
-the typing rules in Fig.~\ref{fig:llcrules}. The language features functions
-and function application ($\lolli$), two flavours of pairs, additive ($\with$)
-and multiplicative ($\tensor$), a disjunction operator ($\oplus$) to construct
-sum types, and the $\bang$ modality operator which constructs an unrestricted
-type from a linear one, allowing values inhabiting $\bang A$ to be consumed
+To further better define the semantics of a linear type system, we present a
+linearly typed lambda calculus~\cite{cite:linear-logic,cite:barberdill}, a very
+simple language with linear types, whose syntactically valid programs are given
+by the grammar in Fig.~\ref{fig:llcgrammar} and well-typed programs by the
+typing rules in Fig.~\ref{fig:llcrules}. The language features functions and
+function application ($\lolli$), two flavours of pairs, additive ($\with$) and
+multiplicative ($\tensor$), a disjunction operator ($\oplus$) to construct sum
+types, and the $\bang$ modality operator which constructs an unrestricted type
+from a linear one, allowing values inhabiting $\bang A$ to be consumed
 unrestrictedly. A typing judgement for the linearly typed lambda calculus has
 the form
 %
@@ -93,7 +92,7 @@ where $\Gamma$ is the context of resources that may be used unrestrictedly,
 that is, any number of times, $\Delta$ is the context of resources that must be
 used linearly (\emph{exactly once}), $M$ is the program to type and $A$ is its
 type.  When resources from the linear context are used, they are removed from
-the context and no longer available, and all resources in the linear context
+the context and no longer available, since all resources in the linear context
 must be used exactly once.
 
 \begin{figure}[h]
@@ -195,8 +194,8 @@ unrestricted context rather than the linear context as we have seen thus far.
 In Section~\ref{sec:linear-haskell}, we describe how linear types are defined in
 Haskell, a programming language more \emph{featureful} than the linearly typed lambda
 calculus. We will see that the theoretical principles underlying the linear
-lambda calculus and linear Haskell are the same, and by studying them in this
-minimal setting we can understand them at large.
+lambda calculus and linear Haskell are the same, and, by studying them in this
+minimal setting, we can understand them at large.
 
 \begin{figure}[h]
 {\small
@@ -293,7 +292,7 @@ unique to Haskell among mainstream programming languages.
 Haskell is a large feature-rich language but its relatively small core is based
 on a typed lambda calculus. As such, there exist no statements and computation
 is done simply through the evaluation of functions. Besides functions, one can
-define types and their constructors and pattern match on said constructors.
+define types, data constructors, and pattern match on said constructors.
 Function application is denoted by the juxtaposition of the function expression
 and its arguments, which often means empty space between terms (\texttt{f~a}
 means \texttt{f} applied to \texttt{a}). Pattern matching is done with the
@@ -368,10 +367,10 @@ advanced type level features, such as:
         which permit a direct encoding of type-level functions resembling rewrite
         rules.
 
-    \item Local equality constraints and existential types by using GADTs, which
-        we explain ahead in more detail. A design for first class existential
-        types with bi-directional type inference in Haskell has been published
-        in~\cite{10.1145/3473569}, despite not being yet implemented in GHC.
+    \item Local equality constraints and existential types by using Generalized
+          Algebraic Data Types (GADTs). A design for first class existential types
+          with bi-directional type inference in Haskell has been published
+          in~\cite{10.1145/3473569}, despite not being yet implemented in GHC.
 
 \end{itemize}
 % Haskell's type families, supports abstraction through type classes, and GADTs
@@ -397,12 +396,15 @@ invalid input.
 %
 Leveraging Haskell's more advanced features, we can use more expressive types to
 assert properties about the values and get rid of the invalid cases (e.g. we
-could define a \texttt{NonEmpty} type to model a list that can not be empty).
+could define a \texttt{NonEmpty} type to model a list that can not be empty,
+for which |head| is not partial).
 %
-A well liked motto is "make invalid states unrepresentable". In this light, we
-introduce Generalized Algebraic Data Types (GADTs) and create a list type
-indexed by size for which we can write a completely safe \texttt{head} function
-by expressing that the size of the list must be at least one, at the type level.
+A well liked motto is "make invalid states unrepresentable".
+
+% In this light, we introduce Generalized Algebraic Data Types (GADTs) and
+% create a list type indexed by size for which we can write a completely safe
+% \texttt{head} function by expressing that the size of the list must be at
+% least one, at the type level.
 
 % Unfortunate we have to comment this! We lose a reference to Ghengin :)
 %%% \subsection{Generalized Algebraic Data Types\label{sec:background-gadts}}
@@ -810,7 +812,7 @@ expression, and the \emph{thunk} is overwritten with the result.
 % subsequent uses of the same name will now refer to the computed result. The
 % suspended computation is called a \emph{thunk}, and
 Call-by-need evaluation is traditionally modelled with a mutable heap for the
-existing thunks or values they are overwritten with~\cite{}.
+existing thunks or values they are overwritten with~\cite{}\todo{cite}.
 %
 Beyond lambdas and let-bindings, Haskell and Core also feature algebraic
 datatypes and case expressions to match on datatype constructors:
@@ -829,9 +831,10 @@ expressions are lazily evaluated by
   \item Evaluating the scrutinee to Weak Head Normal Form, resulting in
   either a lambda expression or a constructor of arity $n$ applied to $n$
   unevaluated expressions $\overline{e_i}^n$
-  \item Matching the weak head normal form of the scrutinee against the
+  \item Matching the Weak Head Normal Form of the scrutinee against the
   patterns, (possibly) substituting the pattern-bound variables of a matching
-  constructor by the unevaluated arguments of a scrutinee constructor application in Weak Head Normal Form, e.g.:
+  constructor by the unevaluated arguments of a scrutinee constructor
+  application in Weak Head Normal Form, e.g.:
   \[
   \ccase{K~\overline{e_i}^n}{K~\overline{x_i}^n \to e'} \Longrightarrow e'\overline{e_i/x_i}^n
   \]
@@ -862,8 +865,8 @@ Desugaring allows the compiler to focus on the small desugared language rather
 than on the large surface one, which can greatly simplify the subsequent
 compilation passes.
 %
-Core is a strongly-typed, lazy, purely functional intermediate language akin to
-a polymorphic lambda calculus, that GHC uses as its key intermediate
+Core is a strongly-typed, lazy, purely functional intermediate language, akin
+to a polymorphic lambda calculus, that GHC uses as its key intermediate
 representation.
 %
 To illustrate the difference in complexity, in GHC's implementation of Haskell,
@@ -885,7 +888,7 @@ significantly simplified by the minimality of Core.
 \item Since Core is an (explicitly) typed language
 (c.f.~System~F~\cite{Girard1972InterpretationFE,10.1007/3-540-06859-7_148}),
 type-checking Core serves as an internal consistency check for the desugaring
-and optimization passes.
+and optimisation passes.
 %
 The Core typechecker provides a verification layer for the correctness of
 desugaring and optimising transformations (and their implementations) because
@@ -994,7 +997,7 @@ short, these three features are desugared as follows:
 \end{itemize}
 
 Core further extends $System~F_C$ with \emph{jumps} and \emph{join
-points}~\cite{maurer2017compiling}, allowing new optimizations to be performed
+points}~\cite{maurer2017compiling}, allowing new optimisations to be performed
 which ultimately result in efficient code using labels and jumps, and
 with a construct used for internal notes such as profiling information.
 % DONE: \todo{We could mention Sequent Core as the origin of jumps and joins here, or simply cite it}
@@ -1091,13 +1094,13 @@ constructors are transformed into coercions).
 The Core-to-Core transformations are the most important set of
 optimising transformations that GHC performs during compilation. By design, the
 frontend of the pipeline (parsing, renaming, typechecking and desugaring) does
-not include any optimizations -- all optimizations are done in Core.
+not include any optimisations -- all optimisations are done in Core.
 The transformational approach focused on Core, known as \emph{compilation by
   transformation}, allows transformations to be both modular and simple.
 Each transformation focuses on optimising a specific set of
 constructs, where applying a transformation often exposes opportunities for
 other transformations to fire. Since transformations are modular, they
-can be chained and iterated in order to maximize the optimization potential (as
+can be chained and iterated in order to maximize the optimisation potential (as
 shown in Figure~\ref{fig:eg:transformations}).
 
 
@@ -1105,7 +1108,7 @@ shown in Figure~\ref{fig:eg:transformations}).
 However, due to the destructive nature of transformations (i.e. applying a
 transformation is not reversible), the order in which transformations are
 applied determines how well the resulting program is optimised.  As such,
-certain orderings of optimizations can hide optimization opportunities and
+certain orderings of optimisations can hide optimisation opportunities and
 block them from firing. This phase-ordering problem is present in most
 optimising compilers.
 
@@ -1114,7 +1117,7 @@ optimising compilers.
 % optimising transformations are applied non-destructively; however, it's a much
 % more expensive technique that has not been .
 %
-% transformation based approach to optimization allows each producing a Core
+% transformation based approach to optimisation allows each producing a Core
 % program fed to the next optimising transformation.
 
 
@@ -1124,7 +1127,7 @@ applied (Section~\ref{sec:core}).
 %
 In light of it, we describe below some of the individual Core-to-Core
 transformations, using $\Longrightarrow$ to denote a program transformation. In
-the literature, the first set of Core-to-Core optimizations was described
+the literature, the first set of Core-to-Core optimisations was described
 in~\cite{santos1995compilation,peytonjones1997a}. These were subsequently
 refined and
 expanded~\cite{peytonjones2002secrets,baker-finch2004constructed,maurer2017compiling,Breitner2016_1000054251,sergey_vytiniotis_jones_breitner_2017}.
@@ -1262,7 +1265,7 @@ process produces performant programs.
 % case-of-know-constructor, float-out, float-in, worker/wrapper split (this one
 % is big, in comparison), etc…
 
-\parawith{Inlining.} Inlining is an optimization common to all compilers, but
+\parawith{Inlining.} Inlining is an optimisation common to all compilers, but
 especially important in functional languages~\cite{peytonjones1997a}. Given
 Haskell's pure and lazy semantics, inlining can be employed in Haskell to a much
 larger extent because we needn't worry about evaluation order or side effects,
@@ -1271,13 +1274,13 @@ replacing an occurrence of a let-bound variable by its right-hand side:
 \[
 \llet{x = e}{e'}~\Longrightarrow~\llet{x = e}{e'[e/x]}
 \]
-Effective inlining is crucial to optimization because, by bringing the
+Effective inlining is crucial to optimisation because, by bringing the
 definition of a variable to the context in which it is used, many other local
-optimizations are unlocked. The work~\cite{peytonjones2002secrets} further
+optimisations are unlocked. The work~\cite{peytonjones2002secrets} further
 discusses the intricacies of inlining and provides algorithms used for inlining
 in GHC.
 
-\parawith{$\beta$-reduction.} $\beta$-reduction is an optimization that
+\parawith{$\beta$-reduction.} $\beta$-reduction is an optimisation that
 consists of reducing an application of a term $\lambda$-abstraction or
 type-level $\Lambda$-abstraction (Figure~\ref{fig:systemfc-terms}) by replacing
 the $\lambda$-bound variable with the argument the function is applied to:
@@ -1293,7 +1296,7 @@ doing so:
 \[
 (\lambda x{:}\tau.~e)~y~\Longrightarrow~\llet{x = y}{e}
 \]
-$\beta$-reduction is always a good optimization because it effectively evaluates
+$\beta$-reduction is always a good optimisation because it effectively evaluates
 the application at compile-time (reducing heap allocations and execution time)
 and unlocks other transformations.
 
@@ -1310,9 +1313,9 @@ variables by the known constructor arguments ($\overline{x{:}\sigma}$):
 \Longrightarrow
 e[v_i/x_i]_{i=1}^n
 \]
-Case-of-known-constructor is an optimization mostly unlocked by other
-optimizations such as inlining and $\beta$-reduction, more so than by code
-written as-is by the programmer. As $\beta$-reduction, this optimization is also
+Case-of-known-constructor is an optimisation mostly unlocked by other
+optimisations such as inlining and $\beta$-reduction, more so than by code
+written as-is by the programmer. As $\beta$-reduction, this optimisation is also
 always good -- it eliminates evaluations whose result is known at compile time
 and further unblocks for other transformations.
 
@@ -1321,10 +1324,11 @@ and further unblocks for other transformations.
 \parawith{Let-floating.} A let-binding in Core entails performing
 \emph{heap-allocation}, therefore, let-related transformations directly impact
 the performance of Haskell programs. In particular, let-floating
-transformations are concerned with best the position of let-bindings in a
-program in order to improve efficiency. Let-floating is an important group of
-transformations for non-strict (lazy) languages described in detail
-by~\cite{cite:let-floating}. We distinguish three let-floating transformations:
+transformations are concerned with positioning let-bindings in a program to
+improve efficiency and further unblock other optimisations. Let-floating is an
+important group of transformations for non-strict (lazy) languages described in
+detail by~\cite{cite:let-floating}. We distinguish three let-floating
+transformations:
 \begin{itemize}
   \item \emph{Float-in} consists of moving a let-binding as far \emph{inwards}
   as possible. For example, it could be moving a let-binding outside of a case
@@ -1340,8 +1344,8 @@ by~\cite{cite:let-floating}. We distinguish three let-floating transformations:
   \]
   This can improve performance by not performing let-bindings (e.g. if the
   branch the let was moved into is never executed); improving strictness
-  analysis; and further unlocking other optimizations such as
-  ~\cite{cite:let-floating}. However, care must be taken when floating a
+  analysis; and further unlocking other optimisations described
+  in~\cite{cite:let-floating}.  However, care must be taken when floating a
   let-binding inside a $\lambda$-abstraction because every time that
   abstraction is applied the value (or thunk) of the binding will be allocated
   in the heap.
@@ -1364,7 +1368,7 @@ by~\cite{cite:let-floating}. We distinguish three let-floating transformations:
   \]
 
   \item The \emph{local transformations} are the third type of let-floating
-  optimizations. In this context, the local transformations are local rewrites
+  optimisations. In this context, the local transformations are local rewrites
   that improve the placement of bindings. There are three local
   transformations:
   \[
@@ -1375,8 +1379,8 @@ by~\cite{cite:let-floating}. We distinguish three let-floating transformations:
   \end{array}
   \]
   These transformations do not change the number of allocations but potentially
-  create opportunities for other optimizations to fire, such as expose a lambda
-  abstraction~\cite{cite:let-floating}.
+  create opportunities for other optimisations to fire, e.g. by exposing a
+  lambda abstraction~\cite{cite:let-floating}.
 \end{itemize}
 
 \parawith{$\eta$-expansion and $\eta$-reduction.} $\eta$-expansion is a transformation
@@ -1412,9 +1416,9 @@ branches:
                                                          \\~alt_n \to e_n}\end{array} \right)}
 \end{array}
 \]
-This transformation exposes other optimizations, e.g., if $e_{c_n}$ is a known
+This transformation exposes other optimisations, e.g., if $e_{c_n}$ is a known
 constructor we can readily apply the \emph{case-of-known-constructor}
-optimization. However,
+optimisation. However,
 this transformation also potentially introduces significant code
 duplication. To this effect,
 we apply a transformation that creates \emph{join points} (i.e.,~shared bindings outside
@@ -1467,7 +1471,7 @@ the wrapper.
 % DONE \todo[inline]{Add a paragraph about the binder swap, and another about the
 % reverse binder swap, possibly foreshadowing how it is important in our study as
 % something that is only linearity preserving because of the way other
-% optimizations are defined.}
+% optimisations are defined.}
 
 \parawith{Binder-swap.} The binder swap transformation applies to a case
 expression whose scrutinee is a variable $x$, and consists of swapping the case

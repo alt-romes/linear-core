@@ -415,10 +415,10 @@ Much like a typed Core ensures that the translation from Haskell (dubbed
 \emph{desugaring}) and the subsequent optimising transformations applied to
 Core are correctly implemented, a \emph{linearly typed} Core guarantees that
 linear resource usage in the source language is not violated by the translation
-process and the compiler optimization passes.
+process and the compiler optimisation passes.
 %
 It is crucial that a program's behaviour enforced by linear types is \emph{not}
-changed by the compiler in the desugaring or optimization stages (optimizations
+changed by the compiler in the desugaring or optimisation stages (optimisations
 should not destroy linearity!) and a linearity aware Core type-checker is key in
 providing such guarantees -- it would be disastrous if the compiler, e.g.,
 duplicated a pointer to heap-allocated memory that was previously just used
@@ -431,11 +431,11 @@ including inlining and $\beta$-reduction, to produce more performant programs.
 
 % Linear core actually not so good
 % Additionally, while not yet a reality, linearity in Core could be used to inform
-% certain program optimizations, i.e. having linear types in Core could be used to
+% certain program optimisations, i.e. having linear types in Core could be used to
 % further optimise certain programs and, therefore, benefit the runtime
 % performance characteristics of our programs. For example, Linear Haskell\cite{}
-% describes as future work an improvement to the inlining optimization: Inlining
-% is a centerpiece program optimization primarily because of the subsequent
+% describes as future work an improvement to the inlining optimisation: Inlining
+% is a centerpiece program optimisation primarily because of the subsequent
 % optimising opportunities unlocked by inlining. However, it relies on a heuristic
 % process known as \emph{cardinality analysis} to discover safe inlining
 % opportunities. Unfortunately, heuristics can be volatile and fail in identifying
@@ -612,7 +612,7 @@ coercions}) in Chapter~\ref{sec:discussion}, which concludes the document.
 % laziness, with both lets and also with case expressions not evaluating
 % expressions in WHNF, and otherwise}
 
-% \todo[inline]{Glimpse at how core optimizations can get us into these situations where we have to see this linearity}
+% \todo[inline]{Glimpse at how core optimisations can get us into these situations where we have to see this linearity}
 
 % \todo[inline]{Saying, finally, what we are going to do, and that our system is
 % capable of seeing linearity in all of these programs, and more -- it is capable
@@ -634,7 +634,7 @@ coercions}) in Chapter~\ref{sec:discussion}, which concludes the document.
 % linearity information in order to successfully type-check linearity in Core
 % across transformations; DONE
 % \item Validating that our type-system accepts programs before and after each
-% transformation is applied; WIP Proofs of optimizations
+% transformation is applied; WIP Proofs of optimisations
 % \item Arguing the soundness of the resulting system (i.e. no semantically
 % non-linear programs are deemed linear); DONE (modulo 1)
 % \item Implementing our extensions to Core in GHC, the leading Haskell Compiler. NOPE.

@@ -404,11 +404,11 @@ We start our discussion with non-strict (non-recursive) let bindings, i.e. let b
 body is evaluated only when the binding is needed, rather than when declared.
 In Core, a let binding entails the creation of a \emph{thunk} that suspends the
 evaluation of the let body (for background, see
-Section~\ref{sec:background:evaluation-strategies}). When the \emph{thunk} is
-\emph{forced}, the evaluation is carried out, and the result overrides the
-\emph{thunk} -- the let binding now points to the result of the evaluation. A
-\emph{thunk} is \emph{forced} (and the suspended computation is evaluated) when
-the binding itself is evaluated.
+Section~\ref{sec:background:evaluation-strategies}). When the binding itself is evaluated, the \emph{thunk} is
+\emph{forced} and the evaluation is carried out. The result overwrites the
+\emph{thunk} -- the let binding now points to the result of the evaluation.
+% A \emph{thunk} is \emph{forced} (and the suspended computation is evaluated) when
+% the binding itself is evaluated.
 
 In a linear type system, a non-strict let binding that depends on a linear
 resource |x| doesn't consume the resource as long as the binding isn't
@@ -431,8 +431,8 @@ the body of the binding and the binding is used exactly once in the let body.
 %
 According to Linear Haskell's core calculus~$\lambda_{\to}^{q}$~\cite{cite:linearhaskell}, let
 bound variables are annotated with a multiplicity which is multiplied (as per
-the multiplicities semiring) with the multiplicities of the variables that are
-free in the binder's body.
+the multiplicity semiring) by the multiplicity of all variables that are free
+in the binder's body.
 %
 In short, if a let binder is linear (has
 multiplicity $1$) then the linear variables free in its body are only used
@@ -841,7 +841,7 @@ f13 x y use = case (x,y) of z { (a,b) -> use a x }
 \end{noway}
 This idea that $x$ and $a$ are mutually exclusive is the same behind let
 bindings being mutually exclusive to the resources that define them.
-By forcing the pattern variable (or the let binding) we run the computations
+By forcing the pattern variable (or the let binding), we run the computations
 defined in terms of the linear variables used for that constructor argument (or
 let binder body), but otherwise, if we don't use those binders, then we don't
 run the computation thus no resources are consumed.
@@ -1154,7 +1154,7 @@ We present Linear Core's syntax and type system iteratively, starting with the
 judgements and base linear calculi rules for multiplicity and term lambdas plus
 the variable rules ($\S~\ref{sec:base-calculi}$).
 %
-Then usage environments, the rule for $\Delta$-bound variables, and rules for
+Then, usage environments, the rule for $\Delta$-bound variables, and rules for
 (recursive) let bindings ($\S~\ref{sec:usage-environments}$).
 %
 Finally, we introduce the rules to typecheck case expressions and alternatives,
@@ -1175,12 +1175,12 @@ scrutinee, proof irrelevant resources, and tagged variables
 The complete syntax of Linear Core is given by Figure~\ref{fig:full-linear-core-syntax}.
 % Figure~\ref{fig:linear-core-types} and Figure~\ref{fig:linear-core-terms}.
 %
-The types of Linear Core are algebraic datatypes, function types, and multiplicity schemes
-to support multiplicity polymorphism: datatypes ($T~\ov{p}$) are parametrised
-by multiplicities, function types ($\vp\to_\pi\s$) are also annotated with a
-multiplicity, and a multiplicity can be $1$, $\omega$ (read \emph{many}), or a
-multiplicity variable $p$ introduced by a multiplicity universal scheme
-($\forall p.~\vp$).
+The types of Linear Core are algebraic datatypes, function types, and
+multiplicity schemes to support multiplicity polymorphism: datatypes
+($T~\ov{p}$) are parametrised by multiplicities, function types
+($\vp\to_\pi\s$) are also annotated with a multiplicity, which can be $1$,
+$\omega$ (read \emph{many}), or a multiplicity variable $p$ introduced by a
+multiplicity universal scheme ($\forall p.~\vp$).
 %
 \[
 \SyntaxTypes
@@ -1280,7 +1280,7 @@ novel insights from Linear Core in typing semantic linearity, that were
 explored by example in Section~\ref{sec:linearity-semantically}.
 %
 We note, however, that we handle multiplicity polymorphism differently from
-Linear Haskell in ignoring the multiplicities semiring and instead
+Linear Haskell in ignoring the multiplicity semiring and, instead,
 conservatively treating all multiplicity polymorphic functions as linear.
 %
 The full type system is given by Figure~\ref{fig:linear-core-typing-rules},
@@ -1603,12 +1603,12 @@ Case expressions \emph{drive evaluation} --
 %In lazy let bindings, computations  can be a case
 %expression can effectively consume resources rather than just 
 %
-a case expression \emph{evaluates its scrutinee} to weak head normal form
+a case expression \emph{evaluates its scrutinee} to Weak Head Normal Form
 (WHNF), \emph{then} selects the case alternative corresponding to the pattern
-matching the weak head normal form of the scrutinee\footnote{In our calculus, the
-alternatives are always exhaustive, i.e. there always exists at least one
+matching the Weak Head Normal Form of the scrutinee\footnote{In our calculus,
+the alternatives are always exhaustive, i.e. there always exists at least one
 pattern which matches the scrutinee in its WHNF, so we're guaranteed to have an
-expression to progress evaluation.}. An expression in weak head normal form can
+expression to progress evaluation.}. An expression in Weak Head Normal Form can
 either be:
 \begin{itemize}
 \item A lambda expression $\lambda x.~e$,
@@ -1627,9 +1627,9 @@ As will be made clear in later sections, we need to devise a specialized typing
 judgement for scrutinees that is able to distinguish between terms
 in WHNF and terms that are not in WHNF.
 %
-Following the discussion on expressions in weak head normal form, we
-present a typing judgement $\G;\D \Vdash e : \s \gtrdot \ov{\D_i}$ for
-expressions in WHNF, and a rule for each of the forms given above:
+Following the discussion on expressions in weak head normal form, we present a
+typing judgement $\G;\D \Vdash e : \s \gtrdot \ov{\D_i}$, and a rule for each
+of the forms given above:
 \[
     \TypeWHNFCons
 \qquad
@@ -1665,7 +1665,7 @@ $K~\ov{e}$. Constructors and lambda expressions otherwise match the wildcard
 pattern whose alternative body is evaluated only substituting the case binder by the
 scrutinee. 
 
-We highlight that when evaluating a case expression, computation only
+We highlight that, when evaluating a case expression, computation only
 effectively happens when a scrutinee not in WHNF is evaluated to WHNF. When the
 scrutinee is already in WHNF, evaluation continues in the alternative by
 substituting in the appropriate scrutinee expressions, but without having
@@ -1769,14 +1769,14 @@ Specifically:
 \begin{itemize}
 \item We introduce the case binder $z$ in the environment as a $\D$-bound
 variable whose usage environment is the linear resources used to type the
-scrutinee
+scrutinee.
 \item We make all the resources $\ov{\D_i}$ used to type the scrutinee available in the linear typing environment.
 \item We annotate the \emph{alt} judgement with the disjoint set of linear resources $\ov{\D_i}$ used
-to typecheck the scrutinee sub-expressions
+to typecheck the scrutinee sub-expressions.
 \item We annotate the judgement with the name of the case binder $z$ and use
 the $\Mapsto$ arrow in the judgement -- this is of most importance when typing
 the alternative itself, and will be motivated together with the alternative
-judgement below
+judgement below.
 \end{itemize}
 %
 Despite the key intuitions of typing a case expressions whose scrutinee is in
@@ -1798,7 +1798,7 @@ constructor with $n > 0$ linear components is:
 \[
 \TypeAltNWHNF
 \]
-The rule states that for such a pattern matching a scrutinee already in
+The rule states that, for such a pattern matching a scrutinee already in
 WHNF, we introduce the linear components of the pattern as $\D$-bound variables
 whose usage environment matches the linear resources required to type the
 corresponding constructor argument in the scrutinee, which comes annotated in
@@ -1944,9 +1944,9 @@ However, it is not sufficient to evaluate the scrutinee to weak head normal
 form to \emph{fully} consume all resources used in the scrutinee, since
 sub-expressions such as constructor arguments will be left unevaluated. To
 \emph{fully} consume all resources occurring in the scrutinee, the scrutinee
-must be evaluated to normal form or s.t. all linear components of the scrutinee
-are fully evaluated, as witnessed by the $Alt0$ rule. In short, for a case
-expression whose scrutinee is not in WHNF:
+must be evaluated either to \emph{normal form} or s.t. all linear components of
+the scrutinee are fully evaluated, as witnessed by the $Alt0$ rule. In short,
+for a case expression whose scrutinee is not in WHNF:
 % We tackle this in due time, in the proof irrelevance section.
 \begin{itemize}
 
@@ -2165,16 +2165,17 @@ We note how $Split$ can be applied both to relevant and proof irrelevant linear 
 
 \section{Linear Core as a GHC Plugin\label{sec:discuss:implementation}}
 
+We have implemented the Linear Core type system as a plugin for the Glasgow
+Haskell Compiler.
 GHC plugins allow developers to inspect and modify programs being compiled by
 GHC, at different stages of compilation~\cite{10.1145/3331545.3342599}.
 %
-In particular, for any given Haskell module, Core plugins run for (and receives
+In particular, for any given Haskell module, Core plugins run for (and receive
 as input) every intermediate program produced in the compilation process, i.e.
 from desugaring and after each optimising transformation.
 %
-To substantiate our claim that Linear Core is suitable for the intermediate
-language of an optimising compiler, we implemented Linear Core as a \emph{Core
-plugin} for the Glasgow Haskell Compiler.
+This implementation further substantiates our claim that Linear Core is
+suitable for the intermediate language of an optimising compiler.
 
 The GHC Linear Core plugin~\cite{cite:linear-core-plugin} implements a
 typechecker for Linear Core: given a Core program, our plugin typechecks the
@@ -2187,10 +2188,10 @@ Most notably, the plugin successfully validates linearity throughout the
 \texttt{linear-base} and \texttt{linear-smc}, except in expressions whose
 linearity depends on so-called \emph{multiplicity coercions}, which are an
 avenue of future work ($\S$~\ref{sec:future-work}) exploring the intersection
-of Linear Core with type equality coercions. Furthermore, the implementation
-accepts all example programs from Chapter~\ref{sec:linearity-semantically}
-deemed well-typed by Linear Core, which are marked with a
-\colorbox{notyet}{\notyetcolorname} background.
+of Linear Core with type equality coercions.
+% Furthermore, the implementation accepts all example programs from Chapter~\ref{sec:linearity-semantically}
+% deemed well-typed by Linear Core, which are marked with a
+% \colorbox{notyet}{\notyetcolorname} background.
 
 % Additionally, we discuss the implementation of the Linear Core type system
 % directly in the Glasgow Haskell Compiler.
@@ -2201,7 +2202,7 @@ deemed well-typed by Linear Core, which are marked with a
 
 The implementation of Linear Core as a typechecker does not follow directly
 from the description of the type system because Linear Core is not
-\emph{syntax-directed}. Specifically, the most challenging features are:
+\emph{syntax-directed}. Specifically, the most challenging features are
 splitting linear resources amongst sub-derivations and consuming fragments of
 resources through pattern-bound variables.
 %
@@ -2218,7 +2219,7 @@ by~\cite{DBLP:journals/tcs/CervesatoHP00}.
 
 % In a case expression whose scrutinee is not in WHNF,
 \item Pattern variables bound in a case alternative, for a scrutinee not in WHNF,
-are introduced as $\D$-variables with usage environment $\lctag{irr{\D}}{K_i}$,
+are introduced as $\D$-variables with usage environment $\lctag{\irr{\D}}{K_i}$,
 where $\D$ are the scrutinee resources and $K_i$ the tag of that pattern
 variable. To use the resources through the pattern-bound $\D$-vars, they must
 be first $Split$ into fragments.
@@ -2238,9 +2239,9 @@ consumed, using the ``whole'' resource as well violates linearity.
 %
 Furthermore, our implementation must infer the usage environments of binders in
 a recursive let group before using them to typecheck the let body. We use a
-naive $O(n^2)$ algorithm to determine these usage environments, but discuss an
-avenue of further research regarding this inference challenge in
-Section~\ref{sec:future-work}.
+naive $O(n^2)$ algorithm (where $n$ is the number of let bindings) to determine
+these usage environments, but discuss an avenue of further research regarding
+this inference challenge in Section~\ref{sec:future-work}.
 
 The usage environments of a recursive group of binders (that is not necessarily
 strongly-connected) is computed in two separate passes.
@@ -2281,23 +2282,28 @@ recursive usage environments.
 % \begin{itemize}
 %     \item Given a list of binders and their naive environment ($(f, F), (g, G),
 %     (h, H)$) in which each use of $f, g, h$ is mapped to a count $n$ in $F, G, H$
-
+%
 %     \item For each pair of a letrec-bound variable and corresponding usage
 %     environment, update all bindings and their usage as described in the
 %     algorithm
-
+%
 %     \item After iterating through all bound rec vars, all usage environments
 %         will be free of recursive bind usages, and hence describe the ``final'' usage environment
 % \end{itemize}
 %
-The algorithm complexity of computing a usage environment for $n$ recursive
-let binders is quadratic in $n$,
+The complexity of computing a usage environment for $n$ recursive let binders
+is quadratic in $n$,
 % i.e. the algorithm has $O(n^2)$ complexity,
 but this is not an issue since it is uncommon to have more than a handful of
 binders in the same recursive let block.
 
-Finally, we present some results:
+Table~\ref{} presents our results of running the plugin on est... libraries
 \todo[inline]{Table with n core programs generated and validated vs failures due to multiplicity coercions}
+
+\begin{itemize}
+\item Discuss results
+\item Alguns não validamos manualmente
+\end{itemize}
 
 
 % Talk about using our plugin on linear-base and other code bases... If I can get
@@ -2814,7 +2820,7 @@ scrutinizing the original alternative body.
 
 Intuitively, since the scrutinee of the outermost case is not in WHNF, no
 resources from it can directly occur in the outermost alternatives. By moving
-the outermost alternatives inwards with a different scrutinee the alternatives
+the outermost alternatives inwards with a different scrutinee, the alternatives
 remain well-typed because they are typed using either the case binder or the
 pattern bound variables, which, by the \emph{Irrelevance} lemma, makes it
 well-typed for any scrutinee consuming arbitrary resources. The proof is given in Section~\ref{sec:proof:caseofcase}.
