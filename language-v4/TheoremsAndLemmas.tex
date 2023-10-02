@@ -168,10 +168,10 @@ If $\G; \D, \D' \vdash \ccase{K~\ov{e}}{\z[\D][\s]~\{..., K~\ov{x} \to e_i\}} : 
 }
 
 \newcommand{\CaseOfCaseTheorem}{
-\begin{theorem}[Case-of-case preserves types]~\\
+\begin{restatable}[Case-of-case preserves types]{theorem}{caseofcasethm}~\\
     If $\G; \D, \D',\D'' \vdash \ccase{\ccase{e_c}{\z[\D]~\{\ov{\rho_{c_i} \to e_{c_i}}\}}}{\var[w][\irr{\D,\D'}][\s']~\{\ov{\rho_i \to e_i}\}} : \vp$\\
     then $\G; \D, \D',\D'' \vdash \ccase{e_c}{\z[\D]~\{\ov{\rho_{c_i} \to \ccase{e_{c_i}}{w~\{\ov{\rho_i \to e_i}\}}}\}} : \vp$\\
-\end{theorem}
+\end{restatable}
 }
 
 \newcommand{\EtaExpansionTheorem}{

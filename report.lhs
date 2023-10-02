@@ -102,7 +102,7 @@
 \maketitle
 \cleardoublepage
 
-\chapter{Acknowledgements}
+\chapter*{Acknowledgements}
 It would not have been possible to complete this work without the support of
 many, to whom I'm deeply thankful.
 
@@ -110,10 +110,10 @@ First and foremost, I'd like to thank my advisor, Bernardo Toninho, for
 mentoring and working with me the past two years. Bernardo first introduced me
 to programming language theory and Haskell, with a seemingly innocent
 undergraduate research project on synthesis from linear types -- catapulting me
-into the glorious world and community of functional programming in Haskell, and
-of the Glasgow Haskell Compiler. Thank you for matching my curiosity by
-teaching me so much (in such a short time), for the bright discussions, and
-great insights.
+into the glorious world and community of PLT, functional programming, and of
+the Glasgow Haskell Compiler. Thank you for matching my curiosity by teaching
+me so much (in such a short time), for the bright discussions, and great
+insights.
 
 Second, I'm thankful to Arnaud Spiwack and Krzysztof Gogolewski for the
 invaluable discussions regarding linearity in GHC out of which this work first emerged.
@@ -123,13 +123,14 @@ Matthew Pickering, Sam Derbyshire, Andreas Klebinger, Sebastian Graf, and John
 Ericson, for sharing your expertise, exchanging exciting new ideas, and
 teaching me in the ways of the Glorious Glasgow Haskell Compiler.
 %
-% I'm thankful to Simon Peyton Jones...
-%
+% I'm very fortunate to have Simon Peyton Jones as a role-model and mentor
+% Prof. Mário emprestou-me dois livros do Pierce :P Prof Leitão for challenging me ...
+
 I thank my dear friends, and, namely, David Neves, Miguel Costa, Francisco
 Pisco, André Costa, Guilherme Gil, Henrique Ferreira, and Tomás Santos, for
 great conversations and time well-spent (both working, and not working)
-together); and, \emph{of course}, António Canteiro, whose prolonged deep
-friendship is irreplaceable.
+together); and, of course, António Canteiro, whose prolonged deep friendship is
+irreplaceable.
 
 I'm deeply grateful for my father Miguel, mother Helena, sister Catarina and
 brother Tiago, my grandparents Augusto, Domingos, Eugénia, Conceição,
@@ -678,6 +679,17 @@ coercions}) in Chapter~\ref{sec:discussion}, which concludes the document.
 \input{language-v4/proofs/UnrestrictedSubstitutionLemma}
 
 \input{language-v4/proofs/DeltaSubstitutionLemma}
+
+\chapter{Optimisations preserve linearity}
+
+Proofs are given inline in Chapter~\ref{sec:optimisations-preserve-types-meta},
+with the exception of the proof that \emph{case-of-case} preserves types, which
+is lengthier than the others.
+
+\section{Case of Case\label{sec:proof:caseofcase}}
+
+\input{language-v4/proofs/optimizations/CaseOfCase}
+
 
 % Already given inline
 % \section{Assumptions}

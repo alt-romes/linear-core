@@ -2444,7 +2444,10 @@ directly).
 only be used through the case binder or pattern-bound variables. If we
 consistently replace the proof irrelevant resources both in the typing
 environment and in the usage environments containing them, the expression
-remains well-typed.
+remains well-typed. We note that the proof irrelevant resources are always
+unique when introduced in such a case alternative (we always take the scrutinee
+environment to make irrelevant, and allow nested ``irrelevantness''), so the
+case binder has the only occurrence of those resources in the $\G$ environment.
 % (being somewhat akin to congruence).
 %
 The proof is given in Section~\ref{sec:proof:irrelevance}.
@@ -2804,7 +2807,19 @@ linearity when further optimised.
 
 \subsection{Case of Case}
 
-\input{language-v4/proofs/optimizations/CaseOfCase}
+The case of case transformation applies to case expressions whose scrutinee is
+another case expression, and returns the innermost case expression transformed by repeating
+the outermost case expression in each alternative of the innermost case,
+scrutinizing the original alternative body.
+
+Intuitively, since the scrutinee of the outermost case is not in WHNF, no
+resources from it can directly occur in the outermost alternatives. By moving
+the outermost alternatives inwards with a different scrutinee the alternatives
+remain well-typed because they are typed using either the case binder or the
+pattern bound variables, which, by the \emph{Irrelevance} lemma, makes it
+well-typed for any scrutinee consuming arbitrary resources. The proof is given in Section~\ref{sec:proof:caseofcase}.
+
+\CaseOfCaseTheorem
 
 % }}}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
