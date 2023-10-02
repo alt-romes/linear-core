@@ -75,7 +75,7 @@ linearCorePass guts = do
        -- the fail_ thing was an attempt to allow the plugin to continue on
        -- functions marked for failing, but that feature isn't finished
        -- then fatalErrorMsg (ppr errs)
-       Trace.pprTraceM "[FAILED]" (ppr errs) -- Ppr.$$ ppr prog)
+       Trace.pprTraceM "[FAILED]" (ppr errs Ppr.$$ ppr prog)
 
   -- We use a simple bash script to count SUCCESS and FAILED
   return guts -- unchanged guts, after validating them.
