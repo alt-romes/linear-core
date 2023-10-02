@@ -418,7 +418,7 @@ dryRun comp = LinearCoreT do
 
 makeEnvResourcesIrrelevant :: Monad m => UsageEnv -> LinearCoreT m ()
 makeEnvResourcesIrrelevant (UsageEnv vs) = do
-  pprTraceM "Making resource irrelevant in case alternative" $! Ppr.empty
+  -- pprTraceM "Making resource irrelevant in case alternative" $! Ppr.empty
   lcstate0 <- get
   lcstate1 <- forM vs $ \(var,mult) -> do
     case M.lookup var lcstate0 of
@@ -436,7 +436,7 @@ makeEnvResourcesIrrelevant (UsageEnv vs) = do
   -- pprTraceM "mkEnvResIrr lcstate0" (Ppr.ppr lcstate0)
   -- pprTraceM "mkEnvResIrr lcstate1" (Ppr.ppr lcstate1)
   put (M.fromList lcstate1 <> lcstate0)
-  pprTraceM "Made resources irrelevant in case alternative" $! Ppr.empty
+  -- pprTraceM "Made resources irrelevant in case alternative" $! Ppr.empty
 
 -- | Run a list of monadic computation ala 'mapM' but restoring the typing environment
 -- for each individual action

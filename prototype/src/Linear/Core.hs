@@ -117,9 +117,9 @@ checkBind (Rec bs) = do
     (extends LetRecBinderDry
          (L.map (\(LCVar b (Just _d)) -> (b, LambdaBound (Relevant OneTy))) ids0)
          (traverse (dryRun . checkExpr) rhss))
-  pprTraceM "naiveUsages" (ppr naiveUsages)
+  -- pprTraceM "naiveUsages" (ppr naiveUsages)
   let recUsages = computeRecUsageEnvs (zip (L.map (.id) ids0) naiveUsages)
-  pprTraceM "recUsages" (ppr recUsages)
+  -- pprTraceM "recUsages" (ppr recUsages)
 
       -- Repeated ocurrences of linear variables will be represented as many
       -- times as they occur in the recursive bindings in the usage
@@ -128,7 +128,7 @@ checkBind (Rec bs) = do
   recUes <- mapM (\i -> extends LetRecBinder (L.map (\id' -> (id'.id, DeltaBound emptyUE)) ids0) $ reconstructUe i.id recUsages inScope) ids0
 
   let ids1 = L.zipWith (\i b -> LCVar i.id (deltaBinding b)) ids0 recUes
-  pprTraceM "Recursive bindings:" (ppr ids1)
+  -- pprTraceM "Recursive bindings:" (ppr ids1)
 
   -- Must typecheck rhss' again with the correct recursive usage environments
   rhss' <- extends LetRecBinder (L.map (\(LCVar i (Just b)) -> (i,b)) ids1) (traverse checkExpr rhss)
@@ -191,7 +191,7 @@ checkExpr expr = case expr of
       lcs0 <- get
       (e', ue) <- record $ checkExpr e
       let irrUe = makeIrrelevant ue
-      pprTraceM "Make irrelevant usage environment:" (ppr irrUe) 
+      -- pprTraceM "Make irrelevant usage environment:" (ppr irrUe) 
       Case e'
            (LCVar b.id (deltaBinding irrUe))
            ty
@@ -199,7 +199,7 @@ checkExpr expr = case expr of
             put lcs0 -- we restore the state for each alternative, not before (otherwise resources aren't consumed in the EmptyCase)
             makeEnvResourcesIrrelevant ue
             extend CaseBinder b.id (DeltaBound irrUe) $
-              pprTrace "checking alt" Ppr.empty $ checkAlt irrUe b.id (exprType (unconvertExpr e)) alt) alts
+              checkAlt irrUe b.id (exprType (unconvertExpr e)) alt) alts
 
   Tick t e  -> Tick t <$> checkExpr e
   Cast e co -> Cast <$> checkExpr e <*> pure co
@@ -236,7 +236,7 @@ checkAlt _ _ _ (Alt (LitAlt _) _ _) = error "impossible"
 --- * ALT0
 checkAlt ue zbind s_ty a@(Alt (DataAlt con) args rhs)
   | all (isManyTy . scaledMult) (uniDataConOrigArgTys con s_ty)
-  = pprTrace "ALT0 con" (ppr a Ppr.<> Ppr.text ". (UE):" Ppr.<> ppr ue) $ do
+  = do -- pprTrace "ALT0 con" (ppr a Ppr.<> Ppr.text ". (UE):" Ppr.<> ppr ue) $ do
           -- Add unrestricted and coercion binders
   rhs' <- extends PatternBinder (L.map (\arg -> (arg.id, LambdaBound (Relevant ManyTy))) args)
           -- Drop from the environment the fully used resources
@@ -254,7 +254,7 @@ checkAlt ue zbind s_ty a@(Alt (DataAlt con) args rhs)
 -- We do lose the ability to make a linear pattern variable unrestricted if no resources were assigned to it, but that's probably never going to happen in the transformations.
 -- It's probably not worth it trying to be that smart, and we don't do substitution here (only checking). Even if we did substituttion things would likely work since all linear variables are used once, despite the theory not working
 -- TODO: Do the simple thing
-checkAlt ue _z s_ty alt@(Alt (DataAlt con) args rhs) = pprTrace "ALTN con" (ppr alt) $ do
+checkAlt ue _z s_ty alt@(Alt (DataAlt con) args rhs) = do -- pprTrace "ALTN con" (ppr alt) $ do
 
   -- pprTraceM "Constructor type" (ppr (dataConRepType con))
   -- pprTraceM "Constructor arguments:" (ppr args <+> ppr (dataConUnivTyVars con) <+> ppr (dataConExTyCoVars con) <+> ppr (dataConUnivAndExTyCoVars con) <+> ppr (dataConTheta con) <+> ppr (zip3 (dataConOrigArgTys con) (scaledMult <$> dataConOrigArgTys con) (uniDataConOrigArgTys con s_ty)) <+> ppr (dataConRepArgTys con))
