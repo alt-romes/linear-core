@@ -339,7 +339,7 @@ Haskell~\cite{cite:linearhaskell}, a pure, functional, and
 % linear types. 
 %
 Linearity in Haskell stands out from linearity in other languages for the
-following reasons essential to our work:
+following reasons, essential to our work:
 
 \begin{itemize}
     % \item Linear types were only added to the language roughly \emph{31 years
@@ -370,7 +370,7 @@ following reasons essential to our work:
         % the haskell default?
 
     \item Both Haskell and its intermediate language Core are \emph{lazily}
-        evaluated, i.e. expressions in Haskell are only evaluated when needed,
+        evaluated, i.e., expressions in Haskell are only evaluated when needed,
         unlike C or Rust, which are \emph{eagerly} evaluated.
         %
         Laziness allows an optimising compiler to aggressively transform the source
@@ -380,8 +380,8 @@ following reasons essential to our work:
         However, lazy evaluation interacts non-trivially with linearity.
         Intuitively, since expressions are not necessarily evaluated, an
         occurrence of a linear resource in an expression does not necessarily
-        entail consuming that resource (i.e. if the expression isn't evaluated,
-        the resource isn't used).
+        entail consuming that resource (i.e., if the expression is not evaluated,
+        the resource is not used).
 
         In eagerly evaluated languages, the distinction between syntactic uses of a
         resource and the actual use of linear resources at runtime does not exist --

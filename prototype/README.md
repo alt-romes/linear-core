@@ -22,6 +22,22 @@ cat output | grep -A1 FAILED | sort | uniq | wc
 cat output | grep SUCCESS | awk '{print $2}' | paste -s -d+ | bc
 ```
 
+### priority-sesh
+
+```haskell
+$ccancel_s5t7 :: (SendOnce (), RecvOnce ()) %1 -> State# RealWorld %1 -> (# State# RealWorld, () #)
+$ccancel_s5t7
+ = \ (ds_i5sV  :: (SendOnce (), RecvOnce ()))
+     (eta_i5sW :: State# RealWorld) ->
+     case ds_i5sV of { (a1_i5sY, b1_i5sZ) ->
+     case $ccancel_s5rL @() a1_i5sY eta_i5sW of
+     { (# ipv_i5t2, ipv1_i5t3 #) ->
+     case ipv1_i5t3 of { () -> $ccancel_s5rM @() b1_i5sZ ipv_i5t2 }
+     }
+     },
+```
+
+
 ### linear-smc
 
 Success: 19438+ (over 7 modules)

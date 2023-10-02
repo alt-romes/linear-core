@@ -2303,9 +2303,11 @@ libraries focused around linear types are given by
 Figure~\ref{fig:core-plugin-res}.
 %
 We compiled the libraries \texttt{linear-smc}, a library presented in the
-work~\cite{10.1145/3471874.3472980} with 7 linearity-heavy modules, and
-\texttt{linear-base}, the Haskell standard library for programming with linear
-types, comprised of over 100 modules, using our plugin.
+work~\cite{10.1145/3471874.3472980} with 1500 lines of linearity-heavy programs,
+\texttt{linear-base} (4000 lines), the Haskell standard library for programming
+with linear types, comprised of over 100 modules, and
+\texttt{priority-sesh}~\cite{10.1145/3471874.3472979} (1400 lines), a
+session-types library, using our plugin.
 %
 We count the number of programs accepted by our implementation, where each
 top-level binding in a module counts as a program, and every such binding is
@@ -2324,22 +2326,22 @@ Section~\ref{sec:reverse-binder-swap-considered-harmful}, these programs can be
 understood as linear as long as applications of linear functions binding these
 variables are \emph{not} reduced \emph{call-by-name}, because, in doing so,
 linear resources are duplicated. In Core, these programs are not seen as
-linear, and thus GHC does not not reduce them call-by-name.
+linear, and thus GHC does not not reduce them using a call-by-name evaluation strategy.
 % We have a flag in our implementation to accept some of these programs...
 
 ``Linear Rejected'' programs include different kinds of programs which are
-rejected by the Linear Core system, but are still semantically linear,
-regardless of them being possibly contrived. An example is a program to which a
-rewrite rule was applied, resulting in an application of unrestricted function
-to a linear resource in the first argument to |build|:
+rejected by the Linear Core system, but are still semantically linear. An
+example is a program to which a rewrite rule was applied, resulting in an
+application of unrestricted function to a linear resource in the first argument
+to |build|:
 \begin{code}
-take :: Int -> Replicator a %1 -> [a]
+take :: Int -> Replicator a ⊸ [a]
 take = \ (ds :: Int) (r :: Replicator b) ->
      case ds of
        1 -> build (\(c :: b -> a -> a) (n :: a) -> c (extract r) n)
        ...
 \end{code}
-We know the linear resource are still used linearly because |build| will
+We know the linear resource is still used linearly because |build| will
 always instance the unrestricted function to $(:)$ (read \emph{Cons}), which is
 linear. Additionally, these include programs scrutinizing a value of a type of
 which all constructors have no linear components, but only matching on the
@@ -2352,13 +2354,12 @@ semantically, and are simultaneously rejected by Linear Core and its
 implementation. An example, where the last component of |HashMap|, |wwz|,
 is linear, but is not being consumed in the case alternative matching on it:
 \begin{code}
-join
-$jssvi :: Ur Bool %1 -> Set Int %1 -> Ur (TestT IO ())
-$jssvi (a :: Ur Bool) (b :: Set Int)
+jssvi :: Ur Bool ⊸ Set Int ⊸ Ur (TestT IO ())
+jssvi (a :: Ur Bool) (b :: Set Int)
   = case a of
     Ur ss -> case b  of
       HashMap wwx wwy wwz ->
-        jump $w$jssAd ss
+        jump wjssAd ss
 \end{code}
 %
 Finally, ``Unknown Rejected'' programs are those whose validity we did not
@@ -2368,11 +2369,14 @@ were not categorized.
 
 \input{prototype/core-plugin-results}
 
-The results indicate Linear Core is successful in accepting the vast majority
-of the thousands of intermediate programs produced by GHC when compiling
-libraries that make extensive use of linear types.
+The results indicate our mostly direct implementation of Linear Core is
+successful in accepting the vast majority of the thousands of intermediate
+programs produced by GHC when compiling libraries that make extensive use of
+linear types.
 %
-The programs rejected by Linear Core, in \texttt{linear-base}, further provide
+The programs rejected by Linear Core, in \texttt{linear-base}, besides
+validating that our implementation is faithful to the system in that,
+anecdotally, programs that should not be accepted are not, further provide
 great insight into the remaining details required to fully typecheck linearity
 in a mature optimising compiler, which seem to be arguably few.
 
