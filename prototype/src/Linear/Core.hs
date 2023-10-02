@@ -181,12 +181,8 @@ checkExpr expr = case expr of
            ty
        <$> withSameEnvMap (\alt -> do
             put lcs0 -- we restore the state for each alternative, not before (otherwise resources aren't consumed in the EmptyCase)
-                     -- in the NOT WHNF case we also restore the state, but then make it irrelevant
             extend CaseBinder b.id (DeltaBound ue) $
-              checkAlt ue (
-                          (if | Var x_s <- e -> (x_s:) | otherwise -> Prelude.id) -- part 2/2 of EXPERIENCE 1
-                          [b.id]
-                          ) (exprType (unconvertExpr e)) alt) alts
+              checkAlt ue b.id (exprType (unconvertExpr e)) alt) alts
     | otherwise
     -- Expression is definitely not in WHNF (or do we really mean HNF?)
     -> do -- pprTrace "Case expression" (ppr casee) $ do
@@ -201,20 +197,20 @@ checkExpr expr = case expr of
            ty
        <$> withSameEnvMap (\alt -> do
             put lcs0 -- we restore the state for each alternative, not before (otherwise resources aren't consumed in the EmptyCase)
-            makeEnvResourcesIrrelevant ue -- and then make it irrelevant
+            makeEnvResourcesIrrelevant ue
             extend CaseBinder b.id (DeltaBound irrUe) $
-              pprTrace "checking alt" Ppr.empty $ checkAlt irrUe [b.id] (exprType (unconvertExpr e)) alt) alts
+              pprTrace "checking alt" Ppr.empty $ checkAlt irrUe b.id (exprType (unconvertExpr e)) alt) alts
 
   Tick t e  -> Tick t <$> checkExpr e
   Cast e co -> Cast <$> checkExpr e <*> pure co
 
 checkAlt :: UsageEnv -- ^ The scrutinee's usage environment
-         -> [Var]    -- ^ Case binder name and possibly scrutinee-var name, to make unrestricted in ALT0
+         -> Var      -- ^ Case binder name
          -> Type     -- ^ Scrutinee type
          -> LCAlt -> LinearCoreM LCAlt
 
 --- * ALT_
-checkAlt ue zbinds s_ty (Alt DEFAULT [] rhs) = do
+checkAlt ue zbind s_ty (Alt DEFAULT [] rhs) = do
   rhs' <- checkExpr rhs
 
   -- EXPERIENCE 2: Allowing data constructors that are unrestricted
@@ -224,7 +220,7 @@ checkAlt ue zbinds s_ty (Alt DEFAULT [] rhs) = do
   when (allConstructorsAreUnrestricted s_ty) $ do
         -- Drop from the binder environment the fully used resources to make it unrestricted
         Linear.Core.Monad.drop ue
-        mapM_ moveToUnrEnv zbinds
+        dropEnvOf zbind
 
   return (Alt DEFAULT [] rhs')
 
@@ -232,7 +228,7 @@ checkAlt _ _ _ (Alt DEFAULT _ _) = error "impossible"
 
 --- * ALT0
 checkAlt ue zbind _ (Alt (LitAlt l) [] rhs) = do
-  rhs' <- Linear.Core.Monad.drop ue >> mapM_ moveToUnrEnv zbind >> checkExpr rhs
+  rhs' <- Linear.Core.Monad.drop ue >> dropEnvOf zbind >> checkExpr rhs
   return (Alt (LitAlt l) [] rhs')
 
 checkAlt _ _ _ (Alt (LitAlt _) _ _) = error "impossible"
@@ -246,7 +242,7 @@ checkAlt ue zbind s_ty a@(Alt (DataAlt con) args rhs)
           -- Drop from the environment the fully used resources
           $ Linear.Core.Monad.drop ue
           -- Drop from the binder environment the fully used resources to make it unrestricted
-          >> mapM_ moveToUnrEnv zbind
+          >> dropEnvOf zbind
           >> checkExpr rhs
   return (Alt (DataAlt con) args rhs')
 

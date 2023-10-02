@@ -12,7 +12,7 @@ module Linear.Core.Monad
   , use
   , extend
   , extends
-  , drop, moveToUnrEnv
+  , drop, dropEnvOf
   , unrestricted
   , record
   , dryRun
@@ -139,9 +139,9 @@ use = flip use' [] where
     -- Lookup the variable in the environment
     mv <- gets (M.lookup key)
 
-    pprTraceM "Using var" (Ppr.ppr key Ppr.<+> Ppr.text "with mult" Ppr.<+>
-      Ppr.ppr mv Ppr.<+> Ppr.text "and tag environment" Ppr.<+> Ppr.ppr mtags
-      Ppr.<+> Ppr.text "; allowIrr: " Ppr.<+> Ppr.text (show allowsIrrelevant))
+    -- pprTraceM "Using var" (Ppr.ppr key Ppr.<+> Ppr.text "with mult" Ppr.<+>
+    --   Ppr.ppr mv Ppr.<+> Ppr.text "and tag environment" Ppr.<+> Ppr.ppr mtags
+    --   Ppr.<+> Ppr.text "; allowIrr: " Ppr.<+> Ppr.text (show allowsIrrelevant))
 
 
     case mv of
@@ -232,9 +232,8 @@ use = flip use' [] where
                     modify (M.delete key) -- OK, we only had one fragment left and consumed it
                 Just splits' -> modify (M.insert key (Right splits'))   -- we keep the remaining fragments
 
-    -- debug
-    key_val <- gets (M.lookup key)
-    pprTraceM "Used var, remaining var in env is:" (Ppr.ppr key Ppr.<+> Ppr.ppr key_val)
+    -- key_val <- gets (M.lookup key)
+    -- pprTraceM "Used var, remaining var in env is:" (Ppr.ppr key Ppr.<+> Ppr.ppr key_val)
 
 
 -- | Extend a computation that threads linear resources with a resource that
@@ -332,10 +331,10 @@ drop (UsageEnv env) = do
 --              -> [m]
 --             ) (NE.toList mults)
 
-moveToUnrEnv :: Monad m
+dropEnvOf :: Monad m
           => Var -- ^ The var to make unrestricted by "dropping all resources from it"
           -> LinearCoreT m ()
-moveToUnrEnv v = do
+dropEnvOf v = do
   modify (M.insert v (Left (LambdaBound (Relevant GHC.Core.Type.ManyTy))))
 
 
@@ -351,11 +350,9 @@ unrestricted computation = LinearCoreT do
   prev <- get
   result <- unLC computation
   after <- get
-  -- We filter linear because if a computation moved a resource from linear to
-  -- unrestricted, we don't care about that difference because of a case alternative??
-  when (filterLinear [prev] /= filterLinear [after]) $
+  when (prev /= after) $
     throwError $ fromString $
-      "An unrestricted computation should consume no linear resources, but instead it used " ++ showPprUnsafe (prev M.\\ after, after M.\\ prev) ++ "."
+      "An unrestricted computation should consume no linear resources, but instead it used " ++ showPprUnsafe (prev M.\\ after) ++ "."
   return result
 
 -- | Run a computation and record the linear resources used in that computation
@@ -384,16 +381,15 @@ record computation = LinearCoreT do
                 ) (M.toList diffs)
 
 -- Return the a difference (akin to set difference) from two group of resources, accounting for splits
--- e.g. [(x,One#(,)2),(y,One)] `diffResources` [(x,One#(,)2#(#,#)2)] == [(x,One#(,)2#(#,#)1),(y,One)]
+-- e.g.
+-- e.g. [(x,One#(,)2)] `diffResources` [(x,One#(,)2#(#,#)2)] == [(x,One#(,)2#(#,#)1)]
 diffResources :: LCState -> LCState -> LCState
 diffResources = M.differenceWith diffgo
     where
       diffgo :: Either IdBinding (NonEmpty Mult)
              -> Either IdBinding (NonEmpty Mult)
              -> Maybe (Either IdBinding (NonEmpty Mult))
-      diffgo (Left (LambdaBound m)) (Left (LambdaBound (Relevant GHC.Core.Type.ManyTy)))
-        | isLinear m = Just (Left (LambdaBound m)) -- this might happen if in an alternative we move a linear scrut-var to the unr context 
-      diffgo (Left _) (Left _)  = Nothing -- for other left bindings, equal keys means something wasn't used (thus not relevant in the diff)
+      diffgo (Left _) (Left _)  = Nothing -- for left bindings, equal keys means something wasn't used (thus not relevant in the diff)
       diffgo (Left (LambdaBound m)) (Right (NE.toList -> ne)) = Right <$> NE.nonEmpty ([m] `setDiffAwareOfSplits` ne) -- we might delete the resource if the split has just 1 position
       diffgo (Left (DeltaBound _)) (Right _) = error "How would that happen? DB"
       diffgo (Right _) (Left _) = error "How would that happen?"
@@ -466,8 +462,7 @@ withSameEnvMap :: Monad m => (a -> LinearCoreT m b) -> [a] -> LinearCoreT m [b]
 withSameEnvMap f ls = LinearCoreT do
   lcstate <- get
   (ls', states) <- mapAndUnzipM (\x -> put lcstate >> unLC (f x) >>= \y -> gets (y,)) ls
-  (isDryRun,_,_) <- ask -- in a dry run we ignore if linear variables go unused
-  unless (isDryRun || allEq (filterLinear states)) $
+  unless (allEq states) $
     throwError $ "withSameEnvMap: Not all eq!" ++ Ppr.showPprUnsafe (fmap (M.filter (\case Left (DeltaBound _) -> False; _ -> True)) states)
   return ls'
 
@@ -487,11 +482,4 @@ allEq = allEq' Nothing where
   allEq' _        []     = True
   allEq' Nothing  (x:xs) = allEq' (Just x) xs
   allEq' (Just y) (x:xs) = x == y && allEq' (Just y) xs
-
--- We only compare the linear fields, because with the case-var-rule hack,
--- there are branches in which we will introduce $x$ in the $\G$ env,
--- whereas in the branches where $x$ remains linear, it will be removed.
--- Otherwise we could compare all states, but it would mean the same...
-filterLinear :: [LCState] -> [LCState]
-filterLinear = fmap (M.filter (\case Right _ -> True; Left (LambdaBound m) -> isLinear m; _ -> False))
   
