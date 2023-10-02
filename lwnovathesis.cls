@@ -108,3 +108,23 @@
 \hypersetup{colorlinks=true, linkcolor=black, citecolor=magenta, breaklinks, pdfdisplaydoctitle}
 % Display document title as PDF title instead of file name
 
+% Display text in blank pages
+% \makeatletter
+%     \def\cleardoublepage{\clearpage%
+%         \if@twoside
+%             \ifodd\c@page\else
+%                 \vspace*{\fill}
+%                 \hfill
+%                 \begin{center}
+%                 \emph{This page intentionally left blank.}
+%                 \end{center}
+%                 \vspace{\fill}
+%                 \thispagestyle{empty}
+%                 \newpage
+%                 \if@twocolumn\hbox{}\newpage\fi
+%             \fi
+%         \fi
+%     }
+% \makeatother
+
+

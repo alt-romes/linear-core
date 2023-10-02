@@ -2099,63 +2099,63 @@ We note how $Split$ can be applied both to relevant and proof irrelevant linear 
 % mixing of pattern variables bound at different alternatives (e.g.~$\lambda
 % x~y.~\ccase{(x,y)}{(a,b)\to\ccase{(a,b)}{(z,w)\to(a,w)}}$).
 
-\section{Linear Core Examples}
-
-\todo[inline]{If I have no time...}
-
-Linear Mini-Core~\cite{cite:minicore} lists examples of Core programs where
-semantic linearity must be understood in order for them to be well-typed. In
-this section, we show those examples in Linear Core ($\lambda^\pi_\Delta$),
-briefly explaining why they are indeed well-typed.
-
-\paragraph{Equations}
-
-The Linear Haskell function is compiled in Linear Core as\\
-%
-\begin{minipage}{0.47\textwidth}
-\begin{code}
-data C = Red | Green | Blue
-f :: C ⊸ C ⊸ C
-f Red q = q
-f p Green = p
-f Blue q = q
-\end{code}
-\end{minipage}
-\begin{minipage}{0.47\textwidth}
-\[
-\begin{array}{ll}
-\lambda p{:}_1C~q{:}_1C.~\ccase{p}{p2{:}_{\{p\}}C \\
-\{Red \to q \\
-; \_ \to \ccase{q}{q2{:}_{\{q\}}C\\
-  \{Green \to p2\\
-  ; \_ \to \ccase{p2}{p3{:}_{\{p\}}C \\
-  \{Blue \to q2\}} \}} \}}
-\end{array}
-\]
-\end{minipage}
-
-\paragraph{Unrestricted Fields}
-
-The following is well-typed:
-Let $\datatype{K}{K : A \lolli B \to C}$, and $f$:
-\[
-\lambda \xl.~\ccase{x}{\var[z][x]~\{ K~a~b \to (z, b) \}}
-\]
-
-\paragraph{Wildcard}
-
-The following is ill-typed:
-\begin{code}
-f = \x -> case x of z { _ -> True }
-\end{code}
-
-\paragraph{Duplication}
-
-The following is ill-typed:
-\begin{code}
-data Foo = Foo A
-f = \x -> case x of z { Foo a -> (z, a) }
-\end{code}
+%%%%% \section{Linear Core Examples}
+%%%%% 
+%%%%% \todo[inline]{If I have no time...}
+%%%%% 
+%%%%% Linear Mini-Core~\cite{cite:minicore} lists examples of Core programs where
+%%%%% semantic linearity must be understood in order for them to be well-typed. In
+%%%%% this section, we show those examples in Linear Core ($\lambda^\pi_\Delta$),
+%%%%% briefly explaining why they are indeed well-typed.
+%%%%% 
+%%%%% \paragraph{Equations}
+%%%%% 
+%%%%% The Linear Haskell function is compiled in Linear Core as\\
+%%%%% %
+%%%%% \begin{minipage}{0.47\textwidth}
+%%%%% \begin{code}
+%%%%% data C = Red | Green | Blue
+%%%%% f :: C ⊸ C ⊸ C
+%%%%% f Red q = q
+%%%%% f p Green = p
+%%%%% f Blue q = q
+%%%%% \end{code}
+%%%%% \end{minipage}
+%%%%% \begin{minipage}{0.47\textwidth}
+%%%%% \[
+%%%%% \begin{array}{ll}
+%%%%% \lambda p{:}_1C~q{:}_1C.~\ccase{p}{p2{:}_{\{p\}}C \\
+%%%%% \{Red \to q \\
+%%%%% ; \_ \to \ccase{q}{q2{:}_{\{q\}}C\\
+%%%%%   \{Green \to p2\\
+%%%%%   ; \_ \to \ccase{p2}{p3{:}_{\{p\}}C \\
+%%%%%   \{Blue \to q2\}} \}} \}}
+%%%%% \end{array}
+%%%%% \]
+%%%%% \end{minipage}
+%%%%% 
+%%%%% \paragraph{Unrestricted Fields}
+%%%%% 
+%%%%% The following is well-typed:
+%%%%% Let $\datatype{K}{K : A \lolli B \to C}$, and $f$:
+%%%%% \[
+%%%%% \lambda \xl.~\ccase{x}{\var[z][x]~\{ K~a~b \to (z, b) \}}
+%%%%% \]
+%%%%% 
+%%%%% \paragraph{Wildcard}
+%%%%% 
+%%%%% The following is ill-typed:
+%%%%% \begin{code}
+%%%%% f = \x -> case x of z { _ -> True }
+%%%%% \end{code}
+%%%%% 
+%%%%% \paragraph{Duplication}
+%%%%% 
+%%%%% The following is ill-typed:
+%%%%% \begin{code}
+%%%%% data Foo = Foo A
+%%%%% f = \x -> case x of z { Foo a -> (z, a) }
+%%%%% \end{code}
 
 
 % }}}

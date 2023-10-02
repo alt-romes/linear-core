@@ -79,7 +79,8 @@
 \newcommand{\ccase}[2]{\mathsf{case}~#1~\mathsf{of}~#2}
 
 \title{Type-checking Linearity in Core\\ or: Semantic Linearity for a Lazy Optimising Compiler}
-\author{Rodrigo Mesquita \\ Adviser: Bernardo Toninho}
+\author{Rodrigo Mesquita \\ Advisor: Bernardo Toninho}
+\date{ }
 
 
 \begin{document}
@@ -99,6 +100,43 @@
 \frontmatter
 
 \maketitle
+\cleardoublepage
+
+\chapter{Acknowledgements}
+It would not have been possible to complete this work without the support of
+many, to whom I'm deeply thankful.
+
+First and foremost, I'd like to thank my advisor, Bernardo Toninho, for
+mentoring and working with me the past two years. Bernardo first introduced me
+to programming language theory and Haskell, with a seemingly innocent
+undergraduate research project on synthesis from linear types -- catapulting me
+into the glorious world and community of functional programming in Haskell, and
+of the Glasgow Haskell Compiler. Thank you for matching my curiosity by
+teaching me so much (in such a short time), for the bright discussions, and
+great insights.
+
+Second, I'm thankful to Arnaud Spiwack and Krzysztof Gogolewski for the
+invaluable discussions regarding linearity in GHC out of which this work first emerged.
+%
+I'd also like to thank my GHC colleagues and friends, particularly, Ben Gamari,
+Matthew Pickering, Sam Derbyshire, Andreas Klebinger, Sebastian Graf, and John
+Ericson, for sharing your expertise, exchanging exciting new ideas, and
+teaching me in the ways of the Glorious Glasgow Haskell Compiler.
+%
+% I'm thankful to Simon Peyton Jones...
+%
+I thank my dear friends, and, namely, David Neves, Miguel Costa, Francisco
+Pisco, André Costa, Guilherme Gil, Henrique Ferreira, and Tomás Santos, for
+great conversations and time well-spent (both working, and not working)
+together); and, \emph{of course}, António Canteiro, whose prolonged deep
+friendship is irreplaceable.
+
+I'm deeply grateful for my father Miguel, mother Helena, sister Catarina and
+brother Tiago, my grandparents Augusto, Domingos, Eugénia, Conceição,
+great-grandparents Gil and Luísa, my aunts, uncles and cousins, and my dearest
+beloved Bárbara: for their unwavering support in my every dream or need, and
+for their love.
+
 \cleardoublepage
 
 \abstractnum
@@ -157,21 +195,21 @@ Num sistema de tipos linear, recursos lineares têm de ser usados
 ocorrência \emph{sintática} do mesmo no programa, no entanto, sob a perspectiva
 de avaliação \emph{lazy}, a linearidade pode ser também compreendida de forma
 \emph{semântica}, observando que uma ocorrência sintática de um recurso não
-significa necessariamente que esse recurso é usado quando o programa é
+significa necessariamente que esse recurso seja usado quando o programa é
 avaliado.
 %
-Linearidade semântica é especialmente relevante em compiladores que optimizam
+Linearidade semântica é particularmente relevante em compiladores que optimizam
 linguagens com linearidade e \emph{laziness}: a \emph{laziness} permite ao
-compilador transformar consideravelmente o programa original, de forma que a
-interacção entre linearidade e \emph{laziness} é levada ao extremo,
+compilador transformar consideravelmente o programa original, de tal forma que
+a interacção entre linearidade e \emph{laziness} é levada ao extremo,
 independentemente de como a linearidade foi tipificada no programa original.
 %
 Desenvolvemos o primeiro sistema de tipos (\emph{Linear Core}) que compreende
 linearidade semântica na presença de \emph{laziness}, um sistema adequado para
-a linguagem intermédia (\emph{Core}) do Glasgow Haskell Compiler. Provámos que
+a linguagem intermédia (\emph{Core}) do Glasgow Haskell Compiler. Provamos que
 o sistema é \emph{type safe} e que várias optimizações preservam linearidade no
-Linear Core, apesar de as mesmas não a preservarem no Core. Implementámos o
-Linear Core como um \emph{plugin} para o compilador, com o objectivo de validar
+Linear Core, apesar de as mesmas não a preservarem no Core. Implementamos o
+Linear Core como um \emph{plugin} para o compilador com o objectivo de validar
 o sistema em bibliotecas lineares populares, como a \emph{linear-base}.
 
 %%% PREPARATION ABSTRACT %%%
