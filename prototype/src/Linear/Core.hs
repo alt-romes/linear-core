@@ -1,4 +1,4 @@
-{-# LANGUAGE GHC2021, ViewPatterns, DerivingVia, GeneralizedNewtypeDeriving, OverloadedRecordDot #-}
+{-# LANGUAGE GHC2021, ViewPatterns, DerivingVia, GeneralizedNewtypeDeriving, OverloadedRecordDot, MultiWayIf #-}
 {-|
 In this module we attempt to implement the linear type system defined in the
 thesis.
@@ -169,6 +169,10 @@ checkExpr expr = case expr of
   casee@(Case e b ty alts)
     -- Expression is in WHNF (See Note [exprIsHNF] and #23771, function is really "exprIsWHNF")
     | exprIsHNF (unconvertExpr e)
+      -- EXPERIENCE 1: Experiment in ignoring the preservation issue and simply
+      -- accepting occurrences of linear variables in scrutinees and in their
+      -- bodies
+       || (if | Var _ <- e -> True | otherwise -> False)
     -> do
       lcs0 <- get
       (e', ue) <- record $ checkExpr e
@@ -209,6 +213,7 @@ checkAlt :: UsageEnv -- ^ The scrutinee's usage environment
 checkAlt ue zbind s_ty (Alt DEFAULT [] rhs) = do
   rhs' <- checkExpr rhs
 
+  -- EXPERIENCE 2: Allowing data constructors that are unrestricted
   -- When we're matching on a resource s.t., regardless of the constructor,
   -- there are no linear components, we can say in the DEFAULT alternative
   -- the binder is unrestricted too, and the resources are fully consumed.
