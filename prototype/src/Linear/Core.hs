@@ -169,10 +169,10 @@ checkExpr expr = case expr of
   casee@(Case e b ty alts)
     -- Expression is in WHNF (See Note [exprIsHNF] and #23771, function is really "exprIsWHNF")
     | exprIsHNF (unconvertExpr e)
-      -- EXPERIENCE 1: Experiment in ignoring the preservation issue and simply
+      -- part 1/2 EXPERIENCE 1: Experiment in ignoring the preservation issue and simply
       -- accepting occurrences of linear variables in scrutinees and in their
       -- bodies
-       || (if | Var _ <- e -> True | otherwise -> False)
+       -- || (if | Var _ <- e -> True | otherwise -> False)
     -> do
       lcs0 <- get
       (e', ue) <- record $ checkExpr e
@@ -181,8 +181,12 @@ checkExpr expr = case expr of
            ty
        <$> withSameEnvMap (\alt -> do
             put lcs0 -- we restore the state for each alternative, not before (otherwise resources aren't consumed in the EmptyCase)
+                     -- in the NOT WHNF case we also restore the state, but then make it irrelevant
             extend CaseBinder b.id (DeltaBound ue) $
-              checkAlt ue b.id (exprType (unconvertExpr e)) alt) alts
+              checkAlt ue (
+                          (if | Var x_s <- e -> (x_s:) | otherwise -> Prelude.id) -- part 2/2 of EXPERIENCE 1
+                          [b.id]
+                          ) (exprType (unconvertExpr e)) alt) alts
     | otherwise
     -- Expression is definitely not in WHNF (or do we really mean HNF?)
     -> do -- pprTrace "Case expression" (ppr casee) $ do
@@ -197,20 +201,20 @@ checkExpr expr = case expr of
            ty
        <$> withSameEnvMap (\alt -> do
             put lcs0 -- we restore the state for each alternative, not before (otherwise resources aren't consumed in the EmptyCase)
-            makeEnvResourcesIrrelevant ue
+            makeEnvResourcesIrrelevant ue -- and then make it irrelevant
             extend CaseBinder b.id (DeltaBound irrUe) $
-              pprTrace "checking alt" Ppr.empty $ checkAlt irrUe b.id (exprType (unconvertExpr e)) alt) alts
+              pprTrace "checking alt" Ppr.empty $ checkAlt irrUe [b.id] (exprType (unconvertExpr e)) alt) alts
 
   Tick t e  -> Tick t <$> checkExpr e
   Cast e co -> Cast <$> checkExpr e <*> pure co
 
 checkAlt :: UsageEnv -- ^ The scrutinee's usage environment
-         -> Var      -- ^ Case binder name
+         -> [Var]    -- ^ Case binder name and possibly scrutinee-var name, to make unrestricted in ALT0
          -> Type     -- ^ Scrutinee type
          -> LCAlt -> LinearCoreM LCAlt
 
 --- * ALT_
-checkAlt ue zbind s_ty (Alt DEFAULT [] rhs) = do
+checkAlt ue zbinds s_ty (Alt DEFAULT [] rhs) = do
   rhs' <- checkExpr rhs
 
   -- EXPERIENCE 2: Allowing data constructors that are unrestricted
@@ -220,7 +224,7 @@ checkAlt ue zbind s_ty (Alt DEFAULT [] rhs) = do
   when (allConstructorsAreUnrestricted s_ty) $ do
         -- Drop from the binder environment the fully used resources to make it unrestricted
         Linear.Core.Monad.drop ue
-        dropEnvOf zbind
+        mapM_ moveToUnrEnv zbinds
 
   return (Alt DEFAULT [] rhs')
 
@@ -228,7 +232,7 @@ checkAlt _ _ _ (Alt DEFAULT _ _) = error "impossible"
 
 --- * ALT0
 checkAlt ue zbind _ (Alt (LitAlt l) [] rhs) = do
-  rhs' <- Linear.Core.Monad.drop ue >> dropEnvOf zbind >> checkExpr rhs
+  rhs' <- Linear.Core.Monad.drop ue >> mapM_ moveToUnrEnv zbind >> checkExpr rhs
   return (Alt (LitAlt l) [] rhs')
 
 checkAlt _ _ _ (Alt (LitAlt _) _ _) = error "impossible"
@@ -242,7 +246,7 @@ checkAlt ue zbind s_ty a@(Alt (DataAlt con) args rhs)
           -- Drop from the environment the fully used resources
           $ Linear.Core.Monad.drop ue
           -- Drop from the binder environment the fully used resources to make it unrestricted
-          >> dropEnvOf zbind
+          >> mapM_ moveToUnrEnv zbind
           >> checkExpr rhs
   return (Alt (DataAlt con) args rhs')
 

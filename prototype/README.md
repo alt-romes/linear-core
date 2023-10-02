@@ -103,6 +103,7 @@ take
          build
            @a_a8DQ
            (\ (@a_d8Hm)
+           -- Isto é linear pq c_d8Hn vai ser sempre (:) Cons
               (c_d8Hn [OS=OneShot] :: a_a8DQ -> a_d8Hm -> a_d8Hm)
               (n_d8Ho [OS=OneShot] :: a_d8Hm) ->
               c_d8Hn (extract @a_a8DQ r_a8u5) n_d8Ho)

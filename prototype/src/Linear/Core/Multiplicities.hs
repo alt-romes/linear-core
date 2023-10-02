@@ -24,7 +24,7 @@ import GHC.Core.Type (isMultiplicityVar, isMultiplicityTy)
 ----- Id Binding ---------------------------------------------------------------
 --------------------------------------------------------------------------------
 
-data BindSite = LetBinder | LetRecBinder | LetRecBinderDry | LambdaBinder | CaseBinder | PatternBinder
+data BindSite = LetBinder | LetRecBinder | LetRecBinderDry | LambdaBinder | CaseBinder | PatternBinder | Unknown
   deriving (Show, Eq)
 
 data IdBinding = LambdaBound Mult    -- lambdas
