@@ -32,7 +32,7 @@
 % Use memoir as the base class, for documentation run `texdoc memoir`
 % The options set solve (4), (2), (1)
 % \LoadClass[a4paper,11pt,twoside,onecolumn,openright,draft]{memoir}
-\LoadClass[a4paper,11pt,twoside,onecolumn,openright,draft]{memoir}
+\LoadClass[a4paper,11pt,twoside,onecolumn,openright]{memoir}
 
 % This solves (6) by setting 1.5 line spacing for the main text
 % And solves (7) as well because footnotes' line spacing is unaltered

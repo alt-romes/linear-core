@@ -2303,9 +2303,9 @@ libraries focused around linear types are given by
 Figure~\ref{fig:core-plugin-res}.
 %
 We compiled the libraries \texttt{linear-smc}, a library presented in the
-work~\cite{10.1145/3471874.3472980} with 1500 lines of linearity-heavy programs,
-\texttt{linear-base} (4000 lines), the Haskell standard library for programming
-with linear types, comprised of over 100 modules, and
+work~\cite{10.1145/3471874.3472980} (1500 lines), \texttt{linear-base} (4000
+lines), the Haskell standard library for programming with linear types,
+comprised of over 100 modules, and
 \texttt{priority-sesh}~\cite{10.1145/3471874.3472979} (1400 lines), a
 session-types library, using our plugin.
 %
@@ -2317,7 +2317,13 @@ typechecker are given in the ``Total Rejected'' column, but we distil these
 rejections into ``Unique Rejections'' by removing duplicate rejections (those
 of the same program and for the same linearity-violating reason, but occurring
 at different stages). We further categorize the unique rejections into ``Linear
-modulo Call-by-name'', ``Linear Rejected'', ``Not Linear Rejected'', and ``Unknown Rejected''.
+modulo Call-by-name'', ``Linear Rejected'', ``Not Linear Rejected'', and
+``Unknown Rejected''.
+%
+Using the plugin, \texttt{linear-base} takes 35 seconds to compile, instead of
+20 seconds. We note, however, that the implementation is not performance
+conscious, and types every intermediate program from scratch, instead of
+maintaining linearity information throughout the pipeline.
 
 Programs ``linear modulo call-by-name'' are a class of programs
 which scrutinize a variable, but then uses the variable in the case
@@ -2328,7 +2334,7 @@ variables are \emph{not} reduced \emph{call-by-name}, because, in doing so,
 linear resources are duplicated. In Core, these programs are not seen as
 linear, and thus GHC does not not reduce them using a call-by-name evaluation strategy.
 % We have a flag in our implementation to accept some of these programs...
-
+%
 ``Linear Rejected'' programs include different kinds of programs which are
 rejected by the Linear Core system, but are still semantically linear. An
 example is a program to which a rewrite rule was applied, resulting in an

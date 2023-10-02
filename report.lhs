@@ -1,4 +1,5 @@
 \documentclass{lwnovathesis}
+\usepackage{pdfpages}
 \usepackage{mathtools}
 \usepackage{boldline}
 \usepackage{xargs}
@@ -87,6 +88,8 @@
 \begin{document}
 
 \frontmatter
+
+\includepdf[pages=-,frame=false]{thesis_capa.pdf}
 
 \maketitle
 \cleardoublepage

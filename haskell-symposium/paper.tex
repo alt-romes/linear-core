@@ -1,0 +1,49 @@
+\documentclass[sigplan,screen,review]{acmart}
+
+
+\begin{document}
+
+\title{Typechecking Linearity in Haskell's Core Intermediate Language}
+
+\author{Rodrigo Mesquita}
+\affiliation{
+  \institution{Universidade Nova de Lisboa}
+  \city{Lisbon}
+  \country{Portugal}
+}
+
+\author{Bernardo Toninho}
+\affiliation{
+  \institution{Universidade Nova de Lisboa}
+  \city{Lisbon}
+  \country{Portugal}
+}
+
+\begin{abstract}
+Linear types were introduced to Haskell ...
+%
+However, the current Core type-checker rejects many linearly valid programs
+that originate from Core-to-Core optimizing transformations. As such, linearity
+typing is effectively disabled, for otherwise disabling optimizations would be
+far more devastating.
+%
+% This dissertation presents an extension to Core's type system that accepts a
+The goal of our proposed dissertation is to develop an extension to Core's type
+system that accepts a larger amount of programs and verifies that optimizing
+transformations applied to well-typed linear Core produce well-typed linear
+Core.
+%
+Our extension will be based on attaching variable \emph{usage environments} to
+binders, which augment the type system with more  fine-grained contextual
+linearity information, allowing the system to accept programs which seem to
+syntactically violate linearity but preserve linear resource usage. We will
+also develop a usage environment inference procedure and integrate the
+procedure with the type checker.  We will validate our proposal by showing a
+range of Core-to-Core transformations can be typed by our system.
+\end{abstract}
+
+\maketitle
+
+\section{Introduction}
+
+\end{document}
