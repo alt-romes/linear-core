@@ -24,18 +24,36 @@ cat output | grep SUCCESS | awk '{print $2}' | paste -s -d+ | bc
 
 ### priority-sesh
 
-this is linear, we should be able to see it.
+WIP
 ```haskell
-$ccancel_s5t7 :: (SendOnce (), RecvOnce ()) %1 -> State# RealWorld %1 -> (# State# RealWorld, () #)
-$ccancel_s5t7
- = \ (ds_i5sV  :: (SendOnce (), RecvOnce ()))
-     (eta_i5sW :: State# RealWorld) ->
-     case ds_i5sV of { (a1_i5sY, b1_i5sZ) ->
-     case $ccancel_s5rL @() a1_i5sY eta_i5sW of
-     { (# ipv_i5t2, ipv1_i5t3 #) ->
-     case ipv1_i5t3 of { () -> $ccancel_s5rM @() b1_i5sZ ipv_i5t2 }
-     }
-     },
+   $ccancel_s46Z :: forall {a}.  Cancelable a => [a] %1 -> State# RealWorld %1 -> (# State# RealWorld, () #)
+   $ccancel_s46Z
+     = \ (@a_a2DK) ($dCancelable_a2DL  :: Cancelable a_a2DK) (eta_B0  :: [a_a2DK]) (eta_B1  :: State# RealWorld) ->
+         letrec {
+           go_s48m :: [a_a2DK] %1 -> State# RealWorld %1 -> (# State# RealWorld, [()] #)
+           go_s48m
+             = \ (ds_a46v  :: [a_a2DK])
+                 (eta_X2  :: State# RealWorld) ->
+                 case ds_a46v of {
+                   [] -> (# eta_X2, [] @() #);
+                   : x_a46y  xs_a46z  ->
+                     case $dCancelable_a2DL x_a46y eta_X2 of
+                     { (# ipv_a46O, ipv1_a46P #) ->
+                         case go_s48m xs_a46z ipv_a46O of {
+                         (# ipv2_a46S, ipv3_a46T #) -> (# ipv2_a46S, : @() ipv1_a46P ipv3_a46T #)
+                     }
+                     }
+                 }; } in
+         case go_s48m eta_B0 eta_B1 of
+         { (# ipv_a45T, ipv1_a45U #) ->
+         (# ipv_a45T,
+            case $w$cconsume
+                   @()
+                   ($fConsumable()1 `cast` (N:Generically[0] <()>_R %<'One>_N ->_R N:Generically[0] <()>_R ; Sym (N:Consumable[0] <()>_N) :: (Generically () %1 -> Generically () :: Type) ~R# (Consumable () :: Constraint)))
+                   ipv1_a45U
+            of
+            { (# #) -> () } #)
+         },
 ```
 
 
