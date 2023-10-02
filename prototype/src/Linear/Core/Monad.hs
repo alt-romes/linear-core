@@ -47,6 +47,8 @@ import qualified Data.Map as M
 import qualified GHC.Utils.Panic as Ppr
 import qualified Data.List as L
 import Data.Either (fromRight)
+import Data.Bifunctor (Bifunctor(..))
+import Data.Maybe (catMaybes)
 
 -- | Computations that thread through a linear context from which resources must
 -- be used exactly once, and resources of other multiplicities that can be
@@ -222,7 +224,11 @@ use = flip use' [] where
           -- non-matching tagged fragments untouched.
           tags -> do
 
-            (join -> splits, consumed_ms) <- mapAndUnzipM (splitAsNeededThenConsume allowsIrrelevant tags) (NE.toList mults)
+            (join -> splits, catMaybes -> consumed_ms)
+              <- mapAndUnzipM (\m -> if extractTags m `L.isPrefixOf` tags
+                                        -- if the mult doesn't match the prefix then we don't split, otherwsie we split things that are definitely not supposed to split!
+                                        then second Just <$> splitAsNeededThenConsume allowsIrrelevant tags m
+                                        else return ([m], Nothing)) (NE.toList mults)
             -- pprTraceM "Split key at tags" (Ppr.ppr key Ppr.<+> Ppr.ppr tags Ppr.<+> Ppr.ppr splits)
             if isDryRun
                then tell (map (key,) consumed_ms) -- Again, we don't consume things when dry run

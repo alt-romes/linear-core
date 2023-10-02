@@ -24,6 +24,7 @@ cat output | grep SUCCESS | awk '{print $2}' | paste -s -d+ | bc
 
 ### priority-sesh
 
+this is linear, we should be able to see it.
 ```haskell
 $ccancel_s5t7 :: (SendOnce (), RecvOnce ()) %1 -> State# RealWorld %1 -> (# State# RealWorld, () #)
 $ccancel_s5t7
