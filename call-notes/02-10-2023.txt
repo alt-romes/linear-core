@@ -1,0 +1,11 @@
+linear-smc:
+
+Numero de coisas que são validadas ou não e porquê
+
+linear-base:
+
+Escape hatch: "premilinar" no sentido em que corri sobre linear base, e tenho X
+erros de type checking. De todos estes erros não consegui validar todos à mão.
+
+Tabela com X erros dos quais
+

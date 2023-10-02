@@ -811,8 +811,8 @@ expression, and the \emph{thunk} is overwritten with the result.
 % overwrites the unevaluated expression the name was associated with, and
 % subsequent uses of the same name will now refer to the computed result. The
 % suspended computation is called a \emph{thunk}, and
-Call-by-need evaluation is traditionally modelled with a mutable heap for the
-existing thunks or values they are overwritten with~\cite{}\todo{cite}.
+% Call-by-need evaluation is traditionally modelled with a mutable heap for the
+% existing thunks or values they are overwritten with~\cite{}\todo{cite}.
 %
 Beyond lambdas and let-bindings, Haskell and Core also feature algebraic
 datatypes and case expressions to match on datatype constructors:
@@ -820,7 +820,7 @@ datatypes and case expressions to match on datatype constructors:
 \item A datatype defines a (user-defined) \emph{type} through a set of
 constructors $\overline{K_i}$ that can be used to build values of the type they
 define. A constructor applied to a set of argument expressions, $K~\overline{e}$, is
-said to be in Weak Head Normal Form, and does not reduce any further on its own.
+said to be in Weak Head Normal Form~\cite{10.5555/1096899}, and does not reduce any further on its own.
 
 \item A case expression $\ccase{e_s}{\overline{\rho_i \to e_i}}$ is defined by a
 scrutinee $e_s$ and a list of alternatives comprised of a pattern $\rho$

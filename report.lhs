@@ -16,6 +16,7 @@
 \usepackage{tikz-qtree}
 \usetikzlibrary{trees}	% this is to allow the fork right path
 \usepackage{mdframed}
+\usepackage{makecell}
 \usepackage{thmtools, thm-restate}
 
 % font stack: acmart
@@ -144,8 +145,8 @@ for their love.
 
 \cleardoublepage
 
-\abstractnum
-\begin{abstract}
+\pdfbookmark{Abstract}{Abstract}
+\chapter*{Abstract}
 Linear type systems guarantee linear resources are used \emph{exactly once}.
 Traditionally, using a resource is synonymous with its \emph{syntactic}
 occurrence in the program, however, under the lens of \emph{lazy} evaluation,
@@ -166,6 +167,8 @@ safe and that multiple optimising transformations preserve linearity in Linear
 Core while failing to do so in Core. We have implemented Linear Core as a
 compiler plugin to validate the system against established libraries, including
 \texttt{linear-base}, in the heart of the compiler.
+
+\cleardoublepage
 
 %%% PREPARATION ABSTRACT %%%
 %Linear types were added both to Haskell and to its Core intermediate language,
@@ -190,11 +193,9 @@ compiler plugin to validate the system against established libraries, including
 %also develop a usage environment inference procedure and integrate the
 %procedure with the type checker.  We will validate our proposal by showing a
 %range of Core-to-Core transformations can be typed by our system.
-\end{abstract}
-\cleardoublepage
 
-\renewcommand{\abstractname}{Resumo}
-\begin{abstract}
+\pdfbookmark{Resumo}{Resumo}
+\chapter*{Resumo}
 Num sistema de tipos linear, recursos lineares têm de ser usados
 \emph{exatamente uma vez}. Usar um recurso linear costuma ser equivalente a uma
 ocorrência \emph{sintática} do mesmo no programa, no entanto, sob a perspectiva
@@ -216,6 +217,7 @@ o sistema é \emph{type safe} e que várias optimizações preservam linearidade
 Linear Core, apesar de as mesmas não a preservarem no Core. Implementamos o
 Linear Core como um \emph{plugin} para o compilador com o objectivo de validar
 o sistema em bibliotecas lineares populares, como a \emph{linear-base}.
+\cleardoublepage
 
 %%% PREPARATION ABSTRACT %%%
 %Tipos lineares foram integrados ambos no Haskell e na sua linguagem intermédia,
@@ -240,8 +242,6 @@ o sistema em bibliotecas lineares populares, como a \emph{linear-base}.
 %desenvolver um algoritmo de inferência de \emph{ambientes de uso}. Vamos
 %validar a nossa proposta através do conjunto de transformações Core-to-Core que
 %o nosso sistema consegue tipificar.
-\end{abstract}
-\cleardoublepage
 
 \xtableofcontents
 \xlistoffigures

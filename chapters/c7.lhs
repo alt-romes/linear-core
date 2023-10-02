@@ -1244,8 +1244,9 @@ The (small-step) operational semantics of Linear Core are given by
 Figure~\ref{fig:linear-core-operational-semantics}. We use call-by-name
 evaluation for Linear Core as it captures the non-strict semantics in which
 our type system understands linearity, while being simpler to reason about than
-call-by-need operational semantics which is traditionally modelled with a
-mutable heap to store \emph{thunks} and the values they are overwritten with.
+call-by-need operational semantics.
+% which is traditionally modelled with a
+% mutable heap to store \emph{thunks} and the values they are overwritten with.
 Furthermore, linear function applications, even in a \emph{call-by-need} system, are
 usually reduced \emph{call-by-name} as the function argument is guaranteed to
 be used exactly once (thus avoiding unnecessarily allocating memory on the heap
@@ -1604,7 +1605,7 @@ Case expressions \emph{drive evaluation} --
 %expression can effectively consume resources rather than just 
 %
 a case expression \emph{evaluates its scrutinee} to Weak Head Normal Form
-(WHNF), \emph{then} selects the case alternative corresponding to the pattern
+(WHNF)~\cite{10.5555/1096899}, \emph{then} selects the case alternative corresponding to the pattern
 matching the Weak Head Normal Form of the scrutinee\footnote{In our calculus,
 the alternatives are always exhaustive, i.e. there always exists at least one
 pattern which matches the scrutinee in its WHNF, so we're guaranteed to have an
@@ -2297,13 +2298,16 @@ is quadratic in $n$,
 but this is not an issue since it is uncommon to have more than a handful of
 binders in the same recursive let block.
 
-Table~\ref{} presents our results of running the plugin on est... libraries
-\todo[inline]{Table with n core programs generated and validated vs failures due to multiplicity coercions}
+Table~\ref{fig:core-plugin-res} presents the results of running the Linear Core GHC plugin on large established libraries focused around linear types.
+
+\input{prototype/core-plugin-results}
 
 \begin{itemize}
 \item Discuss results
 \item Alguns não validamos manualmente
 \end{itemize}
+\todo[inline]{Table with n core programs generated and validated vs failures due to multiplicity coercions}
+\todo[inline]{Discuss results}
 
 
 % Talk about using our plugin on linear-base and other code bases... If I can get

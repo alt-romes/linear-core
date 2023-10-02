@@ -81,7 +81,7 @@
 
 % Indices that open right on new page
 % To hide "Contents" from the PDF viewer contents add an asterisk to the command end
-\newcommand{\xtableofcontents}{\tableofcontents\cleardoublepage}
+\newcommand{\xtableofcontents}{\pdfbookmark{Contents}{Contents}\tableofcontents*\cleardoublepage}
 \newcommand{\xlistoffigures}{\listoffigures\cleardoublepage}
 \newcommand{\xlistoftables}{\listoftables}
 
