@@ -21,6 +21,7 @@
 \newcommand{\lletrec}[2]{\mathsf{letrec}~#1~\mathsf{in}~#2}
 \newcommand{\llet}[2]{\mathsf{let}~#1~\mathsf{in}~#2}
 
+
 \usetheme{Copenhagen}
 %\usetheme{Singapore}
 \usecolortheme{spruce}
@@ -36,20 +37,19 @@
 %%%%%%%%%%%%%%  Color-related things   %%%%%%%%%%%%%%
 %include polycode.fmt
 
-%subst keyword a = "\textcolor{BlueViolet}{\textbf{" a "}}"
+%%subst keyword a = "\textcolor{BlueViolet}{\textbf{" a "}}"
 %format forall = "\forall"
-%format %-> = "\multimap"
+%format ?-> = "\multimap"
 %format . = ".\;"
 %format /\ = "\Lambda"
 %format hlg (a) = "\colorbox{working}{\hspace{-7pt}$" a "$}"
-%format hlr (a) = "\colorbox{noway}{\hspace{-7pt}$" a "$}"
 %format hl (a) = "\colorbox{limitation}{\hspace{-7pt}$" a "$}"
+%format hln (a) = "\colorbox{limitation}{\hspace{-3pt}$" a "$}"
 
-\newcommand{\myFor}[2]{\For{$#1$}{$#2$}}
-\newcommand{\id}[1]{\textsf{\textsl{#1}}}
-
-\renewcommand{\Varid}[1]{\textcolor{Sepia}{\id{#1}}}
-\renewcommand{\Conid}[1]{\textcolor{OliveGreen}{\id{#1}}}
+%% Used:
+%format hli (a) = "\textcolor<+(1)>{red}{\hspace{-4pt}" a "}"
+%format hlr (a) = "\textcolor{red}{\hspace{-4pt}" a "}"
+%format hlin (a) = "\textcolor<+(1)>{red}{" a "}"
 %%%%%%%%%%%%  End of Color-related things   %%%%%%%%%%%%
 
 % It might make sense to add pretty formating of individual things
@@ -107,77 +107,116 @@
 \begin{frame}{Lazy Evaluation}
 Expressions under lazy evaluation are only \emph{evaluated} when \emph{needed}
 \pause
-\only<2>{
 \begin{code}
 f :: Ptr -> ()
 f x =
   if condition
-    then free x
+    hli(then free x)
     else free x
 \end{code}
-}
-\only<3>{
+\end{frame}
+
+\begin{frame}{Lazy Evaluation}
+Expressions under lazy evaluation are only \emph{evaluated} when \emph{needed}
 \begin{code}
 f :: Ptr -> ()
 f x =
+  hli(let y = free x in)
   if condition
-    hl(then free x)
+    hli(then y)
     else free x
 \end{code}
-}
-\only<4-5>{
-\begin{code}
-f :: Ptr -> ()
-f x =
-  hl(let y = free x)
-  if condition
-    hl(then y)
-    else free x
-\end{code}
-}
+\pause
 % An imperative programmer will throw his hands on his head: oh dear.
 % but all is fine
-\only<5>{
-\begin{itemize}
-\item We always |free x| \emph{exactly once}, because |y| is only evaluated when the |condition| is true.
-\end{itemize}
-}
+\only<4>{We always |free x| \emph{exactly once}, because |y| is only evaluated when the |condition| is true.}
+\only<5>{Laziness keeps us pure and allows the compiler to do more} %infinite data structures$\dots$}
+
+
+% Dizer porque é que laziness interessa
 \end{frame}
+
 
 \begin{frame}{And Linear Types}
 A linear function ($\lolli$) consumes its argument \emph{exactly once}
 \pause
 \begin{minipage}{0.45\textwidth}
 \begin{code}
-add1 :: Int %-> Int
-add1 x = x + 1
+id :: Int ?-> Int
+id x = x
 \end{code}
 \end{minipage}
 \pause
 \begin{minipage}{0.45\textwidth}
 \begin{code}
-dup :: Int %-> (Int,Int)
+hlin(dup :: Int ?-> (Int,Int))
 dup x = (x,x)
 \end{code}
 \end{minipage}
 % Dizer como isto são exemplos pouco interessantes, mas linear types permitem
 % escrever resource-safe abstractions (resources like pointers or file handles)
+\pause
+Linearly typed abstractions can guarantee correct resource usage
 \end{frame}
 
 % \begin{frame}{And Linear Types}
 % \begin{code}
-% add1 :: Int %-> Int
+% add1 :: Int ?-> Int
 % add1 x = x + 1
 % \end{code}
 % \pause
 % \begin{code}
-% madd1 :: Bool -> Int %-> Int
+% madd1 :: Bool -> Int ?-> Int
 % madd1 condition x =
 %   if condition
-%     then add1 x
+%     then add x
 %     else x
 % \end{code}
 % \end{frame}
+
+\begin{frame}{Interaction between Laziness and Linearity}
+How do we type linearity in the presence of laziness?
+\begin{code}
+hlin(f :: Ptr ?-> ())
+f x =
+  if condition
+    hli(then free x)
+    hli(else free x)
+\end{code}
+\end{frame}
+
+\begin{frame}{Interaction between Laziness and Linearity}
+How do we type linearity in the presence of laziness?
+\begin{code}
+f :: Ptr ?-> ()
+f x =
+  hli(let y = free x)
+  if condition
+    hli(then y)
+    hli(else free x)
+\end{code}
+\pause
+Under lazy evaluation, $x$ is always used \emph{exactly once} when the program is run \pause -- $x$ is used linearly!
+\end{frame}
+
+\begin{frame}{Why is linearity under laziness relevant?}
+
+\begin{itemize}
+\item<1-> Linear typing that accounts for lazy evaluation has not been previously considered
+  \begin{itemize}
+  \item<2-> Typing is usually not concerned with evaluation.
+  \item<3-> Linearity is different,
+  \item<4-> but only wrt lazy evaluation.
+  \end{itemize}
+\item<5-> Haskell has both linear types and lazy evaluation
+  \begin{itemize}
+  \item<6-> Linearity is typed conservatively.
+  \item<7-> GHC's intermediate language is typed,
+  \item<8-> and heavily transformed by (ab)using laziness.
+  \end{itemize}
+\end{itemize}
+
+\end{frame}
 
 \begin{frame}{Which is aggressively optimized}
 
@@ -227,7 +266,7 @@ dup x = (x,x)
 
 \begin{frame}{Example program that is not \emph{obviously linear}}
 \begin{code}
-madd1 :: Bool -> Int %-> Int
+madd1 :: Bool -> Int ?-> Int
 madd1 condition x =
   let y = add1 x
   if condition
