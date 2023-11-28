@@ -104,7 +104,7 @@
 % \end{itemize}
 % \end{frame}
 
-\begin{frame}{Lazy Evaluation}
+\begin{frame}{Lazy evaluation}
 Expressions under lazy evaluation are only \emph{evaluated} when \emph{needed}
 \pause
 \begin{code}
@@ -116,7 +116,7 @@ f x =
 \end{code}
 \end{frame}
 
-\begin{frame}{Lazy Evaluation}
+\begin{frame}{Lazy evaluation}
 Expressions under lazy evaluation are only \emph{evaluated} when \emph{needed}
 \begin{code}
 f :: Ptr -> ()
@@ -124,20 +124,18 @@ f x =
   hli(let y = free x in)
   if condition
     hli(then y)
-    else free x
+    hli(else free x)
 \end{code}
 \pause
 % An imperative programmer will throw his hands on his head: oh dear.
 % but all is fine
-\only<4>{We always |free x| \emph{exactly once}, because |y| is only evaluated when the |condition| is true.}
-\only<5>{Laziness keeps us pure and allows the compiler to do more} %infinite data structures$\dots$}
-
-
+\only<5>{We always |free x| \emph{exactly once}, because |y| is only evaluated when the |condition| is true.}
+\only<6>{Laziness keeps us pure and allows the compiler to do more} %infinite data structures$\dots$}
 % Dizer porque é que laziness interessa
 \end{frame}
 
 
-\begin{frame}{And Linear Types}
+\begin{frame}{and linear types}
 A linear function ($\lolli$) consumes its argument \emph{exactly once}
 \pause
 \begin{minipage}{0.45\textwidth}
@@ -174,7 +172,7 @@ Linearly typed abstractions can guarantee correct resource usage
 % \end{code}
 % \end{frame}
 
-\begin{frame}{Interaction between Laziness and Linearity}
+\begin{frame}{... interact non-trivially}
 How do we type linearity in the presence of laziness?
 \begin{code}
 hlin(f :: Ptr ?-> ())
@@ -185,7 +183,7 @@ f x =
 \end{code}
 \end{frame}
 
-\begin{frame}{Interaction between Laziness and Linearity}
+\begin{frame}{... interact non-trivially}
 How do we type linearity in the presence of laziness?
 \begin{code}
 f :: Ptr ?-> ()
@@ -196,24 +194,55 @@ f x =
     hli(else free x)
 \end{code}
 \pause
+\only<-6>{
 Under lazy evaluation, $x$ is always used \emph{exactly once} when the program is run \pause -- $x$ is used linearly!
+}
+\only<7>{
+However, this program, is \textcolor{red}{rejected} by linear type systems!
+}
 \end{frame}
 
-\begin{frame}{Why is linearity under laziness relevant?}
+\begin{frame}{Linearity in Haskell}
 
-\begin{itemize}
-\item<1-> Linear typing that accounts for lazy evaluation has not been previously considered
+Linear typing that accounts for lazy evaluation has not been previously considered
   \begin{itemize}
   \item<2-> Typing is usually not concerned with evaluation.
   \item<3-> Linearity is different,
   \item<4-> but only wrt lazy evaluation.
   \end{itemize}
-\item<5-> Haskell has both linear types and lazy evaluation
+\pause
+\onslide<5->{
+Haskell has both linear types and lazy evaluation
   \begin{itemize}
   \item<6-> Linearity is typed conservatively.
   \item<7-> GHC's intermediate language is typed,
   \item<8-> and heavily transformed by (ab)using laziness.
   \end{itemize}
+}
+
+\end{frame}
+
+\begin{frame}{}
+
+There is a mismatch between linear programs and programs accepted as linear
+
+\begin{itemize}
+\item<1-> 
+\end{itemize}
+
+\end{frame}
+
+\begin{frame}
+Aproveitar aquele slide do Simon
+\end{frame}
+
+\begin{frame}{Definition of consuming $x$ once}
+
+The Linear Haskell definition of \emph{consume exactly once}:
+\begin{itemize}
+\item To consume a value of atomic base type (like Int or Ptr) exactly once, just evaluate it.
+\item To consume a function value exactly once, apply it to one argument, and consume its result exactly once.
+\item To consume a pair exactly once, pattern-match on it, and consume each component exactly once.
 \end{itemize}
 
 \end{frame}
