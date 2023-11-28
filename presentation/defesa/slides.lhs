@@ -24,7 +24,6 @@
 
 \usetheme{Copenhagen}
 %\usetheme{Singapore}
-\usecolortheme{spruce}
 \usecolortheme{seahorse}
 \setbeamertemplate{navigation symbols}{}
 \setbeamertemplate{itemize items}[circle]
@@ -38,6 +37,7 @@
 %include polycode.fmt
 
 %%subst keyword a = "\textcolor{BlueViolet}{\textbf{" a "}}"
+%format ==> = "\Longrightarrow"
 %format forall = "\forall"
 %format ?-> = "\multimap"
 %format . = ".\;"
@@ -81,6 +81,8 @@
 \tikzstyle{do} = [trapezium, trapezium left angle=70, trapezium right angle=110, minimum width=3cm, minimum height=1cm, text centered, draw=black, fill=blue!30]
 \tikzstyle{arrow} = [thick,->,>=stealth]
 
+\setbeamercolor{block body}{bg=notyet}
+
 \title{Type-checking Linearity in Core:\\ Semantic Linearity for a Lazy Optimising Compiler}
 \author{Rodrigo Mesquita\\Advisor: Bernardo Toninho}
 \institute{
@@ -93,6 +95,182 @@
 \begin{document}
 
 \frame{\titlepage}
+
+\begin{frame}{Linear Haskell}
+Haskell has Linear Types!\\
+\pause
+A linear function $\lolli$ consumes its argument \emph{exactly once}
+\begin{columns}
+\pause
+\begin{column}{0.5\textwidth}
+\begin{alertblock}{}
+\begin{code}
+bad :: Ptr ?-> IO ()
+bad x = do
+  free x
+  free x
+\end{code}
+\end{alertblock}
+\end{column}
+\pause
+\begin{column}{0.5\textwidth}
+\begin{exampleblock}{}
+\begin{code}
+ok :: Ptr ?-> IO ()
+ok x = free x
+\end{code}
+\end{exampleblock}
+\end{column}
+\end{columns}
+\end{frame}
+
+\begin{frame}{Linearity in GHC}
+\begin{center}
+\begin{tikzpicture}[node distance={5cm}, thick, main/.style = {draw, rectangle, minimum size=1.5em}] 
+\node[main] (1) {{\only<6->{Linear }Haskell}}; 
+\pause
+\node[main] (2) [right of=1] {{\only<7->{Linear }Core}};
+\draw[->] (1) -- node[above] {Desugar} (2);
+\pause
+\draw[->] (2) to [out=225,in=315,looseness=10] node[below] {Optimize} (2);
+\pause
+\node[main] (3) [right of=2] {Assembly};
+\draw[->] (2) -- node[above] {Code Gen} (3);
+\end{tikzpicture} 
+\end{center}
+\onslide<5->{Core is both lazy and \only<8->{\emph{linearly} }typed}
+\end{frame}
+
+\begin{frame}{Rather, Core \emph{should be} linear...}
+\begin{itemize}
+\item To fully represent \emph{Linear} Haskell
+\item To validate that optimisations preserve linearity
+\item To possibly inform certain optimisations
+% but also for consistency, uniformity with the implementation of the source language...
+\end{itemize}
+\end{frame}
+
+\begin{frame}{So, why isn't Core linear?}
+Optimisations heavily transform linear programs (by abusing laziness), to the point they stop \emph{looking} linear
+\pause
+\begin{columns}
+\begin{column}{0.5\textwidth}
+\begin{block}{}
+\begin{code}
+myFree :: Ptr ?-> IO ()
+myFree x = do
+  let y = free x
+  free x
+\end{code}
+\end{block}
+\end{column}
+\pause
+\begin{column}{0.5\textwidth}
+\begin{code}
+let y = free x in y
+==>
+let y = free x in free x
+\end{code}
+\end{column}
+\end{columns}
+\end{frame}
+
+\begin{frame}{Core programs stop \emph{looking} linear}
+\begin{columns}
+\begin{column}{0.5\textwidth}
+\begin{block}{}
+\begin{code}
+let y = free ptr
+in if condition
+  then y
+  else return ptr
+\end{code}
+\end{block}
+\end{column}
+\pause
+\begin{column}{0.5\textwidth}
+\begin{block}{}
+\begin{code}
+case (x,y) of
+  (a, b) -> something x y
+\end{code}
+\end{block}
+\end{column}
+\end{columns}
+\end{frame}
+
+\begin{frame}{Semantic vs Syntactic Linearity}
+
+\begin{itemize}
+\item Programs are still linear \emph{semantically} because of laziness, but are rejected by the type system\pause
+\item \textbf{Key insight:} Under lazy evaluation,\\
+  \begin{center}
+  \emph{syntactic} occurrence $\nRightarrow$ \emph{consuming} a resource\\
+  \emph{syntactic} linearity $\neq$ \emph{semantic} linearity
+  \end{center}\pause
+  % Under call-by-value the distinction barely exists
+  % This is a problem unique to Haskell
+\item We type \emph{syntactic} linearity in Core, but that is not enough\pause
+\item Optimisations push interaction between laziness and linearity to the limit
+\end{itemize}
+
+% The meaning of \emph{consuming} a resource is conflated with its
+% \emph{syntactic} occurrence... and that becomes a problem under \emph{lazy} evaluation!
+
+% Under lazy evaluation, a syntactic occurrence of a linear resource is not necessarily \emph{consuming} it.
+% We call 
+\end{frame}
+
+
+%\begin{frame}{Which is aggressively optimized}
+
+%% Because of laziness we can do much more.
+%% Linearity would also allow us to improve certain optimizations, because if we
+%% know something to be used exactly once we can e.g. avoid heap allocations
+
+%%\begin{tikzpicture}[node distance=2cm]
+%%\node (haskell-code) [is] {Haskell Code};
+%%\node (dothings) [do, below of=haskell-code] {Elaborate};
+%%\node (elaborated-haskell) [is, below of=dothings] {Elaborated Haskell};
+%%\node (desugar) [do, below of=elaborated-haskell] {Desugar};
+%%\node (core) [is, right of=desugar] {Core};
+%%\node (opt) [do, right of=core] {Optimise};
+%%\node (gen-code) [do, below of=core] {Generate Code};
+%%\node (machinecode) [is,below of=opt] {Machine Code};
+%%\draw [arrow] (haskell-code) -- (dothings);
+%%\draw [arrow] (dothings) -- (elaborated-haskell);
+%%\draw [arrow] (elaborated-haskell) -- (desugar);
+%%\draw [arrow] (desugar) -- (core);
+%%\draw [arrow] (core) -- (opt);
+%%\draw [arrow] (opt) -- (core);
+%%\draw [arrow] (core) -- (gen-code);
+%%\draw [arrow] (gen-code) -- (machinecode);
+%%\end{tikzpicture}
+%\centering
+%\begin{tikzpicture}[node distance={5cm}, thick, main/.style = {draw, rectangle, minimum size=1.5em}] 
+%\node[main] (1) {Haskell}; 
+%\pause
+%\node[main] (2) [right of=1] {Core};
+%\draw[->] (1) -- node[above] {Desugar} (2);
+%\pause
+%\draw[->] (2) to [out=225,in=315,looseness=10] node[below] {Optimize} (2);
+%\pause
+%\node[main] (3) [right of=2] {Assembly};
+%\draw[->] (2) -- node[above] {Code Gen} (3);
+
+%\end{tikzpicture} 
+%\end{frame}
+
+\begin{frame}{Our Contributions}
+\begin{itemize}
+% \item We describe \emph{semantic} linearity under lazy evaluation
+\item Linear Core: a type system that \colorbox{notyet}{understands} semantic linearity in the presence of laziness
+% Must mention that yellow box means our type system accepts
+\item We proved Linear Core to be sound
+\item We implemented Linear Core as a GHC plugin
+\end{itemize}
+\end{frame}
+
 
 % \begin{frame}{In 5 minutes ...}
 % \begin{itemize}
@@ -247,45 +425,6 @@ The Linear Haskell definition of \emph{consume exactly once}:
 
 \end{frame}
 
-\begin{frame}{Which is aggressively optimized}
-
-% Because of laziness we can do much more.
-% Linearity would also allow us to improve certain optimizations, because if we
-% know something to be used exactly once we can e.g. avoid heap allocations
-
-%\begin{tikzpicture}[node distance=2cm]
-%\node (haskell-code) [is] {Haskell Code};
-%\node (dothings) [do, below of=haskell-code] {Elaborate};
-%\node (elaborated-haskell) [is, below of=dothings] {Elaborated Haskell};
-%\node (desugar) [do, below of=elaborated-haskell] {Desugar};
-%\node (core) [is, right of=desugar] {Core};
-%\node (opt) [do, right of=core] {Optimise};
-%\node (gen-code) [do, below of=core] {Generate Code};
-%\node (machinecode) [is,below of=opt] {Machine Code};
-%\draw [arrow] (haskell-code) -- (dothings);
-%\draw [arrow] (dothings) -- (elaborated-haskell);
-%\draw [arrow] (elaborated-haskell) -- (desugar);
-%\draw [arrow] (desugar) -- (core);
-%\draw [arrow] (core) -- (opt);
-%\draw [arrow] (opt) -- (core);
-%\draw [arrow] (core) -- (gen-code);
-%\draw [arrow] (gen-code) -- (machinecode);
-%\end{tikzpicture}
-\centering
-\begin{tikzpicture}[node distance={5cm}, thick, main/.style = {draw, rectangle, minimum size=1.5em}] 
-\node[main] (1) {Haskell}; 
-\pause
-\node[main] (2) [right of=1] {Core};
-\draw[->] (1) -- node[above] {Desugar} (2);
-\pause
-\draw[->] (2) to [out=225,in=315,looseness=10] node[below] {Optimize} (2);
-\pause
-\node[main] (3) [right of=2] {Assembly};
-\draw[->] (2) -- node[above] {Code Gen} (3);
-
-\end{tikzpicture} 
-\end{frame}
-
 \begin{frame}{Hwvr, optimizations push linearity x laziness too far}
 \begin{itemize}
 \item Optimizations move things around\pause
@@ -325,7 +464,6 @@ madd1 condition x =
 \begin{frame}{ }
 \centering \emph{Fim}
 \end{frame}
-
 
 \appendix
 
