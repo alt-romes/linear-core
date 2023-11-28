@@ -1,3 +1,21 @@
+Notas:
+
+Optimisations make Core programs not look linear.
+Because it can e.g. inline this definition
+This surely isn't linear, or is it?
+At runtime, x will be consumed exactly once
+Why did we type this as non-linear? Because we're thinking that a
+syntactic use of a resource equates to consuming that resource, which
+is not true under lazy evaluation...!
+
+In fact, we have idenitified this as the main limitation of Core's
+linear type system
+
+So we developed a type system
+
+
+Estrutura:
+
 - Linear Haskell
     - GHC com Linear Types
     - Existe porque ...
@@ -10,7 +28,12 @@
         - Fully represent haskell
         - Validate optimisations and implementation (optimiser better not duplicate resources)
         - Might inform optimisations
-        - Key idea: difficult because interaction laziness x linearity
+
+- Motivation: Why isn't Core typed linearly?
+- Key idea: difficult because interaction laziness x linearity
+- The syntactci occurrence of a linear resource is NOT the same as
+  using that resource, under lazy evaluation
+    (integrar aquele racicioncinio acima...)
 
 - Contributions
     - List
