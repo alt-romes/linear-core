@@ -97,6 +97,7 @@
 \frame{\titlepage}
 
 \begin{frame}{Linear Haskell}
+% Linear types were retroffited to Haskell by introducing linearity in the function type
 Haskell has Linear Types!\\
 \pause
 A linear function $\lolli$ consumes its argument \emph{exactly once}
@@ -151,28 +152,29 @@ ok x = free x
 \end{frame}
 
 \begin{frame}{So, why isn't Core linear?}
-Optimisations heavily transform linear programs (by abusing laziness), to the point they stop \emph{looking} linear
+Optimisations heavily transform linear programs to the point they stop \emph{looking} linear
 \pause
-\begin{columns}
-\begin{column}{0.5\textwidth}
+% \begin{column}{0.5\textwidth}
+% \begin{block}{}
+% \begin{code}
+% myFree :: Ptr ?-> IO ()
+% myFree x = do
+%   let y = free x
+%   free x
+% \end{code}
+% \end{block}
+% \end{column}
+% \pause
 \begin{block}{}
-\begin{code}
-myFree :: Ptr ?-> IO ()
-myFree x = do
-  let y = free x
-  free x
-\end{code}
-\end{block}
-\end{column}
-\pause
-\begin{column}{0.5\textwidth}
+\centering
 \begin{code}
 let y = free x in y
 ==>
 let y = free x in free x
 \end{code}
-\end{column}
-\end{columns}
+\end{block}
+\pause
+Linearity checking is effectively disabled because most programs would be rejected otherwise
 \end{frame}
 
 \begin{frame}{Core programs stop \emph{looking} linear}
@@ -266,7 +268,7 @@ case (x,y) of
 % \item We describe \emph{semantic} linearity under lazy evaluation
 \item Linear Core: a type system that \colorbox{notyet}{understands} semantic linearity in the presence of laziness
 % Must mention that yellow box means our type system accepts
-\item We proved Linear Core to be sound
+\item We proved Linear Core and multiple optimising transformations to be sound
 \item We implemented Linear Core as a GHC plugin
 \end{itemize}
 \end{frame}
