@@ -21,7 +21,6 @@
 \newcommand{\lletrec}[2]{\mathsf{letrec}~#1~\mathsf{in}~#2}
 \newcommand{\llet}[2]{\mathsf{let}~#1~\mathsf{in}~#2}
 
-
 \usetheme{Copenhagen}
 %\usetheme{Singapore}
 \usecolortheme{seahorse}
@@ -83,6 +82,14 @@
 
 \setbeamercolor{block body}{bg=notyet}
 
+%% Proofs and rules
+\input{../../proof}
+\input{../../language-v2/proof}
+\input{../../language-v3/proof}
+\input{../../language-v4/proof}
+\input{../../language-v4/Syntax}
+\input{../../language-v4/TypingRules}
+
 \title{Type-checking Linearity in Core:\\ Semantic Linearity for a Lazy Optimising Compiler}
 \author{Rodrigo Mesquita\\Advisor: Bernardo Toninho}
 \institute{
@@ -142,6 +149,8 @@ ok x = free x
 \onslide<5->{Core is both lazy and \only<8->{\emph{linearly} }typed}
 \end{frame}
 
+% Probably remove this slide and simply scratch the last line and add "should
+% be" linear...
 \begin{frame}{Rather, Core \emph{should be} linear...}
 \begin{itemize}
 \item To fully represent \emph{Linear} Haskell
@@ -152,7 +161,8 @@ ok x = free x
 \end{frame}
 
 \begin{frame}{So, why isn't Core linear?}
-Optimisations heavily transform linear programs to the point they stop \emph{looking} linear
+% Optimisations heavily transform linear programs to the point they stop \emph{looking} linear
+Optimised programs stop \emph{looking} linear
 \pause
 % \begin{column}{0.5\textwidth}
 % \begin{block}{}
@@ -174,37 +184,14 @@ let y = free x in free x
 \end{code}
 \end{block}
 \pause
-Linearity checking is effectively disabled because most programs would be rejected otherwise
-\end{frame}
-
-\begin{frame}{Core programs stop \emph{looking} linear}
-\begin{columns}
-\begin{column}{0.5\textwidth}
-\begin{block}{}
-\begin{code}
-let y = free ptr
-in if condition
-  then y
-  else return ptr
-\end{code}
-\end{block}
-\end{column}
-\pause
-\begin{column}{0.5\textwidth}
-\begin{block}{}
-\begin{code}
-case (x,y) of
-  (a, b) -> something x y
-\end{code}
-\end{block}
-\end{column}
-\end{columns}
+Linearity is ignored, or most programs would be rejected
 \end{frame}
 
 \begin{frame}{Semantic vs Syntactic Linearity}
 
 \begin{itemize}
-\item Programs are still linear \emph{semantically} because of laziness, but are rejected by the type system\pause
+\item Programs are still linear \emph{semantically} because of laziness\pause
+      %, but are rejected by the type system\pause
 \item \textbf{Key insight:} Under lazy evaluation,\\
   \begin{center}
   \emph{syntactic} occurrence $\nRightarrow$ \emph{consuming} a resource\\
@@ -213,7 +200,7 @@ case (x,y) of
   % Under call-by-value the distinction barely exists
   % This is a problem unique to Haskell
 \item We type \emph{syntactic} linearity in Core, but that is not enough\pause
-\item Optimisations push interaction between laziness and linearity to the limit
+\item Optimisations push laziness x linearity to the limit
 \end{itemize}
 
 % The meaning of \emph{consuming} a resource is conflated with its
@@ -266,202 +253,324 @@ case (x,y) of
 \begin{frame}{Our Contributions}
 \begin{itemize}
 % \item We describe \emph{semantic} linearity under lazy evaluation
-\item Linear Core: a type system that \colorbox{notyet}{understands} semantic linearity in the presence of laziness
+\item Linear Core: a type system that \colorbox{notyet}{understands} semantic linearity in the presence of laziness\pause
 % Must mention that yellow box means our type system accepts
-\item We proved Linear Core and multiple optimising transformations to be sound
-\item We implemented Linear Core as a GHC plugin
+\item We proved Linear Core and multiple optimising transformations to be sound\pause
+\item We implemented Linear Core as a GHC plugin\pause
 \end{itemize}
 \end{frame}
 
+\begin{frame}{Semantic Linearity: Lets}
+\begin{columns}
+\begin{column}{0.5\textwidth}
+\begin{block}{}
+\begin{code}
+let y = free ptr
+in if condition
+  then y
+  else return ptr
+\end{code}
+\end{block}
+\end{column}
+\pause
+\begin{column}{0.5\textwidth}
+\begin{alertblock}{}
+\begin{code}
+let y = use ptr
+in (y,y)
+\end{code}
+\end{alertblock}
+\end{column}
+\end{columns}
+\pause
+\vspace{0.5cm}
+Resources in lets are only consumed if the binder is consumed
+\end{frame}
 
-% \begin{frame}{In 5 minutes ...}
+\begin{frame}{Semantic Linearity: Case}
+\begin{columns}
+\begin{column}{0.5\textwidth}
+\begin{exampleblock}{}
+\begin{code}
+case (x,y) of
+  (a, b) -> something a b
+\end{code}
+\end{exampleblock}
+\end{column}
+\pause
+\begin{column}{0.5\textwidth}
+\begin{block}{}
+\begin{code}
+case (x,y) of
+  (a, b) -> something x y
+\end{code}
+\end{block}
+\end{column}
+\end{columns}
+\pause
+\begin{columns}
+\begin{column}{0.5\textwidth}
+\begin{alertblock}{}
+\begin{code}
+case free x of
+  Result v -> free x
+\end{code}
+\end{alertblock}
+\end{column}
+\pause
+\begin{column}{0.5\textwidth}
+\begin{alertblock}{}
+\begin{code}
+case use ptr of z
+  _ -> ()
+\end{code}
+\end{alertblock}
+\end{column}
+\end{columns}
+\pause
+\vspace{0.5cm}
+Resources are \emph{kind of} consumed if scrut. is \emph{not} in WHNF
+\end{frame}
+
+\begin{frame}{Semantic Linearity: Case of Var}
+\[
+\begin{array}{c}
+(\lambda x.~\ccase{x}{\_ \to x})\\\pause
+\Longrightarrow_{\textrm{call by name}}\\\pause
+\ccase{free~x}{\_ \to free~x}\\\pause
+\\
+\Longrightarrow_{\textrm{call by need}}\\\pause
+\llet{y = free~x}{\ccase{y}{\_ \to y}}\\
+\end{array}
+\]
+\end{frame}
+
+\begin{frame}{Linear Core: $\Delta$-vars}
+\textbf{Key idea:} $\Delta$-bound variables delay consuming resources\pause
+\begin{itemize}
+\item Annotate $\D$-vars with resources $\D$ used in its body\\\pause
+\item Using a $\D$-var entails using all of its $\D$\pause
+\end{itemize}
+\pause
+\begin{columns}
+\begin{column}{0.5\textwidth}
+\begin{block}{}
+%format yWithUEPtr = y "_{\{ptr\}}"
+\begin{code}
+let yWithUEPtr = free ptr in y
+\end{code}
+\end{block}
+\end{column}
+\pause
+\begin{column}{0.5\textwidth}
+\[
+\TypeVarDelta
+\]
+\end{column}
+\end{columns}
+\end{frame}
+
+\begin{frame}{Linear Core: Lets}
+Let-bound vars are the canonical $\D$-vars
+\pause
+\begin{columns}
+\begin{column}{0.5\textwidth}
+\begin{block}{}
+%format yWithUEPtr = y "_{\{ptr\}}"
+\begin{code}
+let yWithUEPtr = free ptr
+in if condition
+  then yWithUEPtr
+  else return ptr
+\end{code}
+\end{block}
+\end{column}
+\pause
+\begin{column}{0.5\textwidth}
+\[
+\TypeLet
+\]
+\end{column}
+\end{columns}
+\end{frame}
+
+% \begin{frame}{Lazy evaluation}
+% Expressions under lazy evaluation are only \emph{evaluated} when \emph{needed}
+% \pause
+% \begin{code}
+% f :: Ptr -> ()
+% f x =
+%   if condition
+%     hli(then free x)
+%     else free x
+% \end{code}
+% \end{frame}
+
+% \begin{frame}{Lazy evaluation}
+% Expressions under lazy evaluation are only \emph{evaluated} when \emph{needed}
+% \begin{code}
+% f :: Ptr -> ()
+% f x =
+%   hli(let y = free x in)
+%   if condition
+%     hli(then y)
+%     hli(else free x)
+% \end{code}
+% \pause
+% % An imperative programmer will throw his hands on his head: oh dear.
+% % but all is fine
+% \only<5>{We always |free x| \emph{exactly once}, because |y| is only evaluated when the |condition| is true.}
+% \only<6>{Laziness keeps us pure and allows the compiler to do more} %infinite data structures$\dots$}
+% % Dizer porque é que laziness interessa
+% \end{frame}
+
+% \begin{frame}{and linear types}
+% A linear function ($\lolli$) consumes its argument \emph{exactly once}
+% \pause
+% \begin{minipage}{0.45\textwidth}
+% \begin{code}
+% id :: Int ?-> Int
+% id x = x
+% \end{code}
+% \end{minipage}
+% \pause
+% \begin{minipage}{0.45\textwidth}
+% \begin{code}
+% hlin(dup :: Int ?-> (Int,Int))
+% dup x = (x,x)
+% \end{code}
+% \end{minipage}
+% % Dizer como isto são exemplos pouco interessantes, mas linear types permitem
+% % escrever resource-safe abstractions (resources like pointers or file handles)
+% \pause
+% Linearly typed abstractions can guarantee correct resource usage
+% \end{frame}
+
+% % \begin{frame}{And Linear Types}
+% % \begin{code}
+% % add1 :: Int ?-> Int
+% % add1 x = x + 1
+% % \end{code}
+% % \pause
+% % \begin{code}
+% % madd1 :: Bool -> Int ?-> Int
+% % madd1 condition x =
+% %   if condition
+% %     then add x
+% %     else x
+% % \end{code}
+% % \end{frame}
+
+% \begin{frame}{... interact non-trivially}
+% How do we type linearity in the presence of laziness?
+% \begin{code}
+% hlin(f :: Ptr ?-> ())
+% f x =
+%   if condition
+%     hli(then free x)
+%     hli(else free x)
+% \end{code}
+% \end{frame}
+
+% \begin{frame}{... interact non-trivially}
+% How do we type linearity in the presence of laziness?
+% \begin{code}
+% f :: Ptr ?-> ()
+% f x =
+%   hli(let y = free x)
+%   if condition
+%     hli(then y)
+%     hli(else free x)
+% \end{code}
+% \pause
+% \only<-6>{
+% Under lazy evaluation, $x$ is always used \emph{exactly once} when the program is run \pause -- $x$ is used linearly!
+% }
+% \only<7>{
+% However, this program, is \textcolor{red}{rejected} by linear type systems!
+% }
+% \end{frame}
+
+% \begin{frame}{Linearity in Haskell}
+
+% Linear typing that accounts for lazy evaluation has not been previously considered
+%   \begin{itemize}
+%   \item<2-> Typing is usually not concerned with evaluation.
+%   \item<3-> Linearity is different,
+%   \item<4-> but only wrt lazy evaluation.
+%   \end{itemize}
+% \pause
+% \onslide<5->{
+% Haskell has both linear types and lazy evaluation
+%   \begin{itemize}
+%   \item<6-> Linearity is typed conservatively.
+%   \item<7-> GHC's intermediate language is typed,
+%   \item<8-> and heavily transformed by (ab)using laziness.
+%   \end{itemize}
+% }
+
+% \end{frame}
+
+% \begin{frame}{}
+
+% There is a mismatch between linear programs and programs accepted as linear
+
 % \begin{itemize}
-% \item Linear Types
-% \item Laziness
-% \item Interaction
-% \item Compiler Optimizations
-% \item A Type System for Semantic Linearity?
+% \item<1-> 
+% \end{itemize}
+
+% \end{frame}
+
+% \begin{frame}
+% Aproveitar aquele slide do Simon?
+% \end{frame}
+
+% \begin{frame}{Definition of consuming $x$ once}
+
+% The Linear Haskell definition of \emph{consume exactly once}:
+% \begin{itemize}
+% \item To consume a value of atomic base type (like Int or Ptr) exactly once, just evaluate it.
+% \item To consume a function value exactly once, apply it to one argument, and consume its result exactly once.
+% \item To consume a pair exactly once, pattern-match on it, and consume each component exactly once.
+% \end{itemize}
+
+% \end{frame}
+
+% \begin{frame}{Hwvr, optimizations push linearity x laziness too far}
+% \begin{itemize}
+% \item Optimizations move things around\pause
+% \item And programs stop \emph{looking} linear
 % \end{itemize}
 % \end{frame}
 
-\begin{frame}{Lazy evaluation}
-Expressions under lazy evaluation are only \emph{evaluated} when \emph{needed}
-\pause
-\begin{code}
-f :: Ptr -> ()
-f x =
-  if condition
-    hli(then free x)
-    else free x
-\end{code}
-\end{frame}
-
-\begin{frame}{Lazy evaluation}
-Expressions under lazy evaluation are only \emph{evaluated} when \emph{needed}
-\begin{code}
-f :: Ptr -> ()
-f x =
-  hli(let y = free x in)
-  if condition
-    hli(then y)
-    hli(else free x)
-\end{code}
-\pause
-% An imperative programmer will throw his hands on his head: oh dear.
-% but all is fine
-\only<5>{We always |free x| \emph{exactly once}, because |y| is only evaluated when the |condition| is true.}
-\only<6>{Laziness keeps us pure and allows the compiler to do more} %infinite data structures$\dots$}
-% Dizer porque é que laziness interessa
-\end{frame}
-
-
-\begin{frame}{and linear types}
-A linear function ($\lolli$) consumes its argument \emph{exactly once}
-\pause
-\begin{minipage}{0.45\textwidth}
-\begin{code}
-id :: Int ?-> Int
-id x = x
-\end{code}
-\end{minipage}
-\pause
-\begin{minipage}{0.45\textwidth}
-\begin{code}
-hlin(dup :: Int ?-> (Int,Int))
-dup x = (x,x)
-\end{code}
-\end{minipage}
-% Dizer como isto são exemplos pouco interessantes, mas linear types permitem
-% escrever resource-safe abstractions (resources like pointers or file handles)
-\pause
-Linearly typed abstractions can guarantee correct resource usage
-\end{frame}
-
-% \begin{frame}{And Linear Types}
-% \begin{code}
-% add1 :: Int ?-> Int
-% add1 x = x + 1
-% \end{code}
-% \pause
+% \begin{frame}{Example program that is not \emph{obviously linear}}
 % \begin{code}
 % madd1 :: Bool -> Int ?-> Int
 % madd1 condition x =
+%   let y = add1 x
 %   if condition
-%     then add x
+%     then y
 %     else x
 % \end{code}
 % \end{frame}
 
-\begin{frame}{... interact non-trivially}
-How do we type linearity in the presence of laziness?
-\begin{code}
-hlin(f :: Ptr ?-> ())
-f x =
-  if condition
-    hli(then free x)
-    hli(else free x)
-\end{code}
-\end{frame}
+% \begin{frame}{Motivation: The short story}
+% \begin{itemize}
+% % \item Core's current linearity is violated after optimizations\pause
+% % \item The compiler doesn't duplicate/forget linear resources\pause
+% \item Core's \emph{type system} does not understand linearity x laziness\pause
+% \item So it cannot use linearity for optimizations\pause
+% \item Neither validate linearity internally
+% \end{itemize}
+% \end{frame}
 
-\begin{frame}{... interact non-trivially}
-How do we type linearity in the presence of laziness?
-\begin{code}
-f :: Ptr ?-> ()
-f x =
-  hli(let y = free x)
-  if condition
-    hli(then y)
-    hli(else free x)
-\end{code}
-\pause
-\only<-6>{
-Under lazy evaluation, $x$ is always used \emph{exactly once} when the program is run \pause -- $x$ is used linearly!
-}
-\only<7>{
-However, this program, is \textcolor{red}{rejected} by linear type systems!
-}
-\end{frame}
-
-\begin{frame}{Linearity in Haskell}
-
-Linear typing that accounts for lazy evaluation has not been previously considered
-  \begin{itemize}
-  \item<2-> Typing is usually not concerned with evaluation.
-  \item<3-> Linearity is different,
-  \item<4-> but only wrt lazy evaluation.
-  \end{itemize}
-\pause
-\onslide<5->{
-Haskell has both linear types and lazy evaluation
-  \begin{itemize}
-  \item<6-> Linearity is typed conservatively.
-  \item<7-> GHC's intermediate language is typed,
-  \item<8-> and heavily transformed by (ab)using laziness.
-  \end{itemize}
-}
-
-\end{frame}
-
-\begin{frame}{}
-
-There is a mismatch between linear programs and programs accepted as linear
-
-\begin{itemize}
-\item<1-> 
-\end{itemize}
-
-\end{frame}
-
-\begin{frame}
-Aproveitar aquele slide do Simon
-\end{frame}
-
-\begin{frame}{Definition of consuming $x$ once}
-
-The Linear Haskell definition of \emph{consume exactly once}:
-\begin{itemize}
-\item To consume a value of atomic base type (like Int or Ptr) exactly once, just evaluate it.
-\item To consume a function value exactly once, apply it to one argument, and consume its result exactly once.
-\item To consume a pair exactly once, pattern-match on it, and consume each component exactly once.
-\end{itemize}
-
-\end{frame}
-
-\begin{frame}{Hwvr, optimizations push linearity x laziness too far}
-\begin{itemize}
-\item Optimizations move things around\pause
-\item And programs stop \emph{looking} linear
-\end{itemize}
-\end{frame}
-
-\begin{frame}{Example program that is not \emph{obviously linear}}
-\begin{code}
-madd1 :: Bool -> Int ?-> Int
-madd1 condition x =
-  let y = add1 x
-  if condition
-    then y
-    else x
-\end{code}
-\end{frame}
-
-\begin{frame}{Motivation: The short story}
-\begin{itemize}
-% \item Core's current linearity is violated after optimizations\pause
-% \item The compiler doesn't duplicate/forget linear resources\pause
-\item Core's \emph{type system} does not understand linearity x laziness\pause
-\item So it cannot use linearity for optimizations\pause
-\item Neither validate linearity internally
-\end{itemize}
-\end{frame}
-
-\begin{frame}{Our contributions}
-\begin{itemize}
-\item We developed a \emph{type system} that understands linearity x laziness\pause
-\item Validating that optimisations preserve linearity\pause
-\item And implemented it as a GHC plugin
-\end{itemize}
-\end{frame}
+% \begin{frame}{Our contributions}
+% \begin{itemize}
+% \item We developed a \emph{type system} that understands linearity x laziness\pause
+% \item Validating that optimisations preserve linearity\pause
+% \item And implemented it as a GHC plugin
+% \end{itemize}
+% \end{frame}
 
 \begin{frame}{ }
 \centering \emph{Fim}
@@ -503,25 +612,16 @@ written $e\blacktriangleright\sigma_1\sim\sigma_2$.
 
 \end{frame}
 
-
-%% Proofs and rules
-\input{../../proof}
-\input{../../language-v2/proof}
-\input{../../language-v3/proof}
-\input{../../language-v4/proof}
-\input{../../language-v4/Syntax}
-\input{../../language-v4/TypingRules}
-
-\begin{frame}{Sample: $\Delta$-bound variables}
-\small
-\[
-\begin{array}{c}
-\TypeVarDelta\\
-\\\pause
-\TypeLet
-\end{array}
-\]
-\end{frame}
+% \begin{frame}{Sample: $\Delta$-bound variables}
+% \small
+% \[
+% \begin{array}{c}
+% \TypeVarDelta\\
+% \\\pause
+% \TypeLet
+% \end{array}
+% \]
+% \end{frame}
 
 \end{document}
 
