@@ -1,5 +1,6 @@
 \documentclass[14pt,aspectratio=169,dvipsnames]{beamer}
 
+\usepackage{soul}
 \usepackage{tabularx}
 \usepackage{booktabs}
 \usepackage{makecell}
@@ -104,13 +105,31 @@
 
 \begin{document}
 
+% I'll be presenting <title>, a work the studies the interaction between
+% laziness and linearity in the heart of the Glasgow Haskell compiler.
 \frame{\titlepage}
 
+% Haskell has Linear Types! Linear types are a type level feature that gives
+% programmers expressiveness to enforce how certain resources are used at
+% runtime. This allows us to build resource-safe abstractions that guarantee
+% correct resource usage e.g. for heap allocated memory, file handles, or, more
+% exotically, for deadlock freedom with session types and quantum programming.
+% languages
+%
+% Linear Haskell introduces the linear function type, which is st:
+% A linear function -o consumes its argument exactly once.
+%
+% Here are two examples:
+% The first is a linear function that binds $x$, so $x$ has to be used exactly
+% once. However, it frees $x$ twice. This function does not typecheck!
+% The second is an OK function which says that it uses $x$ linearly in its type, and it does.
 \begin{frame}{Linear Haskell}
 % Linear types were retroffited to Haskell by introducing linearity in the function type
 Haskell has Linear Types!\\
-\begin{columns}
 \pause
+A linear function $\lolli$ consumes its argument \emph{exactly once}
+\pause
+\begin{columns}
 \begin{column}{0.5\textwidth}
 \begin{alertblock}{}
 \begin{code}
@@ -131,10 +150,29 @@ ok x = free x
 \end{exampleblock}
 \end{column}
 \end{columns}
-\pause
-A linear function $\lolli$ consumes its argument \emph{exactly once}
 \end{frame}
 
+% Linear Types were implemented as an extension in the Glasgow Haskell
+% compiler, which is the de-facto Haskell compiler.
+%
+%
+% Haskell is desugared to an intermediate language called Core, which is
+% transformed over and over by multiple the so-called Core-to-Core
+% optimisations until ultimately we generate assembly code from it.
+%
+% It is important to note Core is both lazy and typed, and that this allows it to fully represent Haskell.
+% For one, Core is lazily evaluated like Haskell, and the desugaring and
+% optimisation passes preserve types.  It is crucial in GHC that Core is typed
+% because it serves as a sanity check over the correctness of source
+% transformations and their implementation.
+%
+% With the introduction of Linear Types, we now have that Linear Haskell
+% desugars to what we would call Linear Core, i.e. Core with linear types.
+% Ideally, Linear Core is both lazy and linearly typed. Core being linearly
+% typed benefits us like Core being typed does. We can easily validate that the
+% optimising passes preserve linearity -- which should be true -- by
+% typechecking linearity after every transformation! Optimiser should
+% definitely not destroy linearity. We also need linearity in Core to fully represent Linear Haskell.
 \begin{frame}{Linearity in the Glasgow Haskell Compiler (GHC)}
 \begin{center}
 \begin{tikzpicture}[node distance={5cm}, thick, main/.style = {draw, rectangle, minimum size=1.5em}] 
@@ -149,20 +187,22 @@ A linear function $\lolli$ consumes its argument \emph{exactly once}
 \draw[->] (2) -- node[above] {Code Gen} (3);
 \end{tikzpicture} 
 \end{center}
-\onslide<5->{\only<8->{Linear }Core \only<-8>{is}\only<9->{\emph{should be}} both lazy and \only<8->{\emph{linearly} }typed}
+\onslide<5->{\only<8->{Linear }Core \only<-8>{is}\only<9->{\st{is}~\emph{should be}} both lazy and \only<8->{\emph{linearly} }typed}
 \end{frame}
 
-% Probably remove this slide and simply scratch the last line and add "should
-% be" linear...
-% \begin{frame}{Rather, Core \emph{should be} linear...}
-% \begin{itemize}
-% \item To fully represent \emph{Linear} Haskell
-% \item To validate that optimisations preserve linearity
-% \item To possibly inform certain optimisations
-% % but also for consistency, uniformity with the implementation of the source language...
-% \end{itemize}
-% \end{frame}
-
+% So, why isn't Core linear? It's key to understand that the optimiser does
+% not destroy linearity semantically, however, the optimised programs stop
+% looking linear -- the type system no longer accepts these programs, but if
+% reason about linearity semantically we can see they remain linear.
+%
+% Here's an example, <read example>...
+%
+% That leaves us at: Linearity is currently ignored in Core. The alternative
+% would be to reject most linear programs after they are optimised, even though
+% they are correct and it is only a type system limitation that we are not able
+% to say they are in the intermediate language's type system.
+% And this only comes up in Core because the optimiser changes around things
+% that were previously linearly conservatively.
 \begin{frame}{So, why isn't Core linear?}
 % Optimisations heavily transform linear programs to the point they stop \emph{looking} linear
 Optimised programs stop \emph{looking} linear, but are linear \emph{semantically}
@@ -190,6 +230,8 @@ let y = free x in free x
 Linearity is ignored in Core, or most programs would be rejected
 \end{frame}
 
+% Summarising,
+% <bullets>
 \begin{frame}{Semantic vs Syntactic Linearity}
 
 \begin{itemize}
@@ -212,7 +254,6 @@ Linearity is ignored in Core, or most programs would be rejected
 % Under lazy evaluation, a syntactic occurrence of a linear resource is not necessarily \emph{consuming} it.
 % We call 
 \end{frame}
-
 
 %\begin{frame}{Which is aggressively optimized}
 
@@ -253,16 +294,19 @@ Linearity is ignored in Core, or most programs would be rejected
 %\end{tikzpicture} 
 %\end{frame}
 
+% Our contributions...
+% <bullets>
+% Must mention that yellow box means our type system accepts...
 \begin{frame}{Our Contributions}
 \begin{itemize}
 % \item We describe \emph{semantic} linearity under lazy evaluation
 \item Linear Core: a type system that \colorbox{notyet}{understands} semantic linearity in the presence of laziness\pause
-% Must mention that yellow box means our type system accepts
 \item We proved Linear Core and multiple optimising transformations to be sound\pause
 \item We implemented Linear Core as a GHC plugin
 \end{itemize}
 \end{frame}
 
+% Let's talk about ...
 \begin{frame}{}
 \centering
 \large
