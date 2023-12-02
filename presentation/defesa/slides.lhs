@@ -1,5 +1,8 @@
 \documentclass[14pt,aspectratio=169,dvipsnames]{beamer}
 
+\usepackage{tabularx}
+\usepackage{booktabs}
+\usepackage{makecell}
 \usepackage{amsmath}
 \usepackage{mathtools}
 \usepackage{xargs}
@@ -106,8 +109,6 @@
 \begin{frame}{Linear Haskell}
 % Linear types were retroffited to Haskell by introducing linearity in the function type
 Haskell has Linear Types!\\
-\pause
-A linear function $\lolli$ consumes its argument \emph{exactly once}
 \begin{columns}
 \pause
 \begin{column}{0.5\textwidth}
@@ -130,9 +131,11 @@ ok x = free x
 \end{exampleblock}
 \end{column}
 \end{columns}
+\pause
+A linear function $\lolli$ consumes its argument \emph{exactly once}
 \end{frame}
 
-\begin{frame}{Linearity in GHC}
+\begin{frame}{Linearity in the Glasgow Haskell Compiler (GHC)}
 \begin{center}
 \begin{tikzpicture}[node distance={5cm}, thick, main/.style = {draw, rectangle, minimum size=1.5em}] 
 \node[main] (1) {{\only<6->{Linear }Haskell}}; 
@@ -146,23 +149,23 @@ ok x = free x
 \draw[->] (2) -- node[above] {Code Gen} (3);
 \end{tikzpicture} 
 \end{center}
-\onslide<5->{Core is both lazy and \only<8->{\emph{linearly} }typed}
+\onslide<5->{\only<8->{Linear }Core \only<-8>{is}\only<9->{\emph{should be}} both lazy and \only<8->{\emph{linearly} }typed}
 \end{frame}
 
 % Probably remove this slide and simply scratch the last line and add "should
 % be" linear...
-\begin{frame}{Rather, Core \emph{should be} linear...}
-\begin{itemize}
-\item To fully represent \emph{Linear} Haskell
-\item To validate that optimisations preserve linearity
-\item To possibly inform certain optimisations
-% but also for consistency, uniformity with the implementation of the source language...
-\end{itemize}
-\end{frame}
+% \begin{frame}{Rather, Core \emph{should be} linear...}
+% \begin{itemize}
+% \item To fully represent \emph{Linear} Haskell
+% \item To validate that optimisations preserve linearity
+% \item To possibly inform certain optimisations
+% % but also for consistency, uniformity with the implementation of the source language...
+% \end{itemize}
+% \end{frame}
 
 \begin{frame}{So, why isn't Core linear?}
 % Optimisations heavily transform linear programs to the point they stop \emph{looking} linear
-Optimised programs stop \emph{looking} linear
+Optimised programs stop \emph{looking} linear, but are linear \emph{semantically}
 \pause
 % \begin{column}{0.5\textwidth}
 % \begin{block}{}
@@ -184,7 +187,7 @@ let y = free x in free x
 \end{code}
 \end{block}
 \pause
-Linearity is ignored, or most programs would be rejected
+Linearity is ignored in Core, or most programs would be rejected
 \end{frame}
 
 \begin{frame}{Semantic vs Syntactic Linearity}
@@ -256,13 +259,17 @@ Linearity is ignored, or most programs would be rejected
 \item Linear Core: a type system that \colorbox{notyet}{understands} semantic linearity in the presence of laziness\pause
 % Must mention that yellow box means our type system accepts
 \item We proved Linear Core and multiple optimising transformations to be sound\pause
-\item We implemented Linear Core as a GHC plugin\pause
+\item We implemented Linear Core as a GHC plugin
 \end{itemize}
 \end{frame}
 
+\begin{frame}{}
+\centering
+\large
+Semantic Linearity, by example
+\end{frame}
+
 \begin{frame}{Semantic Linearity: Lets}
-\begin{columns}
-\begin{column}{0.5\textwidth}
 \begin{block}{}
 \begin{code}
 let y = free ptr
@@ -271,23 +278,14 @@ in if condition
   else return ptr
 \end{code}
 \end{block}
-\end{column}
-\pause
-\begin{column}{0.5\textwidth}
-\begin{alertblock}{}
-\begin{code}
-let y = use ptr
-in (y,y)
-\end{code}
-\end{alertblock}
-\end{column}
-\end{columns}
 \pause
 \vspace{0.5cm}
-Resources in lets are only consumed if the binder is consumed
+Resources in lets are only consumed if the binder is evaluated
 \end{frame}
 
 \begin{frame}{Semantic Linearity: Case}
+% Estes programas são criados por optimizações, apesar de parecerem programas
+% que um programador nunca escreveria
 \begin{columns}
 \begin{column}{0.5\textwidth}
 \begin{exampleblock}{}
@@ -321,43 +319,31 @@ case free x of
 \begin{column}{0.5\textwidth}
 \begin{alertblock}{}
 \begin{code}
-case use ptr of z
-  _ -> ()
+case use x of
+  Result v -> ()
 \end{code}
 \end{alertblock}
 \end{column}
 \end{columns}
 \pause
 \vspace{0.5cm}
-Resources are \emph{kind of} consumed if scrut. is \emph{not} in WHNF
+Resources are \emph{kind of} consumed if the expression is evaluated
+% (scrutinee is \emph{not} in WHNF)
 \end{frame}
 
-\begin{frame}{Semantic Linearity: Case of Var}
-\[
-\begin{array}{c}
-(\lambda x.~\ccase{x}{\_ \to x})\\\pause
-\Longrightarrow_{\textrm{call by name}}\\\pause
-\ccase{free~x}{\_ \to free~x}\\\pause
-\\
-\Longrightarrow_{\textrm{call by need}}\\\pause
-\llet{y = free~x}{\ccase{y}{\_ \to y}}\\
-\end{array}
-\]
+\begin{frame}{}
+\centering
+\large
+Linear Core
 \end{frame}
 
-\begin{frame}{Linear Core: $\Delta$-vars}
-\textbf{Key idea:} $\Delta$-bound variables delay consuming resources\pause
-\begin{itemize}
-\item Annotate $\D$-vars with resources $\D$ used in its body\\\pause
-\item Using a $\D$-var entails using all of its $\D$\pause
-\end{itemize}
-\pause
+\begin{frame}{Linear Core: $Let$-vars}
 \begin{columns}
 \begin{column}{0.5\textwidth}
 \begin{block}{}
 %format yWithUEPtr = y "_{\{ptr\}}"
 \begin{code}
-let yWithUEPtr = free ptr in y
+let yWithUEPtr = free ptr in yWithUEPtr
 \end{code}
 \end{block}
 \end{column}
@@ -368,11 +354,16 @@ let yWithUEPtr = free ptr in y
 \]
 \end{column}
 \end{columns}
+\pause
+\vspace{0.5cm}
+$Let$-binder bodies don't consume resources\pause
+\begin{itemize}
+\item Annotate Let-vars with linear resources $\D$ used in its body\\\pause
+\item Using a Let-var entails using all of its $\D$
+\end{itemize}
 \end{frame}
 
 \begin{frame}{Linear Core: Lets}
-Let-bound vars are the canonical $\D$-vars
-\pause
 \begin{columns}
 \begin{column}{0.5\textwidth}
 \begin{block}{}
@@ -392,6 +383,181 @@ in if condition
 \]
 \end{column}
 \end{columns}
+\pause
+\vspace{0.5cm}
+Resources used in the binder are still available in the body:
+\begin{itemize}
+\item Can consume them using the let-var
+\item Or directly, if the let-var is unused
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Linear Core: Case}
+Case scrut evaluate to WHNF, unless they are already in WHNF\\\pause
+% Recalling the key idea that if it is already in WHNF no EVALUATION happens, thus no resources are consumed (thuis can be in the next slide)
+\begin{columns}
+\begin{column}{0.5\textwidth}
+\begin{block}{}
+\begin{code}
+case (x,y) of
+  (a, b) -> something x y
+\end{code}
+\end{block}
+\end{column}
+\pause
+\begin{column}{0.5\textwidth}
+\begin{alertblock}{}
+\begin{code}
+case free x of
+  Result v -> free x
+\end{code}
+\end{alertblock}
+\end{column}
+\end{columns}
+\vspace{0.5cm}
+\pause
+\textbf{Key idea:} We need to branch on \emph{WHNF-ness}
+% Não explico os detalhes na apresentação, mas que conseguimos tratar no
+% sistema na sua forma mais geral
+\end{frame}
+
+\begin{frame}{Linear Core: Case WHNF}
+%format aWithUEX = a "_{\{x\}}"
+%format bWithUEY = b "_{\{y\}}"
+\begin{columns}
+\begin{column}{0.5\textwidth}
+\begin{block}{}
+\begin{code}
+case (x,y) of
+  (aWithUEX, bWithUEY) -> use x y
+\end{code}
+\end{block}
+\end{column}
+\pause
+\begin{column}{0.5\textwidth}
+\[
+\infer
+{
+\onslide<3->{\cdot; x, y \vdash (x,y)}\\
+\onslide<5->{a{:}_{\{x\}}, b{:}_{\{y\}}; x,y \vdash use~x~y}
+}
+{
+\onslide<2->{\cdot; x,y \vdash \ccase{(x,y)}{(a,b) \to\dots}}
+}
+\]
+\end{column}
+\end{columns}
+\vspace{0.5cm}
+\onslide<4->{
+Scrut resources are available in the body, pattern vars are $\D$-vars
+}
+\end{frame}
+
+\begin{frame}{Linear Core: Case Not-WHNF}
+\begin{columns}
+\begin{column}{0.5\textwidth}
+\begin{alertblock}{}
+\begin{code}
+case free x of
+  Result v -> free x
+\end{code}
+\end{alertblock}
+\end{column}
+\pause
+\begin{column}{0.5\textwidth}
+\[
+\infer
+{
+\onslide<3->{\cdot; x \vdash free~x}\\
+\onslide<5->{v{:}_{\{[x]\}}; [x] \vdash free~x}
+}
+{
+\cdot; x \vdash \ccase{free~x}{\dots}
+}
+\]
+\end{column}
+\end{columns}
+\vspace{0.5cm}
+\onslide<4->{
+Scrut resources are \emph{irrelevant} in the body
+\begin{itemize}
+\item They cannot be instantiated with $Var$
+\item But must still be used exactly once
+% the only way to do this is via pattern variables
+}
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Metatheory: Linear Core}
+% Estranho ter esta distinção que depende do estado de algo at runtime, isto é type safe?
+% Sistema de tipos razoável
+\begin{itemize}
+\item Not obvious whether these rules make sense together
+\item We proved the system is type safe via preservation + progress
+% Auxiliary lemma Irrelevance gives us that an alternative for a scrutinee not
+% in WHNF that is well-typed with an irrelevant resource in the context is also
+% well-typed if that irrelevant resource is substituted for any linear
+% environment uniformly regardless of the scrutinee WHNF-ness
+% \item Lots of lemmas...
+\pause
+\begin{itemize}
+\item \emph{Irrelevance} lemma
+\item Linear-var substitution lemma
+\begin{itemize}
+\item + substitution on case alternatives
+\end{itemize}
+\item $\Delta$-var substitution lemma
+\begin{itemize}
+\item + substitution on case alternatives
+\end{itemize}
+\item Unr-var substitution lemma
+\begin{itemize}
+\item + substitution on case alternatives
+\end{itemize}
+\end{itemize}
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Metatheory: Optimising Transformations}
+\begin{itemize}
+\item Inlining
+\item $\beta$-reduction
+\item $\beta$-reduction with sharing
+\item $\beta$-reduction for multiplicity abstractions
+\item Case-of-known-constructor
+\item Full laziness
+\item Local transformations (three of them)
+\item $\eta$-expansion
+\item $\eta$-reduction
+\item Binder swap
+\item Reverse binder swap (contentious!)
+\item Case-of-case
+\end{itemize}
+\end{frame}
+
+\begin{frame}{GHC Plugin: Linear Core Implementation}
+We implemented Linear Core as a GHC plugin
+\scriptsize
+\input{../../prototype/core-plugin-results}
+\end{frame}
+
+\begin{frame}{Conclusion}
+\begin{itemize}
+\item Linear Core is a suitable type system for Core, as it understands the
+interaction between linearity and laziness that the optimiser pushes to the
+limit
+\pause
+\item Not every single program is accepted by Linear Core
+  \begin{itemize}
+  \item Future work: \emph{multiplicity coercions}
+  \item Discuss linearity modulo call-by-name
+  \item Iron out quirks (rewrite rules, ...)
+  \end{itemize}
+\pause
+\item Builds on the shoulders of Linear Haskell and Linear Mini-Core
+\pause
+\item There's much more in the thesis!
+\end{itemize}
 \end{frame}
 
 % \begin{frame}{Lazy evaluation}
@@ -578,6 +744,19 @@ in if condition
 
 \appendix
 
+\begin{frame}{Semantic Linearity: Case of Var}
+\[
+\begin{array}{c}
+(\lambda x.~\ccase{x}{\_ \to x})\\\pause
+\Longrightarrow_{\textrm{call by name}}\\\pause
+\ccase{free~x}{\_ \to free~x}\\\pause
+\\
+\Longrightarrow_{\textrm{call by need}}\\\pause
+\llet{y = free~x}{\ccase{y}{\_ \to y}}\\
+\end{array}
+\]
+\end{frame}
+
 \begin{frame}{System FC}
 
 \only<1-2>{
@@ -624,5 +803,8 @@ written $e\blacktriangleright\sigma_1\sim\sigma_2$.
 % \end{frame}
 
 \end{document}
+
+% Notas:
+% Saber o que preciso de dizer em cada slide
 
 % vim: foldmarker=\\begin{frame},\\end{frame} foldenable
