@@ -187,7 +187,7 @@ ok x = free x
 \draw[->] (2) -- node[above] {Code Gen} (3);
 \end{tikzpicture} 
 \end{center}
-\onslide<5->{\only<8->{Linear }Core \only<-8>{is}\only<9->{\st{is}~\emph{should be}} both lazy and \only<8->{\emph{linearly} }typed}
+\onslide<5->{Core \only<-7>{is}\only<8->{\emph{should be}} both lazy and \only<8->{\emph{linearly} }typed}
 \end{frame}
 
 % So, why isn't Core linear? It's key to understand that the optimiser does
@@ -205,7 +205,7 @@ ok x = free x
 % that were previously linearly conservatively.
 \begin{frame}{So, why isn't Core linear?}
 % Optimisations heavily transform linear programs to the point they stop \emph{looking} linear
-Optimised programs stop \emph{looking} linear, but are linear \emph{semantically}
+Optimised programs stop \emph{looking} linear
 \pause
 % \begin{column}{0.5\textwidth}
 % \begin{block}{}
@@ -381,31 +381,31 @@ Resources are \emph{kind of} consumed if the expression is evaluated
 Linear Core
 \end{frame}
 
-\begin{frame}{Linear Core: $Let$-vars}
-\begin{columns}
-\begin{column}{0.5\textwidth}
-\begin{block}{}
-%format yWithUEPtr = y "_{\{ptr\}}"
-\begin{code}
-let yWithUEPtr = free ptr in yWithUEPtr
-\end{code}
-\end{block}
-\end{column}
-\pause
-\begin{column}{0.5\textwidth}
-\[
-\TypeVarDelta
-\]
-\end{column}
-\end{columns}
-\pause
-\vspace{0.5cm}
-$Let$-binder bodies don't consume resources\pause
-\begin{itemize}
-\item Annotate Let-vars with linear resources $\D$ used in its body\\\pause
-\item Using a Let-var entails using all of its $\D$
-\end{itemize}
-\end{frame}
+%\begin{frame}{Linear Core: $Let$-vars}
+%\begin{columns}
+%\begin{column}{0.5\textwidth}
+%\begin{block}{}
+%%format yWithUEPtr = y "_{\{ptr\}}"
+%\begin{code}
+%let yWithUEPtr = free ptr in yWithUEPtr
+%\end{code}
+%\end{block}
+%\end{column}
+%\pause
+%\begin{column}{0.5\textwidth}
+%\[
+%\TypeVarDelta
+%\]
+%\end{column}
+%\end{columns}
+%\pause
+%\vspace{0.5cm}
+%$Let$-binder bodies don't consume resources\pause
+%\begin{itemize}
+%\item Annotate Let-vars with linear resources $\D$ used in its body\\\pause
+%\item Using a Let-var entails using all of its $\D$
+%\end{itemize}
+%\end{frame}
 
 \begin{frame}{Linear Core: Lets}
 \begin{columns}
@@ -423,17 +423,23 @@ in if condition
 \pause
 \begin{column}{0.5\textwidth}
 \[
-\TypeLet
+\infer
+{
+\onslide<3->{\cdot ; ptr \vdash free~ptr}\\
+\onslide<4->{y{:}_{\{ptr\}}; ptr \vdash |if condition| \dots}
+}
+{\cdot; ptr \vdash \llet{y = free~ptr}{\dots}}
 \]
 \end{column}
 \end{columns}
-\pause
+\onslide<5->{
 \vspace{0.5cm}
-Resources used in the binder are still available in the body:
+$Let$-binders don't consume resources\pause
 \begin{itemize}
-\item Can consume them using the let-var
-\item Or directly, if the let-var is unused
+\item Annotate $let$-vars with linear resources ($\D$) used in its body\\\pause
+\item Using a $let$-var equates to using its annotated context ($\D$)
 \end{itemize}
+}
 \end{frame}
 
 \begin{frame}{Linear Core: Case}
@@ -492,8 +498,12 @@ case (x,y) of
 \end{column}
 \end{columns}
 \vspace{0.5cm}
+
 \onslide<4->{
-Scrut resources are available in the body, pattern vars are $\D$-vars
+\begin{itemize}
+\item Scrutinee resources are available in the body\\
+\item Pattern variables are annotated with corresponding scrutinee variables
+\end{itemize}
 }
 \end{frame}
 
@@ -523,7 +533,7 @@ case free x of
 \end{columns}
 \vspace{0.5cm}
 \onslide<4->{
-Scrut resources are \emph{irrelevant} in the body
+Scrutinee resources are \emph{irrelevant} in the body
 \begin{itemize}
 \item They cannot be instantiated with $Var$
 \item But must still be used exactly once
