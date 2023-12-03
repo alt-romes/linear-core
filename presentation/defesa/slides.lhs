@@ -423,20 +423,22 @@ in if condition
 \pause
 \begin{column}{0.5\textwidth}
 \[
+\onslide<3->{
 \infer
 {
-\onslide<3->{\cdot ; ptr \vdash free~ptr}\\
-\onslide<4->{y{:}_{\{ptr\}}; ptr \vdash |if condition| \dots}
+\onslide<4->{\cdot ; ptr \vdash free~ptr}\\
+\onslide<5->{y{:}_{\{ptr\}}; ptr \vdash |if condition| \dots}
 }
 {\cdot; ptr \vdash \llet{y = free~ptr}{\dots}}
+}
 \]
 \end{column}
 \end{columns}
-\onslide<5->{
+\onslide<2->{
 \vspace{0.5cm}
-$Let$-binders don't consume resources\pause
+$Let$-binders don't consume resources
 \begin{itemize}
-\item Annotate $let$-vars with linear resources ($\D$) used in its body\\\pause
+\item Annotate $let$-vars with linear resources ($\D$) used in its body\\
 \item Using a $let$-var equates to using its annotated context ($\D$)
 \end{itemize}
 }
@@ -486,20 +488,22 @@ case (x,y) of
 \pause
 \begin{column}{0.5\textwidth}
 \[
+\onslide<3->{
 \infer
 {
-\onslide<3->{\cdot; x, y \vdash (x,y)}\\
+\onslide<4->{\cdot; x, y \vdash (x,y)}\\
 \onslide<5->{a{:}_{\{x\}}, b{:}_{\{y\}}; x,y \vdash use~x~y}
 }
 {
-\onslide<2->{\cdot; x,y \vdash \ccase{(x,y)}{(a,b) \to\dots}}
+\cdot; x,y \vdash \ccase{(x,y)}{(a,b) \to\dots}
+}
 }
 \]
 \end{column}
 \end{columns}
 \vspace{0.5cm}
 
-\onslide<4->{
+\onslide<2->{
 \begin{itemize}
 \item Scrutinee resources are available in the body\\
 \item Pattern variables are annotated with corresponding scrutinee variables
@@ -517,22 +521,23 @@ case free x of
 \end{code}
 \end{alertblock}
 \end{column}
-\pause
 \begin{column}{0.5\textwidth}
 \[
+\onslide<3->{
 \infer
 {
-\onslide<3->{\cdot; x \vdash free~x}\\
+\onslide<4->{\cdot; x \vdash free~x}\\
 \onslide<5->{v{:}_{\{[x]\}}; [x] \vdash free~x}
 }
 {
 \cdot; x \vdash \ccase{free~x}{\dots}
 }
+}
 \]
 \end{column}
 \end{columns}
 \vspace{0.5cm}
-\onslide<4->{
+\onslide<2->{
 Scrutinee resources are \emph{irrelevant} in the body
 \begin{itemize}
 \item They cannot be instantiated with $Var$
