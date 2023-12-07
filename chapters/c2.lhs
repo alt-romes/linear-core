@@ -379,10 +379,9 @@ advanced type level features, such as:
 % impredicative polymorphism\cite{}
 These advanced features have become commonplace in Haskell code, enforcing
 application level invariants and program correctness through the types. As an
-example to work through this section while we introduce compile-time invariants
-with GADTs, consider the definition of \texttt{head} in the standard library, a
-function which takes the first element of a list by pattern matching on the list
-constructors.
+example, consider the definition of \texttt{head} in the standard library, a
+function which takes the first element of a list by pattern matching on the
+list constructors:
 
 \begin{code}
     head :: [a] -> a
