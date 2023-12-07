@@ -512,12 +512,13 @@ case (x,y) of
 \end{frame}
 
 \begin{frame}{Linear Core: Case Not-WHNF}
+%format vWithIrrX = v "_{\{[x]\}}"
 \begin{columns}
 \begin{column}{0.5\textwidth}
 \begin{alertblock}{}
 \begin{code}
 case free x of
-  Result v -> free x
+  Result vWithIrrX -> free x
 \end{code}
 \end{alertblock}
 \end{column}
@@ -562,17 +563,8 @@ Scrutinee resources are \emph{irrelevant} in the body
 \begin{itemize}
 \item \emph{Irrelevance} lemma
 \item Linear-var substitution lemma
-\begin{itemize}
-\item + substitution on case alternatives
-\end{itemize}
 \item $\Delta$-var substitution lemma
-\begin{itemize}
-\item + substitution on case alternatives
-\end{itemize}
 \item Unr-var substitution lemma
-\begin{itemize}
-\item + substitution on case alternatives
-\end{itemize}
 \end{itemize}
 \end{itemize}
 \end{frame}
