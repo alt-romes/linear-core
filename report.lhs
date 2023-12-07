@@ -46,7 +46,7 @@
 
 %%%%%%%%%%%%  End of Color-related things   %%%%%%%%%%%%
 
-% It might make sence to add pretty formating of individual things
+% It might make sense to add pretty formating of individual things
 % like "forall", cf.
 % https://github.com/goldfirere/thesis/blob/master/tex/rae.fmt
 
@@ -89,7 +89,8 @@
 
 \frontmatter
 
-\includepdf[pages=-,frame=false]{thesis_capa.pdf}
+% \includepdf[pages=-,frame=false]{thesis_capa.pdf}
+% \cleardoublepage
 
 \maketitle
 \cleardoublepage
@@ -115,12 +116,15 @@ Matthew Pickering, Sam Derbyshire, Andreas Klebinger, Sebastian Graf, and John
 Ericson, for sharing your expertise, exchanging exciting new ideas, and
 teaching me in the ways of the Glorious Glasgow Haskell Compiler.
 %
-% I'm very thankful to Simon Peyton Jones, for his brilliance as a computer
-% scientist, writer, and speaker -- 
+I'm very thankful to Simon Peyton Jones, who has always inspired me in his
+brilliance as a computer scientist, eloquence, and good humour, besides his
+mentorship in reviewing and leading my GHC patches to their best, simpler,
+version.
 %
-% From the department, I thank also professor João Leitão for challenging me,
-% and professor Mário Pereira, Prof. Mário emprestou-me dois livros do Pierce
-% :P Prof Leitão for challenging me ...
+I thank also professor João Leitão for nurturing my interest in distributed
+systems, and professor Mário Pereira for both helpful conversations and recommending
+me two books (from Benjamin Pierce) that he let me borrow, on advanced
+types and category theory.
 
 I thank my dear friends, and, namely, David Neves, Miguel Costa, Francisco
 Pisco, André Costa, Guilherme Gil, Henrique Ferreira, Tomás Santos, and the
