@@ -89,8 +89,9 @@
 
 \frontmatter
 
-% \includepdf[pages=-,frame=false]{thesis_capa.pdf}
-% \cleardoublepage
+% INCLUDE NOVATHESIS FRONT COVER...
+\includepdf[pages=-,frame=false]{thesis_capa.pdf}
+\cleardoublepage
 
 \maketitle
 \cleardoublepage
@@ -720,6 +721,15 @@ is lengthier than the others.
 % \section{Case of Case}
 % % 
 % % \input{language-v4/proofs/optimizations/CaseOfCase}
+
+
+% INCLUDE NOVATHESIS BACK COVER...
+\clearpage
+\newpage
+\thispagestyle{empty}
+\
+\clearpage
+\includepdf[pages=3,frame=false]{PrepCover.pdf}
 
 \end{document}
 
