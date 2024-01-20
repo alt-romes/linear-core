@@ -90,8 +90,8 @@
 \frontmatter
 
 % INCLUDE NOVATHESIS FRONT COVER...
-\includepdf[pages=-,frame=false]{thesis_capa.pdf}
-\cleardoublepage
+% \includepdf[pages=-,frame=false]{thesis_capa.pdf}
+% \cleardoublepage
 
 \maketitle
 \cleardoublepage
@@ -724,12 +724,12 @@ is lengthier than the others.
 
 
 % INCLUDE NOVATHESIS BACK COVER...
-\clearpage
-\newpage
-\thispagestyle{empty}
-\
-\clearpage
-\includepdf[pages=3,frame=false]{PrepCover.pdf}
+% \clearpage
+% \newpage
+% \thispagestyle{empty}
+% \
+% \clearpage
+% \includepdf[pages=3,frame=false]{PrepCover.pdf}
 
 \end{document}
 
