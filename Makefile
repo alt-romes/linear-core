@@ -34,4 +34,4 @@ final: $(DOCNAME).tex $(DEPS)
 	lhs2TeX $< -o $@
 
 clean:
-	rm -f *.out *.blg *.bbl *.aux *.log *.toc *.ptb *.glg *.glo *.gls *.ist *.lof *.lot chapters/*.aux report.tex icfp.tex chapters/c2.tex chapters/c3.tex chapters/c4.tex chapters/c5.tex chapters/c6.tex chapters/c7.tex chapters/c8.tex icfp.pdf
+	rm -f *.out *.blg *.bbl *.aux *.log *.toc *.ptb *.glg *.glo *.gls *.ist *.lof *.lot chapters/*.aux report.tex chapters/c2.tex chapters/c3.tex chapters/c4.tex chapters/c5.tex chapters/c6.tex chapters/c7.tex chapters/c8.tex icfp.pdf

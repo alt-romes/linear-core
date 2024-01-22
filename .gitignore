@@ -16,7 +16,6 @@
 *.snm
 *.loe
 report.tex
-icfp.tex
 chapters/c*.tex
 presentation/preparation/TODO
 presentation/preparation/slides.tex

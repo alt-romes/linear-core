@@ -15,6 +15,7 @@
 \usepackage{makecell}
 \usepackage{fancyvrb}
 \usepackage{thmtools, thm-restate}
+\usepackage{listings}
 
 \newtheorem{theorem}{Theorem}
 \newtheorem{proposition}[theorem]{Proposition}
@@ -75,6 +76,29 @@
 \newcommand{\llet}[2]{\mathsf{let}~#1~\mathsf{in}~#2}
 \newcommand{\lletrec}[2]{\mathsf{letrec}~#1~\mathsf{in}~#2}
 \newcommand{\ccase}[2]{\mathsf{case}~#1~\mathsf{of}~#2}
+
+\lstset{
+  frame=none,
+  xleftmargin=2pt,
+  stepnumber=1,
+  numbers=left,
+  numbersep=5pt,
+  numberstyle=\ttfamily\tiny\color[gray]{0.3},
+  belowcaptionskip=\bigskipamount,
+  captionpos=b,
+  escapeinside={*'}{'*},
+  language=haskell,
+  tabsize=2,
+  emphstyle={\bf},
+  commentstyle=\it,
+  stringstyle=\mdseries\rmfamily,
+  showspaces=false,
+  keywordstyle=\bfseries\rmfamily,
+  columns=flexible,
+  basicstyle=\small\sffamily,
+  showstringspaces=false,
+  morecomment=[l]\%,
+}
 
 \input{proof}
 \input{language-v2/proof}
@@ -174,19 +198,18 @@ among other correctness properties~\cite{10.1145/3373718.3394765,10.1145/3527313
 
 Consider the following program in which allocated memory is freed twice.
 % We know this to be the dreaded double-free error which will crash the program at runtime.
-Regardless of the \emph{double-free} error, a C-like type system will accept this
-program without any issue:
+Regardless of the \emph{double-free} error, a C-like type system will
+accept such a program:
 % \centering
 \begin{code}
-let p = malloc(4);
-in free(p);
-   free(p);
+let p = malloc(4); in free(p); free(p);
 \end{code}
-Under the lens of a linear type system, consider the variable $p$ to be a
-linear resource created by the call to \texttt{malloc}. Since $p$ is linear, it
+Under the lens of a linear type system, if $p$ is deemed to be a
+linear resource created by the call to \texttt{malloc}, it
 must be used \emph{exactly once}.  However, the program above uses $p$ twice,
-in the two calls to \texttt{free}. With a linear type system, the
-program above does not typecheck! In this sense, linear typing
+in the two calls to \texttt{free} and so fails to type-check.
+%
+In this sense, linear typing
 effectively ensures the program does not compile with a double-free error.
 
 Despite their promise and extensive presence in research
@@ -484,7 +507,7 @@ where a computation that closes the given |handle| is bound to |x| before the
 |handle| is returned:
 %
 \begin{code}
-f : Handle ⊸ Handle
+f : Handle \lolli Handle
 f handle = let x = close handle in handle
 \end{code}
 %
@@ -610,7 +633,7 @@ depends on the resource |x| to a binder, which is then returned:
 %
 \begin{notyet}
 \begin{code}
-f1 :: (a ⊸ b) -> a ⊸ b
+f1 :: (a -o b) -> a -o b
 f1 use x =
   let y = use x
    in y
@@ -641,7 +664,7 @@ body, however, the resource is still used semantically linearly because |y| isn'
 %
 \begin{notyet}
 \begin{code}
-f2 :: (a ⊸ a) -> a ⊸ a
+f2 :: (a -o a) -> a -o a
 f2 use x =
   let y = use x
   in use x
@@ -663,7 +686,7 @@ instance:
 %
 \begin{notyet}
 \begin{code}
-f3 :: (a ⊸ a) -> Bool -> a ⊸ a
+f3 :: (a -o a) -> Bool -> a -o a
 f3 use bool x =
   let y = use x
   in case bool of
@@ -688,7 +711,7 @@ once. Illustratively, the following program must \emph{not} typecheck:
 %
 \begin{noway}
 \begin{code}
-f4 :: (a ⊸ b) -> a ⊸ (b, b)
+f4 :: (a -o b) -> a -o (b, b)
 f4 use x =
   let y = use x
   in (y, y)
@@ -716,7 +739,7 @@ Lastly, consider a program which defines two let bindings |z| and |y|, where
 %
 \begin{noway}
 \begin{code}
-f5 :: (a ⊸ a) -> a ⊸ ()
+f5 :: (a -o a) -> a -o ()
 f5 use x =
   let y = use x
   let z = use y
@@ -762,7 +785,7 @@ defined in terms of the linear resource |x| and itself:
 %
 \begin{notyet}
 \begin{code}
-f6 :: Bool -> a ⊸ a
+f6 :: Bool -> a -o a
 f6 bool x =
   let go b
         = case b of
@@ -793,7 +816,7 @@ uses |x| linearly if evaluated:
 %
 \begin{notyet}
 \begin{code}
-f7 :: Bool -> a ⊸ a
+f7 :: Bool -> a -o a
 f7 bool x =
   let go b
         = case b of
@@ -810,7 +833,7 @@ If |f u| doesn't terminate, it is never consumed, thus the claim holds
 vacuously; that's why |f8| typechecks:
 \begin{working}
 \begin{code}
-f8 :: a ⊸ b
+f8 :: a -o b
 f8 x = f8 x
 \end{code}
 \end{working}
@@ -866,7 +889,7 @@ once:
 %
 \begin{noway}
 \begin{code}
-f9 :: Bool -> Bool ⊸ Bool
+f9 :: Bool -> Bool -o Bool
 f9 bool x =
   let go b
         = case b of
@@ -883,7 +906,7 @@ Lastly, we extend our single-binding running example to use two mutually recursi
 depend a linear resource:
 \begin{notyet}
 \begin{code}
-f10 :: Bool -> a ⊸ a
+f10 :: Bool -> a -o a
 f10 bool x =
   let go1 b
         = case b of
@@ -942,7 +965,7 @@ For example, the entry point to the linear array API presented in Linear
 Haskell takes such a function as its second argument:
 \begin{working}
 \begin{code}
-newMArray :: Int -> (MArray a ⊸ Unrestricted b) ⊸ b
+newMArray :: Int -> (MArray a -o Unrestricted b) -o b
 \end{code}
 \end{working}
 %(The second argument is a function that consumes |MArray a| linearly
@@ -1005,7 +1028,7 @@ matches on it, then uses both linearly-bound variables from the tuple pattern
 match. This is well-typed in Linear Haskell:
 \begin{working}
 \begin{code}
-f11 :: a ⊸ b ⊸ (a ⊸ b ⊸ c) -> c
+f11 :: a -o b -o (a -o b -o c) -> c
 f11 x y use = case (x,y) of { (a,b) -> use a b }
 \end{code}
 \end{working}
@@ -1014,7 +1037,7 @@ pattern variables and instead uses the resources in the scrutinee is also
 semantically linear, despite not being accepted by Linear Haskell:
 \begin{notyet}
 \begin{code}
-f12 :: a ⊸ b ⊸ (a ⊸ b ⊸ c) -> c
+f12 :: a -o b -o (a -o b -o c) -> c
 f12 x y use = case (x,y) of z { (a,b) -> use x y }
 \end{code}
 \end{notyet}
@@ -1026,7 +1049,7 @@ since we aren't using neither $a$ nor $b$ (thereby never forcing the arguments
 of the tuple). However, if we did use $a$ in the case body, then $x$ would be unavailable:
 \begin{noway}
 \begin{code}
-f13 :: a ⊸ a ⊸ (a ⊸ a ⊸ c) -> c
+f13 :: a -o a -o (a -o a -o c) -> c
 f13 x y use = case (x,y) of z { (a,b) -> use a x }
 \end{code}
 \end{noway}
@@ -1040,7 +1063,7 @@ run the computation thus no resources are consumed.
 A third option for this example is to use the case binder $z$ instead of $a,b$ or $x,y$:
 \begin{notyet}
 \begin{code}
-f14 :: a ⊸ b ⊸ (a ⊸ b ⊸ c) -> c
+f14 :: a -o b -o (a -o b -o c) -> c
 f14 x y use = case (x,y) of z { (a,b) -> uncurry use z }
 \end{code}
 \end{notyet}
@@ -1054,7 +1077,7 @@ evaluating it to WHNF will require doing computation and thus consume linear
 resources that are used in it:
 \begin{notyet}
 \begin{code}
-f15 :: a ⊸ b ⊸ (a ⊸ b ⊸ (c,d)) -> (c,d)
+f15 :: a -o b -o (a -o b -o (c,d)) -> (c,d)
 f15 x y use = case use x y of z { (a,b) -> z }
 \end{code}
 \end{notyet}
@@ -1063,7 +1086,7 @@ alternatives, but we \emph{must} still use either the case binder $z$ or the lin
 pattern variables $a,b$, e.g. it would be quite disastrous if any of the following typechecked:
 \begin{noway}
 \begin{code}
-doubleFree :: Ptr ⊸ (Ptr ⊸ Result) -> Result
+doubleFree :: Ptr -o (Ptr -o Result) -> Result
 doubleFree x free = case free x of z { Result v -> free x }
 \end{code}
 \end{noway}
@@ -1077,7 +1100,7 @@ leakPointer x = case id x of z { _ -> () }
 %whereas this is fine:
 %\begin{notyet}
 %\begin{code}
-%f16 :: Ptr ⊸ (Ptr ⊸ (Value,Int)) -> (Value,Int)
+%f16 :: Ptr -o (Ptr -o (Value,Int)) -> (Value,Int)
 %f16 x free = case K (free x) of z { K y -> free x }
 %\end{code}
 %\end{notyet}
@@ -1103,7 +1126,7 @@ binder unrestrictedly and refer to it zero or more times. For example, this
 program is semantically linear:
 \begin{notyet}
 \begin{code}
-f16 :: () ⊸ ()
+f16 :: () -o ()
 f16 x = case x of z { () -> z <> z }
 \end{code}
 \end{notyet}
@@ -1116,7 +1139,7 @@ any resource could be freely used in that branch, and the example is
 %
 \begin{limitation}
 \begin{code}
-f :: a ⊸ a
+f :: a -o a
 f x = case K1 x of z { K2 -> x; K1 a -> x }
 \end{code}
 \end{limitation}
@@ -1216,7 +1239,7 @@ unrestrictedly, and therefore the case binder may also be used unrestrictedly.
 % ROMES:TODO: Do something about this?
 % \begin{noway}
 % \begin{code}
-% f :: a ⊸ (a ⊸ K) ⊸ a
+% f :: a -o (a -o K) -o a
 % f x use = case x of z { K -> x }
 % \end{code}
 % \end{noway}
@@ -2306,7 +2329,7 @@ We note how $Split$ can be applied both to relevant and proof irrelevant linear 
 %%%%% \begin{minipage}{0.47\textwidth}
 %%%%% \begin{code}
 %%%%% data C = Red | Green | Blue
-%%%%% f :: C ⊸ C ⊸ C
+%%%%% f :: C -o C -o C
 %%%%% f Red q = q
 %%%%% f p Green = p
 %%%%% f Blue q = q
@@ -2531,7 +2554,7 @@ example is a program to which a rewrite rule was applied, resulting in an
 application of unrestricted function to a linear resource in the first argument
 to |build|:
 \begin{code}
-take :: Int -> Replicator a ⊸ [a]
+take :: Int -> Replicator a -o [a]
 take = \ (ds :: Int) (r :: Replicator b) ->
      case ds of
        1 -> build (\(c :: b -> a -> a) (n :: a) -> c (extract r) n)
@@ -2550,7 +2573,7 @@ semantically, and are simultaneously rejected by Linear Core and its
 implementation. An example, where the last component of |HashMap|, |wwz|,
 is linear, but is not being consumed in the case alternative matching on it:
 \begin{code}
-jssvi :: Ur Bool ⊸ Set Int ⊸ Ur (TestT IO ())
+jssvi :: Ur Bool -o Set Int -o Ur (TestT IO ())
 jssvi (a :: Ur Bool) (b :: Set Int)
   = case a of
     Ur ss -> case b  of
