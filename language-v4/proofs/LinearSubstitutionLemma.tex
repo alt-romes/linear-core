@@ -207,7 +207,7 @@ By structural induction on the first derivation.
   Subcase $x$ occurs in $\ov{e''}$\\
     (2) $\judg[\G][\D,\D'',\xl]{\ccase{e}{\z[\irr{\D}][\s']~\{\ov{\rho\to e''}\}}}{\vp}$\\
     (3) $e$ is definitely not in WHNF\\
-    (4) $\judg[\G][\D]{e}{\s'}$\`by inv.\\
+    (4) $\judg[\G][\D]{e}{\s'}$\`by inv.\X1\
     (5) $\ov{\judg[\G,\zr{\irr{\D}}{\s'}][\irr{\D},\D'',\xl]{\rho\to e''}{\s' \Rrightarrow \vp}[alt][\irr{\D}][z]}$\`by inv.\\
     (6) $e[e'/x] = e$\` by $x$ does not occur in $e$\\
     (7) $\ov{\judg[\subst{\G}{\D'}{x},\zr{\irr{\D}}{\s'}][\irr{\D},\D'',\D']{\rho\to e''[e'/x]}{\s' \Rrightarrow \vp}[alt][\irr{\D}][z]}$\`by lin. subst. on alts\\

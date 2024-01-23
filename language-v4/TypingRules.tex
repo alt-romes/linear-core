@@ -19,7 +19,8 @@
 
 % TODO: split tagged stuff and proof irrelevant stuff
 \newcommand{\TypeVarSplit}{
-    \infer*[right=($Split$)]
+  % \infer*[right=($Split$)]
+  \infer[$\mathit{(Split)}$]
     {\judg[\G][\D,\x]{e}{\vp} \and \hasargs{K}{n}}
     {\judg[\G][\D,\ov{\xt{K_i}}^n]{e}{\s}}
 }
@@ -64,16 +65,16 @@
 }
 
 \newcommand{\TypeLet}{
-    % \infer*[right=($Let$)]
-    \infer[(Let)]
+     \infer*[right=($Let$)]
+    %\infer[(Let)]
     {\judg[\G][\D]{e}{\s} \\ \judg[\G,\xr{\D}{\s}][\D,\D']{e'}{\vp}}
     {\judg[\G][\D,\D']{\llet{\x[\D] = e}{e'}}{\vp}}
 }
 
 
 \newcommand{\TypeLetRec}{
-    % \infer*[right=($LetRec$)]
-  \infer[(LetRec)]
+     \infer*[right=($LetRec$)]
+  %\infer[(LetRec)]
     {\ov{\judg[\G,\ov{x_i{:}_{\D}\s_i}][\D]{e_i}{\s}} \\ \judg[\G,\ov{x_i{:}_{\D}\s_i}][\D,\D']{e'}{\vp}}
     {\judg[\G][\D,\D']{\lletrec{\ov{\var[x_i][\D][\s_i] = e_i}}{e'}}{\vp}}
 }

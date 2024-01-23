@@ -1,4 +1,4 @@
-\documentclass[acmsmall, screen, review]{acmart}
+\documentclass[acmsmall,review]{acmart}
 \PassOptionsToPackage{dvipsnames}{xcolor}
 \usepackage{boldline}
 \usepackage{xcolor}
@@ -132,7 +132,7 @@
    \institution{Well-Typed}
   %\city{City}
    \country{Something}}
- \email{xxx\@yyy.com}
+ \email{xxx@yyy.com}
 \author{Bernardo Toninho}
 \orcid{0000-0002-0746-7514}
 \affiliation{
@@ -140,7 +140,7 @@
   \institution{NOVA-LINCS, FCT-NOVA, Universidade Nova de Lisboa}
   %\city{City}
   \country{Portugal}}
-\email{btoninho\@fct.unl.pt}
+\email{btoninho@fct.unl.pt}
 %% TODO: AFFILIATION, EMAIL
 %% TODO: CCS CONCEPTS and KEYWORDS
 %% TODO: ACM RIGHTS notice...
@@ -436,14 +436,16 @@ transformations in linearity-heavy Haskell libraries, such as
 
 \end{itemize}
 %
-We review background concepts fundamental to our work in
-Section~\ref{sec:background}, including linear type systems, linear types in
-Haskell, evaluation strategies, Core's type system, and multiple optimising
-transformations applied by GHC in its compilation process.
+% We review background concepts fundamental to our work in
+% Section~\ref{sec:background}, including linear type systems, linear types in
+% Haskell, evaluation strategies, Core's type system, and multiple optimising
+% transformations applied by GHC in its compilation process.
 %
 We compare our contributions to related work and discuss possible
-avenues for further research (highlighting so-called \emph{multiplicity
-coercions}) in Section~\ref{sec:discussion}, which concludes the document.
+avenues for further research
+% (highlighting so-called
+% \emph{multiplicity coercions})
+in Section~\ref{sec:discussion}, which concludes the document.
 
 % In fact, we are not aware of any linear type system which
 % understands linearity in the presence of laziness.
@@ -698,8 +700,10 @@ Haskell doesn't seem to infer multiplicities for lets yet, so while the above
 program should typecheck in Linear Haskell, it is rejected by GHC.
 
 The next example exposes the case in which the let binder is ignored in the let
-body. Here, the linear resource |x| is used in |y|'s body and in the let
-body, however, the resource is still used semantically linearly because |y| isn't used at all, thus |x| is consumed just once in the let body:
+body. Here, the linear resource \incode{x} is used in \incode{y}'s body and in the let
+body, however, the resource is still used semantically linearly
+because \incode{y} isn't used at all, thus \incode{x} is consumed just
+once in the let body: 
 %
 \begin{notyet}
 \begin{lstlisting}
@@ -712,7 +716,7 @@ Programmers don't often write bindings that are completely unused, yet, an
 optimising compiler will produce intermediate programs with unused bindings\footnote{Unused bindings are then
 also dropped by the optimising compiler} 
 from transformations such as inlining, which can substitute out occurrences
-of the binder (e.g. |y| is inlined in the let body).
+of the binder (e.g. \incode{y} is inlined in the let body).
 
 Let bindings can also go unused if they are defined before branching on case
 alternatives. At runtime, depending on the branch taken, the let binding will
@@ -800,7 +804,7 @@ linearly, either the binder occurs exactly once $y$, or the resources $\ov{x}$
 do). We discuss how to encode this principle between let bindings and their dependencies using so called \emph{usage
 environments}, in Section~\ref{sec:usage-environments}.
 
-\vspace{-.5cm}
+%\vspace{-.5cm}
 \paragraph{Recursive let bindings\label{sec:semantic-linearity-examples:recursive-lets}}
 Second, we look into recursive let bindings. For the most part,
 recursive let bindings behave as non-recursive let bindings, i.e. we must use them \emph{at
@@ -913,8 +917,8 @@ lets.
 
 There might not be a solution to the set of equations. In this case, the
 binding undoubtedly entails using a linear resource more than once. For
-example, if we use a linear resource |x| in one case alternative, and invoke
-the recursive call more than once, we might eventually consume |x| more than
+example, if we use a linear resource \incode{x} in one case alternative, and invoke
+the recursive call more than once, we might eventually consume \incode{x} more than
 once:
 %
 \begin{noway}
@@ -928,8 +932,8 @@ f9 bool x =
   in go bool
 \end{lstlisting}
 \end{noway}
-Note that if returned |x| instead of |go bool| in the let body, then, despite
-the binding using |x| more than once, we would still consume |x| exactly once,
+Note that if returned \incode{x} instead of \incode{go bool} in the let body, then, despite
+the binding using \incode{x} more than once, we would still consume \incode{x} exactly once,
 since recursive bindings are still lazy.
 
 Lastly, we extend our single-binding running example to use two mutually recursive bindings that
@@ -938,12 +942,10 @@ depend a linear resource:
 \begin{lstlisting}
 f10 :: Bool -> a *' $\lolli$ '* a
 f10 bool x =
-  let go1 b
-        = case b of
+  let go1 b = case b of
            True -> go2 b
            False -> go1 (not b)
-      go2 b
-        = case b of
+       go2 b = case b of
            True -> x
            False -> go1 b
   in go1 bool
@@ -951,7 +953,7 @@ f10 bool x =
 \end{notyet}
 As before, we must find a solution to the set of equations defined by the
 mutually recursive bindings to determine which resources will be consumed.
-In this case, |go1| and |go2| both consume |x| exactly once if evaluated.
+In this case, \incode{go1} and \incode{go2} both consume \incode{x} exactly once if evaluated.
 We additionally note that a strongly connected group of recursive bindings
 (i.e. all bindings are transitively reachable from any of them) will always
 consume the same set of resources -- if all bindings are potentially reachable,
@@ -1004,22 +1006,25 @@ newMArray :: Int -> (MArray a *' $\lolli$ '* Unrestricted b) *' $\lolli$ '* b
 
 % ROMES:TODO: Há qualquer coisa que não gosto nada! na coerência deste paragrafo
 
-In short, case expressions enable us to consume resources and thus write
+In short, case expressions enable us to consume resources and so write
 functions that fully consume their linear arguments. To understand exactly how,
 we turn to the definition of \emph{consuming} a resource from Linear
 Haskell~\cite{cite:linearhaskell}:
-\begin{itemize}
-    \item To consume a value of atomic base type (such as~\texttt{Int} or
-        \texttt{Ptr}) exactly once, just evaluate~it.
-    \item To consume a function value exactly once, apply it to one argument,
-        and consume its result exactly once.
-    \item To consume a value of an algebraic datatype exactly once,
+%begin{itemize}
+% \item
+to consume a value of atomic base type (such as~\texttt{Int} or
+        \texttt{Ptr}) exactly once, just evaluate it;
+        % \item
+        to consume a function value exactly once, apply it to one argument,
+        and consume its result exactly once;
+        % \item
+        To consume a value of an algebraic datatype exactly once,
         pattern-match on it, and consume all its linear components exactly once.
         % For example, a linear pair (equivalent to $\tensor$) is consumed exactly
         % once if pattern-matched on \emph{and} both the first and second element are
         % consumed once.
-\end{itemize}
-That is, we can consume a linear resource by fully evaluating it, through case
+%\end{itemize}
+Thus, we can consume a linear resource by fully evaluating it, through case
 expressions.
 
 %%% In Section~\ref{sec:generalizing-evaluation-consuming} we generalize the idea
@@ -1030,23 +1035,26 @@ expressions.
 In Core, case expressions are of the form $\ccase{e_s}{z~\{\ov{\rho_i \to e_i}\}}$,
 where $e_s$ is the case \emph{scrutinee}, $z$ is the case \emph{binder}, and
 $\ov{\rho_i \to e_i}$ are the case \emph{alternatives}, composed of a pattern
-$\rho_i$ and of the corresponding expression $e_i$. Critically:
-\begin{enumerate}
-\item The case scrutinee is always evaluated to Weak Head Normal Form (WHNF).
+$\rho_i$ and of the corresponding expression $e_i$. Critically,
+%\begin{enumerate}
+%\item
+the case scrutinee is always evaluated to Weak Head Normal Form (WHNF);
+%
+% \item
+evaluating an expression that is already in WHNF is a no-op, that is,
+no computation occurs; 
+%
+the case binder is an alias to the result of evaluating the scrutinee
+to WHNF; and,
+the alternative patterns are always exhaustive.
+% i.e. there always exists
+% a pattern that matches the WHNF of a value resulting from evaluating the
+% scrutinee, where a pattern is either a wildcard that matches all expressions
+% ($\_$), or a constructor and its linear and non-linear component binders
+% ($K~\ov{x}\ov{y}$, with $\ov{x}$ as linearly-bound variables and $\ov{y}$ as
+% unrestricted ones).
 
-\item Evaluating to WHNF an expression that is already in WHNF is a no-op, that is,
-no computation whatsoever occurs, unlike evaluating a e.g. function application.
-
-\item The case binder is an alias to the result of evaluating the scrutinee to WHNF.
-
-\item The alternative patterns are always exhaustive, i.e. there always exists
-a pattern that matches the WHNF of a value resulting from evaluating the
-scrutinee, where a pattern is either a wildcard that matches all expressions
-($\_$), or a constructor and its linear and non-linear component binders
-($K~\ov{x}\ov{y}$, with $\ov{x}$ as linearly-bound variables and $\ov{y}$ as
-unrestricted ones).
-
-\end{enumerate}
+%\end{enumerate}
 
 % ROMES:TODO: We should talk about WHNF in the background, not here.
 % \parawith{WHNF} An expression is in Weak Head Normal Form when 
@@ -1056,31 +1064,31 @@ example of a program that constructs a tuple from linear resources then pattern
 matches on it, then uses both linearly-bound variables from the tuple pattern
 match. This is well-typed in Linear Haskell:
 \begin{working}
-\begin{code}
-f11 :: a -o b -o (a -o b -o c) -> c
+\begin{lstlisting}
+f11 :: a *' $\lolli$ '* b *' $\lolli$ '* (a *' $\lolli$ '* b *' $\lolli$ '* c) -> c
 f11 x y use = case (x,y) of { (a,b) -> use a b }
-\end{code}
+\end{lstlisting}
 \end{working}
 What might be more surprising is that a similar program which discards the
 pattern variables and instead uses the resources in the scrutinee is also
 semantically linear, despite not being accepted by Linear Haskell:
 \begin{notyet}
-\begin{code}
-f12 :: a -o b -o (a -o b -o c) -> c
+\begin{lstlisting}
+f12 :: a *' $\lolli$ '* b *' $\lolli$ '* (a *' $\lolli$ '* b *' $\lolli$ '* c) -> c
 f12 x y use = case (x,y) of z { (a,b) -> use x y }
-\end{code}
+\end{lstlisting}
 \end{notyet}
-We justify that |f12| is linear by appealing to property 2 -- since the
+We justify that \incode{f12} is linear by appealing to the fact that the
 expression (the tuple) being scrutinized is already in WHNF, evaluating it will
 not consume neither $x$ nor $y$. Even if the tuple was constructed with
 two expressions using $x$ and $y$ respectively, no computation would happen
 since we aren't using neither $a$ nor $b$ (thereby never forcing the arguments
 of the tuple). However, if we did use $a$ in the case body, then $x$ would be unavailable:
 \begin{noway}
-\begin{code}
-f13 :: a -o a -o (a -o a -o c) -> c
+\begin{lstlisting}
+f13 :: a *' $\lolli$ '* a *' $\lolli$ '* (a *' $\lolli$ '* a *' $\lolli$ '* c) -> c
 f13 x y use = case (x,y) of z { (a,b) -> use a x }
-\end{code}
+\end{lstlisting}
 \end{noway}
 This idea that $x$ and $a$ are mutually exclusive is the same behind let
 bindings being mutually exclusive to the resources that define them.
@@ -1091,10 +1099,10 @@ run the computation thus no resources are consumed.
 
 A third option for this example is to use the case binder $z$ instead of $a,b$ or $x,y$:
 \begin{notyet}
-\begin{code}
-f14 :: a -o b -o (a -o b -o c) -> c
+\begin{lstlisting}
+f14 :: a *' $\lolli$ '* b *' $\lolli$ '* (a *' $\lolli$ '* b *' $\lolli$ '* c) -> c
 f14 x y use = case (x,y) of z { (a,b) -> uncurry use z }
-\end{code}
+\end{lstlisting}
 \end{notyet}
 Again, $z$ is mutually exclusive with $a,b$ and with $x,y$, but at least one of
 the three must occur to ensure the linear resources are consumed. In this
@@ -1105,25 +1113,25 @@ Dually, consider the scrutinee to be an expression that's not in WHNF, s.t.
 evaluating it to WHNF will require doing computation and thus consume linear
 resources that are used in it:
 \begin{notyet}
-\begin{code}
-f15 :: a -o b -o (a -o b -o (c,d)) -> (c,d)
+\begin{lstlisting}
+f15 :: a *' $\lolli$ '* b *' $\lolli$ '* (a *' $\lolli$ '* b *' $\lolli$ '* (c,d)) -> (c,d)
 f15 x y use = case use x y of z { (a,b) -> z }
-\end{code}
+\end{lstlisting}
 \end{notyet}
 Unlike when the scrutinee was in WHNF, we can no longer use $x,y$ in the case
 alternatives, but we \emph{must} still use either the case binder $z$ or the linear
 pattern variables $a,b$, e.g. it would be quite disastrous if any of the following typechecked:
 \begin{noway}
-\begin{code}
-doubleFree :: Ptr -o (Ptr -o Result) -> Result
+\begin{lstlisting}
+doubleFree :: Ptr *' $\lolli$ '* (Ptr *' $\lolli$ '* Result) -> Result
 doubleFree x free = case free x of z { Result v -> free x }
-\end{code}
+\end{lstlisting}
 \end{noway}
 \begin{noway}
-\begin{code}
+\begin{lstlisting}
 leakPointer :: Ptr -> ()
 leakPointer x = case id x of z { _ -> () }
-\end{code}
+\end{lstlisting}
 \end{noway}
 %
 %whereas this is fine:
@@ -1136,11 +1144,11 @@ leakPointer x = case id x of z { _ -> () }
 %
 The result of evaluating the scrutinee must be consumed exactly to guarantee
 that the resources used in the scrutinee are fully consumed, or risk them being only ``almost'' consumed. Take for example
-|use| in |f15| to simply be |(,)|: it is not sufficient for |use x y| to be
-evaluated to WHNF to consume |x| and |y|. Otherwise, if all the resources were
+\incode{use} in \incode{f15} to simply be \incode{(,)}: it is not sufficient for \incode{use x y} to be
+evaluated to WHNF to consume \incode{x} and \incode{y}. Otherwise, if all the resources were
 considered to be fully consumed after the scrutinee were evaluated in a case
 expression, we could simply ignore the pattern variables, effectively
-discarding linear resources (for cases such as the |use = (,)| example). In
+discarding linear resources (for cases such as the \incode{use = (,)} example). In
 short, if the scrutinee is not in WHNF we must either consume the case binder
 or the linear components of the pattern.
 
@@ -1151,32 +1159,45 @@ in the computation have been fully consumed.
 %
 Consequently, in a branch of a constructor without linear fields we know the
 result of evaluating the scrutinee to be unrestricted, so we can use the case
-binder unrestrictedly and refer to it zero or more times. For example, this
-program is semantically linear:
+binder unrestrictedly and refer to it zero or more times. For example,
+the program in Figure~\ref{fig:nolin} is semantically linear.
+
+\begin{figure}[t]
+ \begin{minipage}{0.5\textwidth}
 \begin{notyet}
-\begin{code}
-f16 :: () -o ()
+\begin{lstlisting}
+f16 :: () *' $\lolli$ '* ()
 f16 x = case x of z { () -> z <> z }
-\end{code}
+\end{lstlisting}
 \end{notyet}
-A second example of an unrestricted pattern, where |K2| has no fields and |K1|
-has one linear field, seems as though it shouldn't typecheck since the resource
-$x$ must have been fully consumed to take the |K2| branch, but because the
-scrutinee is known to be |K1|, the |K2| branch is \emph{absurd}, so, in reality
+\vspace{-0.5cm}
+\caption{No Linear Fields\label{fig:nolin}}
+\end{minipage}%
+\begin{minipage}{0.5\textwidth}
+\begin{limitation}
+\begin{lstlisting}
+f :: a *' $\lolli$ '* a
+f x = case K1 x of z { K2 -> x; K1 a -> x }
+\end{lstlisting}
+\end{limitation}
+\vspace{-0.5cm}
+\caption{Absurd Branches\label{fig:absurd}}
+\end{minipage}
+\end{figure}
+
+A second example of an unrestricted pattern, where \incode{K2} has no fields and \incode{K1}
+has one linear field, is shown in Figure~\ref{fig:absurd}. Seemingly, the resource
+$x$ must have been fully consumed to take the \incode{K2} branch, but because the
+scrutinee is known to be \incode{K1}, the \incode{K2} branch is \emph{absurd}, so, in reality
 any resource could be freely used in that branch, and the example is
 \emph{semantically} linear (despite not being seen as so by our system):
 %
-\begin{limitation}
-\begin{code}
-f :: a -o a
-f x = case K1 x of z { K2 -> x; K1 a -> x }
-\end{code}
-\end{limitation}
+%
 %
 This particular example has a known constructor being scrutinized which might
 seem like an unrealistic example, but we recall that during the transformations
 programs undergo in an optimising compiler, many programs such as this
-naturally occur (e.g. if the definition of a function is inlined in the
+naturally occur (e.g.,~if the definition of a function is inlined in the
 scrutinee).
 %
 % However, the scrutinee before evaluation likely isn't in WHNF, thus scrutinee
@@ -1186,30 +1207,39 @@ scrutinee).
 
 Further exploring that each linear field must be consumed exactly once, and
 that resources in WHNF scrutinees aren't consumed, we are able to construct
-more contrived examples, the following two of which the first doesn't typecheck
-because the same linear field is used twice, but the second one does since it
-uses each linear field exactly once (despite pattern matching on the same
-components twice)
-\begin{noway}
-\begin{code}
-f w = case w of z
-        (a,b) ->
-          case (a,b) of z'
-            (c,d) ->
-               (a,c)
-\end{code}
-\end{noway}
-\begin{notyet}
-\begin{code}
-f w = case w of z
-        (a,b) ->
-          case (a,b) of z'
-            (c,d) ->
-               (a,d)
-\end{code}
-\end{notyet}
+more contrived examples (Figures~\ref{fig:badcase}
+and~\ref{fig:goodcase}). the example in Figure~\ref{fig:badcase} does not typecheck
+because the same linear field is used twice, but the example in
+Figure~\ref{fig:goodcase} does since it
+uses each linear field exactly once, despite pattern matching on the same
+components twice.
 
-Before last, we consider the default case alternatives, also known as wildcards
+\begin{figure}[t]
+  \begin{minipage}{0.5\textwidth}
+\begin{noway}
+\begin{lstlisting}
+f w = case w of z
+        (a,b) -> case (a,b) of z'
+                        (c,d) -> (a,c)
+\end{lstlisting}
+\end{noway}
+\vspace{-0.5cm}
+\caption{Bad Case\label{fig:badcase}}
+\end{minipage}%
+\begin{minipage}{0.5\textwidth}
+\begin{notyet}
+\begin{lstlisting}
+f w = case w of z
+        (a,b) -> case (a,b) of z'
+                        (c,d) -> (a,d)
+\end{lstlisting}
+\end{notyet}
+\vspace{-0.5cm}
+\caption{Good Case\label{fig:goodcase}}
+\end{minipage}
+\end{figure}
+
+Finally, we consider the default case alternatives, also known as wildcards
 (written $\_$), in the presence of linearity: matching against the wildcard
 doesn't provide new information, so linearity is seen as before but without
 fully consuming the scrutinee linear resources (in non-linear patterns) nor
@@ -1217,21 +1247,21 @@ binding new linear resources (in linear patterns). In short, if the scrutinee
 is in WHNF, we can either use the resources from the scrutinee or the case
 binder in that alternative, if the scrutinee is not in WHNF, we \emph{must} use
 the case binder, as it's the only way to linearly consume the result of
-evaluating the scrutinee.
-
-Finally, we discuss the special case of a case expression scrutinizing a
-variable $x$:
-\[
+evaluating the scrutinee. We also discuss the special case of a case
+expression scrutinizing a variable $x$:
+$
 \lambda x.~\ccase{x}{\_ \to x}
-\]
+$. 
 It might seem as though the program is linear:
-\begin{itemize}
-\item If $x$ is in WHNF, then scrutinizing it is a no-op, and returning $x$
-just returns the resource intact.
-\item If $x$ is not in WHNF, then scrutinizing it evaluates it to WHNF, and
+%begin{itemize}
+% \item
+if $x$ is in WHNF, then scrutinizing it is a no-op, and returning $x$
+just returns the resource intact;
+% \item
+if $x$ is not in WHNF, then scrutinizing it evaluates it to WHNF, and
 returning $x$ returns the result of evaluating $x$ that still had to be
 consumed exactly once.
-\end{itemize}
+%\end{itemize}
 However, in practice, it depends on the evaluation strategy. If linear function
 applications are $\beta$-reduced \emph{call-by-name} (a common practice, as
 linear functions use their argument exactly once), and the above function is
@@ -1239,8 +1269,8 @@ considered linear, then an application might duplicate linear resources during
 evaluation. For example:
 \[
 \begin{array}{l}
-(\lambda x.~\ccase{x}{\_ \to x})~(free~x)\\
-\Longrightarrow_{CBN~\beta-reduction}\\
+(\lambda x.~\ccase{x}{\_ \to x})~(free~x)
+\Longrightarrow_{CBN}
 \ccase{free~x}{\_ \to free~x}
 \end{array}
 \]
@@ -1455,8 +1485,8 @@ i.e. there is always at least one pattern which matches the scrutinized expressi
 \SyntaxTerms
 \]
 Linear Core takes the idea of annotating lets with usage environments from the
-unpublished Linear Mini-Core document by Arnaud Spiwack et.
-all~\cite{cite:minicore}, which first tentatively tackled Core's
+unpublished Linear Mini-Core document by Spiwack et.
+al~\cite{cite:minicore}, which first tentatively tackled Core's
 linearity issues. We discuss this work in more detail in
 Section~\ref{sec:linear-mini-core}.
 
@@ -1547,11 +1577,10 @@ duplicated for sub-derivations and may unrestrictedly exist in the variable
 rules.
 % TODO: Likely rewrite that
 %
-The main typing judgement reads ``expression $e$ has type $\s \to \vp$ under
-the unrestricted environment $\G$ and linear environment $\D$'':
-\[
-\G;\D \vdash e : \s \to \vp
-\]
+The main typing judgement, written $\G;\D \vdash e : \s \to \vp$,
+denotes that expression $e$ has type $\s \to \vp$ under
+the unrestricted environment $\G$ and linear environment $\D$.
+
 Occurrences of unrestricted variables from $\G$ are well-typed as long as the linear
 environment is empty, while occurrences of linear variables are only well-typed
 when the variable being typed is the only resource available in the linear context.
@@ -1584,7 +1613,7 @@ distinct split, are both well-typed and the argument type matches the
 function's expected argument type. Conversely, unrestricted resources are
 duplicated and available whole to both sub-derivations.
 \[
-\TypeLamElimL
+\TypeLamElimL \quad \TypeLamElimW
 \]
 An unrestricted function, unlike a linear one, consumes its argument
 unrestrictedly (zero or more times). Therefore, in an unrestricted function
@@ -1593,9 +1622,7 @@ entails consuming those resources unrestrictedly, since the
 variable binding the argument expression could be discarded or used more than
 once in the function body. Thus, argument expressions to unrestricted functions must also
 be unrestricted, i.e. no linear variables can be used to type them.
-\[
-\TypeLamElimW
-\]
+%
 Typing linear and unrestricted function applications separately is less general
 than typing applications of functions of any multiplicity $\pi$ by scaling (per the multiplicity
 semiring) the multiplicities of the resources used to type the argument by $\pi$, however, our objective of typing semantic
@@ -1611,17 +1638,14 @@ $\forall p.~\dots$, i.e. a type universally quantified over a multiplicity
 variable $p$. We note that, in the body of the abstraction, function types annotated
 with a $p$ variable and datatype fields with multiplicity $p$ are typed as
 thought they are linear functions and linear fields, because $p$ can be
-instantiated at both $\omega$ and $1$ (so types using $p$ must be well-typed at both instantiations).
+instantiated at both $\omega$ and $1$.
 \[
-\TypeMultLamIntro
+\TypeMultLamIntro \quad \TypeMultLamElim
 \]
 A multiplicity application instantiates a multiplicity-polymorphic type
 $\forall p.~\s$ at a particular (argument) multiplicity $\pi$, resulting in an
 expression of type $\s$ where occurrences of $p$ are substituted by $\pi$, i.e.
 $\s[\pi/p]$.
-\[
-\TypeMultLamElim
-\]
 The rule additionally requires that $\pi$ be \emph{well-formed} in order
 for the expression to be well-typed, using the judgement $\G \vdash_{mult}
 \pi$, where well-formedness is given by $\pi$ either being $1$, $\omega$, or an
@@ -1673,19 +1697,22 @@ expressions. Yet, this distinction is slightly blurred after introducing how
 typing environments can be moved to usage environments, or otherwise occurs in
 rules relating the two.
 
-\subsubsection{\texorpdfstring{$\D$}{Delta}-bound variables}
+\paragraph{\texorpdfstring{$\D$}{Delta}-bound variables}
 
 A $\Delta$-bound variable $u$ is a variable annotated with a usage environment $\Delta$. Crucially, for any $\Delta$-bound variable $u$:
 %
-\begin{enumerate}
-\item Using $u$ is equivalent to using all the linear resources in $\Delta$
+%\begin{enumerate}
+%\item
+(1) using $u$ is equivalent to using all the linear resources in $\Delta$;
 %\item $u$ can only be used once, since the $\D$ resources will not be available afterwards
-\item Using $u$ is mutually exclusive with using the $\Delta$ resources it depends on elsehow
-\item $u$ can be safely discarded as long as the resources in $\Delta$ are consumed elsehow
-\end{enumerate}
+%\item
+(2) using $u$ is mutually exclusive with using the $\Delta$ resources it depends on elsehow;
+% \item
+(3) $u$ can be safely discarded as long as the resources in $\Delta$ are consumed elsehow.
+%\end{enumerate}
 %
 Fortunately, since linear resources must be linearly split across
-sub-derivations, (2) follows from (1): consuming the linear resources
+sub-derivations, (2) follows from (1) since consuming the linear resources
 in $\Delta$ to type $u$ makes them unavailable in the context of any other
 derivation. Therefore, expressions using these resources a second time, directly, or indirectly through the same
 (or other) usage environment, is ill-typed, as the resources are
@@ -1693,9 +1720,9 @@ already allocated to the derivation of $u$. Similarly, (3) also follows from
 (1), because if the linear resources aren't consumed in the $\Delta$-var
 derivation, they must be consumed in an alternative derivation (or otherwise
 the expression is ill-typed).
-
+%
 These observations all boil down to one typing rule for $\Delta$-bound
-variables, which fundamentally encodes (1), implying the other two bullets:
+variables, which fundamentally encodes (1), implying the other two points:
 \[
 \TypeVarDelta
 \]
@@ -1852,11 +1879,11 @@ matching the Weak Head Normal Form of the scrutinee\footnote{In our calculus,
 the alternatives are always exhaustive, i.e. there always exists at least one
 pattern which matches the scrutinee in its WHNF, so we're guaranteed to have an
 expression to progress evaluation.}. An expression in Weak Head Normal Form can
-either be:
-\begin{itemize}
-\item A lambda expression $\lambda x.~e$,
-\item or a datatype constructor application $K~\ov{e}$
-\end{itemize}
+either be %\begin{itemize}
+% \item
+a lambda expression $\lambda x.~e$ 
+or a datatype constructor application $K~\ov{e}$.
+%\end{itemize}
 In both cases, the sub-expressions $e$ or $\ov{e}$ occurring in the lambda body
 or as constructor arguments needn't be evaluated for the lambda or constructor
 application to be in weak head normal form (if otherwise all sub-expressions
@@ -1865,11 +1892,10 @@ were fully evaluated the whole expression would also be in \emph{normal form}).
 %
 Accordingly, these sub-expressions might still depend on linear resources to be
 well-typed (these resources will be consumed when the expression is evaluated).
-%
+
 As will be made clear in later sections, we need to devise a specialized typing
 judgement for scrutinees that is able to distinguish between terms
 in WHNF and terms that are not in WHNF.
-%
 Following the discussion on expressions in weak head normal form, we present a
 typing judgement $\G;\D \Vdash e : \s \gtrdot \ov{\D_i}$, and a rule for each
 of the forms given above:
@@ -2307,7 +2333,9 @@ environment $\D_i$ to each linear pattern variable where, $\D_i$ is obtained fro
 scrutinee environment tagged with the constructor name and linear-variable
 index $\lctag{\D_s}{K_i}$, and $\y[\D_i]$ is introduced in $\G$.
 \[
-\TypeAltNNotWHNF
+  \begin{array}{cc}
+    \TypeAltNNotWHNF & \TypeVarSplit
+    \end{array}
 \]
 The tag consists of a constructor name $K$ and an index $i$ identifying the
 position of the pattern variable among all bound variables in that pattern.
@@ -2316,11 +2344,7 @@ The key idea is that a linear resource $x$ can be split into $n$ resources at a
 given constructor, where $n$ is the number of positional linear arguments of
 the constructor.
 %
-This is given by the rule:
-\[
-\TypeVarSplit
-\]
-By assigning to each linear pattern variable a fragment of the scrutinee
+This is given by the Split rule. By assigning to each linear pattern variable a fragment of the scrutinee
 resources with a tag, we guarantee that all linear pattern variables are
 simultaneously used to consume all the scrutinee resources, since for any of
 scrutinee resources to be used by a linear pattern-bound var be used, the
@@ -2496,20 +2520,21 @@ resources semantically used in the binder bodies, while counting \emph{uses}
 Second, the binder names and corresponding \emph{naive environment} (mapping
 each linear resource to $1$ and the recursive variables to the $n$ number of
 times they are \emph{used}) in Cartesian pairs are given as input to
-Algorithm~\ref{computeRecUsages}, which computes the actual usage environment
+% Algorithm~\ref{computeRecUsages},
+an algorithm which computes the actual usage environment
 of each binder.
 %
 % TODO: I should probably use the re-computed usageEnvs instead of the naiveUsageEnvs.
 % I'm pretty sure it might fail in some inputs if I keep using the naiveUsageEnvs.
-\begin{algorithm}
-$usageEnvs \gets naiveUsageEnvs.map(fst)$\;
-\For{$(bind, U) \in naiveUsageEnvs$}{
-    \For{$V \in usageEnvs$}{
-        $V \gets sup(V[bind]*U\setminus\{bind\}, V\setminus\{bind\})$
-    }
-}
-\caption{computeRecUsages\label{computeRecUsages}}
-\end{algorithm}
+% \begin{algorithm}
+% $usageEnvs \gets naiveUsageEnvs.map(fst)$\;
+% \For{$(bind, U) \in naiveUsageEnvs$}{
+%     \For{$V \in usageEnvs$}{
+%         $V \gets sup(V[bind]*U\setminus\{bind\}, V\setminus\{bind\})$
+%     }
+% }
+% \caption{computeRecUsages\label{computeRecUsages}}
+% \end{algorithm}
 %
 Intuitively, the algorithm, for each recursive binder, iterates over the
 (initially naive) usage environments and substitutes occurrences of the
@@ -2581,34 +2606,32 @@ linear, and thus GHC does not not reduce them using a call-by-name evaluation st
 rejected by the Linear Core system, but are still semantically linear. An
 example is a program to which a rewrite rule was applied, resulting in an
 application of unrestricted function to a linear resource in the first argument
-to |build|:
-\begin{code}
-take :: Int -> Replicator a -o [a]
+to \incode{build}:
+\begin{lstlisting}
+take :: Int -> Replicator a *' $\lolli$ '* [a]
 take = \ (ds :: Int) (r :: Replicator b) ->
      case ds of
        1 -> build (\(c :: b -> a -> a) (n :: a) -> c (extract r) n)
        ...
-\end{code}
-We know the linear resource is still used linearly because |build| will
+\end{lstlisting}
+We know the linear resource is still used linearly because \incode{build} will
 always instance the unrestricted function to $(:)$ (read \emph{Cons}), which is
 linear. Additionally, these include programs scrutinizing a value of a type of
 which all constructors have no linear components, but only matching on the
 default alternative, programs where common-sub-expression elimination
-substituted more than one occurrence of |Ur x| by |y|, in the body of
-scrutinizing |y| (a linear variable), and other programs affected by rewrite rules.
+substituted more than one occurrence of \incode{Ur x} by \incode{y}, in the body of
+scrutinizing \incode{y} (a linear variable), and other programs affected by rewrite rules.
 %
 ``Not Linear Rejected'' indicate programs that we do not understand as linear,
 semantically, and are simultaneously rejected by Linear Core and its
-implementation. An example, where the last component of |HashMap|, |wwz|,
+implementation. An example, where the last component of \incode{HashMap}, \incode{wwz},
 is linear, but is not being consumed in the case alternative matching on it:
-\begin{code}
-jssvi :: Ur Bool -o Set Int -o Ur (TestT IO ())
+\begin{lstlisting}
+jssvi :: Ur Bool *' $\lolli$ '* Set Int *' $\lolli$ '* Ur (TestT IO ())
 jssvi (a :: Ur Bool) (b :: Set Int)
   = case a of
-    Ur ss -> case b  of
-      HashMap wwx wwy wwz ->
-        jump wjssAd ss
-\end{code}
+     Ur ss -> case b of { HashMap wwx wwy wwz -> jump wjssAd ss }
+\end{lstlisting}
 %
 Finally, ``Unknown Rejected'' programs are those whose validity we did not
 check. These include both programs accepted by Linear Core, but not by its
@@ -2756,30 +2779,37 @@ the $Case_{\textrm{WHNF}}$ rule.
 % expression whose scrutinee is evaluated to WHNF is handled in the
 % preservation proof.
 
-The \emph{Irrelevance} lemma is required to prove preservation for that
-evaluation case. We need to prove that the alternatives of a case expression
-typed with proof irrelevant resources are still well-typed when the proof
-irrelevant resource is substituted by the scrutinee resources as it is evaluated to WHNF.
-In this sense, the \emph{Irrelevance} lemma witnesses the soundness of typing a
+% The \emph{Irrelevance} lemma is required to prove preservation for that
+% evaluation case. We need to prove that the alternatives of a case expression
+% typed with proof irrelevant resources are still well-typed when the proof
+% irrelevant resource is substituted by the scrutinee resources as it is evaluated to WHNF.
+% In this sense, the \emph{Irrelevance} lemma witnesses the soundness of typing a
+% case alternative with proof irrelevant resources in a certain context with respect to
+% typing the same expression with arbitrary resources (we note, however, typing
+% an alternative with proof irrelevant resources is not complete wrt using
+% arbitrary resources -- a counter example needs only to use a resource
+% directly).
+
+\WHNFConvSoundness
+
+The \emph{Irrelevance} lemma witnesses the soundness of typing a
 case alternative with proof irrelevant resources in a certain context with respect to
 typing the same expression with arbitrary resources (we note, however, typing
 an alternative with proof irrelevant resources is not complete wrt using
 arbitrary resources -- a counter example needs only to use a resource
 directly).
 
-\WHNFConvSoundness
-
-\noindent Intuitively, the lemma holds since proof irrelevant resources can
-only be used through the case binder or pattern-bound variables. If we
-consistently replace the proof irrelevant resources both in the typing
-environment and in the usage environments containing them, the expression
-remains well-typed. We note that the proof irrelevant resources are always
-unique when introduced in such a case alternative (we always take the scrutinee
-environment to make irrelevant, and allow nested ``irrelevantness''), so the
-case binder has the only occurrence of those resources in the $\G$ environment.
-% (being somewhat akin to congruence).
-%
-The proof is given in Section~\ref{sec:proof:irrelevance}.
+% \noindent Intuitively, the lemma holds since proof irrelevant resources can
+% only be used through the case binder or pattern-bound variables. If we
+% consistently replace the proof irrelevant resources both in the typing
+% environment and in the usage environments containing them, the expression
+% remains well-typed. We note that the proof irrelevant resources are always
+% unique when introduced in such a case alternative (we always take the scrutinee
+% environment to make irrelevant, and allow nested ``irrelevantness''), so the
+% case binder has the only occurrence of those resources in the $\G$ environment.
+% % (being somewhat akin to congruence).
+% %
+% The proof is given in Section~\ref{sec:proof:irrelevance}.
 
 \subsection{Type safety\label{sec:type-safety-meta}}
 
@@ -2792,114 +2822,118 @@ $\xo$, linear variables $\xl$, and $\D$-bound variables $\xD$.
 
 \TypePreservationTheorem
 %
-\noindent Type preservation states that a well-typed expression $e$ that
-evaluates to $e'$ remains well-typed under the same context:
+\ProgressTheorem
+% \noindent Type preservation states that a well-typed expression $e$ that
+% evaluates to $e'$ remains well-typed under the same context:
 %
-The proof ($\S$~\ref{sec:proof:type-preservation}) is done by structural induction on the reductions $e \longrightarrow
+Type preservation
+% ($\S$~\ref{sec:proof:type-preservation})
+follows by structural induction on the reductions $e \longrightarrow
 e'$ from the operational semantics. Most cases are straightforward and usually
 appeal to one or more of the substitution lemmas described below. The most
 interesting case is that of case expressions whose scrutinee can be further
 evaluated -- we branch on whether the scrutinee becomes in WHNF, and invoke the
 \emph{Irrelevance} lemma if so.
 %
-This case guarantees that the separation of rules for treating scrutinees is
-consistent, in the sense that a well-typed case expression with a scrutinee not
-in WHNF remains well-typed after the scrutinee is evaluated to WHNF.
-
-\ProgressTheorem
+% This case guarantees that the separation of rules for treating scrutinees is
+% consistent, in the sense that a well-typed case expression with a scrutinee not
+% in WHNF remains well-typed after the scrutinee is evaluated to WHNF.
 %
-\noindent Progress states that the evaluation of a well-typed term does not block:
-Similarly, progress is proved by induction on typing ($\S$~\ref{sec:proof:progress}).
-
-\subsubsection{Substitution Lemmas}
-
-The preservation and progress theorems depend on multiple substitution lemmas,
-one for each kind of variable, as is standard.
-% The proofs are given in Section~\ref{sec:proof:substitution-lemmas}.
-% The ... themselves diverge from their common formulation, because
-% $\D$-variables refer to linearly bound variables, so substitution must take into account
-
-
-The linear substitution lemma states that a well-typed expression $e$ with a
-linear variable $x$ of type $\s$ remains well-typed if
-occurrences of $x$ in the $e$ are replaced by an expression $e'$ of the same
-type $\s$, and occurrences of $x$ in the linear context and in usage
-environments of $\D$-bound variables are replaced by the linear context $\D'$
-used to type $e'$:
-
-\LinearSubstitutionLemma
-
-\noindent Where $\G[\D'/x]$ substitutes all occurrences of $x$ in the usage
-environments of $\D$-variables in $\G$ by the linear variables in $\D'$.
-% ($x$ couldn't appear anywhere besides usage environments of $\D$-bound variables, since $x$ is linear).
-
-The substitution of the resource in the usage environments is illustrated
-by the following example. Consider the term $\llet{y = use~x}{y}$ where $use$ and $x$ are free variables:
-if we replace occurrences of $x$ by $e'$ (where $\G;\D \vdash e : \s$), then the
-``real'' usage environment of $y$ goes from $\{x\}$ to $\D$. If we don't update
-the usage environment of $y$ accordingly, we'll ultimately be typing
-$y{:}_{\{x\}}\vp$ with $\D$ instead of $x$, which is not valid.
-
-The linear substitution lemma extends to case alternatives as well.
-The lemma for substitution of linear variables in case alternatives is similar
-to the linear substitution lemma, applied to the case alternative judgement.
-% Is slightly more involved, in the sense that there are more environments in which the
-% substitution $[\D/x]$ must be applied (for the same reason):
 %
-\LinearSubstitutionAltsLemma
 %
-\noindent We further require that the environment annotated in the case
-alternative judgement, $\D_s$, is a subset of the environment used to type the
-whole alternative $\D_s \subseteq \D$. In all occurrences of the alternative
-judgement (in $Case_{\textrm{WHNF}}$ and $Case_{\textrm{Not WHNF}}$), the
-environment annotating the alternative judgement is \emph{always} a subset of
-the alternative environment.
+%\noindent
+% Progress states that the evaluation of a well-typed term does not block:
+% Similarly, progress is proved by induction on typing ($\S$~\ref{sec:proof:progress}).
 
-The substitution lemma for unrestricted variables follows the usual
-formulation, with the added restriction (common to linear type systems) that
-the expression $e'$ that is going to substitute the unrestricted variable $x$
-is typed on an empty linear environment:
-%
-\UnrestrictedSubstitutionLemma
-%
-\noindent Similarly, we also prove the substitution of unrestricted variables preserves types on an alternative case expression:
-%
-\UnrestrictedSubstitutionAltsLemma
+% \subsubsection{Substitution Lemmas}
 
-Finally, we introduce the lemma stating that substitution of $\D$-bound
-variables by expressions of the same type preserves the type of the original
-expression.
-%
-What distinguishes this lemma from traditional substitution lemmas is that the
-usage environment $\D$ of the variable $x$ being substituted by expression $e'$
-must match exactly the typing environment $\D$ of $e'$ and the
-environment of the original expression doesn't change with the substitution:
-%
-\DeltaSubstitutionLemma
-%
-\noindent Intuitively, if $x$ is well-typed with $\D$ in $e$, substituting $x$
-by an expression $e'$ which is typed in the same environment $\D$ allows the
-distribution of resources $\D,\D'$ used to type $e$ across sub-derivations to remain
-unchanged. To prove the theorems, we don't need a ``stronger'' substitution of
-$\D$-vars lemma (allowing arbitrary resources $\D''$ to type $e'$, as in other
-substitution lemmas), as we only ever substitute $\D$-variables by expressions
-whose typing environment matches the variables usage environment. However, it
-is not obvious whether such a lemma is possible to prove for $\D$-variables
-(e.g. let $\G;\D \vdash e :\s$ and $\G; \D' \vdash \llet{x = e'}{x}$, if we
-substitute $e$ for $x$ the resources $\D'$ are no longer consumed).
+% The preservation and progress theorems depend on multiple substitution lemmas,
+% one for each kind of variable, as is standard.
+% % The proofs are given in Section~\ref{sec:proof:substitution-lemmas}.
+% % The ... themselves diverge from their common formulation, because
+% % $\D$-variables refer to linearly bound variables, so substitution must take into account
 
-The $\D$-substitution lemma on case alternatives reflects again that the typing
-environment of the expression substitution the variable must match its usage
-environment. We recall that $\D_s \subseteq \D,\D'$ states that the annotated
-environment is always contained in the typing environment, which is true of all
-occurrences of this judgement. An alternative formulation of this lemma could
-instead explicitly list $\D_s$ as part of the typing environment for the same
-effect:
 
-\DeltaSubstitutionAltsLemma
+% The linear substitution lemma states that a well-typed expression $e$ with a
+% linear variable $x$ of type $\s$ remains well-typed if
+% occurrences of $x$ in the $e$ are replaced by an expression $e'$ of the same
+% type $\s$, and occurrences of $x$ in the linear context and in usage
+% environments of $\D$-bound variables are replaced by the linear context $\D'$
+% used to type $e'$:
 
-The proofs for substitution lemmas of linear, unrestricted, and
-$\D$-variables are available in Section~\ref{sec:proof:substitution-lemmas}.
+% \LinearSubstitutionLemma
+
+% \noindent Where $\G[\D'/x]$ substitutes all occurrences of $x$ in the usage
+% environments of $\D$-variables in $\G$ by the linear variables in $\D'$.
+% % ($x$ couldn't appear anywhere besides usage environments of $\D$-bound variables, since $x$ is linear).
+
+% The substitution of the resource in the usage environments is illustrated
+% by the following example. Consider the term $\llet{y = use~x}{y}$ where $use$ and $x$ are free variables:
+% if we replace occurrences of $x$ by $e'$ (where $\G;\D \vdash e : \s$), then the
+% ``real'' usage environment of $y$ goes from $\{x\}$ to $\D$. If we don't update
+% the usage environment of $y$ accordingly, we'll ultimately be typing
+% $y{:}_{\{x\}}\vp$ with $\D$ instead of $x$, which is not valid.
+
+% The linear substitution lemma extends to case alternatives as well.
+% The lemma for substitution of linear variables in case alternatives is similar
+% to the linear substitution lemma, applied to the case alternative judgement.
+% % Is slightly more involved, in the sense that there are more environments in which the
+% % substitution $[\D/x]$ must be applied (for the same reason):
+% %
+% \LinearSubstitutionAltsLemma
+% %
+% \noindent We further require that the environment annotated in the case
+% alternative judgement, $\D_s$, is a subset of the environment used to type the
+% whole alternative $\D_s \subseteq \D$. In all occurrences of the alternative
+% judgement (in $Case_{\textrm{WHNF}}$ and $Case_{\textrm{Not WHNF}}$), the
+% environment annotating the alternative judgement is \emph{always} a subset of
+% the alternative environment.
+
+% The substitution lemma for unrestricted variables follows the usual
+% formulation, with the added restriction (common to linear type systems) that
+% the expression $e'$ that is going to substitute the unrestricted variable $x$
+% is typed on an empty linear environment:
+% %
+% \UnrestrictedSubstitutionLemma
+% %
+% \noindent Similarly, we also prove the substitution of unrestricted variables preserves types on an alternative case expression:
+% %
+% \UnrestrictedSubstitutionAltsLemma
+
+% Finally, we introduce the lemma stating that substitution of $\D$-bound
+% variables by expressions of the same type preserves the type of the original
+% expression.
+% %
+% What distinguishes this lemma from traditional substitution lemmas is that the
+% usage environment $\D$ of the variable $x$ being substituted by expression $e'$
+% must match exactly the typing environment $\D$ of $e'$ and the
+% environment of the original expression doesn't change with the substitution:
+% %
+% \DeltaSubstitutionLemma
+% %
+% \noindent Intuitively, if $x$ is well-typed with $\D$ in $e$, substituting $x$
+% by an expression $e'$ which is typed in the same environment $\D$ allows the
+% distribution of resources $\D,\D'$ used to type $e$ across sub-derivations to remain
+% unchanged. To prove the theorems, we don't need a ``stronger'' substitution of
+% $\D$-vars lemma (allowing arbitrary resources $\D''$ to type $e'$, as in other
+% substitution lemmas), as we only ever substitute $\D$-variables by expressions
+% whose typing environment matches the variables usage environment. However, it
+% is not obvious whether such a lemma is possible to prove for $\D$-variables
+% (e.g. let $\G;\D \vdash e :\s$ and $\G; \D' \vdash \llet{x = e'}{x}$, if we
+% substitute $e$ for $x$ the resources $\D'$ are no longer consumed).
+
+% The $\D$-substitution lemma on case alternatives reflects again that the typing
+% environment of the expression substitution the variable must match its usage
+% environment. We recall that $\D_s \subseteq \D,\D'$ states that the annotated
+% environment is always contained in the typing environment, which is true of all
+% occurrences of this judgement. An alternative formulation of this lemma could
+% instead explicitly list $\D_s$ as part of the typing environment for the same
+% effect:
+
+% \DeltaSubstitutionAltsLemma
+
+% The proofs for substitution lemmas of linear, unrestricted, and
+% $\D$-variables are available in Section~\ref{sec:proof:substitution-lemmas}.
 
 %TODO! Substitution of proof-irrelevant linear variables preserves typing. The
 %term always remains the same because $x$ cannot occur in any term, however, all
@@ -2923,10 +2957,10 @@ intermediate representations of optimising compilers for lazy languages with
 linear types. In light of this goal, we prove that \emph{multiple optimising
 transformations} are type preserving in Linear Core, and thus preserve linearity.
 
-The optimising transformations proved sound wrt Linear Core in this section
-have been previously explained and motivated in
-Section~\ref{sec:core-to-core-transformations}.
-%
+% The optimising transformations proved sound wrt Linear Core in this section
+% have been previously explained and motivated in
+% Section~\ref{sec:core-to-core-transformations}.
+% %
 Transformations are described by an arbitrary well-typed expression with a certain shape, on
 the left hand side (lhs) of the arrow $\Longrightarrow$, resulting in an expression on
 the right hand side (rhs) that we prove to be well-typed.
@@ -2937,40 +2971,43 @@ the right hand side (rhs) that we prove to be well-typed.
 For each transformation, we describe the intuition behind the transformation
 preserving linearity in our system.
 
-\subsubsection{Inlining}
+\todo[inline]{Aqui uma lista itemizada das transformações todas. As
+  provas todas para apendice.}
 
-% To the best of our knowledge, there is no linear type system for which inlining
-% preserves linearity\footnote{https://github.com/ghc-proposals/ghc-proposals/blob/master/proposals/0111-linear-types.rst\#id90}
+% \subsubsection{Inlining}
 
-\input{language-v4/proofs/optimizations/Inlining}
+% % To the best of our knowledge, there is no linear type system for which inlining
+% % preserves linearity\footnote{https://github.com/ghc-proposals/ghc-proposals/blob/master/proposals/0111-linear-types.rst\#id90}
 
-\subsubsection{\texorpdfstring{$\beta$}{Beta}-reduction}
+% \input{language-v4/proofs/optimizations/Inlining}
 
-\input{language-v4/proofs/optimizations/BetaReduction}
+% \subsubsection{\texorpdfstring{$\beta$}{Beta}-reduction}
 
-\subsubsection{Case of known constructor}
+% \input{language-v4/proofs/optimizations/BetaReduction}
 
-\input{language-v4/proofs/optimizations/CaseOfKnownConstructor}
+% \subsubsection{Case of known constructor}
 
-\subsubsection{Let floating}
+% \input{language-v4/proofs/optimizations/CaseOfKnownConstructor}
 
-\input{language-v4/proofs/optimizations/LetFloating}
+% \subsubsection{Let floating}
 
-\subsubsection{\texorpdfstring{$\eta$}{Eta}-conversions}
+% \input{language-v4/proofs/optimizations/LetFloating}
 
-\input{language-v4/proofs/optimizations/EtaConvs}
+% \subsubsection{\texorpdfstring{$\eta$}{Eta}-conversions}
 
-\subsubsection{Binder Swap}
+% \input{language-v4/proofs/optimizations/EtaConvs}
 
-The binder swap transformation applies to case expressions whose scrutinee is a
-single variable $x$, and it substitutes occurrences of $x$ in the case
-alternatives for the case binder $z$. If $x$ is a linear resource, $x$ cannot
-occur in the case alternatives (as we conservatively consider variables are not
-in WHNF), so the substitution preserves types vacuously. Otherwise, $x$ can be
-freely substituted by $z$, since $z$ is also an unrestricted resource (it's
-usage environment is empty because $x$ is unrestricted).
+% \subsubsection{Binder Swap}
 
-\input{language-v4/proofs/optimizations/BinderSwap}
+% The binder swap transformation applies to case expressions whose scrutinee is a
+% single variable $x$, and it substitutes occurrences of $x$ in the case
+% alternatives for the case binder $z$. If $x$ is a linear resource, $x$ cannot
+% occur in the case alternatives (as we conservatively consider variables are not
+% in WHNF), so the substitution preserves types vacuously. Otherwise, $x$ can be
+% freely substituted by $z$, since $z$ is also an unrestricted resource (it's
+% usage environment is empty because $x$ is unrestricted).
+
+% \input{language-v4/proofs/optimizations/BinderSwap}
 
 \subsubsection{Reverse Binder Swap Considered Harmful\label{sec:reverse-binder-swap-considered-harmful}}
 
@@ -3060,8 +3097,8 @@ $\beta$-reduction is done with call-by-need on such an expression. If the above
 example were reduced with call-by-need:
 \[
 \begin{array}{l}
-(\lambda x.~\ccase{x}{\_ \to x})~(use~y)\\
-\Longrightarrow_\textrm{call-by-need $\beta$-reduction}\\
+(\lambda x.~\ccase{x}{\_ \to x})~(use~y)
+\Longrightarrow_\textrm{CBNeed}
 \llet{x = use~y}{\ccase{y}{\_ \to y}}
 \end{array}
 \]
@@ -3134,21 +3171,21 @@ linearity when further optimised.
 %         case x_v of _ -> x_v
 % \end{code}
 
-\subsubsection{Case of Case}
+% \subsubsection{Case of Case}
 
-The case of case transformation applies to case expressions whose scrutinee is
-another case expression, and returns the innermost case expression transformed by repeating
-the outermost case expression in each alternative of the innermost case,
-scrutinizing the original alternative body.
+% The case of case transformation applies to case expressions whose scrutinee is
+% another case expression, and returns the innermost case expression transformed by repeating
+% the outermost case expression in each alternative of the innermost case,
+% scrutinizing the original alternative body.
 
-Intuitively, since the scrutinee of the outermost case is not in WHNF, no
-resources from it can directly occur in the outermost alternatives. By moving
-the outermost alternatives inwards with a different scrutinee, the alternatives
-remain well-typed because they are typed using either the case binder or the
-pattern bound variables, which, by the \emph{Irrelevance} lemma, makes it
-well-typed for any scrutinee consuming arbitrary resources. The proof is given in Section~\ref{sec:proof:caseofcase}.
+% Intuitively, since the scrutinee of the outermost case is not in WHNF, no
+% resources from it can directly occur in the outermost alternatives. By moving
+% the outermost alternatives inwards with a different scrutinee, the alternatives
+% remain well-typed because they are typed using either the case binder or the
+% pattern bound variables, which, by the \emph{Irrelevance} lemma, makes it
+% well-typed for any scrutinee consuming arbitrary resources. The proof is given in Section~\ref{sec:proof:caseofcase}.
 
-\CaseOfCaseTheorem
+% \CaseOfCaseTheorem
 
 % }}}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -3160,21 +3197,21 @@ understands (semantic) linearity in the presence of laziness, suitable for
 optimising compilers with these characteristics which leverage laziness and
 (possibly) linearity in its transformations.
 
-In this chapter, we compare our contributions and Linear Core to related
-existing works in the literature,
-% (including linearity in a lazy, evaluation models in terms of linearity, and
-% the Core system).
-%
-consider further research
-% deemed out of the scope of this work and of the Linear Core type system
-(notably, so-called \emph{multiplicity coercions} to handle the
-interaction between linearity and \emph{coercions}, a key feature of Core which we
-left out our system), and conclude.
+% In this chapter, we compare our contributions and Linear Core to related
+% existing works in the literature,
+% % (including linearity in a lazy, evaluation models in terms of linearity, and
+% % the Core system).
+% %
+% consider further research
+% % deemed out of the scope of this work and of the Linear Core type system
+% (notably, so-called \emph{multiplicity coercions} to handle the
+% interaction between linearity and \emph{coercions}, a key feature of Core which we
+% left out our system), and conclude.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % {{{ Related Work
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Related Work}
+\subsection{Related Work}
 
 In this section we discuss related work, namely, Linear
 Haskell~\cite{cite:linearhaskell}, Linear Mini-Core~\cite{cite:minicore}, and
@@ -3214,7 +3251,7 @@ transformations~\cite{cite:let-floating,peytonjones1997a,cite:linearhaskell}.
 % 
 % Rules?
 
-\subsubsection{Linear Haskell\label{sec:related-work-linear-haskell}}
+\paragraph{Linear Haskell\label{sec:related-work-linear-haskell}}
 
 % \todo[inline]{Say something about Linear Haskell's lazy operational semantics,
 % but the type system not being concerned with linearity in the presence of
@@ -3259,7 +3296,7 @@ also be seen as a system that validates the programs written in Linear Haskell
 and are compiled by GHC, by guaranteeing (through typing) that linear resources
 are still used exactly once throughout the optimising transformations.
 
-\subsubsection{Linear Mini-Core\label{sec:linear-mini-core}}
+\paragraph{Linear Mini-Core\label{sec:linear-mini-core}}
 
 Linear Mini-Core~\cite{cite:minicore} is a specification of linear types in
 Core as they were being implemented in GHC, and doubles as the (unpublished)
@@ -3291,7 +3328,7 @@ Core programs, preserve linearity as understood by the system.
 % How do they handle linearity plus optimisations
 % They probabluy don't typecheck linearity in Core
 
-\subsubsection{Linearity-influenced optimisations}
+\paragraph{Linearity-influenced optimisations}
 
 Core-to-Core transformations appear in many works across the research
 literature~\cite{cite:let-floating,peytonjones1997a,santos1995compilation,peytonjones2002secrets,baker-finch2004constructed,maurer2017compiling,Breitner2016_1000054251,sergey_vytiniotis_jones_breitner_2017},
@@ -3302,7 +3339,7 @@ certain optimisations (in particular, let-floating and inlining) greatly
 benefit from linearity analysis and, in order to improve those transformation,
 linear-type-inspired systems were created specifically for the purpose of the
 transformation.
-
+%
 By fully supporting linear types in Core, these optimising transformations
 could be informed by the language inherent linearity, and, consequently, avoid
 an ad-hoc or incomplete linear-type inference pass custom-built for
@@ -3337,9 +3374,9 @@ linearity into account.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % {{{ Future Work
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Future Work\label{sec:future-work}}
+\subsection{Future Work\label{sec:future-work}}
 
-In this section we highlight some avenues of further research. Briefly,
+We highlight some avenues of further research. Briefly,
 these include \emph{multiplicity coercions}, optimisations leveraging
 linearity, resource inference for usage environments, and ultimately using
 Linear Core in a mature optimising compiler with lazy evaluation and linear
@@ -3347,58 +3384,66 @@ types -- the Glasgow Haskell Compiler. Lastly, we discuss the
 % we hypothesize Linear($X$), a linear system parametrized on the evaluation strategy, and the
 generalization of Linear Core to the surface Haskell language.
 
-\parawith{Multiplicity Coercions.}
+\paragraph{Multiplicity Coercions.}
 Linear Core doesn't have type equality coercions, a flagship feature of GHC
 Core's type system.
 %
-Coercions, briefly explained in Section~\ref{sec:core},
+Coercions %briefly explained in Section~\ref{sec:core},
 allow the Core intermediate language to encode a panoply of Haskell source
 type-level features such as GADTs, type families or newtypes.
 %
 In Linear Haskell, multiplicities are introduced as annotations to function
 arrows which specify the linearity of the function. In practice,
-multiplicities are simply types of kind |Multiplicity|, where |One| and |Many|
-are the type constructors of the kind |Multiplicity|; multiplicity polymorphism
+multiplicities are simply types of kind \incode{Multiplicity}, where \incode{One} and \incode{Many}
+are the type constructors of the kind \incode{Multiplicity}; multiplicity polymorphism
 follows from type polymorphism, where multiplicity variables are
 just type variables. Encoding multiplicities as types allows Haskell programs
 to leverage features available for types to naturally extend to multiplicities
 as well.
-%
-Consequently, we might define, e.g., using a GADT |SBool| and a type family
-|If|, the function |dep| which is linear in the second argument if the first
-argument is |STrue| and unrestricted otherwise:
-%
-\begin{limitation}
-\begin{code}
-data SBool :: Bool -> Type where
-  STrue :: SBool True
-  SFalse :: SBool False
-
-type family If b t f where
-  If True t _ = t
-  If False _ f = f
-
-dep :: SBool b -> Int %(If b One Many) -> Int
-dep STrue x = x
-dep SFalse _ = 0
-\end{code}
-\end{limitation}
-%
-This example is linear and should be accepted. However, the example is rejected
-by the GHC's Core type checker. Critically, Core doesn't currently understand
-so-called \emph{multiplicity coercions}. Even though after matching on |STrue|
-we have access to a coercion from the function multiplicity $m$ to $1$ ($m \sim
-1$), we cannot use this coercion to determine whether the usages of the linear
-resources match the multiplicity.
-%
-Studying the interaction between coercions and multiplicities is a main avenue
+For instance, it is possible via the use of GADTs to define a
+function whose linearity of its second argument depends on the value
+of its first argument, internally realized through so-called
+\emph{multiplicity coercions}. Currently, Core cannot make use of such
+coercions to determine whether the usages of linear resources match
+their intended multiplicity. Studying the interaction between coercions and multiplicities is a main avenue
 of future work for Linear Core.
+%
+% Consequently, we might define, e.g., using a GADT \incode{SBool} and a type family
+% |If|, the function \incode{dep} which is linear in the second argument if the first
+% argument is \incode{STrue} and unrestricted otherwise:
+% %
+% \begin{limitation}
+% \begin{lstlisting}
+% data SBool :: Bool -> Type where
+%   STrue :: SBool True
+%   SFalse :: SBool False
+
+% type family If b t f where
+%   If True t _ = t
+%   If False _ f = f
+
+% dep :: SBool b -> Int %(If b One Many) -> Int
+% dep STrue x = x
+% dep SFalse _ = 0
+% \end{lstlisting}
+% \end{limitation}
+% %
+% This example is linear and should be accepted. However, the example is rejected
+% by the GHC's Core type checker.
+% Critically, Core doesn't currently understand
+% so-called \emph{multiplicity coercions}. Even though after matching on |STrue|
+% we have access to a coercion from the function multiplicity $m$ to $1$ ($m \sim
+% 1$), we cannot use this coercion to determine whether the usages of the linear
+% resources match the multiplicity.
+% %
+% Studying the interaction between coercions and multiplicities is a main avenue
+% of future work for Linear Core.
 
 % In GHC, multiplicity coercions are tracked by issue $19517$\footnote{https://gitlab.haskell.org/ghc/ghc/-/issues/19517}.
 
 % \todo[inline]{Relate to levity polymorphism and runtime rep coercions (Sam)}
 
-\parawith{Optimisations leveraging linearity.}
+\paragraph{Optimisations leveraging linearity.}
 We only briefly mentioned how linearity can inform optimisations to produce
 more performant programs. We leave exploring optimisations unblocked by
 preserving linearity in the intermediate language with Linear Core as future
@@ -3413,7 +3458,7 @@ Core accepting more programs as linear there are more chances to use linearity,
 in contrast to a linear type system which does not account for lazy evaluation
 and thus rejects more programs.
 
-\parawith{Usage environment resource inference.}
+\paragraph{Usage environment resource inference.}
 In Section~\ref{sec:linearity-semantically}, we explained that the linear
 resources used by a group of recursive bindings aren't obvious and must be
 consistent with each other (i.e. considering the mutually-recursive calls) as
@@ -3427,7 +3472,7 @@ Linear Core uses a naive algorithm to determine the usage environments, thereby
 leaving as future work the design of a principled algorithm to determine the
 usage environments of recursive group of bindings.
 
-\parawith{Linear Core in the Glasgow Haskell Compiler.}
+\paragraph{Linear Core in the Glasgow Haskell Compiler.}
 Linear Core is suitable as the intermediate language of an optimising compiler
 for a linear and lazy language such as Haskell Core, in that optimising
 transformations in Linear Core preserve types \emph{and} linearity, since Linear
@@ -3451,7 +3496,7 @@ optimisations. Despite our initiative in this
 direction\footnote{https://gitlab.haskell.org/ghc/ghc/-/issues/23218}, we leave
 this as future work.
 
-\parawith{Generalizing Linear Core to Haskell.}
+\paragraph{Generalizing Linear Core to Haskell.}
 Linear types, despite their compile-time correctness guarantees regarding
 resource management, impose a burden on programmers in being a restrictive
 typing discipline (witnessed, e.g., by Linear
@@ -3515,40 +3560,40 @@ work to apply the ideas from Linear Core to the surface Haskell language.
 % \todo[inline]{Rather, we define a syntax directed type system that infers usage environments while checking...}
 % 
 
-\section{Conclusion}
+% \section{Conclusion}
 
-Optimising compilers with a typed and lazy intermediate language with linear
-types (of which GHC is the prime example) leverage laziness to heavily
-transform and rewrite programs into simpler forms.
-%
-However, these optimising transformations push the interaction between
-linearity and laziness to the limits where linearity can no longer be seen
-syntactically, despite being maintained semantically, in the sense that linear
-resources are still used exactly once when the optimised program is run.
+% Optimising compilers with a typed and lazy intermediate language with linear
+% types (of which GHC is the prime example) leverage laziness to heavily
+% transform and rewrite programs into simpler forms.
+% %
+% However, these optimising transformations push the interaction between
+% linearity and laziness to the limits where linearity can no longer be seen
+% syntactically, despite being maintained semantically, in the sense that linear
+% resources are still used exactly once when the optimised program is run.
 
-In this work we explored linearity in the presence of laziness by example
-through the interactions of linear types with lazy (recursive) let bindings and
-case expressions that evaluate their scrutinee to Weak Head Normal Form. Most
-example programs were linear semantically, but not syntactically.
-%
-We developed a linear type system, Linear Core, for an intermediate language
-akin to GHC Core, with laziness and linearity. In contrast to GHC Core's type
-system, or any other linear type system (to the best of our knowledge), our
-type system understands semantic linearity, and can thus correctly type a wider
-range of linear programs, as those explored in the semantic linearity examples.
-%
-Crucially, we proved soundness of the type system, and proved multiple
-optimising transformations preserve linearity, despite most violating linearity
-in other linear type systems. Additionally, we implemented Linear Core as a GHC
-plugin to further explore its suitability in the intermediate language of an
-optimising compiler.
+% In this work we explored linearity in the presence of laziness by example
+% through the interactions of linear types with lazy (recursive) let bindings and
+% case expressions that evaluate their scrutinee to Weak Head Normal Form. Most
+% example programs were linear semantically, but not syntactically.
+% %
+% We developed a linear type system, Linear Core, for an intermediate language
+% akin to GHC Core, with laziness and linearity. In contrast to GHC Core's type
+% system, or any other linear type system (to the best of our knowledge), our
+% type system understands semantic linearity, and can thus correctly type a wider
+% range of linear programs, as those explored in the semantic linearity examples.
+% %
+% Crucially, we proved soundness of the type system, and proved multiple
+% optimising transformations preserve linearity, despite most violating linearity
+% in other linear type systems. Additionally, we implemented Linear Core as a GHC
+% plugin to further explore its suitability in the intermediate language of an
+% optimising compiler.
 
-Concluding, Linear Core is a suitable type system for linear, lazy,
-intermediate languages of optimising compilers such as GHC, as it understands
-linearity in the presence of laziness s.t. optimisations preserve types and
-linearity, and further unblocks optimisations influenced by linearity, e.g.
-inlining and call-by-name $\beta$-reduction for applications of (semantically)
-linear functions.
+% Concluding, Linear Core is a suitable type system for linear, lazy,
+% intermediate languages of optimising compilers such as GHC, as it understands
+% linearity in the presence of laziness s.t. optimisations preserve types and
+% linearity, and further unblocks optimisations influenced by linearity, e.g.
+% inlining and call-by-name $\beta$-reduction for applications of (semantically)
+% linear functions.
 
 % }}}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
