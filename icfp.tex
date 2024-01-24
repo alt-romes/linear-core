@@ -681,6 +681,7 @@ also dropped by the optimising compiler}
 from transformations such as inlining, which can substitute out occurrences
 of the binder (e.g. \incode{y} is inlined in the let body).
 
+\todo[inline]{Cut this one}
 Let bindings can also go unused if they are defined before branching on case
 alternatives. At runtime, depending on the branch taken, the let binding will
 be evaluated only if it occurs in that branch.
