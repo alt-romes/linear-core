@@ -206,8 +206,8 @@ deadlock-free~\cite{10.1007/978-3-642-15375-4_16},
 %guarantee that quantum entangled states are not duplicated~\cite{}
 among other correctness properties~\cite{10.1145/3373718.3394765,10.1145/3527313,cite:linearhaskell}.
 % handle mutable state safely~\cite{}
-
-Consider the following program in which allocated memory is freed twice.
+%
+For instance, consider the following program in which allocated memory is freed twice.
 % We know this to be the dreaded double-free error which will crash the program at runtime.
 Regardless of the \emph{double-free} error, a C-like type system will
 accept such a program:
@@ -244,50 +244,30 @@ Haskell~\cite{cite:linearhaskell}, a pure, functional, and
 % related to linear types, and Rust\cite{} has ownership types which build from
 % linear types. 
 %
-Linearity in Haskell stands out from linearity in other languages:
-%\begin{itemize}
-    % \item Linear types were only added to the language roughly \emph{31 years
-    %     after} Haskell's inception, unlike Rust and Idris 2 which were designed
-    %     with linearity from the start. It is an especially difficult endeavour
-    %     to add linear types to a well-established language with a large library
-    %     ecosystem and many active users, rather than to develop the language
-    %     from the ground up with linear types in mind. The successful
-    %     approach as implemented in the Glasgow Haskell Compiler (GHC), the leading
-    %     Haskell compiler, is based on Linear Haskell~\cite{cite:linearhaskell}, which describes a linear type system designed
-    %     with retaining backwards-compatibility and allowing code reuse across
-    %     linear and non-linear users of the same libraries.
-    %     We describe Linear Haskell in detail in Section~\ref{sec:linear-haskell}.
+
+However, linearity in Haskell stands out from linearity in other
+languages given that linear types permeate Haskell down to (its) Core,
+the intermediate language into which Haskell is translated. Core is a
+minimal, explicitly typed, functional language, to which multiple
+Core-to-Core optimising transformations are applied during
+compilation. Due to Core's minimal design, typechecking Core programs
+is very efficient and doing so serves as a sanity check to the
+correction of the source transformations. If the resulting optimised
+Core program fails to typecheck, the optimising transformations are
+very likely to have introduced an error in the resulting program.
 %
-%\item
-  Linear types permeate Haskell down to (its) Core, the
-        intermediate language into which Haskell is
-        translated. Core is a minimal, explicitly typed,
-        functional language, to which multiple
-        Core-to-Core optimising transformations are
-        applied during compilation. Due to Core's minimal design, typechecking
-        Core programs is very efficient and doing so serves as a sanity check to the
-        correction of the source transformations. If the resulting optimised
-        Core program fails to typecheck, the optimising
-        transformations are very likely to have introduced an error
-        in the resulting program.
-        %We present Core and its formal
-        %basis, System~$F_C$~\cite{cite:systemfc}, in Section~\ref{sec:core}.
-        % TODO: \item values in rust are linear by default while non-linear is
-        % the haskell default?
-%
-        % \item
-        
-        Both Haskell and its intermediate language Core are \emph{lazily}
+
+Both Haskell and its intermediate language Core are \emph{lazily}
         evaluated, i.e., expressions in Haskell are only evaluated when needed,
-        unlike C or Rust, which are \emph{eagerly} evaluated.
+        (unlike Rust, which is \emph{eagerly} evaluated).
         %
-        Laziness allows an optimising compiler to aggressively transform the source
-        program without changing its semantics and, indeed, the Glasgow Haskell
-        Compiler (GHC) heavily transforms Core by leveraging its laziness.
+        % Laziness allows an optimising compiler to aggressively transform the source
+        % program without changing its semantics and, indeed, the Glasgow Haskell
+        % Compiler (GHC) heavily transforms Core by leveraging its laziness.
         %
-        However, lazy evaluation interacts non-trivially with linearity.
-        Intuitively, since expressions are not necessarily evaluated, an
-        occurrence of a linear resource in an expression does not necessarily
+        As we make clear in this paper, lazy evaluation interacts non-trivially with linearity.
+        Intuitively, since expressions are not necessarily evaluated,
+        a syntactic occurrence of a linear resource in an expression does not necessarily
         entail consuming that resource (i.e., if the expression is not evaluated,
         the resource is not used).
 %
@@ -295,35 +275,30 @@ Linearity in Haskell stands out from linearity in other languages:
         resource and the actual use of linear resources at runtime does not exist --
         an occurrence of a variable in the program always entails consuming it.
         %
-        This interaction is unique to Haskell since, as far as we know, it is the
+        This interaction is unique to Haskell since, to the best of
+        our knowledge, it is the
         only language featuring both laziness and linearity.
-        %
-        %We review lazy and eager evaluation strategies in Section~\ref{sec:background:evaluation-strategies}.
 
-%\end{itemize}
+Just as Core's type system provides a degree of validation to the
+translation from Haskell (dubbed \emph{desugaring}) and the subsequent
+optimising transformations, a \emph{linearly typed} Core would guarantee that
+linear resource usage in the source language is not violated by desugaring
+and the compiler optimisation passes. Moreover, linearity information in
+Core can inform Core-to-Core optimising 
+transformations~\cite{cite:let-floating,peytonjones1997a,cite:linearhaskell},
+such as inlining and $\beta$-reduction, to produce more efficient programs.
 %
-
-% Linear core good Aligned with the philosophy of having a \emph{typed}
-% intermediate language, the integration of linear types in Haskell required
-% extending Core with linear types.
-%
-Much like a typed Core ensures that the translation from Haskell (dubbed
-\emph{desugaring}) and the subsequent optimising transformations applied to
-Core are correctly implemented, a \emph{linearly typed} Core guarantees that
-linear resource usage in the source language is not violated by the translation
-process and the compiler optimisation passes.
-%
-It is crucial that a program's behaviour enforced by linear types is \emph{not}
-changed by the compiler in the desugaring or optimisation stages (optimisations
-should not destroy linearity!) and a linearity aware Core type-checker is key in
-providing such guarantees -- it would be disastrous if the compiler, e.g.,
-duplicated a pointer to heap-allocated memory that was previously just used
-once and then freed in the original program.
+% It is crucial that a program's behaviour enforced by linear types is \emph{not}
+% changed by the compiler in the desugaring or optimisation stages (optimisations
+% should not destroy linearity!) and a linearity aware Core type-checker is key in
+% providing such guarantees -- it would be disastrous if the compiler, e.g.,
+% duplicated a pointer to heap-allocated memory that was previously just used
+% once and then freed in the original program.
 %TODO: linearidade pode informar otimizacoes
 %
-Even more, linearity in Core can inform Core-to-Core optimising
-transformations~\cite{cite:let-floating,peytonjones1997a,cite:linearhaskell},
-including inlining and $\beta$-reduction, to produce more performant programs.
+% Even more, linearity in Core can inform Core-to-Core optimising
+% transformations~\cite{cite:let-floating,peytonjones1997a,cite:linearhaskell},
+% including inlining and $\beta$-reduction, to produce more performant programs.
 
 % Linear core actually not so good
 % Additionally, while not yet a reality, linearity in Core could be used to inform
@@ -351,35 +326,28 @@ including inlining and $\beta$-reduction, to produce more performant programs.
 % so in Core?
 %
 
-In spite of a linearly typed Core ultimately being the desired intermediate
-language for the Glasgow Haskell Compiler,
-both in its expressiveness to completely represent a Haskell with
-linear types and in enabling more extensive compiler validations plus improved optimisations,
-linearity is effectively ignored in Core. The reason is not evidently clear:
-if we can typecheck linearity in the surface level Haskell, it should also be
-possible, and natural, to do so in Core.
-% why do we fail to do so in Core?
-
-The desugaring process from surface level Haskell to Core, and the subsequent
-Core-to-Core optimising transformations, eliminate, and rearrange, most of the
-syntactic constructs through which linearity checking is performed -- often
-resulting in programs completely different from the original, especially due to
-the flexibility laziness provides a compiler in the optimisations it may
-perform. % without changing the program semantics.
+Despite of the advantages of a linearly typed Core, the status quo is
+that linearity is effectively ignored in Core, despite being checked
+in the source Haskell code. The reason is that the desugaring
+and the subsequent Core-to-Core optimising transformations,
+eliminate and rearrange most of the syntactic constructs through
+which linearity checking is performed -- often resulting in programs
+that are syntactically very different from the original, especially
+due to the flexibility laziness provides a compiler in the
+optimisations it may perform.
 %
-Crucially, since optimisations do not destroy linearity, the resulting program
-is still linear \emph{semantically}, however, the current linear type system
-fails to recognize it as linear.
-%
-% The optimisations transform programs that are linear into ones that don't
-% \emph{look} linear, but remain linear \emph{semantically}.
+Crucially, while optimisations aim to preserve the semantics of
+programs and so preserve a program's linear resource consumption,
+a \emph{naive} syntactic analysis of the optimised programs (as
+performed by the current Core type checker) often fails to recognize
+the program as linear.
 %
 For instance, let $x$ be a linear resource in the two following programs, where
 the latter results from inlining $y$ in the let body of the former. Despite the
-result no longer \emph{looking} linear (as there are now two syntactic
-occurrences of the linear resource $x$), the program \emph{is} indeed linear
-because the let-bound expression freeing $x$ is never evaluated, so $x$ is
-consumed exactly once when it is freed in the let body:
+the program no longer appearing linear (as there are now two 
+occurrences of $x$), the program \emph{is} indeed linear
+because the let-bound expression is never evaluated, so $x$ is
+consumed exactly once (when it is freed in the let body):
 % executed, $x$ will be freed exactly once:
 %
 % , \emph{is} linear, as the let bound expression freeing $x$
@@ -402,36 +370,36 @@ The Core optimising transformations expose a fundamental limitation of Core's
 linear type system: it does not account for the call-by-need evaluation model
 of Core, and thus a whole class of programs that are linear under the lens of
 lazy evaluation are rejected by Core's current linear type system.
-
+%
 In this work, we address this limitation (and its implications on validating
 and influencing optimising transformations) by designing a type system which
-understands semantic linearity in the presence of laziness and is suitable for
-the intermediate language of an optimising compiler.
+understands \emph{semantic linearity} in the presence of laziness and is suitable for
+the intermediate language of an optimising compiler such as the
+Glasgow Haskell Compiler.
 %
-In detail, our contributions are:
+Our contributions are as follows:
 %
 \begin{itemize}
 
-\item We explain and provide insights into \emph{semantic} linearity in
-contrast to \emph{syntactic} linearity, in Haskell, by example
+\item We introduce the concept of \emph{semantic} linearity, in
+contrast to \emph{syntactic} linearity in Haskell, by example
 ($\S$~\ref{sec:linearity-semantically}).
 
 \item We introduce Linear Core, a type system for a linear lazy language with
-all key features from Core (except for type equality coercions), which,
-crucially, understands semantic linearity in the presence of laziness. To the
-best of our knowledge, this is the first type system to understand linearity
-semantically in the context of lazy evaluation
+the key features from Core (except for type equality coercions), which,
+accounts for semantic linearity in the presence of laziness. To the
+best of our knowledge, this is the first type system to capture linearity
+semantically in this context
 ($\S$~\ref{sec:main:linear-core}).
 
-\item We prove Linear Core to be sound (well-typed Linear Core programs do not
-get \emph{stuck}) and prove that multiple optimising transformations (which
-currently violate linearity in Core) preserve types and linearity in Linear
+\item We show the type soundness of Linear Core and prove that
+  multiple optimising transformations, which
+fail to type check in Core, are validated by Linear
 Core ($\S$~\ref{sec:main:metatheory}).
 
-\item We implement Linear Core as a GHC plugin which typechecks linearity in
+\item We implement Linear Core as a GHC plugin which checks linearity in
 all intermediate Core programs produced during the compilation process, showing
-it accepts the intermediate programs resulting from (laziness-abusing)
-transformations in linearity-heavy Haskell libraries, such as
+it accepts the programs resulting from transformations in libraries such as
 \texttt{linear-base} ($\S$~\ref{sec:discuss:implementation}).
 
 \end{itemize}
@@ -500,21 +468,15 @@ in Section~\ref{sec:discussion}, which concludes the document.
 \section{Linearity, Semantically\label{sec:linearity-semantically}}
 
 A linear type system statically guarantees that linear resources are
-\emph{consumed} exactly once. Consequently, whether a program is well-typed
-under a linear type system intrinsically depends on the precise definition of
-\emph{consuming} a resource. Even though \emph{consuming} a resource is
-commonly regarded as synonymous with the \emph{syntactic occurrence} of the resource
-in the program, that is not always the case.
+\emph{consumed} exactly once. Consequently, whether a program is
+well-typed under a linear type system intrinsically depends on the
+definition of \emph{consuming} a resource.
+In general, \emph{consuming} a resource is equated with its 
+\emph{syntactic occurrence} in the program. However, as this section
+makes clear, when considering linear type systems for non-strict
+languages, a distinction between using
+resources \emph{syntactically} and \emph{semantically} is needed.
 %
-In fact, this chapter highlights the distinction between using resources
-\emph{syntactically} and \emph{semantically} as a principal limitation of
-linear type systems for non-strict languages, with examples motivated by the
-constructs available in GHC Core and how they are evaluated.
-
-% and we show how a linear type system found on
-% \emph{consuming resources semantically} rather than \emph{using resources
-% syntactically} can accept
-
 Consider the following program in a functional Haskell-like language,
 where a computation that closes the given \lstinline{handle} is bound to \lstinline{x} before the
 \lstinline{handle} is returned:
@@ -524,9 +486,10 @@ f : Handle *' $\lolli$ '* Handle
 f handle = let x = close handle in handle
 \end{lstlisting}
 %
-In this example, the \lstinline{handle} appears to be closed before
+
+In the code above, the \lstinline{handle} appears to be closed before
 returned, whereas in fact the handle will only be closed if the let bound
-computation is effectively run (i.e. evaluated).
+computation is effectively run (i.e.,~evaluated).
 %
 The example illustrates that \emph{consuming} a resource is not necessarily
 synonymous with its syntactic occurrences, since depending on the evaluation strategy
