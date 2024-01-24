@@ -119,8 +119,8 @@
 \input{language-v4/TypingRules}
 \input{language-v4/TheoremsAndLemmas}
 
-\title{Type-checking Linearity in GHC Core}
-\subtitle{Semantic Linearity in a Lazy Optimising Compiler}
+\title{Semantic Linearity in a Lazy Optimising Compiler}
+\subtitle{Type-checking Linearity in GHC Core}
 
 \author{Rodrigo Mesquita}
 \affiliation{
@@ -129,9 +129,10 @@
   %\city{City}
   \country{Portugal}}
 \affiliation{
-   \institution{Well-Typed}
+   \institution{Well-Typed LLP}
   %\city{City}
-   \country{Something}}
+  %\country{Something}
+ }
  \email{xxx@yyy.com}
 \author{Bernardo Toninho}
 \orcid{0000-0002-0746-7514}
@@ -1050,7 +1051,7 @@ since we aren't using neither $a$ nor $b$ (thereby never forcing the arguments
 of the tuple). However, if we did use $a$ in the case body, then $x$ would be unavailable:
 \begin{noway}
 \begin{lstlisting}
-f13 :: a *' $\lolli$ '* a *' $\lolli$ '* (a *' $\lolli$ '* a *' $\lolli$ '* c) -> c
+f13 :: a *' $\lolli$ '* b *' $\lolli$ '* (a *' $\lolli$ '* a *' $\lolli$ '* c) -> c
 f13 x y use = case (x,y) of z { (a,b) -> use a x }
 \end{lstlisting}
 \end{noway}
@@ -1091,6 +1092,7 @@ doubleFree :: Ptr *' $\lolli$ '* (Ptr *' $\lolli$ '* Result) -> Result
 doubleFree x free = case free x of z { Result v -> free x }
 \end{lstlisting}
 \end{noway}
+% Remover
 \begin{noway}
 \begin{lstlisting}
 leakPointer :: Ptr -> ()
@@ -1178,6 +1180,7 @@ Figure~\ref{fig:goodcase} does since it
 uses each linear field exactly once, despite pattern matching on the same
 components twice.
 
+%Remover estes
 \begin{figure}[t]
   \begin{minipage}{0.5\textwidth}
 \begin{noway}
@@ -2394,6 +2397,7 @@ We note how $Split$ can be applied both to relevant and proof irrelevant linear 
 % {{{ Linear Core as a GHC Plugin
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+%Trocar ordem com a metatheory
 \section{Linear Core as a GHC Plugin\label{sec:discuss:implementation}}
 
 We have implemented the Linear Core type system as a plugin for the Glasgow
@@ -2474,19 +2478,19 @@ naive $O(n^2)$ algorithm (where $n$ is the number of let bindings) to determine
 these usage environments, but discuss an avenue of further research regarding
 this inference challenge in Section~\ref{sec:future-work}.
 
-The usage environments of a recursive group of binders (that is not necessarily
-strongly-connected) is computed in two separate passes.
-%
-First, we calculate a \emph{naive environment} by recording the linear
-resources semantically used in the binder bodies, while counting \emph{uses}
-(not syntactic occurrences) of the mutually recursive let variables.
-%
-Second, the binder names and corresponding \emph{naive environment} (mapping
-each linear resource to $1$ and the recursive variables to the $n$ number of
-times they are \emph{used}) in Cartesian pairs are given as input to
-% Algorithm~\ref{computeRecUsages},
-an algorithm which computes the actual usage environment
-of each binder.
+% The usage environments of a recursive group of binders (that is not necessarily
+% strongly-connected) is computed in two separate passes.
+% %
+% First, we calculate a \emph{naive environment} by recording the linear
+% resources semantically used in the binder bodies, while counting \emph{uses}
+% (not syntactic occurrences) of the mutually recursive let variables.
+% %
+% Second, the binder names and corresponding \emph{naive environment} (mapping
+% each linear resource to $1$ and the recursive variables to the $n$ number of
+% times they are \emph{used}) in Cartesian pairs are given as input to
+% % Algorithm~\ref{computeRecUsages},
+% an algorithm which computes the actual usage environment
+% of each binder.
 %
 % TODO: I should probably use the re-computed usageEnvs instead of the naiveUsageEnvs.
 % I'm pretty sure it might fail in some inputs if I keep using the naiveUsageEnvs.
@@ -2500,15 +2504,15 @@ of each binder.
 % \caption{computeRecUsages\label{computeRecUsages}}
 % \end{algorithm}
 %
-Intuitively, the algorithm, for each recursive binder, iterates over the
-(initially naive) usage environments and substitutes occurrences of the
-recursive binders by their corresponding usage environment,
-scaled up by the amount of times that recursive binder is used in the
-environment being updated. The result is the least upper bound of linear
-resources used by each strongly-connected group of mutually recursive bindings
-(for each binder of such a group), since all occurrences of the recursive
-binders in the usage environments will be substituted away by the corresponding
-recursive usage environments.
+% Intuitively, the algorithm, for each recursive binder, iterates over the
+% (initially naive) usage environments and substitutes occurrences of the
+% recursive binders by their corresponding usage environment,
+% scaled up by the amount of times that recursive binder is used in the
+% environment being updated. The result is the least upper bound of linear
+% resources used by each strongly-connected group of mutually recursive bindings
+% (for each binder of such a group), since all occurrences of the recursive
+% binders in the usage environments will be substituted away by the corresponding
+% recursive usage environments.
 %
 % The high-level description is:
 % \begin{itemize}
@@ -2523,11 +2527,11 @@ recursive usage environments.
 %         will be free of recursive bind usages, and hence describe the ``final'' usage environment
 % \end{itemize}
 %
-The complexity of computing a usage environment for $n$ recursive let binders
-is quadratic in $n$,
-% i.e. the algorithm has $O(n^2)$ complexity,
-but this is not an issue since it is uncommon to have more than a handful of
-binders in the same recursive let block.
+% The complexity of computing a usage environment for $n$ recursive let binders
+% is quadratic in $n$,
+% % i.e. the algorithm has $O(n^2)$ complexity,
+% but this is not an issue since it is uncommon to have more than a handful of
+% binders in the same recursive let block.
 
 The results of running the Linear Core GHC plugin on large established
 libraries focused around linear types are given by
@@ -2569,33 +2573,36 @@ linear, and thus GHC does not not reduce them using a call-by-name evaluation st
 ``Linear Rejected'' programs include different kinds of programs which are
 rejected by the Linear Core system, but are still semantically linear. An
 example is a program to which a rewrite rule was applied, resulting in an
-application of unrestricted function to a linear resource in the first argument
-to \incode{build}:
-\begin{lstlisting}
-take :: Int -> Replicator a *' $\lolli$ '* [a]
-take = \ (ds :: Int) (r :: Replicator b) ->
-     case ds of
-       1 -> build (\(c :: b -> a -> a) (n :: a) -> c (extract r) n)
-       ...
-\end{lstlisting}
-We know the linear resource is still used linearly because \incode{build} will
-always instance the unrestricted function to $(:)$ (read \emph{Cons}), which is
-linear. Additionally, these include programs scrutinizing a value of a type of
-which all constructors have no linear components, but only matching on the
-default alternative, programs where common-sub-expression elimination
-substituted more than one occurrence of \incode{Ur x} by \incode{y}, in the body of
-scrutinizing \incode{y} (a linear variable), and other programs affected by rewrite rules.
+application of unrestricted function to a linear resource.
+% in the first argument
+% to \incode{build}:
+% \begin{lstlisting}
+% take :: Int -> Replicator a *' $\lolli$ '* [a]
+% take = \ (ds :: Int) (r :: Replicator b) ->
+%      case ds of
+%        1 -> build (\(c :: b -> a -> a) (n :: a) -> c (extract r) n)
+%        ...
+% \end{lstlisting}
+% We know the linear resource is still used linearly because \incode{build} will
+% always instance the unrestricted function to $(:)$ (read \emph{Cons}), which is
+% linear. Additionally, these include programs scrutinizing a value of a type of
+% which all constructors have no linear components, but only matching on the
+% default alternative, programs where common-sub-expression elimination
+% substituted more than one occurrence of \incode{Ur x} by \incode{y}, in the body of
+% scrutinizing \incode{y} (a linear variable), and other programs affected by rewrite rules.
 %
 ``Not Linear Rejected'' indicate programs that we do not understand as linear,
 semantically, and are simultaneously rejected by Linear Core and its
-implementation. An example, where the last component of \incode{HashMap}, \incode{wwz},
-is linear, but is not being consumed in the case alternative matching on it:
-\begin{lstlisting}
-jssvi :: Ur Bool *' $\lolli$ '* Set Int *' $\lolli$ '* Ur (TestT IO ())
-jssvi (a :: Ur Bool) (b :: Set Int)
-  = case a of
-     Ur ss -> case b of { HashMap wwx wwy wwz -> jump wjssAd ss }
-\end{lstlisting}
+implementation. These programs were not necessarily identified as bad
+by the linter.\footnote{rever}
+% An example, where the last component of \incode{HashMap}, \incode{wwz},
+% is linear, but is not being consumed in the case alternative matching on it:
+% \begin{lstlisting}
+% jssvi :: Ur Bool *' $\lolli$ '* Set Int *' $\lolli$ '* Ur (TestT IO ())
+% jssvi (a :: Ur Bool) (b :: Set Int)
+%   = case a of
+%      Ur ss -> case b of { HashMap wwx wwy wwz -> jump wjssAd ss }
+% \end{lstlisting}
 %
 Finally, ``Unknown Rejected'' programs are those whose validity we did not
 check. These include both programs accepted by Linear Core, but not by its
@@ -3154,12 +3161,7 @@ linearity when further optimised.
 % }}}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\section{Conclusion\label{sec:discussion}}
-
-Linear Core is an intermediate language with a type system system that
-understands (semantic) linearity in the presence of laziness, suitable for
-optimising compilers with these characteristics which leverage laziness and
-(possibly) linearity in its transformations.
+\section{Related and Future Work\label{sec:discussion}}
 
 % In this chapter, we compare our contributions and Linear Core to related
 % existing works in the literature,
@@ -3175,12 +3177,12 @@ optimising compilers with these characteristics which leverage laziness and
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % {{{ Related Work
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsection{Related Work}
+%paragraph{Related Work}
 
-In this section we discuss related work, namely, Linear
-Haskell~\cite{cite:linearhaskell}, Linear Mini-Core~\cite{cite:minicore}, and
-linearity-influenced optimising
-transformations~\cite{cite:let-floating,peytonjones1997a,cite:linearhaskell}.
+% In this section we discuss related work, namely, Linear
+% Haskell~\cite{cite:linearhaskell}, Linear Mini-Core~\cite{cite:minicore}, and
+% linearity-influenced optimising
+% transformations~\cite{cite:let-floating,peytonjones1997a,cite:linearhaskell}.
 
 % TODO: A brief introduction to the related work section?
 
@@ -3215,37 +3217,37 @@ transformations~\cite{cite:let-floating,peytonjones1997a,cite:linearhaskell}.
 % 
 % Rules?
 
-\paragraph{Linear Haskell\label{sec:related-work-linear-haskell}}
-
+\paragraph{Linear Haskell\label{sec:related-work-linear-haskell}.}
+%
 % \todo[inline]{Say something about Linear Haskell's lazy operational semantics,
 % but the type system not being concerned with linearity in the presence of
 % laziness}
-
-Haskell, contrary to most programming languages with linear types, has existed
-for 31 years of its life \emph{without} linear types. As such, the introduction
-of linear types to Haskell comes with added challenges that do not exist in
-languages that were designed with linear types from the start:
 %
-\begin{itemize}
-    \item Backwards compatibility. The addition of linear types shouldn't break
-        all existing Haskell code.
-    \item Code re-usability. The linearly-typed part of Haskell's ecosystem and
-        its non-linearly-typed counterpart should fit in together and it must be
-        possible to define functions readily usable by both sides
-        simultaneously.
-    \item Future-proofing. Haskell, despite being an
-        industrial-strength language, is also a petri-dish for experimentation
-        and innovation in the field of programming languages. Therefore, Linear
-        Haskell takes care to accommodate possible future features, in
-        particular, its design is forwards compatible with affine and dependent
-        types.
-\end{itemize}
-%
-Linear Haskell~\cite{cite:linearhaskell} is thus concerned with retrofitting
-linear types in Haskell, taking into consideration the above design goals, but
-is not concerned with extending Haskell's intermediate language(s),
+% Haskell, contrary to most programming languages with linear types, has existed
+% for 31 years of its life \emph{without} linear types. As such, the introduction
+% of linear types to Haskell comes with added challenges that do not exist in
+% languages that were designed with linear types from the start:
+% %
+% \begin{itemize}
+%     \item Backwards compatibility. The addition of linear types shouldn't break
+%         all existing Haskell code.
+%     \item Code re-usability. The linearly-typed part of Haskell's ecosystem and
+%         its non-linearly-typed counterpart should fit in together and it must be
+%         possible to define functions readily usable by both sides
+%         simultaneously.
+%     \item Future-proofing. Haskell, despite being an
+%         industrial-strength language, is also a petri-dish for experimentation
+%         and innovation in the field of programming languages. Therefore, Linear
+%         Haskell takes care to accommodate possible future features, in
+%         particular, its design is forwards compatible with affine and dependent
+%         types.
+% \end{itemize}
+% %
+Linear Haskell~\cite{cite:linearhaskell} is concerned with retrofitting
+linear types in Haskell but
+is not concerned with extending GHC's intermediate language(s),
 which presents its own challenges. 
-
+%
 Nonetheless, while the Linear Haskell work keeps Core unchanged, its
 implementation in GHC does modify and extend Core with linearity/multiplicity
 annotations. Core's type system is unable to type \emph{semantic} linearity of

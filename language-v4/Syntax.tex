@@ -11,16 +11,14 @@
 
 \newcommand{\SyntaxTerms}{
 \ensuremath{
-\begin{array}{lcll}
-    u                & ::=  & x,y,z \mid K                                                     & \textrm{Variables and data constructors}\\
-    e                & ::=  & u                                                                & \textrm{Term atoms}\\
+\begin{array}{lcll}                                             
+    e                & ::=  & x,y,z \mid K                                                                 & \textrm{Variables and data constructors}\\
                      & \mid & \Lambda p.~e~\mid~e~\pi                                          & \textrm{Multiplicity abstraction/application}\\
                      & \mid & \lambda x{:}_\pi\sigma.~e~\mid~e~e'                           & \textrm{Term abstraction/application}\\
                      & \mid & \llet{x{:}_{\Delta}\sigma = e}{e'}                              & \textrm{Let} \\
                      & \mid & \lletrec{\overline{x{:}_{\Delta}\sigma = e}}{e'}             & \textrm{Recursive Let} \\
                      & \mid &
                      \ccase{e}{z{:}_{\Delta}\sigma~\{\overline{\rho\to e'}\}}   & \textrm{Case} \\
-                     &      &                                                                  & \\
 %    p               & ::=  & K~\overline{b{:}\kappa}~\overline{x{:}\sigma}                    & \textrm{Pattern} \\
     \rho             & ::=  & K~\overline{x{:}_\pi\sigma} \mid \_                              & \textrm{Pattern and wildcard} \\
 % Currently we don't care about the existential multiplicity variables, but later on we might
@@ -46,10 +44,11 @@
 \begin{figure}[ht]
 \begin{framed}
 \[
-\begin{array}{l}
+{\small
+  \begin{array}{l}
 %
 \textbf{Types} \\
-\SyntaxTypes\\\\
+\SyntaxTypes\\
 %
 \textbf{Terms}\\
 \SyntaxTerms\\\\
@@ -57,26 +56,27 @@
 \textbf{Environments}\\
 \SyntaxEnvironments\\\\
 %
-\textbf{Multiplicities}\\
-\begin{array}{lcll}
-  \pi, \mu & ::= & 1 \mid \omega \mid p \mid \pi + \mu \mid \pi \cdot \mu\\
+\textbf{Multiplicities} \qquad\qquad \textbf{Declarations}\\
+\begin{array}{lcl}
+  \pi, \mu & ::= & 1 \mid \omega \mid p \qquad decl  ::=  \datatype{T~\overline{p}}{\overline{K:\overline{\sigma \to_\pi}~T~\overline{p}}} %\mid \pi + \mu \mid \pi \cdot \mu\\
 % We don't use + and \cdot yet, but we will
-\end{array}\\\\
-%
-\textbf{Usage Environments}\\
-% something like dual numbers, in that we now have the two components of each usage environment.
-\begin{array}{lcl}
-  \Delta & ::= \cdot\mid\Delta_1+\Delta_2\mid\pi\Delta\\
-\end{array}\\\\
-%
-\textbf{Declarations}\\
-\begin{array}{lcl}
-  pgm & ::= & \overline{decl}; e \\
-  decl & ::= & \datatype{T~\overline{p}}{\overline{K:\overline{\sigma \to_\pi}~T~\overline{p}}}
 \end{array}
 %
-\end{array}
+% \textbf{Usage Environments}\\
+% % something like dual numbers, in that we now have the two components of each usage environment.
+% \begin{array}{lcl}
+%   \Delta & ::= \cdot\mid\Delta_1+\Delta_2\mid\pi\Delta\\
+% \end{array}\\\\
+%
+% \textbf{Declarations}\\
+% \begin{array}{lcl}
+%  % pgm & ::= & \overline{decl}; e \\
+%   decl & ::= & \datatype{T~\overline{p}}{\overline{K:\overline{\sigma \to_\pi}~T~\overline{p}}}
+% \end{array}
+%
+\end{array}}
 \]
+               
 \end{framed}
 \caption{Linear Core Syntax}
 \label{fig:full-linear-core-syntax}
