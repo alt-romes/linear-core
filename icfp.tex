@@ -2692,6 +2692,29 @@ resources $\D$, for any $\D$.
 
 \subsection{Assumptions}
 
+\renewcommand{\DeltaLinearRelationLemma}{
+\begin{lemma}[$\D \Rightarrow 1$]
+Any $\Delta$-variable with a fully-irrelevant usage environment can be made a linear variable as long as its irrelevant environment is dropped from the linear environment (and the unrestricted env. is updated accordingly).\\
+If $\G,\x[\irr{\D}]; \irr{\D},\D' \vdash e : \vp$
+then $\G[x/\irr{\D}]; \D',\xl \vdash e :\vp$.
+\end{lemma}
+}
+
+\renewcommand{\LinearDeltaRelationLemma}{
+\begin{lemma}[$1 \Rightarrow \D$]
+A linear variable can be moved to the unrestricted context as a $\D$-var with any usage environment $\D$ by introducing $\D$ in the linear resources (and the unrestricted env. is updated accordingly).\\
+If $\G; \D',\xl \vdash e :\vp$
+then $\G[\D/x],\xD; \D,\D' \vdash e : \vp$.
+\end{lemma}
+}
+
+\renewcommand{\DeltaUnrestrictedRelationLemma}{
+\begin{lemma}[$x{:}_\omega\sigma = x{:}_{\cdot}\sigma$]
+An unrestricted variable is equivalent to a $\D$-var with an empty usage environment.\\
+$\G,\xo; \D \vdash e : \vp$ iff $\G,\x[\cdot]; \D \vdash e : \vp$
+\end{lemma}
+}
+
 We use two main assumptions in our proofs, which are dual.
 %
 First, a program well-typed with a linear variable ($\xl$) is equivalently
