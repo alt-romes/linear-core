@@ -180,7 +180,7 @@ including \texttt{linear-base}, in the heart of the compiler.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % {{{ Introduction
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Introduction}
+\section{Introduction}\label{sec:intro}
 
 % Statically safe programming languages provide compile time correctness
 % guarantees by having the compiler rule out certain classes of errors
@@ -498,25 +498,28 @@ of the language the computation that closes the handle might not be
 executed, and if so, the \lstinline{handle} in that unused computation
 is not consumed.
 %
-Expanding on this, consider the above example program under distinct
-evaluation strategies: under call-by-value, %With \emph{eager}
+Expanding on this, consider the above example program under
+under call-by-need semantics.  %With \emph{eager}
 % evaluation semantics,
-the let
-  bound expression \lstinline{close handle} is eagerly evaluated, and the \lstinline{handle} will be closed before being
-returned. It is clear that a linear type system should not accept such a
-program since the linear resource \lstinline{handle} is duplicated -- it is used in a
-computation that closes it, while still being made available to the caller of
-the function;
-%
-on the other hand, with \emph{call-by-need}, the let
+% the let
+%   bound expression \lstinline{close handle} is eagerly evaluated, and the \lstinline{handle} will be closed before being
+% returned. It is clear that a linear type system should not accept such a
+% program since the linear resource \lstinline{handle} is duplicated -- it is used in a
+% computation that closes it, while still being made available to the caller of
+% the function;
+% %
+% on the other hand, with \emph{call-by-need},
+The let
 bound expression will only be evaluated when the binding \lstinline{x} is needed. We return
 the \lstinline{handle} right away, and the let binding is forgotten as it cannot be
-used outside the scope of the function, so the handle is not closed by \lstinline{f}.
-Under the lens of \emph{call-by-need} evaluation, \emph{using} a resource in a
+used outside the scope of the function, so the handle is not closed by
+calling \lstinline{f}.
+Under the lens of \emph{call-by-need}, \emph{using} a resource in a
 let binding only results in the resource being \emph{consumed} if the binding
 itself is \emph{consumed}. We argue that a linear type system under
 \emph{call-by-need} evaluation should accept the above program, unlike a linear
-type system for the same program evaluated \emph{call-by-value}.
+type system for the same program evaluated with \emph{call-by-value}, where
+the let-bound expression is always evaluated.
 
 Intuitively, a computation that depends on a linear resource to produce a
 result consumes that resource iff the result is effectively computed; in
@@ -524,12 +527,11 @@ contrast, a computation that depends on a linear resource, but is never run,
 will not consume that resource.
 %
 From this observation, and exploring the connection between computation and evaluation,
-% \todo{Alguma dificuldade em dizer exatamente como é que evaluation drives/is computation}
-it becomes clear that \emph{linearity} and \emph{consuming resources}, in the
-above example and for programs in general, should be defined in function of the
-language's evaluation strategy.
+% it becomes clear that \emph{linearity} and \emph{consuming resources}, in the
+% above example and for programs in general, should be defined in function of the
+% language's evaluation strategy.
 %
-We turn our focus to \emph{linearity} under \emph{call-by-need}, not only
+we turn our focus to \emph{linearity} under \emph{call-by-need}, not only
 because GHC Core is \emph{call-by-need}, but also because the distinction
 between semantically and syntactically consuming a resource is only exposed
 under \emph{non-strict} semantics.
@@ -558,9 +560,9 @@ under \emph{non-strict} semantics.
 
 Aligned with our original motivation of typechecking linearity in GHC Core such
 that optimising transformations preserve linearity, and with the goal
-of understanding linearity in a non-strict context, this section helps the
-reader build an intuition for semantic linearity through examples of Core
-programs that are semantically linear but rejected by Core's linear type
+of understanding linearity in a non-strict context, this section aims to
+build an intuition for semantic linearity through examples of Core
+programs that are semantically linear but rejected by (the current) Core linear type
 system.
 % BETTER?:
 %Aligned with our motivation of typechecking linearity in GHC Core such
@@ -571,15 +573,17 @@ system.
 %lazy language.
 %
 In the examples, a \colorbox{working}{\workingcolorname} background highlights programs that are
-syntactically linear and are accepted by Core's naive linear type system. A
+syntactically linear and accepted by Core's naive linear type system. A
 \colorbox{notyet}{\notyetcolorname} or \colorbox{limitation}{\limitationcolorname} background mark programs that are
-semantically linear, but are not seen as linear by Core's (naive wrt laziness) linear type
+\emph{semantically} linear, but are not seen as linear by Core's (naive wrt laziness) linear type
 system. Notably, the linear type system we develop in this work accepts all
 \colorbox{notyet}{\notyetcolorname} programs.
 % (while the few \colorbox{limitation}{\limitationcolorname} programs are not accepted).
 A \colorbox{noway}{\nowaycolorname} background indicates that the program
-simply isn't linear, not even semantically, i.e. the program effectively
-discards or duplicates linear resources.
+violates linearity semantically, i.e.~the program effectively
+discards or duplicates linear resources. We discuss the three main
+syntactic constructs of Core, let bindings (non-recursive and
+recursive) and case expressions.
 
 \paragraph{Let bindings}
 We start our discussion with non-strict (non-recursive) let bindings, i.e. let bindings whose
@@ -594,19 +598,19 @@ When the binding itself is evaluated, the \emph{thunk} is
 % A \emph{thunk} is \emph{forced} (and the suspended computation is evaluated) when
 % the binding itself is evaluated.
 
-    \begin{notyet}
-\begin{lstlisting}
-f1 :: (a *' $\lolli$ '* b) -> a *' $\lolli$ '* b
-f1 use x = let y = use x in y
-\end{lstlisting}
-\end{notyet}
-In a linear type system, a non-strict let binding that depends on a linear
-resource \lstinline{x} doesn't consume the resource as long as the binding isn't
-evaluated -- the suspended computation only uses the resource if it is run. For
-this reason, we can't naively tell whether \lstinline{x} is consumed just by looking at
-the let binding body. In the following example, we assign a computation that
-depends on the resource \lstinline{x} to a binder, which is then
-returned.
+    %\begin{notyet}
+% \begin{lstlisting}
+% f1 :: (a *' $\lolli$ '* b) -> a *' $\lolli$ '* b
+% f1 use x = let y = use x in y
+% \end{lstlisting}
+% \end{notyet}
+% In a linear type system, a non-strict let binding that depends on a linear
+% resource \lstinline{x} doesn't consume the resource as long as the binding isn't
+% evaluated -- the suspended computation only uses the resource if it is run. For
+% this reason, we can't naively tell whether \lstinline{x} is consumed just by looking at
+% the let binding body. In the following example, we assign a computation that
+% depends on the resource \lstinline{x} to a binder, which is then
+% returned.
 
 % \begin{figure}
 %   \begin{minipage}{.33\textwidth}
@@ -644,85 +648,93 @@ returned.
 
 
 
-%
-The linear resource \lstinline{x} is used exactly once, since it is used exactly once in
-the body of the binding and the binding is used exactly once in the let body.
-%
-According to Linear Haskell's core calculus~$\lambda_{\to}^{q}$~\cite{cite:linearhaskell}, let
-bound variables are annotated with a multiplicity which is multiplied (as per
-the multiplicity semiring) by the multiplicity of all variables that are free
-in the binder's body.
-%
-In short, if a let binder is linear (has
-multiplicity $1$) then the linear variables free in its body are only used
-once; if the let binder is unrestricted (has multiplicity $\omega$) then the
-resources in its body are consumed many times, meaning no linear variables can
-occur in that let binder's body.
-%
-Unfortunately, GHC's implementation of Linear
-Haskell doesn't seem to infer multiplicities for lets yet, so while the above
-program should typecheck in Linear Haskell, it is rejected by GHC.
+% %
+% The linear resource \lstinline{x} is used exactly once, since it is used exactly once in
+% the body of the binding and the binding is used exactly once in the let body.
+% %
+% According to Linear Haskell's core calculus~$\lambda_{\to}^{q}$~\cite{cite:linearhaskell}, let
+% bound variables are annotated with a multiplicity which is multiplied (as per
+% the multiplicity semiring) by the multiplicity of all variables that are free
+% in the binder's body.
+% %
+% In short, if a let binder is linear (has
+% multiplicity $1$) then the linear variables free in its body are only used
+% once; if the let binder is unrestricted (has multiplicity $\omega$) then the
+% resources in its body are consumed many times, meaning no linear variables can
+% occur in that let binder's body.
+% %
+% Unfortunately, GHC's implementation of Linear
+% Haskell doesn't seem to infer multiplicities for lets yet, so while the above
+% program should typecheck in Linear Haskell, it is rejected by GHC.
 
-The next example exposes the case in which the let binder is ignored in the let
-body. Here, the linear resource \incode{x} is used in \incode{y}'s body and in the let
-body, however, the resource is still used semantically linearly
-because \incode{y} isn't used at all, thus \incode{x} is consumed just
-once in the let body: 
-%
-\begin{notyet}
-\begin{lstlisting}
-f2 :: (a *' $\lolli$ '* a) -> a *' $\lolli$ '* a
-f2 use x = let y = use x in use x
-\end{lstlisting}
-\end{notyet}
-%
-Programmers don't often write bindings that are completely unused, yet, an
-optimising compiler will produce intermediate programs with unused bindings\footnote{Unused bindings are then
-also dropped by the optimising compiler} 
-from transformations such as inlining, which can substitute out occurrences
-of the binder (e.g. \incode{y} is inlined in the let body).
+% The next example exposes the case in which the let binder is ignored in the let
+% body. Here, the linear resource \incode{x} is used in \incode{y}'s body and in the let
+% body, however, the resource is still used semantically linearly
+% because \incode{y} isn't used at all, thus \incode{x} is consumed just
+% once in the let body: 
+% %
+% \begin{notyet}
+% \begin{lstlisting}
+% f2 :: (a *' $\lolli$ '* a) -> a *' $\lolli$ '* a
+% f2 use x = let y = use x in use x
+% \end{lstlisting}
+% \end{notyet}
+% %
+% Programmers don't often write bindings that are completely unused, yet, an
+% optimising compiler will produce intermediate programs with unused bindings\footnote{Unused bindings are then
+% also dropped by the optimising compiler} 
+% from transformations such as inlining, which can substitute out occurrences
+% of the binder (e.g. \incode{y} is inlined in the let body).
 
-\todo[inline]{Cut this one}
+% \todo[inline]{Cut this one}
+In the example from the beginning of
+Section~\ref{sec:linearity-semantically} (similar to that towards the end
+of Section~\ref{sec:intro}), we discussed a scenario where an
+unused let binding can be used to justify a function where its
+argument occurs both in the (unused) let-bound expression and in the
+body of the let.
 Let bindings can also go unused if they are defined before branching on case
 alternatives. At runtime, depending on the branch taken, the let binding will
 be evaluated only if it occurs in that branch.
-Both optimising transformations (float-out), and programmers used to non-strict evaluation, can produce
-programs with bindings that are selectively used in the case alternatives, for
+Both optimising transformations (float-out), and programmers used to
+non-strict evaluation often produce
+programs with bindings that are selectively used in case alternatives, for
 instance:
 %
 \begin{notyet}
 \begin{lstlisting}
-f3 :: (a *' $\lolli$ '* a) -> Bool -> a *' $\lolli$ '* a
-f3 use bool x = let y = use x in case bool of
+f :: (a *' $\lolli$ '* a) -> Bool -> a *' $\lolli$ '* a
+f use bool x = let y = use x in case bool of
       True -> x 
       False -> y
 \end{lstlisting}
 \end{notyet}
 %
-This example essentially merges \lstinline{f1} with \lstinline{f2}, using \lstinline{x} directly in one
-branch and using \lstinline{y} in the other. Semantically, this program is linear because
-the linear resource \lstinline{x} ends up being used exactly once in both case
-alternatives, directly or indirectly.
+This example uses \lstinline{x} directly in one
+branch and the let-bound \lstinline{y} in the other. Semantically, this program is linear because
+the linear resource \lstinline{x} ends up is used exactly once in both case
+alternatives, directly in the \lstinline{True} branch or via the
+let-bound \lstlinline{y} in the \lstinline{False} branch.
 
-Shifting our focus from not using a let binding to using it (more than once),
-we reiterate that a let binding creates a \emph{thunk} which is only evaluated
-once, and re-used subsequently. Despite the binder body only being evaluated
-once, and thus its resources only used once to compute a result, we can still
-only consume said result of the computation once -- perhaps surprisingly, as the
+Shifting our focus from not using a let binding to using it
+more than once.
+Despite the binder body only being evaluated
+once due to call-by-need, and thus its resources being only used once to compute a result, we can still
+only consume the result of the computation once -- perhaps surprisingly, as the
 perception so far is that ``resources are consumed during computation'' and
 multiple uses of the same let binder share the result that was computed only
 once. Illustratively, the following program must \emph{not} typecheck:
 %
 \begin{noway}
 \begin{lstlisting}
-f4 :: (a *' $\lolli$ '* b) -> a *' $\lolli$ '* (b, b)
-f4 use x = let y = use x in (y, y)
+f1 :: (a *' $\lolli$ '* b) -> a *' $\lolli$ '* (b, b)
+f1 use x = let y = use x in (y, y)
 \end{lstlisting}
 \end{noway}
 %
 Intuitively, the result of the computation must also be used exactly once,
-despite being effectively computed just once, because said result may still
-contain (parts of) the linear resource. The trivial example is \lstinline{f4} applied to
+despite being effectively computed just once, since the result may
+still capture (parts of) the linear resource. The trivial example is \lstinline{f1} applied to
 \incode{id} -- the result of computing \incode{id x} is \incode{x}, and \incode{x} must definitely not be
 shared. Indeed, if the result of the computation involving the linear resource
 was, e.g., an unrestricted integer, then sharing the result would not involve consuming the
@@ -741,8 +753,8 @@ Lastly, consider a program which defines two let bindings \incode{z} and \incode
 %
 \begin{noway}
 \begin{lstlisting}
-f5 :: (a *' $\lolli$ '* a) -> a *' $\lolli$ '* ()
-f5 use x = let y = use x in let z = use y in ()
+f2 :: (a *' $\lolli$ '* a) -> a *' $\lolli$ '* ()
+f2 use x = let y = use x in let z = use y in ()
 \end{lstlisting}
 \end{noway}
 %
@@ -756,8 +768,9 @@ neither is used, then \incode{x} isn't used. Since \incode{x} is effectively dis
 example also violates linearity.
 
 % \parawith{Summary}
-The examples so far build an intuition for semantic linearity in the presence
-of lazy let bindings. In essence, an unused let binding doesn't consume any
+% The examples so far build an intuition for semantic linearity in the presence
+% of lazy let bindings. 
+In essence, an unused let binding doesn't consume any
 resources, and a let binding used exactly once consumes its resources exactly
 once. Let binders that depend on linear resources must be used \emph{at most
 once} -- let bound variables are \emph{affine} in the let body.
@@ -771,28 +784,29 @@ environments}, in Section~\ref{sec:usage-environments}.
 
 %\vspace{-.5cm}
 \paragraph{Recursive let bindings\label{sec:semantic-linearity-examples:recursive-lets}}
-Second, we look into recursive let bindings. For the most part,
+% Second, we look into recursive let bindings.
+For the most part,
 recursive let bindings behave as non-recursive let bindings, i.e. we must use them \emph{at
 most once} because, when evaluated, the linear resources used in the binders
 bodies are consumed. The defining property of a group of mutually recursive let
 bindings is that the binders bound in that group can occur, without restrictions, in
-the bodies of those same binders. The same way that, in a let body, evaluating
-a binding that uses some resource exactly once consumes that resource once,
-using the binding in its own definition also entails using that resource once.
+the bodies of those same binders. % The same way that, in a let body, evaluating
+% a binding that uses some resource exactly once consumes that resource once,
+% using the binding in its own definition also entails using that resource once.
 Consider the following program, that calls a recursive let-bound function
 defined in terms of the linear resource \incode{x} and itself:
 %
 \begin{notyet}
 \begin{lstlisting}
-f6 :: Bool -> a *' $\lolli$ '* a
-f6 bool x = let go b = case b of
+f3 :: Bool -> a *' $\lolli$ '* a
+f3 bool x = let go b = case b of
                      True -> x
                      False -> go (not b)
                    in go bool
 \end{lstlisting}
 \end{notyet}
 %
-Function \incode{f6} is semantically linear because, iff it is consumed exactly once,
+Function \incode{f3} is semantically linear because, iff it is consumed exactly once,
 then \incode{x} is consumed exactly once. We can see this by case analysis on \incode{go}'s argument:
 %\begin{itemize}%
 %\item
@@ -816,8 +830,8 @@ uses \incode{x} linearly if evaluated:
 
 \begin{notyet}
 \begin{lstlisting}
-f7 :: Bool -> a *' $\lolli$ '*  a
-f7 bool x = let go b = case b of
+f4 :: Bool -> a *' $\lolli$ '*  a
+f4 bool x = let go b = case b of
                      True -> x
                      False -> go b
                    in go bool
@@ -838,58 +852,55 @@ vacuously.
 % \end{working}
 %
 If \incode{go} doesn't terminate, we aren't able to compute (nor consume) the result
-of \incode{f7}, so we do not promise anything about \incode{x} being consumed (\incode{f7}'s
+of \incode{f4}, so we do not promise anything about \incode{x} being consumed (\incode{f4}'s
 linearity holds trivially). If it did terminate, it would consume \incode{x} exactly
 once (e.g. if \incode{go} was applied to \incode{True}).
 
-Determining the linear resources used in a recursive binding might feel
-peculiar since we need to know the linear resources used by the binder to determine the linear resources it uses.
-%
-The paradoxical definition is difficult to grasp, just how learning that a
-function can be defined in terms of itself is perplexing when one is first
-introduced to general recursion.
-%
-Informally, we \emph{assume} the binding will consume some linear resources
-exactly once, and use that assumption when reasoning about recursive calls such
-that those linear resources are used exactly once.
-
-%This high-level reasoning isn't amenable for a computer that must check
-%whether the program is linear.
-
-Generalizing, we need to find a set of linear resources ($\Delta$) that satisfies the recursive equation
-\footnote{This set of resources will basically be the least upper bound of the sets of resources used in each
-mutually recursive binding scaled by the times each binding was used}
-arising from given binding $x$, such that:
-%\begin{enumerate}
-(1) Occurrences of $x$ in its own body are synonymous with using all resources in $\Delta$ exactly once;
-(2) and if the binding $x$ is fully evaluated, then all resources in $\Delta$ are consumed exactly once.
-%\end{enumerate}
-Finding a solution to this equation is akin to finding a (principle) type for a
-recursive binding: the binding needs to be given a type such that occurrences of
-that binding in its own body typecheck using that type.
-%
-Foreshadowing, the core system we developed assumes recursive let bindings to
-be annotated with a set of resources satisfying the equations; but we also
-present an algorithm to determine this solution, and distinguish between an
-\emph{inference} and a \emph{checking} phase, where we first determine the
-linear resources used by a group of recursive bindings and only then check
-whether the binding is linear, in our implementation of checking of recursive
-lets.
+% Determining the linear resources used in a recursive binding might feel
+% peculiar since we need to know the linear resources used by the binder to determine the linear resources it uses.
+% %
+% The paradoxical definition is difficult to grasp, just how learning that a
+% function can be defined in terms of itself is perplexing when one is first
+% introduced to general recursion.
+% %
+% Informally, we \emph{assume} the recursive binding will consume some linear resources
+% exactly once, and use that assumption when reasoning about recursive calls such
+% that those linear resources are used exactly once.
+% Generalizing, we need to find a set of linear resources ($\Delta$) that satisfies the recursive equation
+% \footnote{This set of resources will basically be the least upper bound of the sets of resources used in each
+% mutually recursive binding scaled by the times each binding was used}
+% arising from given binding $x$, such that:
+% %\begin{enumerate}
+% (1) Occurrences of $x$ in its own body are synonymous with using all resources in $\Delta$ exactly once;
+% (2) and if the binding $x$ is fully evaluated, then all resources in $\Delta$ are consumed exactly once.
+% %\end{enumerate}
+% Finding a solution to this equation is akin to finding a (principle) type for a
+% recursive binding: the binding needs to be given a type such that occurrences of
+% that binding in its own body typecheck using that type.
+% %
+% Foreshadowing, the core system we developed assumes recursive let bindings to
+% be annotated with a set of resources satisfying the equations; but we also
+% present an algorithm to determine this solution, and distinguish between an
+% \emph{inference} and a \emph{checking} phase, where we first determine the
+% linear resources used by a group of recursive bindings and only then check
+% whether the binding is linear, in our implementation of checking of recursive
+% lets.
 % ROMES:TODO:!!!
 %\todo{We might not need the inferrence phase, somehow. Anyhow it seems like
 %our inferrence is not really about determining a solution but more about
 %determining how many times each thing gets used}
 
-There might not be a solution to the set of equations. In this case, the
-binding undoubtedly entails using a linear resource more than once. For
-example, if we use a linear resource \incode{x} in one case alternative, and invoke
+% There might not be a solution to the set of equations. In this case, the
+% binding undoubtedly entails using a linear resource more than once.
+
+Note that if we use a linear resource \incode{x} in one case alternative, and invoke
 the recursive call more than once, we might eventually consume \incode{x} more than
 once:
 %
 \begin{noway}
 \begin{lstlisting}
-f9 :: Bool -> Bool *' $\lolli$ '* Bool
-f9 bool x =
+f5 :: Bool -> Bool *' $\lolli$ '* Bool
+f5 bool x =
   let go b
         = case b of
            True -> x
@@ -897,82 +908,85 @@ f9 bool x =
   in go bool
 \end{lstlisting}
 \end{noway}
-Note that if returned \incode{x} instead of \incode{go bool} in the let body, then, despite
-the binding using \incode{x} more than once, we would still consume \incode{x} exactly once,
+However, if we returned \incode{x} instead of \incode{go bool} in the let body, then, despite
+the binding using \incode{x} more than once, we would consume \incode{x} exactly once,
 since recursive bindings are still lazy.
+%
+These ideas extend to mutually recursive bindings that depend on
+linear resources, as we discuss in Section~\ref{sec:recursivelets}.
 
-Lastly, we extend our single-binding running example to use two mutually recursive bindings that
-depend a linear resource:
-\begin{notyet}
-\begin{lstlisting}
-f10 :: Bool -> a *' $\lolli$ '* a
-f10 bool x =
-  let go1 b = case b of
-           True -> go2 b
-           False -> go1 (not b)
-       go2 b = case b of
-           True -> x
-           False -> go1 b
-  in go1 bool
-\end{lstlisting}
-\end{notyet}
-As before, we must find a solution to the set of equations defined by the
-mutually recursive bindings to determine which resources will be consumed.
-In this case, \incode{go1} and \incode{go2} both consume \incode{x} exactly once if evaluated.
-We additionally note that a strongly connected group of recursive bindings
-(i.e. all bindings are transitively reachable from any of them) will always
-consume the same set of resources -- if all bindings are potentially reachable,
-then all linear resources are too.
+% Lastly, we extend our single-binding running example to use two mutually recursive bindings that
+% depend a linear resource:
+% \begin{notyet}
+% \begin{lstlisting}
+% f10 :: Bool -> a *' $\lolli$ '* a
+% f10 bool x =
+%   let go1 b = case b of
+%            True -> go2 b
+%            False -> go1 (not b)
+%        go2 b = case b of
+%            True -> x
+%            False -> go1 b
+%   in go1 bool
+% \end{lstlisting}
+% \end{notyet}
+% As before, we must find a solution to the set of equations defined by the
+% mutually recursive bindings to determine which resources will be consumed.
+% In this case, \incode{go1} and \incode{go2} both consume \incode{x} exactly once if evaluated.
+% We additionally note that a strongly connected group of recursive bindings
+% (i.e. all bindings are transitively reachable from any of them) will always
+% consume the same set of resources -- if all bindings are potentially reachable,
+% then all linear resources are too.
 
 % \parawith{Summary}
-Summarising, recursive let bindings behave like non-recursive let bindings in
-that if they aren't consumed, the resources they depend on aren't consumed
-either.  However, recursive let bindings are defined in terms of themselves, so
-the set of linear resources that will be consumed when the binder is evaluated
-is also defined in terms of itself (we need it to determine what resources are
-used when we recurse). We can intuitively think of this set of linear resources
-that will be consumed as a solution to a set of equations defined by a group of
-mutually recursive bindings, which we are able to reason about without an
-algorithm for simpler programs. In our work, the core type system isn't
-concerned with deriving said solution, but we present a simple algorithm for
-inferring it with our implementation.
+% Summarising, recursive let bindings behave like non-recursive let bindings in
+% that if they aren't consumed, the resources they depend on aren't consumed
+% either.  However, recursive let bindings are defined in terms of themselves, so
+% the set of linear resources that will be consumed when the binder is evaluated
+% is also defined in terms of itself (we need it to determine what resources are
+% used when we recurse). We can intuitively think of this set of linear resources
+% that will be consumed as a solution to a set of equations defined by a group of
+% mutually recursive bindings, which we are able to reason about without an
+% algorithm for simpler programs. In our work, the core type system isn't
+% concerned with deriving said solution, but we present a simple algorithm for
+% inferring it with our implementation.
 
 \paragraph{Case expressions}
-Finally, we discuss semantic linearity for case expressions, which have been
-purposefully left for last as the key ingredient that brings together the
-semantic linearity insights developed thus far, because, essentially,
+Finally, we discuss case expressions,
+which are the key ingredient that brings together the
+semantic linearity insights developed thus far given that
 \emph{case expressions drive evaluation} and semantic linearity can only be
-understood in function of how expressions are evaluated.
+understood in terms of how expressions are evaluated.
 
-Up until now, the example functions have always linearly transformed linear
-resources, taking into consideration how expressions will be evaluated (and thus
-consumed) to determine if resources are being used linearly. However, there
+Up until now, there
 have been no examples in which linear resources are \emph{fully consumed} in
 the bodies of linear functions. In other words, all example functions so far
 return a value that has to be itself consumed exactly once to ensure the linear
 argument is, in turn, consumed exactly once -- as opposed to functions whose
 application simply needs to be evaluated to guarantee its linear argument is
-consumed (functions that return an unrestricted value).
+consumed (e.g.,~functions that return an unrestricted value).
 %
 %The latter are of particular relevance because linearly-typed abstractions
 %usually require such a function to provide newly-created linear resources to.
 %
-For example, the entry point to the linear array API presented in Linear
-Haskell takes such a function as its second argument:
-\begin{working}
-\begin{lstlisting}
-newMArray :: Int -> (MArray a *' $\lolli$ '* Unrestricted b) *' $\lolli$ '* b
-\end{lstlisting}
-\end{working}
+% For example, the entry point to the linear array API presented in Linear
+% Haskell takes such a function as its second argument:
+% \begin{working}
+% \begin{lstlisting}
+% newMArray :: Int -> (MArray a *' $\lolli$ '* Unrestricted b) *' $\lolli$ '* b
+% \end{lstlisting}
+% \end{working}
 %(The second argument is a function that consumes |MArray a| linearly
 %and returns an unrestricted result -- we don't need to consume said result
 %exactly once to guarantee that |MArray a| is used linearly in the function
 %body.)
-
+%
 % ROMES:TODO: Há qualquer coisa que não gosto nada! na coerência deste paragrafo
-
-In short, case expressions enable us to consume resources and so write
-functions that fully consume their linear arguments. To understand exactly how,
+%
+Case expressions enable us to consume resources and so write
+functions that fully consume their linear arguments.
+% CORTEI
+To understand exactly how,
 we turn to the definition of \emph{consuming} a resource from Linear
 Haskell~\cite{cite:linearhaskell}:
 %begin{itemize}
@@ -1000,18 +1014,17 @@ expressions.
 In Core, case expressions are of the form $\ccase{e_s}{z~\{\ov{\rho_i \to e_i}\}}$,
 where $e_s$ is the case \emph{scrutinee}, $z$ is the case \emph{binder}, and
 $\ov{\rho_i \to e_i}$ are the case \emph{alternatives}, composed of a pattern
-$\rho_i$ and of the corresponding expression $e_i$. Critically,
+$\rho_i$ and of the corresponding expression $e_i$. 
 %\begin{enumerate}
 %\item
-the case scrutinee is always evaluated to Weak Head Normal Form (WHNF);
+The case scrutinee is always evaluated to Weak Head Normal Form (WHNF) and
 %
 % \item
-evaluating an expression that is already in WHNF is a no-op, that is,
-no computation occurs; 
+% evaluating an expression that is already in WHNF is a no-op, that is,
+% no computation occurs; 
 %
 the case binder is an alias to the result of evaluating the scrutinee
-to WHNF; and,
-the alternative patterns are always exhaustive.
+to WHNF. Moreover, in Core, the alternative patterns are always exhaustive.
 % i.e. there always exists
 % a pattern that matches the WHNF of a value resulting from evaluating the
 % scrutinee, where a pattern is either a wildcard that matches all expressions
@@ -1024,81 +1037,81 @@ the alternative patterns are always exhaustive.
 % ROMES:TODO: We should talk about WHNF in the background, not here.
 % \parawith{WHNF} An expression is in Weak Head Normal Form when 
 
-To explore these case properties in the presence of linearity, we start with an
+We start with an
 example of a program that constructs a tuple from linear resources then pattern
 matches on it, then uses both linearly-bound variables from the tuple pattern
 match. This is well-typed in Linear Haskell:
 \begin{working}
 \begin{lstlisting}
-f11 :: a *' $\lolli$ '* b *' $\lolli$ '* (a *' $\lolli$ '* b *' $\lolli$ '* c) -> c
-f11 x y use = case (x,y) of { (a,b) -> use a b }
+f6 :: a *' $\lolli$ '* b *' $\lolli$ '* (a *' $\lolli$ '* b *' $\lolli$ '* c) -> c
+f6 x y use = case (x,y) of { (a,b) -> use a b }
 \end{lstlisting}
 \end{working}
 What might be more surprising is that a similar program which discards the
-pattern variables and instead uses the resources in the scrutinee is also
-semantically linear, despite not being accepted by Linear Haskell:
+pattern variables and instead uses the resources in the scrutinee is 
+\emph{semantically} linear, despite not being accepted by Linear Haskell:
 \begin{notyet}
 \begin{lstlisting}
-f12 :: a *' $\lolli$ '* b *' $\lolli$ '* (a *' $\lolli$ '* b *' $\lolli$ '* c) -> c
-f12 x y use = case (x,y) of z { (a,b) -> use x y }
+f7 :: a *' $\lolli$ '* b *' $\lolli$ '* (a *' $\lolli$ '* b *' $\lolli$ '* c) -> c
+f7 x y use = case (x,y) of z { (a,b) -> use x y }
 \end{lstlisting}
 \end{notyet}
-We justify that \incode{f12} is linear by appealing to the fact that the
-expression (the tuple) being scrutinized is already in WHNF, evaluating it will
-not consume neither $x$ nor $y$. Even if the tuple was constructed with
+We justify that \incode{f7} is linear by appealing to the fact that 
+the tuple being scrutinized is already in WHNF and so evaluating it will
+not consume either $x$ nor $y$. Even if the tuple was constructed with
 two expressions using $x$ and $y$ respectively, no computation would happen
-since we aren't using neither $a$ nor $b$ (thereby never forcing the arguments
+since we are not using $a$ or $b$ (thereby never forcing the arguments
 of the tuple). However, if we did use $a$ in the case body, then $x$ would be unavailable:
 \begin{noway}
 \begin{lstlisting}
-f13 :: a *' $\lolli$ '* b *' $\lolli$ '* (a *' $\lolli$ '* a *' $\lolli$ '* c) -> c
-f13 x y use = case (x,y) of z { (a,b) -> use a x }
+f8 :: a *' $\lolli$ '* b *' $\lolli$ '* (a *' $\lolli$ '* a *' $\lolli$ '* c) -> c
+f8 x y use = case (x,y) of z { (a,b) -> use a x }
 \end{lstlisting}
 \end{noway}
 This idea that $x$ and $a$ are mutually exclusive is the same behind let
 bindings being mutually exclusive to the resources that define them.
-By forcing the pattern variable (or the let binding), we run the computations
-defined in terms of the linear variables used for that constructor argument (or
-let binder body), but otherwise, if we don't use those binders, then we don't
-run the computation thus no resources are consumed.
+By forcing the pattern variable we run the computations
+defined in terms of the linear variables used for that constructor
+argument. Otherwise, if we do not use the pattern variables, then we
+do not run the computation and thus no resources are consumed.
 
-A third option for this example is to use the case binder $z$ instead of $a,b$ or $x,y$:
+A third option is to use the case binder $z$ instead of $a,b$ or $x,y$:
 \begin{notyet}
 \begin{lstlisting}
-f14 :: a *' $\lolli$ '* b *' $\lolli$ '* (a *' $\lolli$ '* b *' $\lolli$ '* c) -> c
-f14 x y use = case (x,y) of z { (a,b) -> uncurry use z }
+f9 :: a *' $\lolli$ '* b *' $\lolli$ '* (a *' $\lolli$ '* b *' $\lolli$ '* c) -> c
+f9 x y use = case (x,y) of z { (a,b) -> uncurry use z }
 \end{lstlisting}
 \end{notyet}
 Again, $z$ is mutually exclusive with $a,b$ and with $x,y$, but at least one of
 the three must occur to ensure the linear resources are consumed. In this
 example, we can think that using $a$ entails using the resource $x$, $b$ the
 resource $y$, and the case binder $z$ entails using both $a$ and $b$.
-
+%
 Dually, consider the scrutinee to be an expression that's not in WHNF, s.t.
-evaluating it to WHNF will require doing computation and thus consume linear
-resources that are used in it:
+evaluating it to WHNF will require performing computation and thus consume linear
+resources:
 \begin{notyet}
 \begin{lstlisting}
-f15 :: a *' $\lolli$ '* b *' $\lolli$ '* (a *' $\lolli$ '* b *' $\lolli$ '* (c,d)) -> (c,d)
-f15 x y use = case use x y of z { (a,b) -> z }
+f10 :: a *' $\lolli$ '* b *' $\lolli$ '* (a *' $\lolli$ '* b *' $\lolli$ '* (c,d)) -> (c,d)
+f10 x y use = case use x y of z { (a,b) -> z }
 \end{lstlisting}
 \end{notyet}
 Unlike when the scrutinee was in WHNF, we can no longer use $x,y$ in the case
 alternatives, but we \emph{must} still use either the case binder $z$ or the linear
-pattern variables $a,b$, e.g. it would be quite disastrous if any of the following typechecked:
-\begin{noway}
-\begin{lstlisting}
-doubleFree :: Ptr *' $\lolli$ '* (Ptr *' $\lolli$ '* Result) -> Result
-doubleFree x free = case free x of z { Result v -> free x }
-\end{lstlisting}
-\end{noway}
-% Remover
-\begin{noway}
-\begin{lstlisting}
-leakPointer :: Ptr -> ()
-leakPointer x = case id x of z { _ -> () }
-\end{lstlisting}
-\end{noway}
+pattern variables $a,b$. %  e.g. it would be quite disastrous if any of the following typechecked:
+% \begin{noway}
+% \begin{lstlisting}
+% doubleFree :: Ptr *' $\lolli$ '* (Ptr *' $\lolli$ '* Result) -> Result
+% doubleFree x free = case free x of z { Result v -> free x }
+% \end{lstlisting}
+% \end{noway}
+% % Remover
+% \begin{noway}
+% \begin{lstlisting}
+% leakPointer :: Ptr -> ()
+% leakPointer x = case id x of z { _ -> () }
+% \end{lstlisting}
+% \end{noway}
 %
 %whereas this is fine:
 %\begin{notyet}
@@ -1108,17 +1121,21 @@ leakPointer x = case id x of z { _ -> () }
 %\end{code}
 %\end{notyet}
 %
-The result of evaluating the scrutinee must be consumed exactly to guarantee
-that the resources used in the scrutinee are fully consumed, or risk them being only ``almost'' consumed. Take for example
-\incode{use} in \incode{f15} to simply be \incode{(,)}: it is not sufficient for \incode{use x y} to be
+The result of evaluating the scrutinee must be consumed exactly once to guarantee
+that the resources used in the scrutinee are fully consumed. %, or
+                                %risk them being only ``almost''
+                                %consumed.
+For instance, take
+\incode{use} in \incode{f10} to be \incode{(,)}: it is not sufficient for \incode{use x y} to be
 evaluated to WHNF to consume \incode{x} and \incode{y}. Otherwise, if all the resources were
 considered to be fully consumed after the scrutinee were evaluated in a case
-expression, we could simply ignore the pattern variables, effectively
-discarding linear resources (for cases such as the \incode{use = (,)} example). In
+expression, we could simply ignore the pattern variables, potentially
+discarding linear resources. In
 short, if the scrutinee is not in WHNF we must either consume the case binder
 or the linear components of the pattern.
 
-However, we must also consider pattern matches on constructors without
+
+We now focus on pattern matching on constructors without
 any linear components. If the constructor has no linear fields, it means the
 result can be consumed unrestrictedly and, therefore, all linear resources used
 in the computation have been fully consumed.
@@ -1132,8 +1149,8 @@ the program in Figure~\ref{fig:nolin} is semantically linear.
  \begin{minipage}{0.5\textwidth}
 \begin{notyet}
 \begin{lstlisting}
-f16 :: () *' $\lolli$ '* ()
-f16 x = case x of z { () -> z <> z }
+f11 :: () *' $\lolli$ '* ()
+f11 x = case x of z { () -> z <> z }
 \end{lstlisting}
 \end{notyet}
 \vspace{-0.5cm}
@@ -1142,8 +1159,8 @@ f16 x = case x of z { () -> z <> z }
 \begin{minipage}{0.5\textwidth}
 \begin{limitation}
 \begin{lstlisting}
-f :: a *' $\lolli$ '* a
-f x = case K1 x of z { K2 -> x; K1 a -> x }
+f12 :: a *' $\lolli$ '* a
+f12 x = case K1 x of z { K2 -> x; K1 a -> x }
 \end{lstlisting}
 \end{limitation}
 \vspace{-0.5cm}
@@ -1156,55 +1173,55 @@ has one linear field, is shown in Figure~\ref{fig:absurd}. Seemingly, the resour
 $x$ must have been fully consumed to take the \incode{K2} branch, but because the
 scrutinee is known to be \incode{K1}, the \incode{K2} branch is \emph{absurd}, so, in reality
 any resource could be freely used in that branch, and the example is
-\emph{semantically} linear (despite not being seen as so by our system):
+\emph{semantically} linear (despite not being seen as so by our system).
 %
 %
 %
-This particular example has a known constructor being scrutinized which might
-seem like an unrealistic example, but we recall that during the transformations
-programs undergo in an optimising compiler, many programs such as this
-naturally occur (e.g.,~if the definition of a function is inlined in the
-scrutinee).
+This particular example might seem unrealistic due to the pattern
+match on a known constructor, but we note that during the
+transformations programs undergo in an optimising compiler, many
+programs such as this naturally occur (e.g.,~if the definition of a
+function is inlined in the scrutinee).
 %
 % However, the scrutinee before evaluation likely isn't in WHNF, thus scrutinee
 % resources cannot directly occur in the case alternatives, since they might be
 % potentially consumed when evaluating the scrutinee, the program leading up to
 % this one wouldn't have been linear (even semantically).
 
-Further exploring that each linear field must be consumed exactly once, and
-that resources in WHNF scrutinees aren't consumed, we are able to construct
-more contrived examples (Figures~\ref{fig:badcase}
-and~\ref{fig:goodcase}). the example in Figure~\ref{fig:badcase} does not typecheck
-because the same linear field is used twice, but the example in
-Figure~\ref{fig:goodcase} does since it
-uses each linear field exactly once, despite pattern matching on the same
-components twice.
+% Further exploring that each linear field must be consumed exactly once, and
+% that resources in WHNF scrutinees aren't consumed, we are able to construct
+% more contrived examples (Figures~\ref{fig:badcase}
+% and~\ref{fig:goodcase}). the example in Figure~\ref{fig:badcase} does not typecheck
+% because the same linear field is used twice, but the example in
+% Figure~\ref{fig:goodcase} does since it
+% uses each linear field exactly once, despite pattern matching on the same
+% components twice.
 
-%Remover estes
-\begin{figure}[t]
-  \begin{minipage}{0.5\textwidth}
-\begin{noway}
-\begin{lstlisting}
-f w = case w of z
-        (a,b) -> case (a,b) of z'
-                        (c,d) -> (a,c)
-\end{lstlisting}
-\end{noway}
-\vspace{-0.5cm}
-\caption{Bad Case\label{fig:badcase}}
-\end{minipage}%
-\begin{minipage}{0.5\textwidth}
-\begin{notyet}
-\begin{lstlisting}
-f w = case w of z
-        (a,b) -> case (a,b) of z'
-                        (c,d) -> (a,d)
-\end{lstlisting}
-\end{notyet}
-\vspace{-0.5cm}
-\caption{Good Case\label{fig:goodcase}}
-\end{minipage}
-\end{figure}
+% %Remover estes
+% \begin{figure}[t]
+%   \begin{minipage}{0.5\textwidth}
+% \begin{noway}
+% \begin{lstlisting}
+% f w = case w of z
+%         (a,b) -> case (a,b) of z'
+%                         (c,d) -> (a,c)
+% \end{lstlisting}
+% \end{noway}
+% \vspace{-0.5cm}
+% \caption{Bad Case\label{fig:badcase}}
+% \end{minipage}%
+% \begin{minipage}{0.5\textwidth}
+% \begin{notyet}
+% \begin{lstlisting}
+% f w = case w of z
+%         (a,b) -> case (a,b) of z'
+%                         (c,d) -> (a,d)
+% \end{lstlisting}
+% \end{notyet}
+% \vspace{-0.5cm}
+% \caption{Good Case\label{fig:goodcase}}
+% \end{minipage}
+% \end{figure}
 
 Finally, we consider the default case alternatives, also known as wildcards
 (written $\_$), in the presence of linearity: matching against the wildcard
@@ -1212,7 +1229,7 @@ doesn't provide new information, so linearity is seen as before but without
 fully consuming the scrutinee linear resources (in non-linear patterns) nor
 binding new linear resources (in linear patterns). In short, if the scrutinee
 is in WHNF, we can either use the resources from the scrutinee or the case
-binder in that alternative, if the scrutinee is not in WHNF, we \emph{must} use
+binder in that alternative. If the scrutinee is not in WHNF, we \emph{must} use
 the case binder, as it's the only way to linearly consume the result of
 evaluating the scrutinee. We also discuss the special case of a case
 expression scrutinizing a variable $x$:
@@ -1243,22 +1260,22 @@ evaluation. For example:
 \]
 Therefore, the type system we present in the next section, which evaluates
 linear applications call-by-name, does not accept the above program as linear.
-Foreshadowing, this particular interaction between evaluation and linearity
+This interaction between evaluation and linearity
 comes up in the type preservation proof of our program, and is again explored
 with the reverse binder swap transformation in
 Section~\ref{sec:optimisations-preserve-types-meta}.
 
 % \parawith{Summary}
-In summary, case expressions evaluate their scrutinees to WHNF,
-introduce a case binder, and bind pattern variables. If the scrutinee is
-already in WHNF, all resources occurring in it are still available in the case
-alternative, alongside the case binder and the pattern-bound variables. In the
-case alternative, either the resources of the scrutinee, the case binder, or
-the linearly bound pattern variables must be used exactly once, but mutually
-exclusively. For scrutinees not in WHNF, in the case alternative, either the
-case binder or the linear pattern variables need to be used, in mutual exclusion.
-If the pattern doesn't bind any linear resources, then it may be consumed
-unrestrictedly, and therefore the case binder may also be used unrestrictedly.
+% In summary, case expressions evaluate their scrutinees to WHNF,
+% introduce a case binder, and bind pattern variables. If the scrutinee is
+% already in WHNF, all resources occurring in it are still available in the case
+% alternative, alongside the case binder and the pattern-bound variables. In the
+% case alternative, either the resources of the scrutinee, the case binder, or
+% the linearly bound pattern variables must be used exactly once, but mutually
+% exclusively. For scrutinees not in WHNF, in the case alternative, either the
+% case binder or the linear pattern variables need to be used, in mutual exclusion.
+% If the pattern doesn't bind any linear resources, then it may be consumed
+% unrestrictedly, and therefore the case binder may also be used unrestrictedly.
 
 % This is fine, because |x| in the case alternative is known to be K...
 % Variables really are weird case...
@@ -1752,7 +1769,7 @@ its usage entails consuming the resources $\D$ the expression $e$ it binds depen
 % be consumed to some extent when we force the computation -- also foreshadowing
 % that evaluation to WHNF doesn't necessarily consume all resources}
 
-\subsubsection{Recursive let bindings}
+\subsubsection{Recursive let bindings}\label{sec:recursivelets}
 
 Recursive let bindings are very similar to non-recursive ones, the main
 exception being that the recursive bindings may be defined in terms of
