@@ -287,13 +287,11 @@
     \TypeWHNFCons
 \qquad
     \TypeWHNFLam
-\\[0.6cm]
-\begin{array}{cc}
-\judgment{\Gamma \vdash decl : \Gamma'} & \judgment{\Gamma \vdash pgm : \sigma}\\
-\\[0.05em]
-\infer{ }{\Gamma \vdash (\datatype{T~\overline{p}}{\overline{K:\sigma}}) : (\overline{K:\sigma}) } &
-\infer{\overline{\Gamma \vdash decl:\Gamma_d} \and \Gamma = \Gamma_0,\overline{\Gamma_d}\\ \Gamma \vdash e : \sigma}{\Gamma_0 \vdash \overline{decl}; e : \sigma}
-\end{array}
+% \begin{array}{cc}
+% \judgment{\Gamma \vdash decl : \Gamma'} \\
+% \\[0.05em]
+% \infer{ }{\Gamma \vdash (\datatype{T~\overline{p}}{\overline{K:\sigma}}) : (\overline{K:\sigma}) } 
+% \end{array}
 \end{array}
 \]
 \end{framed}
