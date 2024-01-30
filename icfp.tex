@@ -1451,7 +1451,7 @@ bindings $x_1{:}_{\D_1}\s_1\dots x_n{:}_{\D_n}\s_n$ and associated expressions
 $e_1\dots e_n$, and case expressions $\ccase{e}{\zD~\{\ov{\rho \to e'}\}}$,
 where $z$ is the case binder and the overline denotes a set of distinct
 patterns $\rho_1\dots \rho_n$ and corresponding right hand sides $e'_1\dots
-e'_n$. Notably, (recursive) let-bound
+e'_n$. We often omit the case binder $z$ when it is unused. Notably, (recursive) let-bound
 binders and case-bound binders are annotated
 with a so-called \emph{usage environment} $\Delta$ -- a fundamental construct
 for type-checking semantic linearity in the presence of laziness we present in
@@ -1479,8 +1479,9 @@ constructors $K$ with signatures indicating the type and multiplicity of the
 constructor arguments. Note that a linear resource is used many times when a
 constructor with an unrestricted field is applied to it, since, dually, pattern
 matching on the same constructor with an unrestricted field allows it to be
-used unrestrictedly. Programs are a set of declarations and a top-level
-expression.
+used unrestrictedly.
+%Programs are a set of declarations and a top-level
+%expression.
 
 \SyntaxFull
 
@@ -2814,8 +2815,8 @@ environment can be made into a linear variable as long as its
 
 % Intuitively, a linear variable 
 
-\noindent Finally, unrestricted resources are equivalent to $\D$-bound
-variables with an empty ($\cdot$) usage environment.
+\noindent Finally, unrestricted and $\D$-bound
+variables with an empty usage environment are equivalent.
 
 \DeltaUnrestrictedRelationLemma
 
@@ -2889,11 +2890,10 @@ $\xo$, linear variables $\xl$, and $\D$-bound variables $\xD$.
 Type preservation
 % ($\S$~\ref{sec:proof:type-preservation})
 follows by structural induction on the reductions $e \longrightarrow
-e'$ from the operational semantics. Most cases are straightforward and usually
-appeal to one or more of the substitution lemmas described below. The most
+e'$ from the operational semantics. Most cases are straightforward, appealing to one or more
+substitution lemmas (see Appendix~\ref{sec:proof:type-preservation}). The most
 interesting case is that of case expressions whose scrutinee can be further
-evaluated -- we branch on whether the scrutinee becomes in WHNF, and invoke the
-\emph{Irrelevance} lemma if so.
+evaluated -- we branch on whether the scrutinee becomes in WHNF and appeal to Lemma~\ref{lem:irrev} if so.
 %
 % This case guarantees that the separation of rules for treating scrutinees is
 % consistent, in the sense that a well-typed case expression with a scrutinee not
@@ -3011,29 +3011,97 @@ evaluated -- we branch on whether the scrutinee becomes in WHNF, and invoke the
 %then $\ov{\Gamma, \Delta_i \vdash e_i : \sigma_i}$
 
 \subsection{Optimisations preserve linearity\label{sec:optimisations-preserve-types-meta}}
-
-One of the primary goals of the Linear Core type system is being suitable for
-intermediate representations of optimising compilers for lazy languages with
-linear types. In light of this goal, we prove that \emph{multiple optimising
-transformations} are type preserving in Linear Core, and thus preserve linearity.
+\todo[inline]{Check Commuting case-let in Fig.~\ref{fig:opttrans}!}
+A main goal of the Linear Core type system is 
+to serve as a typed intermediate representation for optimising
+compilers of lazy languages with linearity. In light of this,
+we show that multiple optimising transformations are type
+preserving in Linear Core (i.e.,~preserve linearity semantically).
 
 % The optimising transformations proved sound wrt Linear Core in this section
 % have been previously explained and motivated in
 % Section~\ref{sec:core-to-core-transformations}.
 % %
-Transformations are described by an arbitrary well-typed expression with a certain shape, on
-the left hand side (lhs) of the arrow $\Longrightarrow$, resulting in an expression on
-the right hand side (rhs) that we prove to be well-typed.
-%
-% For our proofs, we assume the lhs to be a well-typed expression and prove the
-% rhs is well-typed as well.
-%
-For each transformation, we describe the intuition behind the transformation
-preserving linearity in our system.
+%\{\overline{\rho\to e'}\}
+\begin{figure}[t]
 
-\todo[inline]{Aqui uma lista itemizada das transformações todas. As
-  provas todas para apendice.}
+  {\small
+  \[
+    \begin{array}{ll}
+   (\llet{\xD = e}{e'} )  \Longrightarrow \llet{\xD =       e}{e'[e/x]} &                    \mbox{Inlining}\\
+       (\lambda \x[\pi][\s].~e)~e'  \Longrightarrow e[e'/x]  &                \mbox{$\beta$-reduction}\\
+      (\ccase{(K~\ov{e})}{\z[\D][\s]~\{\overline{\rho_j\to e_j}, K~\ov{x} \to e_i, \overline{\rho_k\to e_k}\}} )\Longrightarrow  e_i\ov{[e/x]}[K~\ov{e}/z] &
+                                  \mbox{Case of known constr.}\\
+      (\ccase{(\ccase{e_c}{\z[\D]~\{\ov{\rho_{c_i}\to e_{c_i}}\}})}{\var[w][\irr{\D,\D'}][\s']~\{\ov{\rho_i\to e_i}\}})\\
+            \Longrightarrow 
+      \ccase{e_c}{\z[\D]~\{\ov{\rho_{c_i} \to \ccase{e_{c_i}}{w~\{\ov{\rho_i\to e_i}\}}}\}}
+      & \mbox{Case-of-case}\\
+      (\lambda \y[\pi].~\llet{\xD = e}{e'})
+      \Longrightarrow
+      \llet{\xD=e}{\lambda\y[\pi].~e'} & \mbox{Commuting let-$\lambda$}\\
+      ((\llet{v = e}{b})~a) \Longrightarrow \llet{v = e}{b~a} &\mbox{Commuting let-app.}\\
+      (\ccase{(\llet{v = e}{b})}{\{\overline{\rho\to e'}\}}) \Longrightarrow
+      \llet{v =  e}{\ccase{b}{\{\overline{\rho\to e'}\}}}
+                               &
+                                 \mbox{Commuting let-case}\\
+      (\ccase{e}{\{\overline{\rho_j\to e_j}, \rho \to E[e_1], \overline{\rho_k\to e_k}\}} ) \qquad (\mbox{with $x$ fresh}) \\
+     \Longrightarrow \llet{x = e_1}{\ccase{e}{\{\overline{\rho_j\to e_j}, \rho \to E[t], \overline{\rho_k\to e_k}\}} 
+                                                                        & \mbox{Commuting case-let}\\
+      (\llet{x = (\llet{v = e}{b})}{c}) \Longrightarrow \llet{v = e}{\llet{x = b}{c}}
+                                                                      & \mbox{Commuting let-let}\\
+      f \Longrightarrow \lambda x.(f~x) & \mbox{$\eta$-expansion}\\
+      \lambda x.(f~x) \Longrightarrow f & \mbox{$\eta$-reduction}\\
+      (\ccase{x}{z~\{\ov{\rho_i\to e_i}\}}) \Longrightarrow \ccase{x}{z~\{\ov{\rho_i\to  e_i[z/x]}\}}
+                                                                      & \mbox{Binder swap}\\
+      % (\ccase{x}{z~\{\ov{\rho_i\to e_i}\}} )\Longrightarrow \ccase{x}{z~\{\ov{\rho_i\to e_i[x/z]}\}}
+      %                                                                 & \mbox{Reverse binder swap}
+    \end{array}
+  \]}
+  \caption{Optimising transformations validated by Linear Core\label{fig:opttrans} (see Appendix~\ref{app:optimisations} for details)} 
+\end{figure}
 
+
+
+
+
+We describe Core-to-Core transformations as $e_1 \Longrightarrow e_2$,
+where $e_1$ is an arbitrary \emph{well-typed} expression
+matching a certain shape (or of a certain type), which is
+transformed into expression $e_2$. Validating a transformation
+entails showing that $e_2$ is well-typed. We often annotate the arrow
+with the name of the transformation when describing chains of such
+transformations.
+
+The list of transformations we have
+validated is given in Figure~\ref{fig:opttrans}.
+%
+The behaviour of most transformations can be inferred from its name:
+Inlining substitutes a let-bound expression in the let body; $\beta$-reduction
+and case of known constructor effectively perform evaluation of the given expression;
+case-of-case commutes cases in scrutinee position inside the outer case alternatives;
+let floating and  for let-bound expressions to be floated out of $\lambda$-abstractions;
+the four commuting conversions allow let-bound expressions to be commuted with other
+Core constructs; $\eta$-expansion and reduction apply the $\eta$-laws to terms of function type;
+finally, binder swap substitutes occurrences of a scrutinee variable for the
+case binder. While many of the transformations above are not obviously optimising,
+they are chained in the compiler pipeline to expose optimisation opportunities.
+
+
+% Transformations are described by an arbitrary well-typed expression with a certain shape, on
+% the left hand side (lhs) of the arrow $\Longrightarrow$, resulting in an expression on
+% the right hand side (rhs) that we prove to be well-typed.
+% %
+% % For our proofs, we assume the lhs to be a well-typed expression and prove the
+% % rhs is well-typed as well.
+% %
+% For each transformation, we describe the intuition behind the transformation
+% preserving linearity in our system.
+
+% \todo[inline]{Aqui uma lista itemizada das transformações todas. As
+%   provas todas para apendice.}
+
+
+%%% COMENTADO AQUI
 % \subsubsection{Inlining}
 
 % % To the best of our knowledge, there is no linear type system for which inlining
@@ -3069,107 +3137,116 @@ preserving linearity in our system.
 
 % \input{language-v4/proofs/optimizations/BinderSwap}
 
-\subsubsection{Reverse Binder Swap Considered Harmful\label{sec:reverse-binder-swap-considered-harmful}}
+\paragraph{Reverse Binder Swap\label{sec:reverse-binder-swap-considered-harmful}}
 
-The reverse binder swap transformation substitutes occurrences of the case
-binder $z$ in case alternatives by the scrutinee, when the scrutinee is a
+We now discuss an issue we have found with the so-called reverse binder swap
+transformation.
+%
+%
+Reverse binder swap is dual to the binder swap transformation,
+substituting occurrences of the case
+binder $z$ by the scrutinee in the special case when the scrutinee is a
 variable $x$.
-
-\ReverseBinderSwapTheorem
-
-\noindent This is exactly reverse from what the binder swap transformation
-does in hope of eliminating multiple uses of $x$ so as to inline it. However, by
+%
+% his is dual to what the binder swap transformation
+% does in hope of eliminating multiple uses of $x$ (allowing for inlining). 
+By
 using the scrutinee $x$ instead of the case binder, we might be able to float
 out expressions from the alternative using the case binder. For example, we
 might float an expensive computation involving $z$ out of the case alternative,
-where $z$ is out of scope but $x$ isn't:
-\[
-\begin{array}{l}
-\lambda x.~\lletrec{go~y = \ccase{x}{z~\{(a,b) \to \dots (expensive~z) \dots\} }}{\dots}\\
-\Longrightarrow_\textrm{Reverse binder swap}\\
-\lambda x.~\lletrec{go~y = \ccase{x}{z~\{(a,b) \to \dots (expensive~x) \dots\} }}{\dots}\\
-\Longrightarrow_\textrm{Float out}\\
-\lambda x.~\llet{t = expensive~x}{\lletrec{go~y = \ccase{x}{z~\{(a,b) \to \dots t \dots\} }}{\dots}}\\
-\end{array}
-\]
-If $go$ is a loop, by applying the reverse binder swap we now only compute
-$expensive~x$ once instead of in every loop iteration.
+where $z$ is now out of scope:
 
-Despite GHC applying the reverse binder swap transformation to core programs
-during Core-to-Core optimisation passes, this optimisation violates linearity
+{\small\[
+\begin{array}{l}
+(\lambda x.~\lletrec{go~y = \ccase{x}{z~\{(a,b) \to \ E[expensive~z] \} }}{\dots})
+\Longrightarrow_\textrm{Reverse binder swap}\\
+(\lambda x.~\lletrec{go~y = \ccase{x}{z~\{(a,b) \to E[expensive~x] \} }}{\dots})
+\Longrightarrow_\textrm{Commuting case-let}\\
+\lambda x.~\llet{t = \mathit{expensive}~x}{(\lletrec{go~y = \ccase{x}{z~\{(a,b) \to E[t] \} }}{\dots})}\\
+\end{array}
+\]}
+
+\noindent If $go$ is compiled into a loop, we only compute
+$\mathit{expensive}~x$ once instead of in every loop iteration.
+
+Despite GHC applying the reverse binder swap transformation 
+during its Core-to-Core optimisation passes, this optimisation actually \emph{breaks} linearity
 when considered as a transformation on Linear Core programs. In practice, the
-optimisation preserves linearity in Core when applied as part of the GHC
-transformation pipeline only due to the occurrence analyser being naive with
+optimisation preserves linearity when applied as part of the GHC
+pipeline due to the occurrence analyser being naive with
 regard to semantic linearity. Initially, it might seem as though an expression
 in which a variable $x$ occurs both in the case scrutinee and in the
-alternatives is linear, for example:
-\[
-\G; \xl \vdash \ccase{x}{\_ \to x} : \s
-\]
-The reasoning is done by branching on whether $x$ refers to an expression in
-WHNF or an unevaluated thunk.
-\begin{itemize}
-\item If $x$ refers to an unevaluated expression, then scrutinizing it results
+alternatives is linear (e.g.,~$\ccase{x}{\_ \to x}$):
+% \[
+% \G; \xl \vdash \ccase{x}{\_ \to x} : \s
+% \]
+% The reasoning is done by branching on whether $x$ refers to an expression in
+% WHNF or an unevaluated thunk.
+% \begin{itemize}
+% \item
+  If $x$ refers to an unevaluated expression, then scrutinizing it results
 in the expression bound by $x$ to be evaluated to WHNF. In a subsequent use of
 $x$ in the alternatives, $x$ refers to the evaluated scrutinee in WHNF, which
 must be consumed. Since $x$ is just another name (like the case binder) for the
 scrutinee in WHNF, we may use it instead of the case binder or pattern
 variables.
-\item If $x$ already refers to an expression evaluated to WHNF, then
+%
+On the other hand, if $x$ already refers to an expression evaluated to WHNF, then
 scrutinizing it in a case expression is a no-op, thus we may use it again (in
-mutual exclusion with the case binder and pattern variables)
-\end{itemize}
+mutual exclusion with the case binder and pattern variables).
+%\end{itemize}
 %
 % This idea would be encoded by a possible rule like $$\TypeCaseVar$$
 %
+
 Even though, on its own, it makes intuitive sense that this example indeed uses
 $x$ linearly, when considered as part of a complete type system, allowing this
-expression to be linear makes the system unsound.
-
-We recall that $\beta$-reduction reduces an application of a linear function
+expression to be linear makes the system \emph{unsound}.
+To see why this is the case, recall that $\beta$-reduction reduces an application of a linear function
 using call-by-name -- if we know the argument is used exactly once, a binding
 to share the result of computing the argument is unnecessary, so we instead
 substitute the argument expression for the linearly-bound variable in the
 $\lambda$-body directly.
 
-Consider the function application $$(\lambda x.~\ccase{x}{\_ \to x})~(use~y)$$
+Consider the function application $(\lambda x.~\ccase{x}{\_ \to x})~(use~y)$
 where $y$ is a free linear variable. Assuming $\lambda x.~\ccase{x}{\_ \to x}$
-is a linear function by the reasoning above, $\beta$-reduction transforms the
-application in $(\ccase{x}{\_ \to x})[use~y/x]$, i.e. $\ccase{use~y}{\_ \to
-use~y}$. Now, $y$ is a linear variable \emph{consumed} in the scrutinee of the case
-expression, yet it occurs in the body of the case alternative as well --
+is a linear function, $\beta$-reduction transforms the
+application into $\ccase{use~y}{\_ \to
+  use~y}$. Now, $y$ is a linear variable \emph{consumed} in the scrutinee of the case
+that also occurs in the case alternative --
 linearity is violated by using the linear resource $y$ twice.
-
-Essentially, Linear Core would be unsound, and even duplicate resources, if the
-above kind of expressions, where linear variable scrutinees occur in the
-alternatives body, were well-typed, because of its interaction with the
-call-by-name reduction of linear functions. In this sense, the reverse binder
+%
+% Essentially, Linear Core would be unsound, and even duplicate resources, if the
+% above kind of expressions, where linear variable scrutinees occur in the
+% alternatives body, were well-typed, because of its interaction with the
+% call-by-name reduction of linear functions.
+In this sense, the reverse binder
 swap is an optimisation that creates ill-typed expressions from well-typed
-ones, so it is deemed an invalid optimisation that doesn't preserve types in
+ones, so it is deemed an \emph{invalid} optimisation that does not preserve types in
 our system.
 
-The reverse binder swap is not a problem in the GHC simplifier because of the
+Reverse binder swap is not a problem in the GHC simplifier because of the
 weaker notion of linearity understood by occurrence analysis. Occurrence
 analysis is a static analysis pass which can be used to determine whether a
 lambda application can be $\beta$-reduced call-by-name, and $\ccase{x}{\_ \to
 x}$ is \emph{not} seen as using $x$ linearly by the analysis. Thus,
 $\beta$-reduction is done with call-by-need on such an expression. If the above
-example were reduced with call-by-need:
-\[
-\begin{array}{l}
-(\lambda x.~\ccase{x}{\_ \to x})~(use~y)
-\Longrightarrow_\textrm{CBNeed}
-\llet{x = use~y}{\ccase{y}{\_ \to y}}
-\end{array}
-\]
-Then the computation using $y$ would be let-bound, and $y$ used as a scrutinee
-variable, which is indeed an expression semantically linear in $x$.
+example were reduced with call-by-need
+% \[
+% \begin{array}{l}
+% (\lambda x.~\ccase{x}{\_ \to x})~(use~y)
+% \Longrightarrow_\textrm{CBNeed}
+% \llet{x = use~y}{\ccase{y}{\_ \to y}}
+% \end{array}
+% \]
+then the computation using $y$ would be let-bound, and $y$ used as a scrutinee
+variable, which is indeed semantically linear in $x$.
 
-Concluding, in being able to understand more programs as linear, our type
-system allows more expressions to be considered linear for $\beta$-reduction
-without a let-allocation, however, it makes reverse binder swap an invalid
-transformation since its output, when considered linear, might violate
-linearity when further optimised.
+% Concluding, in being able to understand more programs as linear, our type
+% system allows more expressions to be considered linear for $\beta$-reduction
+% without a let-allocation, however, it makes reverse binder swap an invalid
+% transformation since its output, when considered linear, might violate
+% linearity when further optimised.
 
 % (Link to ticket)
 % 
@@ -3683,7 +3760,7 @@ work to apply the ideas from Linear Core to the surface Haskell language.
 
 \input{language-v4/proofs/DeltaSubstitutionLemma}
 
-\section{Optimisations preserve linearity}
+\section{Optimisations preserve linearity}\label{app:optimisations}
 
 Proofs are given inline in Chapter~\ref{sec:optimisations-preserve-types-meta},
 with the exception of the proof that \emph{case-of-case} preserves types, which

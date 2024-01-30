@@ -13,7 +13,7 @@ If $\cdot; \cdot \vdash e : \sigma$ then $e$ is a value or there exists $e'$ suc
 }
 
 \newcommand{\WHNFConvSoundness}{
-\begin{restatable}[Irrelevance]{lemma}{irrelevancelemma}~
+\begin{restatable}[Irrelevance]{lemma}{irrelevancelemma}~\label{lem:irrev}
 If $\Gamma, \z[\irr{\D}]; \irr{\Delta}, \D' \vdash_{alt} \rho \to e :^z_{\irr{\D}} \sigma \Rrightarrow \vp$
 then $\Gamma, \z[\D^\dag]; \D^\dag, \D' \vdash_{alt} \rho \to e :^z_{\D^\dag} \sigma \Rightarrow \vp$, for \emph{any} $\D^\dag$
 \end{restatable}
