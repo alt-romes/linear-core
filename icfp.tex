@@ -3409,21 +3409,22 @@ variable, which is indeed semantically linear in $x$.
 %         types.
 % \end{itemize}
 % %
-Linear Haskell~\cite{cite:linearhaskell} is concerned with retrofitting
-linear types in Haskell but
-is not concerned with extending GHC's intermediate language(s),
+Linear Haskell~\cite{cite:linearhaskell} augments Haskell with 
+linear types. However, the development is
+not concerned with extending GHC's intermediate language(s),
 which presents its own challenges. 
 %
-Nonetheless, while the Linear Haskell work keeps Core unchanged, its
+Nonetheless, while Linear Haskell keeps GHC Core unchanged, its
 implementation in GHC does modify and extend Core with linearity/multiplicity
 annotations. Core's type system is unable to type \emph{semantic} linearity of
-programs (in contrast to \emph{syntactic} linearity), which results in Core
+programs in the sense elaborated in our work, which results in Core
 rejecting linear programs resulting from optimising transformations that
 leverage the non-strict semantics of Core.
 %
-Linear Core overcomes the limitations of Core's linear type system derived from
-Linear Haskell by understanding semantic linearity in the presence of laziness,
-and provably accepts multiple Core-to-Core passes. Linear Core, ultimately, can
+Our work overcomes the limitations of Core's linear type system derived from
+Linear Haskell by understanding linearity semantically, in the presence of laziness,
+and accepting multiple Core-to-Core passes.
+Linear Core can
 also be seen as a system that validates the programs written in Linear Haskell
 and are compiled by GHC, by guaranteeing (through typing) that linear resources
 are still used exactly once throughout the optimising transformations.
@@ -3433,15 +3434,15 @@ are still used exactly once throughout the optimising transformations.
 Linear Mini-Core~\cite{cite:minicore} is a specification of linear types in
 Core as they were being implemented in GHC, and doubles as the (unpublished)
 precursor to our work. Linear Mini-Core first observes the incapacity of
-Core's type system to accept linear programs after transformations, and first
+Core's type system to accept linear programs after transformations, and 
 introduces usage environments for let-bound variables with the same goal of
 Linear Core of specifying a linear type system for Core that accepts the
 optimising transformations.
 
-We draw from Linear Mini-Core's the rule for non-recursive let expressions and
-how let-bound variables are annotated with a usage environment, however, our
+We draw from Linear Mini-Core the rule for non-recursive let expressions and
+how let-bound variables are annotated with a usage environment. However, our
 work further explores the interaction of laziness with linearity in depth, and
-diverges in rules for typing other constructs, notably, case expressions and
+diverges significantly in rules for typing other constructs, notably, case expressions and
 case alternatives. Furthermore, unlike Mini-Core, we prove type safety of our
 system and that multiple optimising transformations, when applied to Linear
 Core programs, preserve linearity as understood by the system.
@@ -3465,18 +3466,16 @@ Core programs, preserve linearity as understood by the system.
 Core-to-Core transformations appear in many works across the research
 literature~\cite{cite:let-floating,peytonjones1997a,santos1995compilation,peytonjones2002secrets,baker-finch2004constructed,maurer2017compiling,Breitner2016_1000054251,sergey_vytiniotis_jones_breitner_2017},
 all designed in the context of a typed language (Core) which does not have
-linear types. However,
-~\cite{cite:let-floating,peytonjones1997a,cite:linearhaskell} observe that
+linear types. However, some works~\cite{cite:let-floating,peytonjones1997a,cite:linearhaskell} have observed that
 certain optimisations (in particular, let-floating and inlining) greatly
 benefit from linearity analysis and, in order to improve those transformation,
-linear-type-inspired systems were created specifically for the purpose of the
-transformation.
+special purpose linear-type-inspired systems were created and implemented.
 %
 By fully supporting linear types in Core, these optimising transformations
-could be informed by the language inherent linearity, and, consequently, avoid
-an ad-hoc or incomplete linear-type inference pass custom-built for
+could be informed by the language's intrinsic linearity, and, consequently, avoid
+an ad-hoc or incomplete linear type inference pass that is custom-built for
 optimisations. Additionally, the linearity information may potentially be used
-to the benefit of optimising transformations that currently don't take any
+to the benefit of optimising transformations that currently do not take 
 linearity into account.
 
 % \begin{itemize}
@@ -3508,7 +3507,7 @@ linearity into account.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Future Work\label{sec:future-work}}
 
-We highlight some avenues of further research. Briefly,
+We highlight some avenues of future work. Briefly,
 these include \emph{multiplicity coercions}, optimisations leveraging
 linearity, resource inference for usage environments, and ultimately using
 Linear Core in a mature optimising compiler with lazy evaluation and linear
@@ -3517,7 +3516,7 @@ types -- the Glasgow Haskell Compiler. Lastly, we discuss the
 generalization of Linear Core to the surface Haskell language.
 
 \paragraph{Multiplicity Coercions.}
-Linear Core doesn't have type equality coercions, a flagship feature of GHC
+Linear Core does not have type equality coercions, a flagship feature of GHC
 Core's type system.
 %
 Coercions %briefly explained in Section~\ref{sec:core},
@@ -3621,7 +3620,7 @@ A linearly typed Core that preserves linearity throughout the optimisation
 pipeline of GHC both validates the correctness of the compiler, which is
 already achieved to a great extent by preserving (non-linear) types, and
 informs optimisations, allowing the compiler to generate more performant programs.
-
+%
 Implementing Linear Core in GHC is a challenging endeavour, since we must account
 for all other Core features (e.g. strict constructor fields) and more
 optimisations. Despite our initiative in this
@@ -3633,9 +3632,9 @@ Linear types, despite their compile-time correctness guarantees regarding
 resource management, impose a burden on programmers in being a restrictive
 typing discipline (witnessed, e.g., by Linear
 Constraints~\cite{cite:linearconstraints}). Linear Core eases the restrictions
-of linear typing by being more flexible in understanding linearity for lazily
-evaluated languages such as Haskell. In this sense, it is an avenue of future
-work to apply the ideas from Linear Core to the surface Haskell language.
+of linear typing by being more flexible in understanding linearity for lazy
+languages. In this sense, it is an avenue of future
+work to apply the ideas from this work to the surface Haskell language.
 
 % \begin{itemize}
 % 
