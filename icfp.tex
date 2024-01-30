@@ -2754,90 +2754,85 @@ details required to fully typecheck linearity in a mature optimising compiler.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % {{{ Metatheory
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Metatheory\label{sec:main:metatheory}}
+\section{Metatheory of Linear Core\label{sec:main:metatheory}}
 
-The $\lambda^\pi_\D$ system is sound: well-typed programs in Linear Core do not
-get \emph{stuck}. Besides type safety ($\S$~\ref{sec:type-safety-meta}), we
-prove multiple optimising transformations preserve linearity
-($\S$~\ref{sec:optimisations-preserve-types-meta}), and prove an auxiliary
-result regarding proof irrelevant resources, stating that a case alternative
-well-typed in a proof irrelevant context is also well-typed if proof irrelevant
-resources are substituted by an arbitrary environment of relevant resources.
+The $\lambda^\pi_\D$ type system is sound: well-typed programs in Linear Core do not
+get \emph{stuck}. Besides type safety, we
+prove that multiple optimising transformations used in GHC preserve
+linearity in the sense of being well-typed in our system.
 %
-Additionally, we state our assumptions that outline an isomorphism between
-using a linear variable $\xl$ and a $\D$-variable $\xD$ that consumes existing
-resources $\D$, for any $\D$.
+% Additionally, we state our assumptions that outline an isomorphism between
+% using a linear variable $\xl$ and a $\D$-variable $\xD$ that consumes existing
+% resources $\D$, for any $\D$.
 
-\subsection{Assumptions}
+
 
 \renewcommand{\DeltaLinearRelationLemma}{
-\begin{lemma}[$\D \Rightarrow 1$]
-Any $\Delta$-variable with a fully-irrelevant usage environment can be made a linear variable as long as its irrelevant environment is dropped from the linear environment (and the unrestricted env. is updated accordingly).\\
+\begin{lemma}[$\Delta$-bound to Linear]
+% Any $\Delta$-variable with a fully-irrelevant usage environment can be made a linear variable as long as its irrelevant environment is dropped from the linear environment (and the unrestricted env. is updated accordingly).\\
 If $\G,\x[\irr{\D}]; \irr{\D},\D' \vdash e : \vp$
 then $\G[x/\irr{\D}]; \D',\xl \vdash e :\vp$.
 \end{lemma}
 }
 
 \renewcommand{\LinearDeltaRelationLemma}{
-\begin{lemma}[$1 \Rightarrow \D$]
-A linear variable can be moved to the unrestricted context as a $\D$-var with any usage environment $\D$ by introducing $\D$ in the linear resources (and the unrestricted env. is updated accordingly).\\
+  \begin{lemma}[Linear to $\Delta$-bound]
+\\
 If $\G; \D',\xl \vdash e :\vp$
 then $\G[\D/x],\xD; \D,\D' \vdash e : \vp$.
 \end{lemma}
 }
 
 \renewcommand{\DeltaUnrestrictedRelationLemma}{
-\begin{lemma}[$x{:}_\omega\sigma = x{:}_{\cdot}\sigma$]
-An unrestricted variable is equivalent to a $\D$-var with an empty usage environment.\\
+\begin{lemma}[Unrestricted and $\Delta$-bound]
+%An unrestricted variable is equivalent to a $\D$-var with an empty usage environment.\\
 $\G,\xo; \D \vdash e : \vp$ iff $\G,\x[\cdot]; \D \vdash e : \vp$
 \end{lemma}
 }
 
-We use two main assumptions in our proofs, which are dual.
-%
-First, a program well-typed with a linear variable ($\xl$) is equivalently
-well-typed if that same linear variable were instead $\D$-bound ($\xD$) with
-usage environment $\D$, $\D$ were available in the linear context instead of
-the linear variable.
-% , and occurrences of $x$ were substituted by $\D$ in the
-% usage environments of other $\D$-vars in $\G$.
-%
-% First, we state that a linear variable $\xl$ can be replaced by a $\D$-bound
-% variable as long as the context
-%
+\paragraph{$\Delta$-bound variables} Our development relies on the following characterization of $\D$-bound
+variables:
+A well-typed program with a linear variable ($\xl$) is equivalently
+well-typed if the linear variable were instead $\D$-bound ($\xD$) with
+usage environment $\D$, with $\D$ available in the linear context instead of
+the linear variable (and the unrestricted context updated accordingly).
 \LinearDeltaRelationLemma
-%
-\noindent Second, a program well-typed with resources $\D$ and $\D$-bound
-variable ($\xD$) is equivalently well-typed, as long as $\D$ is consumed
-through the use of $x$, if $x$ is moved to the linear context, resources $\D$
-are removed from the linear context, and occurrences of $\D$ whole in usage
-environments are substituted by $x$ (occurrences of fragments of $\D$ in usage
-environments are unimportant since $\D$ was consumed whole by $x$, not by any
-of the fragment-using $\D$-vars).
+
+\noindent Dually, any $\Delta$-bound variable with an irrelevant usage
+environment can be made into a linear variable as long as its
+(irrelevant) environment is dropped from the linear context.
+
+% Dually, a well-typed program with resources $\D$ and $\D$-bound
+% variable ($\xD$) is equivalently well-typed, as long as $\D$ is consumed
+% through the use of $x$, if $x$ is moved to the linear context, resources $\D$
+% are removed from the linear context, and occurrences of $\D$ whole in usage
+% environments are substituted by $x$ (occurrences of fragments of $\D$ in usage
+% environments are unimportant since $\D$ was consumed whole by $x$, not by any
+% of the fragment-using $\D$-vars).
 
 \DeltaLinearRelationLemma
 
 % Intuitively, a linear variable 
 
-We additionally state that unrestricted resources are equivalent to $\D$-bound
-variables with an empty ($\cdot$) usage environment:
+\noindent Finally, unrestricted resources are equivalent to $\D$-bound
+variables with an empty ($\cdot$) usage environment.
 
 \DeltaUnrestrictedRelationLemma
 
-\subsection{Irrelevance}
-
-As discussed above, proof irrelevant resources are resources that can only be
-consumed indirectly, and are used to type case expressions whose scrutinee is
-not in WHNF, essentially encoding that the scrutinee resources must be consumed
-through the case binder or the linear pattern-bound variables.
+\paragraph{Irrelevance}
 %
-As a case expression is evaluated, the scrutinee will eventually be in WHNF,
+As discussed, proof irrelevant resources can only be consumed
+indirectly, essentially encoding that the (non-WHNF) case scrutinee
+resources must be consumed through the case binder or the linear
+pattern-bound variables.
+%
+As a case expression is evaluated, the scrutinee will eventually
+reduce to WHNF,
 which must then be typed with rule $Case_{\textrm{WHNF}}$.
 %
-Crucially, these rules must ``work together'' in the system, in the sense that
+Crucially, the two case rules must be in harmony in the system, in the sense that
 case expressions typed using the $Case_{\textrm{Not WHNF}}$ rule must also be
-well-typed after the scrutinee is evaluated to WHNF, which is then typed using
-the $Case_{\textrm{WHNF}}$ rule.
+well-typed by the $Case_{\textrm{WHNF}}$ once the scrutinee is evaluated to WHNF.
 
 % The type preservation theorem states that a well-typed expression
 % remains well-typed in the presence of evaluation. Specifically, when the case
@@ -2858,11 +2853,11 @@ the $Case_{\textrm{WHNF}}$ rule.
 \WHNFConvSoundness
 
 The \emph{Irrelevance} lemma witnesses the soundness of typing a
-case alternative with proof irrelevant resources in a certain context with respect to
-typing the same expression with arbitrary resources (we note, however, typing
-an alternative with proof irrelevant resources is not complete wrt using
+case alternative with proof irrelevant resources with respect to
+typing the same expression with arbitrary resources. However, typing
+a case alternative with proof irrelevant resources is not complete wrt using
 arbitrary resources -- a counter example needs only to use a resource
-directly).
+directly.
 
 % \noindent Intuitively, the lemma holds since proof irrelevant resources can
 % only be used through the case binder or pattern-bound variables. If we

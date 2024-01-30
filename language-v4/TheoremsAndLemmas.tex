@@ -7,15 +7,15 @@ If $\Gamma; \Delta \vdash e : \sigma$ and $e \longrightarrow e'$ then $\Gamma;
 
 \newcommand{\ProgressTheorem}{
 \begin{restatable}[Progress]{theorem}{progressthm}
-Evaluation of a well-typed term does not block.\\
+%Evaluation of a well-typed term does not block.\\
 If $\cdot; \cdot \vdash e : \sigma$ then $e$ is a value or there exists $e'$ such that $e \longrightarrow e'$.
 \end{restatable}
 }
 
 \newcommand{\WHNFConvSoundness}{
-\begin{restatable}[Irrelevance]{lemma}{irrelevancelemma}~\\
+\begin{restatable}[Irrelevance]{lemma}{irrelevancelemma}~
 If $\Gamma, \z[\irr{\D}]; \irr{\Delta}, \D' \vdash_{alt} \rho \to e :^z_{\irr{\D}} \sigma \Rrightarrow \vp$
-then $\Gamma, \z[\D^\dag]; \D^\dag, \D' \vdash_{alt} \rho \to e :^z_{\D^\dag} \sigma \Rightarrow \vp$,\\ for \emph{any} $\D^\dag$
+then $\Gamma, \z[\D^\dag]; \D^\dag, \D' \vdash_{alt} \rho \to e :^z_{\D^\dag} \sigma \Rightarrow \vp$, for \emph{any} $\D^\dag$
 \end{restatable}
 }
 
