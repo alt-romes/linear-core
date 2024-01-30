@@ -39,7 +39,7 @@ We prove let floating transformations \emph{full-laziness} and three
 \LocalTransformationsTheorem
 
 \begin{description}
-\item[1.] First local-transformation
+\item[1.] Commuting Let-app
 \begin{proof}~
 \begin{tabbing}
     (1) $\G; \D, \D', \D'' \vdash (\llet{\xD = e_1}{e_2})~e_3 : \vp$\\
@@ -52,7 +52,7 @@ We prove let floating transformations \emph{full-laziness} and three
 \end{tabbing}
 \end{proof}
 
-\item[2.] Second local-transformation
+\item[2.] Commuting let-case
 \begin{proof}~
 \begin{tabbing}
     (1) $\G; \D, \D', \D'' \vdash \ccase{\llet{\xD = e_1}{e_2}}{\z[\D,\D'][\s']~\{\ov{\rho \to e_3}\}} : \vp$\\
@@ -70,7 +70,7 @@ We prove let floating transformations \emph{full-laziness} and three
 \end{tabbing}
 \end{proof}
 
-\item[3.] Third local-transformation
+\item[3.] Commuting let-let
 \begin{proof}~
 \begin{tabbing}
     (1) $\G, \D;\D',\D'' \vdash \llet{\x[\D,\D'][\s'] = (\llet{\yD = e_1}{e_2})}{e_3} : \vp$\\

@@ -52,7 +52,7 @@ $\G,\xo; \D \vdash e : \s$ iff $\G,\x[\cdot]; \D \vdash e : \s$
 }
 
 \newcommand{\LinearSubstitutionAltsLemma}{
-    \begin{restatable}[Substitution of linear variables on case alternatives preserves typing]{sublemma}{linearsubstaltslemma}~\\
+    \begin{restatable}[Substitution of linear variables on case alternatives preserves typing]{lemma}{linearsubstaltslemma}~\\
     If $\judg[\G][\D,\xl]{\rho\to e}{\s \Rightarrow \vp}[alt][\D_s][z]$ and
     $\judg[\G][\D']{e'}{\s}$ and
     $\D_s \subseteq \D,x$ \\then
@@ -68,7 +68,7 @@ If $\Gamma, x{:}_\omega\sigma; \Delta \vdash e : \varphi$ and $\Gamma; \cdot \vd
 
 \newcommand{\UnrestrictedSubstitutionAltsLemma}{
 \begin{restatable}[Substitution of unrestricted variables on case alternatives
-    preserves typing]{sublemma}{unrestrictedsubstaltslemma}
+    preserves typing]{lemma}{unrestrictedsubstaltslemma}
 If $\G, \xo; \D \vdash_{alt} \rho \to e :^z_{\Delta_s} \s' \Rightarrow \vp$ and $\G; \D \vdash e' : \s$
     then $\G; \D \vdash_{alt} \rho \to e[e'/x] :^z_{\Delta_s} \s' \Rightarrow \vp$
 \end{restatable}
@@ -89,7 +89,7 @@ If $\G,\xD; \D, \D' \vdash e : \varphi$ and $\G; \D \vdash e' : \sigma$ then $\G
 
 \newcommand{\DeltaSubstitutionAltsLemma}{
 \begin{restatable}[Substitution of $\Delta$-bound variables on case alternatives
-    preserves typing]{sublemma}{deltasubstaltslemma}~\\
+    preserves typing]{lemma}{deltasubstaltslemma}~\\
 If $\G,\xD; \D,\D' \vdash_{alt} \rho \to e :^z_{\Delta_s} \s' \Rightarrow \vp$ and
     $\G; \D \vdash e' : \s$ and $\Delta_s \subseteq (\Delta,\Delta')$ then $\G; \D, \D' \vdash_{alt} \rho \to e[e'/x] :^z_{\Delta_s} \s' \Rightarrow \vp$
 \end{restatable}
@@ -149,8 +149,8 @@ HELP: How to define?
 }
 
 \newcommand{\LocalTransformationsTheorem}{
-\begin{theorem}[Local-transformations preserve types]
-There are three lemmas for local transformations:
+\begin{theorem}[commuting lets preserve types]
+%There are three lemmas for local transformations:
   \[
   \begin{array}{llcl}
   1. & \G; \D \vdash (\llet{v = e}{b})~a : \vp & \Rightarrow & \G; \D \vdash \llet{v = e}{b~a} : \vp\\
