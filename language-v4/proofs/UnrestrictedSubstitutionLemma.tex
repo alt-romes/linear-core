@@ -2,7 +2,16 @@
 % ROMES: This one is pretty much complete, there are no pending todos. If you
 % spot a mistake let me know.
 
-\unrestrictedsubstlemma*
+The substitution lemma for unrestricted variables follows the usual
+formulation, with the added restriction (common to linear type systems) that
+the expression $e'$ that is going to substitute the unrestricted variable $x$
+is typed on an empty linear environment:
+%
+\UnrestrictedSubstitutionLemma
+%
+
+
+%\unrestrictedsubstlemma*
 
 \begin{proof}
 By structural induction on the first derivation.
@@ -161,7 +170,10 @@ By structural induction on the first derivation.
 
 \end{proof}
 
-\unrestrictedsubstaltslemma*
+\noindent Similarly, we also prove the substitution of unrestricted variables preserves types on an alternative case expression:
+%
+\UnrestrictedSubstitutionAltsLemma
+%\unrestrictedsubstaltslemma*
 
 \begin{proof}
 By structural induction on the $alt$ judgment.

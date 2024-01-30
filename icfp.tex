@@ -1,4 +1,4 @@
-\documentclass[acmsmall,review]{acmart}
+\documentclass[acmsmall,review,anonymous]{acmart}
 \PassOptionsToPackage{dvipsnames}{xcolor}
 \usepackage{boldline}
 \usepackage{xcolor}
@@ -19,12 +19,12 @@
 \usepackage{todonotes}
 \usepackage[justification=centering]{subfig}
 
-\newtheorem{theorem}{Theorem}
-\newtheorem{proposition}[theorem]{Proposition}
+%\newtheorem{theorem}{Theorem}
+%\newtheorem{proposition}[theorem]{Proposition}
 % \newtheorem{lemma}[theorem]{Lemma}%[theorem]
-\newtheorem{lemma}{Lemma}%[theorem]
-\newtheorem{sublemma}{Lemma}[lemma]
-\newtheorem{assumption}{Assumption}
+%\newtheorem{lemma}{Lemma}%[theorem]
+%\newtheorem{sublemma}{Lemma}[lemma]
+%\newtheorem{assumption}{Assumption}
 
 %%%%%%%%%%%%%%  Color-related things   %%%%%%%%%%%%%%
 
@@ -148,6 +148,7 @@
 % CHECK: https://www.acm.org/binaries/content/assets/publications/taps/latex-best_practices-06-may-2020.pdf
 
 % \date{ }
+
 
 
 \begin{document}
@@ -714,7 +715,7 @@ This example uses \lstinline{x} directly in one
 branch and the let-bound \lstinline{y} in the other. Semantically, this program is linear because
 the linear resource \lstinline{x} ends up is used exactly once in both case
 alternatives, directly in the \lstinline{True} branch or via the
-let-bound \lstlinline{y} in the \lstinline{False} branch.
+let-bound \lstinline{y} in the \lstinline{False} branch.
 
 Shifting our focus from not using a let binding to using it
 more than once.
@@ -2461,8 +2462,8 @@ from desugaring and after each optimising transformation.
 %
 This implementation further substantiates our claim that Linear Core is
 suitable for the intermediate language of an optimising compiler.
-\todo[inline]{Tem de ser anonimizado, provavelmente alterando a bib
-  entry para omitir autores e o proprio link}
+%\todo[inline]{Tem de ser anonimizado, provavelmente alterando a bib
+  %entry para omitir autores e o proprio link}
 The GHC Linear Core plugin~\cite{cite:linear-core-plugin} implements a
 typechecker for Linear Core: given a Core program, our plugin typechecks the
 linearity of all expressions bound in that program, failing if a linear
@@ -2778,7 +2779,6 @@ then $\G[x/\irr{\D}]; \D',\xl \vdash e :\vp$.
 
 \renewcommand{\LinearDeltaRelationLemma}{
   \begin{lemma}[Linear to $\Delta$-bound]
-\\
 If $\G; \D',\xl \vdash e :\vp$
 then $\G[\D/x],\xD; \D,\D' \vdash e : \vp$.
 \end{lemma}
@@ -3045,7 +3045,7 @@ preserving in Linear Core (i.e.,~preserve linearity semantically).
                                &
                                  \mbox{Commuting let-case}\\
       (\ccase{e}{\{\overline{\rho_j\to e_j}, \rho \to E[e_1], \overline{\rho_k\to e_k}\}} ) \qquad (\mbox{with $x$ fresh}) \\
-     \Longrightarrow \llet{x = e_1}{\ccase{e}{\{\overline{\rho_j\to e_j}, \rho \to E[t], \overline{\rho_k\to e_k}\}} 
+     \Longrightarrow \llet{x = e_1}{\ccase{e}{\{\overline{\rho_j\to e_j}, \rho \to E[t], \overline{\rho_k\to e_k}\}}} 
                                                                         & \mbox{Commuting case-let}\\
       (\llet{x = (\llet{v = e}{b})}{c}) \Longrightarrow \llet{v = e}{\llet{x = b}{c}}
                                                                       & \mbox{Commuting let-let}\\
@@ -3729,7 +3729,7 @@ work to apply the ideas from this work to the surface Haskell language.
 % }}}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\bibliographystyle{plainyr}
+\bibliographystyle{ACM-Reference-Format}
 \bibliography{references}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -3739,18 +3739,6 @@ work to apply the ideas from this work to the surface Haskell language.
 
 \section{Type Safety Proofs}
 
-\subsection{Type Preservation\label{sec:proof:type-preservation}}
-
-\input{language-v4/proofs/TypePreservationTheorem}
-
-\subsection{Progress\label{sec:proof:progress}}
-
-\input{language-v4/proofs/ProgressTheorem}
-
-\subsection{Irrelevance\label{sec:proof:irrelevance}}
-
-\input{language-v4/proofs/WHNFConvSoundness}
-
 \subsection{Substitution Lemmas\label{sec:proof:substitution-lemmas}}
 
 \input{language-v4/proofs/LinearSubstitutionLemma}
@@ -3759,15 +3747,72 @@ work to apply the ideas from this work to the surface Haskell language.
 
 \input{language-v4/proofs/DeltaSubstitutionLemma}
 
+\subsection{Irrelevance\label{sec:proof:irrelevance}}
+
+\input{language-v4/proofs/WHNFConvSoundness}
+
+\subsection{Type Preservation\label{sec:proof:type-preservation}}
+
+\input{language-v4/proofs/TypePreservationTheorem}
+
+\subsection{Progress\label{sec:proof:progress}}
+
+\input{language-v4/proofs/ProgressTheorem}
+
+
+
+
+
 \section{Optimisations preserve linearity}\label{app:optimisations}
 
-Proofs are given inline in Chapter~\ref{sec:optimisations-preserve-types-meta},
-with the exception of the proof that \emph{case-of-case} preserves types, which
-is lengthier than the others.
+\subsection{Inlining}
+\input{language-v4/proofs/optimizations/Inlining}
+
+\subsection{\texorpdfstring{$\beta$}{Beta}-reduction}
+
+\input{language-v4/proofs/optimizations/BetaReduction}
+
+\subsection{Case of known constructor}
+
+\input{language-v4/proofs/optimizations/CaseOfKnownConstructor}
 
 \subsection{Case of Case\label{sec:proof:caseofcase}}
 
+The case of case transformation applies to case expressions whose scrutinee is
+another case expression, and returns the innermost case expression transformed by repeating
+the outermost case expression in each alternative of the innermost case,
+scrutinizing the original alternative body.
+
+Intuitively, since the scrutinee of the outermost case is not in WHNF, no
+resources from it can directly occur in the outermost alternatives. By moving
+the outermost alternatives inwards with a different scrutinee, the alternatives
+remain well-typed because they are typed using either the case binder or the
+pattern bound variables, which, by the \emph{Irrelevance} lemma, makes it
+well-typed for any scrutinee consuming arbitrary resources.
+
 \input{language-v4/proofs/optimizations/CaseOfCase}
+
+\subsection{Commuting let}
+
+\input{language-v4/proofs/optimizations/LetFloating}
+
+\subsection{\texorpdfstring{$\eta$}{Eta}-conversions}
+
+\input{language-v4/proofs/optimizations/EtaConvs}
+
+\subsection{Binder Swap}
+
+The binder swap transformation applies to case expressions whose scrutinee is a
+single variable $x$, and it substitutes occurrences of $x$ in the case
+alternatives for the case binder $z$. If $x$ is a linear resource, $x$ cannot
+occur in the case alternatives (as we conservatively consider variables are not
+in WHNF), so the substitution preserves types vacuously. Otherwise, $x$ can be
+freely substituted by $z$, since $z$ is also an unrestricted resource (it's
+usage environment is empty because $x$ is unrestricted).
+
+\input{language-v4/proofs/optimizations/BinderSwap}
+
+
 
 % }}}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

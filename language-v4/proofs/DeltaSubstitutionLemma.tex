@@ -1,5 +1,25 @@
 
-\deltasubstlemma*
+Finally, we introduce the lemma stating that substitution of $\D$-bound
+variables by expressions of the same type preserves the type of the original
+expression.
+%
+What distinguishes this lemma from traditional substitution lemmas is that the
+usage environment $\D$ of the variable $x$ being substituted by expression $e'$
+must match exactly the typing environment $\D$ of $e'$ and the
+environment of the original expression doesn't change with the substitution:
+%
+\DeltaSubstitutionLemma
+%
+\noindent Intuitively, if $x$ is well-typed with $\D$ in $e$, substituting $x$
+by an expression $e'$ which is typed in the same environment $\D$ allows the
+distribution of resources $\D,\D'$ used to type $e$ across sub-derivations to remain
+unchanged. To prove the theorems, we don't need a ``stronger'' substitution of
+$\D$-vars lemma (allowing arbitrary resources $\D''$ to type $e'$, as in other
+substitution lemmas), as we only ever substitute $\D$-variables by expressions
+whose typing environment matches the variables usage environment. However, it
+is not obvious whether such a lemma is possible to prove for $\D$-variables
+(e.g. let $\G;\D \vdash e :\s$ and $\G; \D' \vdash \llet{x = e'}{x}$, if we
+substitute $e$ for $x$ the resources $\D'$ are no longer consumed).
 
 \begin{proof}
 By structural induction on the first derivation.
@@ -243,8 +263,15 @@ By structural induction on the first derivation.
 
 \end{proof}
 
+The $\D$-substitution lemma on case alternatives reflects again that the typing
+environment of the expression substitution the variable must match its usage
+environment. We recall that $\D_s \subseteq \D,\D'$ states that the annotated
+environment is always contained in the typing environment, which is true of all
+occurrences of this judgement. An alternative formulation of this lemma could
+instead explicitly list $\D_s$ as part of the typing environment for the same
+effect:
 
-\deltasubstaltslemma*
+\DeltaSubstitutionAltsLemma
 
 \begin{proof}
 By structural induction on the $alt$ judgment.

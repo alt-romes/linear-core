@@ -1,4 +1,16 @@
-\linearsubstlemma*
+%\linearsubstlemma*
+
+The linear substitution lemma states that a well-typed expression $e$ with a
+linear variable $x$ of type $\s$ remains well-typed if
+occurrences of $x$ in the $e$ are replaced by an expression $e'$ of the same
+type $\s$, and occurrences of $x$ in the linear context and in usage
+environments of $\D$-bound variables are replaced by the linear context $\D'$
+used to type $e'$:
+\LinearSubstitutionLemma
+
+\noindent Where $\G[\D'/x]$ substitutes all occurrences of $x$ in the usage
+environments of $\D$-variables in $\G$ by the linear variables in $\D'$.
+% ($x$ couldn't appear anywhere besides usage environments of $\D$-bound variables, since $x$ is linear).
 
 % TODO: Short paragraph about the proof for case alternatives sublemma for
 % Alt_0: It's hard because one must consider two different subcases, one in
@@ -207,7 +219,7 @@ By structural induction on the first derivation.
   Subcase $x$ occurs in $\ov{e''}$\\
     (2) $\judg[\G][\D,\D'',\xl]{\ccase{e}{\z[\irr{\D}][\s']~\{\ov{\rho\to e''}\}}}{\vp}$\\
     (3) $e$ is definitely not in WHNF\\
-    (4) $\judg[\G][\D]{e}{\s'}$\`by inv.\X1\
+    (4) $\judg[\G][\D]{e}{\s'}$\`by inv.\\
     (5) $\ov{\judg[\G,\zr{\irr{\D}}{\s'}][\irr{\D},\D'',\xl]{\rho\to e''}{\s' \Rrightarrow \vp}[alt][\irr{\D}][z]}$\`by inv.\\
     (6) $e[e'/x] = e$\` by $x$ does not occur in $e$\\
     (7) $\ov{\judg[\subst{\G}{\D'}{x},\zr{\irr{\D}}{\s'}][\irr{\D},\D'',\D']{\rho\to e''[e'/x]}{\s' \Rrightarrow \vp}[alt][\irr{\D}][z]}$\`by lin. subst. on alts\\
@@ -224,7 +236,20 @@ By structural induction on the first derivation.
 \end{description}
 \end{proof}
 
-\linearsubstaltslemma*
+The linear substitution lemma extends to case alternatives as well.
+The lemma for substitution of linear variables in case alternatives is similar
+to the linear substitution lemma, applied to the case alternative
+judgement.
+%
+%\linearsubstaltslemma*
+\LinearSubstitutionAltsLemma
+%
+\noindent We further require that the environment annotated in the case
+alternative judgement, $\D_s$, is a subset of the environment used to type the
+whole alternative $\D_s \subseteq \D$. In all occurrences of the alternative
+judgement (in $Case_{\textrm{WHNF}}$ and $Case_{\textrm{Not WHNF}}$), the
+environment annotating the alternative judgement is \emph{always} a subset of
+the alternative environment.
 
 \begin{proof}
 By structural induction on the $alt$ judgment.
