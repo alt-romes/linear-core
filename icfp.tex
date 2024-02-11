@@ -2770,7 +2770,7 @@ linearity in the sense of being well-typed in our system.
 
 
 \renewcommand{\DeltaLinearRelationLemma}{
-\begin{lemma}[$\Delta$-bound to Linear]
+\begin{lemma}[$\Delta$-bound to Linear]\label{lem:deltaone}
 % Any $\Delta$-variable with a fully-irrelevant usage environment can be made a linear variable as long as its irrelevant environment is dropped from the linear environment (and the unrestricted env. is updated accordingly).\\
 If $\G,\x[\irr{\D}]; \irr{\D},\D' \vdash e : \vp$
 then $\G[x/\irr{\D}]; \D',\xl \vdash e :\vp$.
@@ -2778,14 +2778,14 @@ then $\G[x/\irr{\D}]; \D',\xl \vdash e :\vp$.
 }
 
 \renewcommand{\LinearDeltaRelationLemma}{
-  \begin{lemma}[Linear to $\Delta$-bound]
+  \begin{lemma}[Linear to $\Delta$-bound]\label{lem:onedelta}
 If $\G; \D',\xl \vdash e :\vp$
 then $\G[\D/x],\xD; \D,\D' \vdash e : \vp$.
 \end{lemma}
 }
 
 \renewcommand{\DeltaUnrestrictedRelationLemma}{
-\begin{lemma}[Unrestricted and $\Delta$-bound]
+\begin{lemma}[Unrestricted and $\Delta$-bound]\label{lem:undelta}
 %An unrestricted variable is equivalent to a $\D$-var with an empty usage environment.\\
 $\G,\xo; \D \vdash e : \vp$ iff $\G,\x[\cdot]; \D \vdash e : \vp$
 \end{lemma}
