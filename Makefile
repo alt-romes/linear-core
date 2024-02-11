@@ -1,6 +1,6 @@
 DOCNAME=report
 
-all: $(DOCNAME).pdf
+all: $(DOCNAME).pdf icfp.pdf
 icfp: icfp.pdf
 
 .PHONY: clean final icfp

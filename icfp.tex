@@ -198,32 +198,26 @@ to existing type systems by enforcing that certain \emph{resources} (e.g.~a
 file handle) must be used \emph{exactly once}.
 %
 In programming languages with a linear type system, not using certain resources
-or using them twice is flagged as a type error. Linear types can thus be used
-to, for instance, statically guarantee that socket descriptors are closed or
-heap-allocated memory is freed, exactly once (leaks and double-frees become
-type errors), or guarantee channel-based communication protocols are
-deadlock-free~\cite{10.1007/978-3-642-15375-4_16},
+or using them twice is flagged as a type error. For instance, linear types can
+statically enforce correct usage of file or socket descriptors, or
+that heap-allocated memory is freed exactly once (leaks and double-frees become
+type errors), or even guarantee deadlock freedom in channel-based communication
+protocols~\cite{10.1007/978-3-642-15375-4_16},
 % implement safe
 % high-performance language interoperability~\cite{}, 
 %guarantee that quantum entangled states are not duplicated~\cite{}
 among other correctness properties~\cite{10.1145/3373718.3394765,10.1145/3527313,cite:linearhaskell}.
 % handle mutable state safely~\cite{}
 %
-For instance, consider the following program in which allocated memory is freed twice.
+The following program with a runtime error (allocated memory is freed twice) is
+accepted by a C-like type system, however, under the lens of a linear type
+system, if $p$ is deemed to be a linear resource created by the call to
+\texttt{malloc}, we would instead reject it:
 % We know this to be the dreaded double-free error which will crash the program at runtime.
-Regardless of the \emph{double-free} error, a C-like type system will
-accept such a program:
 % \centering
 \begin{code}
 let p = malloc(4); in free(p); free(p);
 \end{code}
-Under the lens of a linear type system, if $p$ is deemed to be a
-linear resource created by the call to \texttt{malloc}, it
-must be used \emph{exactly once}.  However, the program above uses $p$ twice,
-in the two calls to \texttt{free} and so fails to type-check.
-%
-In this sense, linear typing
-effectively ensures the program does not compile with a double-free error.
 
 Despite their promise and extensive presence in research
 literature~\cite{Wadler1990LinearTC,CERVESATO2000133,10.1093/logcom/2.3.297},
@@ -236,7 +230,7 @@ type systems. Among them are Idris~2~\cite{brady:LIPIcs.ECOOP.2021.9},
 % a linearly and dependently typed language based on Quantitative Type Theory,
 Rust~\cite{10.1145/2692956.2663188}, a language whose
 ownership types build on linear types to guarantee memory safety
-without garbage collection or reference counting, and, more recently,
+without garbage collection, and, more recently,
 Haskell~\cite{cite:linearhaskell}, a pure, functional, and
 \emph{lazy} general purpose programming language.
 %
@@ -248,20 +242,24 @@ Haskell~\cite{cite:linearhaskell}, a pure, functional, and
 %
 
 However, linearity in Haskell stands out from linearity in other
-languages given that linear types permeate Haskell down to (its) Core,
-the intermediate language into which Haskell is translated. Core is a
-minimal, explicitly typed, functional language, to which multiple
-Core-to-Core optimising transformations are applied during
-compilation. Due to Core's minimal design, typechecking Core programs
-is very efficient and doing so serves as a sanity check to the
-correction of the source transformations. If the resulting optimised
-Core program fails to typecheck, the optimising transformations are
-very likely to have introduced an error in the resulting program.
+languages because linear types permeate Haskell down to (its) Core, the
+intermediate language into which Haskell is translated by the Glasgow Haskell Compiler (GHC).
+%
+Core is a minimal, explicitly typed, functional language to which multiple
+Core-to-Core optimising transformations are applied during compilation.
+%
+Typechecking Core serves as a sanity check to the correction of source
+transformations, since unsound ones will likely introduce ill-typed
+expressions, making them easy to spot.
+%
+% If a Core program fails to typecheck, the
+% optimising transformations are very likely to have introduced an error in the
+% resulting program.
 %
 
-Both Haskell and its intermediate language Core are \emph{lazily}
-        evaluated, i.e., expressions in Haskell are only evaluated when needed,
-        (unlike Rust, which is \emph{eagerly} evaluated).
+Furthermore, both Haskell and its intermediate language Core are \emph{lazily}
+        evaluated -- expressions in Haskell are only evaluated when needed
+        (unlike, e.g., Rust, which is \emph{eagerly} evaluated).
         %
         % Laziness allows an optimising compiler to aggressively transform the source
         % program without changing its semantics and, indeed, the Glasgow Haskell
@@ -328,10 +326,10 @@ such as inlining and $\beta$-reduction, to produce more efficient programs.
 % so in Core?
 %
 
-Despite of the advantages of a linearly typed Core, the status quo is
+Despite the advantages of a linearly typed Core, the status quo is
 that linearity is effectively ignored in Core, despite being checked
 in the source Haskell code. The reason is that the desugaring
-and the subsequent Core-to-Core optimising transformations,
+and the subsequent Core-to-Core optimising transformations
 eliminate and rearrange most of the syntactic constructs through
 which linearity checking is performed -- often resulting in programs
 that are syntactically very different from the original, especially
@@ -339,14 +337,14 @@ due to the flexibility laziness provides a compiler in the
 optimisations it may perform.
 %
 Crucially, while optimisations aim to preserve the semantics of
-programs and so preserve a program's linear resource consumption,
+programs and therefore a program's linear resource consumption,
 a \emph{naive} syntactic analysis of the optimised programs (as
 performed by the current Core type checker) often fails to recognize
 the program as linear.
 %
 For instance, let $x$ be a linear resource in the two following programs, where
-the latter results from inlining $y$ in the let body of the former. Despite the
-the program no longer appearing linear (as there are now two 
+the latter results from inlining $y$ in the let body of the former. Even though the
+the program no longer appears linear (as there are now two 
 occurrences of $x$), the program \emph{is} indeed linear
 because the let-bound expression is never evaluated, so $x$ is
 consumed exactly once (when it is freed in the let body):
@@ -411,11 +409,11 @@ it accepts the programs resulting from transformations in libraries such as
 % Haskell, evaluation strategies, Core's type system, and multiple optimising
 % transformations applied by GHC in its compilation process.
 %
-We compare our contributions to related work and discuss possible
-avenues for further research
+% We compare our contributions to related work and discuss possible
+% avenues for further research
 % (highlighting so-called
 % \emph{multiplicity coercions})
-in Section~\ref{sec:discussion}, which concludes the document.
+% in Section~\ref{sec:discussion}, which concludes the document.
 
 % In fact, we are not aware of any linear type system which
 % understands linearity in the presence of laziness.

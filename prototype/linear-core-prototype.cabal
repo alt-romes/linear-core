@@ -44,14 +44,14 @@ library
                       -- Linear.Core.Translate.Check, Linear.Core.Translate.Infer,
     hs-source-dirs:   src
 
-executable linear-core-prototype
-    import:           common
-    main-is:          Main.hs
-    -- other-modules:    F
-    build-depends:    linear-core-prototype
-    hs-source-dirs:   app
-    ghc-options: -dno-typeable-binds
-                 -- -fplugin=Linear.Core.Plugin
+-- executable linear-core-prototype
+--     import:           common
+--     main-is:          Main.hs
+--     -- other-modules:    F
+--     build-depends:    linear-core-prototype
+--     hs-source-dirs:   app
+--     ghc-options: -dno-typeable-binds
+--                  -- -fplugin=Linear.Core.Plugin
 
 test-suite linear-core-test
   import: common

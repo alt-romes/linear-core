@@ -12,19 +12,11 @@
 
 <!-- --- -->
 
-Reproducing results
-
-<!-- ``` -->
-<!-- ghc -fplugin=... depends on linear-core-prototype -->
-```
-```
-cat output | grep -A1 FAILED | sort | uniq | wc
-cat output | grep SUCCESS | awk '{print $2}' | paste -s -d+ | bc
-```
+See `REPRODUCING.md` for how to reproduce results and use
+`linear-core-prototype` plugin in new packages.
 
 ### priority-sesh
 
-WIP
 ```haskell
    $ccancel_s46Z :: forall {a}.  Cancelable a => [a] %1 -> State# RealWorld %1 -> (# State# RealWorld, () #)
    $ccancel_s46Z
@@ -66,13 +58,13 @@ Reasons for failure: Reverse binder swap argument
 
 ### linear-base
 
-Success: 83476+ (over 89 modules)
-<!-- Failed: 890 in total, 80 unique -->
-Failed: 820 in total, 74 unique
+~~Success: 83476+ (over 89 modules)~~
+~~Failed: 820 in total, 74 unique~~
+
 Reasons for failure:
-NB: It is amazing how this allows us to see examples of semantically linear
+(NB: It is amazing how this allows us to see examples of semantically linear
 programs (which was kind of impossible with -dlinear-core), modulo all the ones
-we can already type. It's great progress...
+we can already type. It's great progress...)
 
 Is linear because all possible constructors have no linear components:
 ```haskell
@@ -211,7 +203,7 @@ $j_ssvi (a_ssA2 :: Ur Bool) (b_ssA6 :: Set Int)
 
 Why is this one linear? It really seems as though `ww_ssAa` (a linear resource)
 is not consumed, so `ww4_as4w` hence `ww_ssAj` aren't consumed linearly...
-Perhaps some optimisation butchered this program's linearity
+Perhaps some optimisation or rewrite rule butchered this program's linearity
 ```haskell
 $wlvl_ssAm :: Int# -> Int# -> Array# (Maybe (RobinVal Int ())) %1 -> Ur (TestT IO ())
 $wlvl_ssAm
@@ -294,5 +286,7 @@ Same thing for (eta1_X2):
 ```
 elim3 :: forall a. (a %1 -> a %1 -> a %1 -> [a]) %1 -> V 3 a %1 -> [a]
 ```
-1 Oct: The plugin seems to hang when linking, after validating all programs, for some reason I don't understand, but only on linear base...
+
+<!-- 1 Oct: The plugin seems to hang when linking, after validating all programs, for some reason I don't understand, but only on linear base... -->
+
 
