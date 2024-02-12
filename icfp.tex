@@ -1251,34 +1251,43 @@ function is inlined in the scrutinee).
 % \end{minipage}
 % \end{figure}
 
-Finally, we consider default case alternatives, also known as wildcards
-(written $\_$), in the presence of linearity: matching against the wildcard
-doesn't provide new information, so linearity is seen as before but without
-fully consuming the scrutinee linear resources (in non-linear patterns) nor
-binding new linear resources (in linear patterns). In short, if the scrutinee
-is in WHNF, we can either use the resources from the scrutinee or the case
-binder in that alternative. If the scrutinee is not in WHNF, we \emph{must} use
-the case binder, as it's the only way to linearly consume the result of
-evaluating the scrutinee. We also discuss the special case of a case
-expression scrutinizing a variable $x$:
+As for \emph{default} case alternatives, also known as \emph{wildcards}
+(written $\_$): matching a wildcard doesn't provide new linearity information,
+unlike matching against a pattern with or without linear components, however,
+the scrutinee will still be evaluated to WHNF.
+%
+% so linearity is seen as before but without
+% fully consuming the scrutinee linear resources (in non-linear patterns) nor
+% binding new linear resources (in linear patterns).
+%
+Briefly, when matching a wildcard, if the scrutinee is already in WHNF, we can
+either use the resources from the scrutinee directly, or the case binder in
+that alternative. If the scrutinee is not in WHNF, we \emph{must} use the case
+binder, as it's the only way to linearly consume the result of evaluating the
+scrutinee.
+
+Finally, we discuss case expressions which scrutinize a
+single variable $x$, e.g.:
 $
 \lambda x.~\ccase{x}{\_ \to x}
 $. 
-It might seem as though the program is linear:
+It might seem as though this function is linear:
 %begin{itemize}
 % \item
 if $x$ is in WHNF, then scrutinizing it is a no-op, and returning $x$
 just returns the resource intact;
 % \item
-if $x$ is not in WHNF, then scrutinizing it evaluates it to WHNF, and
-returning $x$ returns the result of evaluating $x$ that still had to be
-consumed exactly once.
+if $x$ is not in WHNF, then scrutinizing it evaluates it to WHNF, and returning
+$x$ returns the result of evaluating $x$ that still had to be consumed exactly
+once.
 %\end{itemize}
-However, in practice, it depends on the evaluation strategy. If linear function
-applications are $\beta$-reduced \emph{call-by-name} (a common practice, as
-linear functions use their argument exactly once), and the above function is
-considered linear, then an application might duplicate linear resources during
-evaluation. For example:
+However, in practice, this program's linearity can only be determined by
+further branching down on the non-strict evaluation strategy. If linear
+function applications, in general, are $\beta$-reduced \emph{call-by-name} (a desireable
+practice, as linear functions are known to use their argument exactly once)
+% and thus call-by-name reduction will definitely not duplicate computation
+while the above function is considered linear, then such an application might
+duplicate linear resources during evaluation. For instance:
 \[
 \begin{array}{l}
 (\lambda x.~\ccase{x}{\_ \to x})~(free~x)
@@ -1286,11 +1295,16 @@ evaluation. For example:
 \ccase{free~x}{\_ \to free~x}
 \end{array}
 \]
-Therefore, the type system we present in the next section, which evaluates
-linear applications call-by-name, does not accept the above program as linear.
-This interaction between evaluation and linearity
-comes up in the type preservation proof of our program, and is again explored
-with the reverse binder swap transformation in
+On the other hand, if linear function applications are reduced
+\emph{call-by-need}, the above example would instead be semantically linear
+because the result of freeing $x$ would be bound to some $y$ first.
+%
+The type system we present in the next section, which evaluates linear
+applications call-by-name, does not accept the above function scrutinizing a
+variable as linear. 
+This interaction between evaluation and linearity comes up in the type
+preservation proof of our program, and is again explored with the reverse
+binder swap transformation in
 Section~\ref{sec:optimisations-preserve-types-meta}.
 
 % \parawith{Summary}
