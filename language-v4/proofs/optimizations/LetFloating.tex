@@ -115,21 +115,21 @@ $\G ; \D_1,\D_2,\D_3  \vdash \llet{x = e_1}{\ccase{e}{\{\overline{\rho_j\to
        $\judg[\G, z{:}_{\ov{\Delta_i}} \sigma,\ov{\xo},\ov{y_i{:}_{\D_i}\s_i}^n][\ov{\D_i},\D_2,\D_3]{E[e_1]}{\vp}$
        \` by inversion\\
        
-       $\judg[\G, z{:}_{\ov{\Delta_i}} \sigma,\ov{\xo},\ov{y_i{:}_{\D_i}\s_i}^n][\D_2]{e_1}{\sigma'}$
-       \` by inversion\\
-       $\judg[\G, x{:}_{\D_2}\sigma', z{:}_{\ov{\Delta_i}} \sigma,\ov{\xo},\ov{y_i{:}_{\D_i},\s_i}^n][\D_2]{x}{\sigma'}$
+       $\judg[\G, z{:}_{\ov{\Delta_i}} \sigma,\ov{\xo},\ov{y_i{:}_{\D_i}\s_i}^n][\D',\D_2]{e_1}{\sigma'}$
+       \` by inversion, with $\D' \subseteq \ov{\D_i} \subseteq \D_1$\\
+       $\judg[\G, x{:}_{\D',\D_2}\sigma', z{:}_{\ov{\Delta_i}} \sigma,\ov{\xo},\ov{y_i{:}_{\D_i},\s_i}^n][\D',\D_2]{x}{\sigma'}$
        \` by Var$_\Delta$, with $x$ fresh\\
-      $\judg[\G][\D_2]{e_1}{\sigma'}$
+      $\judg[\G][\D',\D_2]{e_1}{\sigma'}$
        \` by assumption\\
        $\judg[\G,
-       x{:}_{\D_2}\sigma', z{:}_{\ov{\Delta_i}} \sigma,\ov{\xo},\ov{y_i{:}_{\D_i}\s_i}^n][\ov{\D_i},\D_2,\D_3]{E[x]}{\vp}$
+       x{:}_{\D',\D_2}\sigma', z{:}_{\ov{\Delta_i}} \sigma,\ov{\xo},\ov{y_i{:}_{\D_i}\s_i}^n][\ov{\D_i},\D_2,\D_3]{E[x]}{\vp}$
        \` by context instantiation\\
-       $\G,x{:}_{\D_2}\sigma',\var[z][\ov{\D_i}];\ov{\D_i},\D_2,\D_3 \vdash_{alt} \rho_j
+       $\G,x{:}_{\D',\D_2}\sigma',\var[z][\ov{\D_i}];\ov{\D_i},\D_2,\D_3 \vdash_{alt} \rho_j
        \to E[x] :^z_{\ov{\D_i}} \s \Mapsto \vp$ \` by
        $\textrm{AltN}_{\textrm{WHNF}}$\\
-       $\G,x{:}_{\D_2}\sigma'; \D_1,\D_2,\D_3 \vdash \ccase{e}{\{\overline{\rho_j\to e_j}, \rho \to
+       $\G,x{:}_{\D',\D_2}\sigma'; \D_1,\D_2,\D_3 \vdash \ccase{e}{\{\overline{\rho_j\to e_j}, \rho \to
   E[x], \overline{\rho_k\to e_k}\}} : \vp$ \` by $\textrm{Case}_\textrm{WHNF}$\\
-       $\G ; \D_1 , \D_2 , \D_3 \vdash \llet{\x[\D_2] = e_1}{\ccase{e}{\{\overline{\rho_j\to e_j}, \rho \to
+       $\G ; \D_1 , \D_2 , \D_3 \vdash \llet{\x[\D',\D_2] = e_1}{\ccase{e}{\{\overline{\rho_j\to e_j}, \rho \to
            E[x], \overline{\rho_k\to e_k}\}}} : \vp$ \` by $\mathit{Let}$\\
        Subsubsubcase: (3) derived by $\textrm{Alt}0$\\
        $\judg[\subst{\G, z{:}_{\ov{\Delta_i}} \sigma}{\cdot}{\ov{\D_i}}_z,\ov{\xo}][\subst{\ov{\D_i},\D_2,\D_3}{\cdot}{\ov{\D_i}}]{E[e_1]}{\vp}$
