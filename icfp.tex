@@ -159,13 +159,17 @@ Traditionally, using a resource is synonymous with its \emph{syntactic}
 occurrence in the program, however, under the lens of \emph{lazy} evaluation,
 linearity can be further understood \emph{semantically}, where a
 syntactic occurrence of a resource does not necessarily entail
-\emph{using} that resource when the program is evaluated.
-%
-Semantic linearity is especially necessary in optimising compilers for
-languages combining linearity and laziness: optimisations leverage laziness to
-heavily rewrite the source program, pushing the interaction of linearity and
-laziness to its limit, regardless of the original program typing linearity
-conservatively.
+\emph{using} that resource when the program is executed.
+Semantic linearity becomes especially vital when considering the
+internal language of an optimising compiler, where optimisations
+heavily rewrite the source program in ways that can often break
+syntactic linearity but that aim to preserve the program's semantics.
+% %
+% Semantic linearity is especially necessary in optimising compilers for
+% languages combining linearity and laziness: optimisations leverage laziness to
+% heavily rewrite the source program, pushing the interaction of linearity and
+% laziness to its limit, regardless of the original program typing linearity
+% conservatively.
 %
 We present Linear Core, the first type system that understands semantic
 linearity in the presence of laziness, suitable for the Core intermediate
@@ -173,7 +177,7 @@ language of the Glasgow Haskell Compiler. We prove Linear Core is both type
 safe and that multiple optimising transformations preserve linearity in Linear
 Core while failing to do so in Core. We have implemented Linear Core as a
 compiler plugin to validate the system against linearity-heavy libraries,
-including \texttt{linear-base}, in the heart of the compiler.
+including \texttt{linear-base}.%^, in the heart of the compiler.
 \end{abstract}
 
 \maketitle
@@ -397,12 +401,18 @@ semantically in this context
 fail to type check in Core, are validated by Linear
 Core ($\S$~\ref{sec:main:metatheory}).
 
-\item We implement Linear Core as a GHC plugin which checks linearity in
+\item We discuss our implementation of Linear Core as a GHC
+  plugin\footnote{We plan to submit our implementation as a companion
+    artifact to this paper.} which checks linearity in
 all intermediate Core programs produced during the compilation process, showing
 it accepts the programs resulting from transformations in libraries such as
 \texttt{linear-base} ($\S$~\ref{sec:discuss:implementation}).
 
 \end{itemize}
+
+\noindent Additional proofs and definitions are given in Appendices~\ref{app:proofs}
+and~\ref{app:optimisations}.
+
 %
 % We review background concepts fundamental to our work in
 % Section~\ref{sec:background}, including linear type systems, linear types in
@@ -2307,11 +2317,11 @@ written by humans.
 Yet, our system is designed to be suitable for optimising compilers
 in which intermediate programs commonly scrutinize expressions in WHNF.
 %
-Crucially, type preservation for the case-reduction substituting the
-case binder and pattern variables in the alternative is not possible
-to prove without branching on WHNF-ness, since otherwise the
-$\D$-substitution is not well-defined.  \todo[inline]{What is the
-  $\Delta$-substitution? Clarify}
+% Crucially, type preservation for the case-reduction substituting the
+% case binder and pattern variables in the alternative is not possible
+% to prove without branching on WHNF-ness, since otherwise the
+% $\D$-substitution is not well-defined.  \todo[inline]{What is the
+%   $\Delta$-substitution? Clarify}
 
 \subsubsection{Splitting and tagging fragments}
 
@@ -2768,32 +2778,35 @@ linearity in the sense of being well-typed in our system.
 
 
 \renewcommand{\DeltaLinearRelationLemma}{
-\begin{lemma}[$\Delta$-bound to Linear]\label{lem:deltaone}
+\begin{restatable}[$\Delta$-bound to Linear]{lemma}{deltaone}\label{lem:deltaone}
 % Any $\Delta$-variable with a fully-irrelevant usage environment can be made a linear variable as long as its irrelevant environment is dropped from the linear environment (and the unrestricted env. is updated accordingly).\\
-If $\G,\x[\irr{\D}]; \irr{\D},\D' \vdash e : \vp$
+If $\G,\x[\irr{\D}]; \irr{\D},\D' \vdash e : \vp$ 
 then $\G[x/\irr{\D}]; \D',\xl \vdash e :\vp$.
-\end{lemma}
+\end{restatable}
 }
 
 \renewcommand{\LinearDeltaRelationLemma}{
-  \begin{lemma}[Linear to $\Delta$-bound]\label{lem:onedelta}
+  \begin{restatable}[Linear to $\Delta$-bound]{lemma}{onedelta}\label{lem:onedelta}
 If $\G; \D',\xl \vdash e :\vp$
-then $\G[\D/x],\xD; \D,\D' \vdash e : \vp$.
-\end{lemma}
+then $\G[\D/x],\xD; \D,\D' \vdash e : \vp$, with fresh $\D$.
+\end{restatable}
 }
 
 \renewcommand{\DeltaUnrestrictedRelationLemma}{
-\begin{lemma}[Unrestricted and $\Delta$-bound]\label{lem:undelta}
+\begin{restatable}[Unrestricted and $\Delta$-bound]{lemma}{undelta}\label{lem:undelta}
 %An unrestricted variable is equivalent to a $\D$-var with an empty usage environment.\\
 $\G,\xo; \D \vdash e : \vp$ iff $\G,\x[\cdot]; \D \vdash e : \vp$
-\end{lemma}
+\end{restatable}
 }
 
 \paragraph{$\Delta$-bound variables} Our development relies on the following characterization of $\D$-bound
 variables:
 A well-typed program with a linear variable ($\xl$) is equivalently
 well-typed if the linear variable were instead $\D$-bound ($\xD$) with
-usage environment $\D$, with $\D$ available in the linear context instead of
+usage environment $\D$, with $\D$
+
+
+available in the linear context instead of
 the linear variable (and the unrestricted context updated accordingly).
 \LinearDeltaRelationLemma
 
@@ -3735,7 +3748,90 @@ work to apply the ideas from this work to the surface Haskell language.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \appendix
 
-\section{Type Safety Proofs}
+\section{Type Safety Proofs}\label{app:proofs}
+
+\subsection{Auxiliary Lemmas}
+The following lemmas presuppose the variable names across the typing
+contexts are distinct.
+
+  \begin{lemma}[Linear to $\Delta$-bound]~\label{lem:onedelta-app}
+
+    \begin{enumerate}
+    
+      \item If $\G; \D',\xl \vdash e :\vp$
+        then $\G[\D/x],\xD; \D,\D' \vdash e : \vp$ (with $\Delta$ fresh).
+      \item If $\G ; \D' , \xl \vdash_{alt} \rho \rightarrow e
+        :^z_{\Delta_s} \sigma \Rightarrow \rho$ then
+        $\G[\D/x],\xD;\D,\D' \vdash_{alt} \rho \rightarrow e
+        :^z_{\Delta_s} \sigma \Rightarrow \rho$ (with $\Delta$ fresh).
+   
+      \end{enumerate}
+\end{lemma}
+\begin{proof}
+Straightforward induction on the structure of the given derivation,
+reconstructing the original derivation and applying rule
+$\mathit{Var}_\Delta$ where rule $\mathit{Var}_1$ was applied on
+$x$ in the original derivation.
+\end{proof}
+\onedelta*
+
+\begin{proof}
+By Lemma~\ref{lem:onedelta-app}(1).
+\end{proof}
+
+
+
+\begin{lemma}[$\Delta$-bound to Linear]~\label{lem:deltaone-app}
+
+  \begin{enumerate}
+ \item If $\G,\x[\irr{\D}]; \irr{\D},\D' \vdash e : \vp$
+   then $\G[x/\irr{\D}]; \D',\xl \vdash e :\vp$.
+ \item If $\G ,\x[\irr{\D}]; \irr{\D}, \D' \vdash_{alt} \rho \rightarrow e
+   :^z_{\Delta_s} \sigma \Rightarrow \rho$ then
+   $\G[x/\irr{\D}];\D',\xl \vdash_{alt} \rho \rightarrow e
+   :^z_{\Delta_s} \sigma \Rightarrow \rho$.
+  \end{enumerate}
+\end{lemma}
+\begin{proof}
+Straightforward induction on the structure of the given derivation,
+reconstructing the original derivation and applying rule
+$\mathit{Var}_1$ where rule $\mathit{Var}_\D$ was applied on
+$x$ in the original derivation.
+\end{proof}
+
+
+
+\deltaone*
+\begin{proof}
+By Lemma~\ref{lem:deltaone-app}(1).
+\end{proof}
+
+\begin{lemma}[Unrestricted and $\Delta$-bound]~\label{lem:undelta-app}
+  \begin{enumerate}
+    \item $\G,\xo; \D \vdash e : \vp$ iff $\G,\x[\cdot]; \D \vdash e :
+      \vp$
+    \item $\G,\xo;\D \vdash_{alt} \rho \rightarrow e
+      :^z_{\Delta_s} \sigma \Rightarrow \rho$ iff
+      $\G,\x[\cdot];\D \vdash_{alt} \rho \rightarrow e
+   :^z_{\Delta_s} \sigma \Rightarrow \rho$
+  \end{enumerate}
+\end{lemma}
+\begin{proof}
+Straightforward induction on the structure of the given derivation,
+noting that rules $\mathit{Var}_\Delta$ and $\mathit{Var}_\omega$
+coincide when $\Delta$ is empty.
+\end{proof}
+
+\undelta*
+
+\begin{proof}
+By Lemma~\ref{lem:undelta-app}.
+\end{proof}
+
+
+\subsection{Irrelevance\label{sec:proof:irrelevance}}
+
+\input{language-v4/proofs/WHNFConvSoundness}
 
 \subsection{Substitution Lemmas\label{sec:proof:substitution-lemmas}}
 
@@ -3745,9 +3841,7 @@ work to apply the ideas from this work to the surface Haskell language.
 
 \input{language-v4/proofs/DeltaSubstitutionLemma}
 
-\subsection{Irrelevance\label{sec:proof:irrelevance}}
 
-\input{language-v4/proofs/WHNFConvSoundness}
 
 \subsection{Type Preservation\label{sec:proof:type-preservation}}
 

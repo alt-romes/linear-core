@@ -9,7 +9,14 @@ used to type $e'$:
 \LinearSubstitutionLemma
 
 \noindent Where $\G[\D'/x]$ substitutes all occurrences of $x$ in the usage
-environments of $\D$-variables in $\G$ by the linear variables in $\D'$.
+environments of $\D$-variables in $\G$ by the linear variables in
+$\D'$.
+We further require that the environment annotated in the case
+alternative judgement, $\D_s$, is a subset of the environment used to type the
+whole alternative $\D_s \subseteq \D$. In all occurrences of the alternative
+judgement (in $Case_{\textrm{WHNF}}$ and $Case_{\textrm{Not WHNF}}$), the
+environment annotating the alternative judgement is \emph{always} a subset of
+the alternative environment.
 % ($x$ couldn't appear anywhere besides usage environments of $\D$-bound variables, since $x$ is linear).
 
 % TODO: Short paragraph about the proof for case alternatives sublemma for
@@ -20,17 +27,19 @@ environments of $\D$-variables in $\G$ by the linear variables in $\D'$.
 % (2) $\judg[][][]{}{}$\\
 
 \begin{proof}
-By structural induction on the first derivation.
+By structural induction on the given derivation.
+
+Statement (1):
 
 \begin{description}
-
+  
 \item[Case:] $\Lambda I$
 \begin{tabbing}
   (1) $\Gamma; \D, x{:}_1\sigma \vdash \Lambda p.~e : \forall p.~\varphi$\\
   (2) $\G; \D' \vdash e' : \sigma$\\
   (3) $\G, p; \D,x{:}_1\sigma \vdash e : \varphi$ \` by inversion on $\Lambda I$\\
   (4) $p \notin \Gamma$ \` by inversion on $\Lambda I$\\
-  (5) $\G[\D'/x],p; \D,\D' \vdash e[e'/x] : \varphi$ \` by induction hypothesis by (2,3)\\
+  (5) $\G[\D'/x],p; \D,\D' \vdash e[e'/x] : \varphi$ \` by i.h.(1) by (2,3)\\
   (6) $\G[\D'/x];\D,\D' \vdash \Lambda p.~e[e'/x] : \forall p.~\varphi$ \` by $\Lambda I$ (4,5)\\
   (7) $(\Lambda p.~e)[e'/x] = (\Lambda p.~e[e'/x])$ \` by def. of substitution\\
 \end{tabbing}
@@ -41,7 +50,7 @@ By structural induction on the first derivation.
   (2) $\G; \D' \vdash e' : \sigma$\\
   (3) $\G; \D, \xl \vdash e : \forall p.~\varphi$ \` by inversion on $\Lambda E$\\
   (4) $\G \vdash_{mult} \pi$ \` by inversion on $\Lambda E$\\
-  (5) $\G[\D'/x]; \D,\D' \vdash e[e'/x] : \forall p.~\varphi$ \` by induction hypothesis by (2,3)\\
+  (5) $\G[\D'/x]; \D,\D' \vdash e[e'/x] : \forall p.~\varphi$ \` by i.h.(1) by (2,3)\\
   (6) $\G[\D'/x]; \D,\D' \vdash e[e'/x]~\pi : \varphi[\pi/p]$ \` by $\Lambda E$ (4,5)\\
   (7) $(e~\pi)[e'/x] = e[e'/x] \pi$ \` by def. of substitution\\
 \end{tabbing}
@@ -51,7 +60,7 @@ By structural induction on the first derivation.
   (1) $\G; \D, \xl \vdash \lambda y{:}_1\sigma'.~e : \sigma' \to_1 \varphi$\\
   (2) $\G; \D' \vdash e' : \sigma$\\
   (3) $\G; \D, \xl, y{:}_1\sigma' \vdash e : \varphi$ \` by inversion on $\lambda I$\\
-  (4) $\G[\D'/x]; \D, y{:}_1\sigma', \D' \vdash e[e'/x] : \varphi$ \` by induction hypothesis by (2,3)\\
+  (4) $\G[\D'/x]; \D, y{:}_1\sigma', \D' \vdash e[e'/x] : \varphi$ \` by i.h.(1) by (2,3)\\
   (5) $\G[\D'/x]; \D,\D' \vdash \lambda y{:}_1\sigma'.~e[e'/x] : \sigma' \to_1 \varphi$ \` by $\lambda I$ (4)\\
   (6) $(\lambda y{:}_1\sigma'.~e)[e'/x] = (\lambda y{:}_1\sigma'.~e[e'/x])$ \` by def. of substitution\\
 \end{tabbing}
@@ -61,7 +70,7 @@ By structural induction on the first derivation.
   (1) $\G; \D, \xl \vdash \lambda y{:}_\omega\sigma'.~e : \sigma' \to_\omega \varphi$\\
   (2) $\G; \D' \vdash e' : \sigma$\\
   (3) $\G, y{:}_\omega\sigma'; \D, \xl \vdash e : \varphi$ \` by inversion on $\lambda I$\\
-  (4) $\G[\D'/x], y{:}_\omega\sigma'; \D, \D' \vdash e[e'/x] : \varphi$ \` by induction hypothesis by (2,3)\\
+  (4) $\G[\D'/x], y{:}_\omega\sigma'; \D, \D' \vdash e[e'/x] : \varphi$ \` by i.h.(1) by (2,3)\\
   (5) $\G[\D'/x]; \D,\D' \vdash \lambda y{:}_\omega\sigma'.~e[e'/x] : \sigma' \to_1 \varphi$ \` by $\lambda I$ (4)\\
   (6) $(\lambda y{:}_\omega\sigma'.~e)[e'/x] = (\lambda y{:}_\omega\sigma'.~e[e'/x])$ \` by def. of substitution\\
 \end{tabbing}
@@ -99,13 +108,13 @@ By structural induction on the first derivation.
   Subcase $x$ occurs in $e$\\
   (3) $\G; \D,\xl \vdash e : \s' \to_1 \vp$\` by inversion on $\lambda E_1$\\
   (4) $\G; \D'' \vdash e'' : \s'$\` by inversion on $\lambda E_1$\\
-  (5) $\G[\D'/x]; \D, \D' \vdash e[e'/x] : \s' \to_1 \vp$\` by induction hypothesis (2,3)\\
+  (5) $\G[\D'/x]; \D, \D' \vdash e[e'/x] : \s' \to_1 \vp$\` by i.h.(1) (2,3)\\
   (6) $\G[\D'/x]; \D, \D', \D'' \vdash e[e'/x]~e'' : \vp$\` by $\lambda E_1$\\
   (7) $(e[e'/x]~e'') = (e~e'')[e'/x]$ \` because $x$ does not occur in $e''$\\
   Subcase $x$ occurs in $e''$\\
   (3) $\G; \D \vdash e : \s' \to_1 \vp$\` by inversion on $\lambda E_1$\\
   (4) $\G; \D'', \xl \vdash e'' : \s'$\` by inversion on $\lambda E_1$\\
-  (5) $\G[\D'/x]; \D'',\D' \vdash e''[e'/x] : \s'$\` by induction hypothesis (2,4)\\
+  (5) $\G[\D'/x]; \D'',\D' \vdash e''[e'/x] : \s'$\` by i.h.(1) (2,4)\\
   (6) $\G[\D'/x]; \D,\D',\D'' \vdash e~e''[e'/x] : \vp$\` by $\lambda E_1$\\
   %(7) $\d[\D'/x] = \d$\` $x$ doesn't occur in $e$, so $\Delta$-bound vars in $e$ \\
   %    \` couldn't contain $x$ and still be well-typed.\\
@@ -119,7 +128,7 @@ By structural induction on the first derivation.
   (3) $x$ does not occur in $e''$\` by $e''$ linear context is empty\\
   (4) $\G; \D, \xl \vdash e : \s' \to_\omega \vp$\` by inversion on $\lambda E_\omega$\\
   (5) $\G; \cdot \vdash e'' : \s'$\` by inversion on $\lambda E_\omega$\\
-  (6) $\G[\D'/x]; \D, \D' \vdash e[e'/x] : \s' \to_\omega \vp$\` by induction hypothesis (2,4)\\
+  (6) $\G[\D'/x]; \D, \D' \vdash e[e'/x] : \s' \to_\omega \vp$\` by i.h.(1) (2,4)\\
   (7) $\G[\D'/x]; \D, \D' \vdash e[e'/x]~e'' : \vp$\` by $\lambda E_\omega$\\
   % (8) $\G''[\lin{\G'}/x] = \G''$\` $x$ doesn't occur in $e''$, so $\Delta$-bound vars in $e''$ \\
   %     \` couldn't contain $x$ and still be well-typed.\\
@@ -133,8 +142,8 @@ By structural induction on the first derivation.
   (2) $\G; \D, \xl, \D'' \vdash \llet{\y[\D,\xl][\s'] = e}{e''} : \vp$\\
   (3) $\G,\y[\D,\xl][\s']; \D, \xl, \D'' \vdash e'' : vp$\` by inversion on $Let$\\
   (4) $\G; \D, \xl \vdash e : \s'$\` by inversion on $Let$\\
-  (5) $\G[\D'/x],\y[\D,\D'][\s']; \D, \D', \D'' \vdash e''[e'/x]$\` by induction hypothesis $(1,3)$\\
-  (6) $\G[\D'/x]; \D, \D' \vdash e[e'/x] : \s'$ \` by induction hypothesis $(1,4)$\\
+  (5) $\G[\D'/x],\y[\D,\D'][\s']; \D, \D', \D'' \vdash e''[e'/x]$\` by i.h.(1) $(1,3)$\\
+  (6) $\G[\D'/x]; \D, \D' \vdash e[e'/x] : \s'$ \` by i.h.(1) $(1,4)$\\
   % (8) $\hasnolinearvars{\G''[\lin{\G'}/x]}$\` by (2) and def. of env. subst.\\
   (7) $\G[\D'/x]; \D, \D', \D'' \vdash \llet{\y[\D,\D'][\s'] = e[e'/x]}{e''[e'/x]} : \vp$ \` (5,6) by $Let$\\
   % (10) $\G[\D'/x]; \D, \D' \vdash \llet{\y[\D,\D'][\s'] = e[e'/x]}{e''[e'/x]} : \vp$ \` by $Contract_\omega$\\
@@ -144,7 +153,7 @@ By structural induction on the first derivation.
   (2) $\G; \D, \D'', \xl  \vdash \llet{\yD = e}{e''} : \vp$\\
   (3) $\G,\yD; \D, \D'', \xl \vdash e'' : \vp$ \` by inversion on $Let$\\
   (4) $\G; \D \vdash e : \s'$ \` by inversion on $Let$\\
-  (5) $\G[\D'/x],\yD; \D, \D', \D'' \vdash e''[e'/x] : \vp$\` by induction hypothesis (1,3)\\
+  (5) $\G[\D'/x],\yD; \D, \D', \D'' \vdash e''[e'/x] : \vp$\` by i.h.(1) (1,3)\\
   (6) $\G[\D'/x]; \D, \D', \D'' \vdash \llet{\yD = e}{e''[e'/x]} : \vp$ \` by $Let$ (2,5,6)\\
   % (7) $\D[\lin{\G'}/x] = \D$\` $\Delta$ only has linear vars, by construction\\
   % (8) $\G''[\lin{\G'}/x] = \G''$\` by (2) and $x \notin \Delta$ in this subcase,\\
@@ -161,15 +170,15 @@ By structural induction on the first derivation.
   (2) $\G; \D, \xl, \D'' \vdash \lletrec{\ov{\var[y_i][\D,\xl][\s_i] = e_i}}{e''} : \vp$\\
   (3) $\G, \ov{\var[y_i][\D,\xl][\s_i]}; \D, \xl, \D'' \vdash e'' : \vp$\` by inversion on $LetRec$\\
   (4) $\ov{\G,\ov{\var[y_i][\D, \xl][\s_i]}; \D, \xl \vdash e_i : \s_i}$\` by inversion on $LetRec$\\
-  (5) $\G[\D'/x], \ov{\var[y_i][\D, \D'][\s_i]}; \D, \D', \D'' \vdash e''[e'/x] : \vp$ \` by induction hypothesis (1,3)\\
-  (6) $\ov{\G, \ov{\var[y_i][\D, \D'][\s_i]}; \D, \D' \vdash e_i[e'/x] : \s_i}$\` by induction hypothesis (1,4)\\
+  (5) $\G[\D'/x], \ov{\var[y_i][\D, \D'][\s_i]}; \D, \D', \D'' \vdash e''[e'/x] : \vp$ \` by i.h.(1) (1,3)\\
+  (6) $\ov{\G, \ov{\var[y_i][\D, \D'][\s_i]}; \D, \D' \vdash e_i[e'/x] : \s_i}$\` by i.h.(1) (1,4)\\
   (7) $\G[\D'/x]; \D, \D', \D'' \vdash \lletrec{\ov{\var[y_i][\D,\G'_1][\s_i] = e_i[e'/x]}}{e''[e'/x]} : \vp$\` by $LetRec$\\
   (8) $(\lletrec{\ov{\var[y_i][\D,\D'][\s_i] = e_i}}{e''})[e'/x] = \lletrec{\ov{\var[y_i][\D,\D'][\s_i] = e_i[e'/x]}}{e''[e'/x]}$\\
   Subcase $\xl$ does not occur in any $e_i$\\
   (2) $\G; \D, \xl, \D'' \vdash \lletrec{\ov{\var[y_i][\D][\s_i] = e_i}}{e''} : \vp$\\
   (3) $\G, \ov{\var[y_i][\D][\s_i]}; \D, \xl, \D'' \vdash e'' : \vp$\` by inversion on $LetRec$\\
   (4) $\ov{\G, \ov{\var[y_i][\D][\s_i]}; \D \vdash e_i : \s_i}$\` by inversion on $LetRec$\\
-  (5) $\G[\D'/x], \ov{\var[y_i][\D][\s_i]}; \D, \D', \D'' \vdash e''[e'/x] : \vp$\` by i.h. (1,3)\\
+  (5) $\G[\D'/x], \ov{\var[y_i][\D][\s_i]}; \D, \D', \D'' \vdash e''[e'/x] : \vp$\` by i.h.(1) (1,3)\\
   (6) $\G[\D'/x]; \D, \D', \D'' \vdash \lletrec{\ov{\var[y_i][\D][\s_i] = e_i}}{e''[e'/x]} : \vp$\` by $LetRec$\\
   (7) $\lletrec{\ov{\var[y_i][\D][\s_i] = e_i}}{e''[e'/x]} = (\lletrec{\ov{\var[y_i][\D][\s_i] = e_i}}{e''})[e'/x]$\` by subcase\\
 \end{tabbing}
@@ -184,8 +193,8 @@ By structural induction on the first derivation.
     (5) $\rho_j~\textrm{matches}~e$
     (6) $\judg[\G,\zr{\D,\xl}{\s'}][\D,\xl,\D'']{\rho_j \to e''}{\s' \Mapsto \vp}[alt][\D,\xl][z]$\\
     (7) $\ov{\judg[\G,\zr{\irr{\D,\xl}}{\s'}][\irr{\D,\xl},\D'']{\rho\to e''}{\s' \Rrightarrow \vp}[alt][\irr{\D,\xl}][z]}$\`by inv.\\
-    (8) $\judg[\subst{\G}{\D'}{x}][\D,\D']{e[e'/x]}{\vp}$\`by i.h.\\
-    (9) $\judg[\subst{\G}{\D'}{x},\zr{\D,\D'}{\s'}][\D,\D',\D'']{\rho_j \to e''[e'/x]}{\s' \Mapsto \vp}[alt][\D,\D'][z]$\` by lin. subst. alts.\\
+    (8) $\judg[\subst{\G}{\D'}{x}][\D,\D']{e[e'/x]}{\vp}$\`by i.h.(1)\\
+    (9) $\judg[\subst{\G}{\D'}{x},\zr{\D,\D'}{\s'}][\D,\D',\D'']{\rho_j \to e''[e'/x]}{\s' \Mapsto \vp}[alt][\D,\D'][z]$\` by i.h.(2)\\
     (10) $\ov{\judg[\subst{\G}{\D'}{x},\zr{\irr{\D,\D'}}{\s'}][\irr{\D,\D'},\D'']{\rho\to e''[e'/x]}{\s' \Rrightarrow \vp}[alt][\irr{\D,\D'}][z]}$ \` by Irrelevance\\
     (11) $\judg[\subst{\G}{\D'}{x}][\D,\D',\D'']{\ccase{e[e'/x]}{\z[\D,\D'][\s']~\{\ov{\rho\to e''[e'/x]}\}}}{\vp}$\\
     Subcase $x$ occurs in $\ov{e''}$\\
@@ -196,8 +205,8 @@ By structural induction on the first derivation.
     (6) $\judg[\G,\zr{\D}{\s'}][\D,\D'',\xl]{\rho_j \to e''}{\s' \Mapsto \vp}[alt][\D][z]$\\
     (7) $\ov{\judg[\G,\zr{\irr{\D}}{\s'}][\irr{\D},\D'',\xl]{\rho\to e''}{\s' \Rrightarrow \vp}[alt][\irr{\D}][z]}$\`by inv.\\
     (8) $e[e'/x] = e$\` by $x$ does not occur in $e$\\
-    (9) $\judg[\subst{\G}{\D'}{x},\zr{\D}{\s'}][\D,\D'',\D']{\rho_j \to e''[e'/x]}{\s' \Mapsto \vp}[alt][\D][z]$\`by lin. subst. alts.\\
-    (10) $\ov{\judg[\subst{\G}{\D'}{x},\zr{\irr{\D}}{\s'}][\irr{\D},\D'',\D']{\rho\to e''[e'/x]}{\s' \Rrightarrow \vp}[alt][\irr{\D}][z]}$\`by lin. subst. on alts\\
+    (9) $\judg[\subst{\G}{\D'}{x},\zr{\D}{\s'}][\D,\D'',\D']{\rho_j \to e''[e'/x]}{\s' \Mapsto \vp}[alt][\D][z]$\`by i.h.(2)\\
+    (10) $\ov{\judg[\subst{\G}{\D'}{x},\zr{\irr{\D}}{\s'}][\irr{\D},\D'',\D']{\rho\to e''[e'/x]}{\s' \Rrightarrow \vp}[alt][\irr{\D}][z]}$\`by i.h.(2)\\
     (11) $\judg[\subst{\G}{\D'}{x}][\D,\D'',\D']{\ccase{e}{\z[\D][\s']~\{\ov{\rho\to e''[e'/x]}\}}}{\vp}$\\
 \end{tabbing}
 
@@ -210,7 +219,7 @@ By structural induction on the first derivation.
     (3) $e$ is definitely not in WHNF\\
     (4) $\judg[\G][\D,\xl]{e}{\s'}$\`by inv.\\
     (5) $\ov{\judg[\G,\zr{\irr{\D,\xl}}{\s'}][\irr{\D,\xl},\D'']{\rho\to e''}{\s' \Rrightarrow \vp}[alt][\irr{\D,\xl}][z]}$\`by inv.\\
-    (6) $\judg[\subst{\G}{\D'}{x}][\D,\D']{e[e'/x]}{\vp}$\`by i.h.\\
+    (6) $\judg[\subst{\G}{\D'}{x}][\D,\D']{e[e'/x]}{\vp}$\`by i.h.(1)\\
     (7) $\ov{\judg[\subst{\G}{\D'}{x},\zr{\irr{\D,\D'}}{\s'}][\irr{\D,\D'},\D'']{\rho\to e''[e'/x]}{\s' \Rrightarrow \vp}[alt][\irr{\D,\D'}][z]}$ \` by Irrelevance\\
     % \` by subst. of p. irr. vars in alt.\\
     % \` or, simply, congruence? \\
@@ -222,7 +231,7 @@ By structural induction on the first derivation.
     (4) $\judg[\G][\D]{e}{\s'}$\`by inv.\\
     (5) $\ov{\judg[\G,\zr{\irr{\D}}{\s'}][\irr{\D},\D'',\xl]{\rho\to e''}{\s' \Rrightarrow \vp}[alt][\irr{\D}][z]}$\`by inv.\\
     (6) $e[e'/x] = e$\` by $x$ does not occur in $e$\\
-    (7) $\ov{\judg[\subst{\G}{\D'}{x},\zr{\irr{\D}}{\s'}][\irr{\D},\D'',\D']{\rho\to e''[e'/x]}{\s' \Rrightarrow \vp}[alt][\irr{\D}][z]}$\`by lin. subst. on alts\\
+    (7) $\ov{\judg[\subst{\G}{\D'}{x},\zr{\irr{\D}}{\s'}][\irr{\D},\D'',\D']{\rho\to e''[e'/x]}{\s' \Rrightarrow \vp}[alt][\irr{\D}][z]}$\`by i.h.(2)\\
     (8) $\judg[\subst{\G}{\D'}{x}][\D,\D'',\D']{\ccase{e}{\z[\irr{\D}][\s']~\{\ov{\rho\to e''[e'/x]}\}}}{\vp}$\\
 \end{tabbing}
 
@@ -234,25 +243,28 @@ By structural induction on the first derivation.
 
 
 \end{description}
-\end{proof}
 
-The linear substitution lemma extends to case alternatives as well.
-The lemma for substitution of linear variables in case alternatives is similar
-to the linear substitution lemma, applied to the case alternative
-judgement.
-%
-%\linearsubstaltslemma*
-\LinearSubstitutionAltsLemma
-%
-\noindent We further require that the environment annotated in the case
-alternative judgement, $\D_s$, is a subset of the environment used to type the
-whole alternative $\D_s \subseteq \D$. In all occurrences of the alternative
-judgement (in $Case_{\textrm{WHNF}}$ and $Case_{\textrm{Not WHNF}}$), the
-environment annotating the alternative judgement is \emph{always} a subset of
-the alternative environment.
+Statement (2):
 
-\begin{proof}
-By structural induction on the $alt$ judgment.
+%\end{proof}
+
+% The linear substitution lemma extends to case alternatives as well.
+% The lemma for substitution of linear variables in case alternatives is similar
+% to the linear substitution lemma, applied to the case alternative
+% judgement.
+% %
+% %\linearsubstaltslemma*
+% \LinearSubstitutionAltsLemma
+% %
+% \noindent We further require that the environment annotated in the case
+% alternative judgement, $\D_s$, is a subset of the environment used to type the
+% whole alternative $\D_s \subseteq \D$. In all occurrences of the alternative
+% judgement (in $Case_{\textrm{WHNF}}$ and $Case_{\textrm{Not WHNF}}$), the
+% environment annotating the alternative judgement is \emph{always} a subset of
+% the alternative environment.
+
+%\begin{proof}
+%By structural induction on the $alt$ judgment.
 
 \begin{description}
 \item[Case:] $AltN_{WHNF}$
@@ -260,7 +272,7 @@ By structural induction on the $alt$ judgment.
     (1) $\judg[\G][\D']{e'}{\s}$\\
     (2) $\judg[\G][\D,\xl]{\konstructor~\to e}{\s' \Mapsto \vp}[alt][\D_s][z][\dag]$\\
     (3) $\judg[\G,\ov{\xo},\ov{y_i{:}_{\D_i}\s_i}][\D,\xl]{e}{\vp}$\`by inv.\\
-    (4) $\judg[\subst{\G}{\D'}{x},\ov{\xo},\ov{y_i{:}_{\subst{\D_i}{\D'}{x}}\s_i}][\D,\D']{e[e'/x]}{\vp}$\` by i.h.\\
+    (4) $\judg[\subst{\G}{\D'}{x},\ov{\xo},\ov{y_i{:}_{\subst{\D_i}{\D'}{x}}\s_i}][\D,\D']{e[e'/x]}{\vp}$\` by i.h.(1)\\
     (5) $\judg[\subst{\G}{\D'}{x}][\D,\D']{\rho \to e[e'/x]}{\s' \Mapsto \vp}[alt][\subst{\D_s}{\D'}{x}][z][\dag]$\` by (4)\\
 \end{tabbing}
 
@@ -272,7 +284,7 @@ By structural induction on the $alt$ judgment.
     (3) $\ov{\D_i}=\ov{\lctag{\D_s}{K_j}}^n$\`by inv.\\
     % (5) $\ov{\D_i\neq\cdot}$\\
     (4) $\judg[\G,\ov{\xo},\ov{y_i{:}_{\D_i}\s_i}][\D,\xl]{e}{\vp}$\`by inv.\\
-    (5) $\judg[\subst{\G}{\D'}{x},\ov{\xo},\ov{y_i{:}_{\subst{\D_i}{\D'}{x}}\s_i}][\D,\D']{e[e'/x]}{\vp}$\` by i.h.\\
+    (5) $\judg[\subst{\G}{\D'}{x},\ov{\xo},\ov{y_i{:}_{\subst{\D_i}{\D'}{x}}\s_i}][\D,\D']{e[e'/x]}{\vp}$\` by i.h.(1)\\
     (6) $\ov{\D_i[\D'/x]}=\ov{\lctag{\D_s[\D'/x]}{K_j}}^n$\`by (3) and cong.\\
     (7) $\judg[\subst{\G}{\D'}{x}][\D,\D']{\rho \to e[e'/x]}{\s' \Rrightarrow \vp}[alt][\subst{\D_s}{\D'}{x}][z][\ddag]$\` by (5,6)\\
 \end{tabbing}
@@ -309,7 +321,7 @@ By structural induction on the $alt$ judgment.
   Subcase $x$ does not occur in scrutinee\\
     (2) $\judg[\G][\D,\xl]{K~\ov{\xo}~\to e}{\s' \Rightarrow \vp}[alt][\D_s][z]$\\
     (3) $\judg[\subst{\G}{\cdot}{\D_s}_z,\ov{\xo}][\subst{\D}{\cdot}{\D_s},\xl]{e}{\vp}$\`by $x$ does not occur in $\D_s$ and inv.\\
-    (4) $\judg[\subst{\subst{\G}{\D'}{x}}{\cdot}{\D_s}_z,\ov{\xo}][\subst{\D}{\cdot}{\D_s},\D']{e[e'/x]}{\vp}$\\\`by i.h. and $x$ does not occur in $\D_s$\\
+    (4) $\judg[\subst{\subst{\G}{\D'}{x}}{\cdot}{\D_s}_z,\ov{\xo}][\subst{\D}{\cdot}{\D_s},\D']{e[e'/x]}{\vp}$\\\`by i.h.(1) and $x$ does not occur in $\D_s$\\
     (5) $\judg[\subst{\subst{\G}{\D'}{x}}{\cdot}{\D_s}_z,\ov{\xo}][\subst{(\D,\D')}{\cdot}{\D_s}]{e[e'/x]}{\vp}$\\
     \`by $\D$ and $\D'$ being disjoint by hypothesis,\\
     \`and $\D_s$ being a subset of $\D$\\ % (CHECK: Done, we require this as requirement to invoke the lemma)\\

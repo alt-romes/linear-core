@@ -22,8 +22,9 @@ is not obvious whether such a lemma is possible to prove for $\D$-variables
 substitute $e$ for $x$ the resources $\D'$ are no longer consumed).
 
 \begin{proof}
-By structural induction on the first derivation.
+By structural induction on the given derivation.
 
+Statement (1):
 \begin{description}
 
 \item[Case:] $\Lambda I$
@@ -31,7 +32,7 @@ By structural induction on the first derivation.
     (1) $\G, \xD; \D, \D' \vdash \Lambda p.~e : \forall p.~\vp$\\
     (2) $\G; \D \vdash e' : \s$\\
     (3) $\G, p, \xD; \D, \D' \vdash e : \vp$ \` by inversion on $\Lambda I$\\
-    (4) $\G, p; \D, \D' \vdash e[e'/x]$ \` by induction hypothesis (2,3)\\
+    (4) $\G, p; \D, \D' \vdash e[e'/x]$ \` by i.h.(1) (2,3)\\
     (5) $\G; \D, \D' \vdash \Lambda p.~e[e'/x] : \forall p.~\vp$ \` by $\Lambda I$ \\
     (6) $(\Lambda p.~e)[e'/x] = (\Lambda p.~e[e'/x])$ \` by def. of subst.\\
     (7) $\G; \D, \D' \vdash (\Lambda p.~e)[e'/x] : \forall p.~\vp$ \` by (5,6)\\
@@ -43,7 +44,7 @@ By structural induction on the first derivation.
     (2) $\G; \D \vdash e' : \s$\\
     (3) $\G,\xD; \D, \D' \vdash e : \forall p.~\vp$ \` by inversion on $\Lambda E$\\
     (4) $\G \vdash_{mult} \pi$ \` by inversion on $\Lambda E$\\
-    (5) $\G; \D, \D' \vdash e[e'/x] : \forall p.~\vp$ \` by induction hypothesis (2,3)\\
+    (5) $\G; \D, \D' \vdash e[e'/x] : \forall p.~\vp$ \` by i.h.(1) (2,3)\\
     (6) $\G; \D, \D' \vdash e[e'/x]~\pi : \vp$ by $\Lambda E$\\
     (7) $(e~\pi)[e'/x] = (e[e'/x]~\pi)$ \` by def. of subst.\\
     (6) $\G; \D, \D' \vdash (e~\pi)[e'/x] : \vp$ by (5,6)\\
@@ -54,7 +55,7 @@ By structural induction on the first derivation.
     (1) $\G, \xD; \D, \D' \vdash \lambda \y[1][\s'].~e : \s' \to_1 \vp$\\
     (2) $\G; \D \vdash e' : \s$\\
     (3) $\G, \xD; \D, \y[1][\s'], \D' \vdash e : \vp$ \` by inversion on $\lambda I$\\
-    (4) $\G; \D, \y[1][\s'], \D' \vdash e[e'/x] : \vp$ \` by induction hypothesis (2,3)\\
+    (4) $\G; \D, \y[1][\s'], \D' \vdash e[e'/x] : \vp$ \` by i.h.(1) (2,3)\\
     (5) $\G; \D, \D' \vdash \lambda \y[1][\s'].~e[e'/x] : \s' \to_1 \vp$ \` by $\lambda I$\\
     (6) $(\lambda \y[1][\s'].~e[e'/x]) = (\lambda \y[1][\s'].~e)[e'/x]$ \` by def. of subst.\\
     (7) $\G; \D, \D' \vdash \lambda (\y[1][\s'].~e)[e'/x] : \s' \to_1 \vp$ \` by (4,5)\\
@@ -65,7 +66,7 @@ By structural induction on the first derivation.
     (1) $\G, \xD; \D, \D' \vdash \lambda \y[\omega][\s'].~e : \s' \to_\omega \vp$\\
     (2) $\G; \D \vdash e' : \s$\\
     (3) $\G, \xD, \y[\omega][\s']; \D, \D' \vdash e : \vp$ \` by inversion on $\lambda I$\\
-    (4) $\G, \y[\omega][\s']; \D, \D' \vdash e[e'/x] : \vp$ \` by induction hypothesis (2,3)\\
+    (4) $\G, \y[\omega][\s']; \D, \D' \vdash e[e'/x] : \vp$ \` by i.h.(1) (2,3)\\
     (5) $\G; \D, \D' \vdash \lambda \y[\omega][\s'].~e[e'/x] : \s' \to_\omega \vp$ \` by $\lambda I$\\
     (6) $(\lambda \y[\omega][\s'].~e[e'/x]) = (\lambda \y[\omega][\s'].~e)[e'/x]$ \` by def. of subst.\\
     (7) $\G; \D, \D' \vdash \lambda (\y[\omega][\s'].~e)[e'/x] : \s' \to_\omega \vp$ \` by (4,5)\\
@@ -127,14 +128,14 @@ By structural induction on the first derivation.
     (3) $\G, \xD; \D,\D' \vdash e : \s' \to_{1,p} \vp$\\
     (4) $\G, \xD; \D'' \vdash e'' : \s'$\\
     (5) $\G; \D'' \vdash e'' : \s'$\` by $Weaken_\D$\\
-    (6) $\G; \D,\D' \vdash e[e'/x] : \s' \to_{1,p} \vp$ \` by i.h.\\
+    (6) $\G; \D,\D' \vdash e[e'/x] : \s' \to_{1,p} \vp$ \` by i.h.(1)\\
     (7) $\G;\D, \D', \D'' \vdash e[e'/x]~e'' : \vp$\` by ($\lambda E_{1,p}$)\\
     (8) $(e[e'/x]~e'')=(e~e'')[e'/x]$\` since $x$ cannot occur in $e''$\\
     Subcase $\D$ occurs in $e''$\\
     (3) $\G, \xD; \D' \vdash e : \s' \to_{1,p} \vp$\\
     (4) $\G; \D' \vdash e : \s' \to_{1,p} \vp$\` by $Weaken_\Delta$\\
     (5) $\G,\xD; \D, \D'' \vdash e'' : \s'$\\
-    (6) $\G; \D, \D'' \vdash e''[e'/x] : \s'$\` by i.h.\\
+    (6) $\G; \D, \D'' \vdash e''[e'/x] : \s'$\` by i.h.(1)\\
     (7) $\G; \D,\D',\D'' \vdash (e~e''[e'/x]) : \vp$\` by ($\lambda E_{1,p}$)\\
     (8) $e~e''[e'/x] = (e~e'')[e'/x]$\`since $x$ does not occur in $e$\\
     Subcase $\D$ is split between $e$ and $e''$\\
@@ -149,7 +150,7 @@ By structural induction on the first derivation.
     (3) $\D$ cannot occur in $e''$\\
     (4) $\G, \xD; \D, \D' \vdash e : \s' \to_\omega \vp$\` by inv. on $\lambda E_\omega$\\
     (5) $\G; \cdot \vdash e'' : \s'$ \` by inv. on $\lambda E_\omega$\\
-    (6) $\G; \D, \D' \vdash e[e'/x] : \s' \to_\omega \vp$ \` by induction hypothesis (2,4)\\
+    (6) $\G; \D, \D' \vdash e[e'/x] : \s' \to_\omega \vp$ \` by i.h.(1) (2,4)\\
     (7) $\G; \D, \D' \vdash e[e'/x]~e'' : \vp$\` by $\lambda E_\omega$ (5,6)\\
     (8) $e[e'/x]~e'' = (e~e'')[e'/x]$\` $x$ does not occur in $e''$ by (3)\\
 \end{tabbing}
@@ -166,7 +167,7 @@ By structural induction on the first derivation.
     (3) $\G, \xD; \D, \D' \vdash e : \s'$\` by inversion on (let)\\
     (4) $\G, \xD,\y[\D,\D'][\s']; \D,\D', \D'' \vdash e'' : \vp$\` by inversion on (let)\\
     (5) $\G,\y[\D,\D'][\s']; \D,\D', \D'' \vdash e'' : \vp$\` by $Weaken_\Delta$ (admissible)\\
-    (6) $\G; \D,\D' \vdash e[e'/x] : \s'$\` by induction hypothesis (1,3)\\
+    (6) $\G; \D,\D' \vdash e[e'/x] : \s'$\` by i.h.(1)  (1,3)\\
     (7) $\G; \D,\D',\D'' \vdash \llet{\y[\D,\D'][\s'] = e[e'/x]}{e''} : \vp$\` by (let) (5,6)\\
     (8) $\llet{\y[\D,\D'][\s'] = e[e'/x]}{e''} = (\llet{\y[\D,\D'][\s'] = e}{e''})[e'/x]$\\\` since $x$ cannot occur in $e''$\\
     Subcase $\D$ occurs in $e''$\\
@@ -174,7 +175,7 @@ By structural induction on the first derivation.
     (3) $\G, \xD; \D' \vdash e : \s'$\` by inversion on (let)\\
     (4) $\G; \D' \vdash e : \s'$\` by $Weaken_\Delta$\\
     (5) $\G,\xD,\y[\D'][\s']; \D,\D',\D'' \vdash e'' : \vp$\` by inversion on (let)\\
-    (6) $\G,\y[\D'][\s']; \D,\D',\D'' \vdash e''[e'/x] : \vp$\` by i.h. (1,5)\\
+    (6) $\G,\y[\D'][\s']; \D,\D',\D'' \vdash e''[e'/x] : \vp$\` by i.h.(1) (1,5)\\
     (7) $\G;\D,\D',\D'' \vdash \llet{\y[\D'][\s'] = e}{e''[e'/x]} : \vp$\` by (let)\\
     (8) $\llet{\y[\D'][\s'] = e}{e''[e'/x]} = (\llet{\y[\D'][\s'] = e}{e''})[e'/x]$\\\` since $x$ cannot occur in $e$\\
     Subcase $\D$ is split between $e$ and $e''$\\
@@ -189,7 +190,7 @@ By structural induction on the first derivation.
     (3) $\G,\xD,\ov{\var[y_i][\D,\D'][\s'_i]}; \D,\D',\D'' \vdash e'' : \vp$\` by inversion on (let)\\
     (4) $\G,\ov{\var[y_i][\D,\D'][\s'_i]}; \D,\D',\D'' \vdash e'' : \vp$\` by $Weaken_\Delta$\\
     (5) $\ov{\G,\xD,\ov{\var[y_i][\D,\D'][\s'_i]}; \D, \D' \vdash e_i : \s'_i}$\` by inversion on (let)\\
-    (6) $\ov{\G,\ov{\var[y_i][\D,\D'][\s'_i]}; \D,\D' \vdash e_i[e'/x] : \s'_i}$\` by induction hypothesis (1,5)\\
+    (6) $\ov{\G,\ov{\var[y_i][\D,\D'][\s'_i]}; \D,\D' \vdash e_i[e'/x] : \s'_i}$\` by i.h.(1) (1,5)\\
     (7) $e''[e'/x] = e''$\` since $x$ cannot occur in $e''$\\
     (8) $\G; \D,\D',\D'' \vdash \lletrec{\ov{\var[y_i][\D,\D'][\s_i'] = e_i[e'/x]}}{e''} : \vp$\` by (let) (4,6)\\
     Subcase $\D$ occurs in $e''$\\
@@ -197,7 +198,8 @@ By structural induction on the first derivation.
     (3) $\ov{\G,\xD,\ov{\var[y_i][\D'][\s'_i]}; \D' \vdash e_i : \s'_i}$\` by inversion on (let)\\
     (4) $\ov{\G,\ov{\var[y_i][\D'][\s'_i]}; \D' \vdash e_i : \s'_i}$\` by $Weaken_\Delta$\\
     (6) $\G,\xD,\ov{\var[y_i][\D'][\s'_i]}; \D,\D',\D'' \vdash e'' : \vp$\` by inversion on (let)\\
-    (7) $\G,\ov{\var[y_i][\D'][\s'_i]}; \D,\D',\D'' \vdash e''[e'/x] : \vp$\` by i.h. (1,6)\\
+    (7) $\G,\ov{\var[y_i][\D'][\s'_i]}; \D,\D',\D'' \vdash e''[e'/x] :
+    \vp$\` by i.h.(1) (1,6)\\
     (8) $\ov{e_i[e'/x] = e_i}$\` since $x$ cannot occur in $\ov{e_i}$\\
     (9) $\G;\D,\D',\D'' \vdash \lletrec{\ov{\var[y_i][\D'][\s'_i] = e_i}}{e''[e'/x]} : \vp$\` by (let)\\
     Subcase $\D$ is split between $e$ and $e''$\\
@@ -214,8 +216,8 @@ By structural induction on the first derivation.
     (5) $\G,\xD;\D,\D' \vdash e : \s'$\\
     (6) $\G,\xD,\z[\D,\D'][\s']; \D,\D',\D'' \vdash_{alt} \rho_j \to e'' :^z_{\D,\D'} : \s' \Mapsto \vp$\\
     (7) $\ov{\G,\xD,\z[\irr{\D,\D'}][\s']; [\D,\D'],\D'' \vdash_{alt} \rho \to e'' :^z_{\irr{\D,\D'}} \s'\Rrightarrow\vp}$\` by inv.\\
-    (8) $\G;\D,\D' \vdash e[e'/x] : \s'$\` by i.h.\\
-    (9) $\G,\z[\D,\D'][\s']; \D,\D',\D'' \vdash_{alt} \rho_j \to e''[e'/x] :^z_{\D,\D'} \s' \Rightarrow \vp$\` by subst. $\D$-vars alts.\\
+    (8) $\G;\D,\D' \vdash e[e'/x] : \s'$\` by i.h.(1)\\
+    (9) $\G,\z[\D,\D'][\s']; \D,\D',\D'' \vdash_{alt} \rho_j \to e''[e'/x] :^z_{\D,\D'} \s' \Rightarrow \vp$\` by i.h.(2)\\
     (10) $\ov{\G,\z[\irr{\D,\D'}][\s']; [\D,\D'],\D'' \vdash_{alt} \rho \to e'' :^z_{\irr{\D,\D'}} \s'\Rrightarrow\vp}$\` by (7) and proof steps below\\\`from case $CaseNotWHNF$\\
     (11) $\G;\D,\D',\D'' \vdash \ccase{e[e'/x]}{\z[\D,\D'][\s']~\{\ov{\rho \to e''[e'/x]}\}} : \vp$\` by $CaseWHNF$\\
     Subcase $\D$ does not occur in $e$\\
@@ -227,8 +229,8 @@ By structural induction on the first derivation.
     (7) $e[e'/x] = e$\` by $x$ cannot occur in $e$\\
     (8) $\G,\xD,\z[\D'][\s']; \D,\D',\D'' \vdash_{alt} \rho_j \to e'' :^z_{\D'} : \s' \Mapsto \vp$\\
     (9) $\ov{\G,\xD,\z[\irr{\D'}][\s']; \D,[\D'],\D'' \vdash_{alt} \rho \to e'' :^z_{\irr{\D'}} \s'\Rrightarrow\vp}$\` by inv.\\
-    (10) $\G,\z[\D'][\s']; \D,\D',\D'' \vdash_{alt} \rho_j \to e''[e'/x] :^z_{\D'} \s' \Mapsto \vp$\` by subst. of $\D$ vars on alts\\
-    (11) $\ov{\G,\z[\irr{\D'}][\s']; \D,[\D'],\D'' \vdash_{alt} \rho \to e''[e'/x] :^z_{\irr{\D'}} \s'\Rrightarrow\vp}$\\\` by subst. of $\D$-vars in case alternatives\\
+    (10) $\G,\z[\D'][\s']; \D,\D',\D'' \vdash_{alt} \rho_j \to e''[e'/x] :^z_{\D'} \s' \Mapsto \vp$\` by i.h.(2)\\
+    (11) $\ov{\G,\z[\irr{\D'}][\s']; \D,[\D'],\D'' \vdash_{alt} \rho \to e''[e'/x] :^z_{\irr{\D'}} \s'\Rrightarrow\vp}$\\\` by i.h.(2)\\
     (12) $\G;\D,\D',\D'' \vdash \ccase{e[e'/x]}{\z[\D'][\s']~\{\ov{\rho \to e''[e'/x]}\}} : \vp$\` by $CaseWHNF$\\
     Subcase $\D$ is partially used in $e$\\
     This is like the subcase above, but consider $\D'$\\
@@ -241,7 +243,7 @@ By structural induction on the first derivation.
     Subcase $\D$ occurs in $e$\\
     (2) $\G,\xD; \D, \D', \D'' \vdash \ccase{e}{\z[\irr{\D,\D'}][\s']~\{\ov{\rho\to e''}\}}$\\
     (3) $\G,\xD; \D, \D' \vdash e : \s'$\` by inv.\\
-    (4) $\G; \D,\D' \vdash e[e'/x] : \s'$\` by i.h.\\
+    (4) $\G; \D,\D' \vdash e[e'/x] : \s'$\` by i.h.(1)\\
     (5) $\ov{\G,\xD,\z[\irr{\D,\D'}][\s']; [\D,\D'],\D'' \vdash_{alt} \rho \to e'' :^z_{\irr{\D,\D'}} \s'\Rrightarrow\vp}$\` by inv.\\
     (6) $e''[e'/x] = e$\` by $x$ cannot occur in $\ov{e''}$ since $\D$ is not available (only $\irr{\D}$)\\
     (7) $\ov{\G,\z[\irr{\D,\D'}][\s']; [\D,\D'],\D'' \vdash_{alt} \rho \to e'' :^z_{\irr{\D,\D'}} \s'\Rrightarrow\vp}$\` by (admissible) $Weaken_\Delta$\\
@@ -252,7 +254,7 @@ By structural induction on the first derivation.
     (4) $\G; \D' \vdash e : \s'$\` by weaken\\
     (5) $e[e'/x] = e$\` by x cannot occur in $e$\\
     (5) $\ov{\G,\xD,\z[\irr{\D'}][\s']; \D,[\D'],\D'' \vdash_{alt} \rho \to e'' :^z_{\irr{\D'}} \s'\Rrightarrow\vp}$\` by inv.\\
-    (7) $\ov{\G,\z[\irr{\D'}][\s']; \D,[\D'],\D'' \vdash_{alt} \rho \to e''[e'/x] :^z_{\irr{\D'}} \s'\Rrightarrow\vp}$\\\` by subst. of $\D$-vars in case alternatives\\
+    (7) $\ov{\G,\z[\irr{\D'}][\s']; \D,[\D'],\D'' \vdash_{alt} \rho \to e''[e'/x] :^z_{\irr{\D'}} \s'\Rrightarrow\vp}$\\\` by i.h.(2)\\
     (8) $\G; \D, \D', \D'' \vdash \ccase{e}{\z[\irr{\D,\D'}][\s']~\{\ov{\rho\to e''[e'/x]}\}}$\`by $CaseNotWHNF$\\
     Subcase $\D$ is partially used in $e$\\
     This is like the subcase above, but consider $\D'$\\
@@ -261,28 +263,29 @@ By structural induction on the first derivation.
 
 \end{description}
 
-\end{proof}
+%\end{proof}
 
-The $\D$-substitution lemma on case alternatives reflects again that the typing
-environment of the expression substitution the variable must match its usage
-environment. We recall that $\D_s \subseteq \D,\D'$ states that the annotated
-environment is always contained in the typing environment, which is true of all
-occurrences of this judgement. An alternative formulation of this lemma could
-instead explicitly list $\D_s$ as part of the typing environment for the same
-effect:
+% The $\D$-substitution lemma on case alternatives reflects again that the typing
+% environment of the expression substitution the variable must match its usage
+% environment. We recall that $\D_s \subseteq \D,\D'$ states that the annotated
+% environment is always contained in the typing environment, which is true of all
+% occurrences of this judgement. An alternative formulation of this lemma could
+% instead explicitly list $\D_s$ as part of the typing environment for the same
+% effect:
 
-\DeltaSubstitutionAltsLemma
+% \DeltaSubstitutionAltsLemma
 
-\begin{proof}
-By structural induction on the $alt$ judgment.
+%\begin{proof}
+%By structural induction on the $alt$ judgment.
 
+Statement (2):
 \begin{description}
 \item[Case:] $AltN_{WHNF}$ (trivial induction)
 \begin{tabbing}
   (1) $\G; \D \vdash e' : \s$\\
   (2) $\G,\xD; \D,\D' \vdash_{alt} \konstructor~\to e \prescript{\dag}{}{:^z_{\ov{\D_i}^n}} \s' \Mapsto \vp$\\
   (3) $\G,\xD,\ov{\xo},\ov{y_i{:}_{\D_i}\s_i}; \D, \D' \vdash e : \vp$\` by inv.\\
-  (4) $\G,\ov{\xo},\ov{y_i{:}_{\D_i}\s_i}; \D, \D' \vdash e[e'/x] : \vp$\` by i.h.\\
+  (4) $\G,\ov{\xo},\ov{y_i{:}_{\D_i}\s_i}; \D, \D' \vdash e[e'/x] : \vp$\` by i.h.(1)\\
   (5) $\G; \D,\D' \vdash_{alt} \konstructor~\to e[e'/x] \prescript{\dag}{}{:^z_{\ov{\D_i}^n}} \s' \Mapsto \vp$\` by $AltN$\\
 \end{tabbing}
 
@@ -292,7 +295,7 @@ By structural induction on the $alt$ judgment.
   (2) $\G,\xD; \D,\D' \vdash_{alt} \konstructor~\to e \prescript{\ddag}{}{:^z_{\D_s}} \s' \Rrightarrow \vp$\\
   (3) $\ov{\D_i} = \ov{\lctag{\D_s}{K_j}}$\`by inv.\\
   (4) $\G,\xD,\ov{\xo},\ov{y_i{:}_{\D_i}\s_i}; \D, \D' \vdash e : \vp$\` by inv.\\
-  (5) $\G,\ov{\xo},\ov{y_i{:}_{\D_i}\s_i}; \D, \D' \vdash e[e'/x] : \vp$\` by i.h.\\
+  (5) $\G,\ov{\xo},\ov{y_i{:}_{\D_i}\s_i}; \D, \D' \vdash e[e'/x] : \vp$\` by i.h.(1)\\
   (6) $\G; \D,\D' \vdash_{alt} \konstructor~\to e[e'/x] \prescript{\ddag}{}{:^z_{\D_s}} \s' \Rrightarrow \vp$\` by $AltN$\\
 \end{tabbing}
 
@@ -320,7 +323,7 @@ By structural induction on the $alt$ judgment.
     (2) $\G,\xD; \D,\D',\D'' \vdash_{alt} K~\ov{\x}~\to e :^z_{\D'} \s' \Rightarrow \vp$\\
     (3) $(\G,\xD)[\cdot/\D']_z; (\D,\D',\D'')[\cdot/\D'] \vdash e : \vp$\\
     (4) $\G[\cdot/\D']_z, \xD; \D,\D'' \vdash e : \vp$\\\`by def. of $[]_z$ subst. and $[]$ subst.\\
-    (5) $\G[\cdot/\D']_z; \D,\D'' \vdash e[e'/x] : \vp$\` by $\D$-subst. lemma\\
+    (5) $\G[\cdot/\D']_z; \D,\D'' \vdash e[e'/x] : \vp$\` by i.h.(1)\\
     (6) $\cdot = \D'[\cdot/\D']$\\
     (7) $\G[\cdot/\D']_z; (\D,\D',\D'')[\cdot/\D'] \vdash e[e'/x] : \vp$\` by (5,6)\\
     (8) $\G;\D,\D',\D'' \vdash_{alt} \vdash e[e'/x] :^z_{\D'} \s' \Rightarrow \vp$\`by $Alt0$\\
@@ -334,7 +337,7 @@ By structural induction on the $alt$ judgment.
     (1) $\G;\D \vdash e' : \s$\\
     (2) $\G,\xD; \D,\D' \vdash_{alt} \_~\to e :^z_{\D_s} \s' \Rightarrow \vp$\\
     (3) $\G,\xD; \D,\D' \vdash e : \vp$\` by inv.\\
-    (4) $\G; \D, \D' \vdash e[e'/x]] : \vp$\` by i.h.\\
+    (4) $\G; \D, \D' \vdash e[e'/x]] : \vp$\` by i.h.(1)\\
     (5) $\G; \D,\D' \vdash_{alt} \_~\to e[e'/x] :^z_{\D_s} \s' \Rightarrow \vp$\` by $Alt_\_$\\
 \end{tabbing}
 \end{description}

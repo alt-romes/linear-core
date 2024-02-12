@@ -14,8 +14,9 @@ is typed on an empty linear environment:
 %\unrestrictedsubstlemma*
 
 \begin{proof}
-By structural induction on the first derivation.
+By structural induction on the given derivation.
 
+Statement (1):
 \begin{description}
 
 \item[Case:] $\Lambda I$
@@ -24,7 +25,7 @@ By structural induction on the first derivation.
   (2) $\G; \cdot \vdash e' : \sigma$ \\
   (3) $\G, \xo, p; \D \vdash e : \varphi$ \` by inversion on $\Lambda I$\\
   (4) $p \notin \G$ \` by inversion on $\Lambda I$\\
-  (5) $\G, p; \D \vdash e[e'/x] : \varphi$ \` by induction hypothesis by (2,3)\\
+  (5) $\G, p; \D \vdash e[e'/x] : \varphi$ \` by i.h.(1) by (2,3)\\
   (6) $\G; \D \vdash \Lambda p.~e[e'/x] : \forall p.~\varphi$ \` by $\Lambda I$ (4,5)\\
   (7) $(\Lambda p.~e)[e'/x] = (\Lambda p.~e[e'/x])$ \` by def. of substitution\\
 \end{tabbing}
@@ -35,7 +36,7 @@ By structural induction on the first derivation.
   (2) $\G; \cdot \vdash e' : \sigma$\\
   (3) $\G, \xo; \D \vdash e : \forall p.~\varphi$ \` by inversion on $\Lambda E$\\
   (4) $\G \vdash_{mult} \pi$ \` by inversion on $\Lambda E$\\
-  (5) $\G; \D \vdash e[e'/x] \forall p.~\varphi$ \` by induction hypothesis by (2,3)\\
+  (5) $\G; \D \vdash e[e'/x] \forall p.~\varphi$ \` by i.h.(1) by (2,3)\\
   (6) $\G; \D \vdash e[e'/x]~\pi : \varphi[\pi/p]$ \` by $\Lambda E$ (4,5)\\
   (7) $(e~\pi)[e'/x] = e[e'/x]~\pi$ \` by def. of substitution\\
 \end{tabbing}
@@ -45,7 +46,7 @@ By structural induction on the first derivation.
   (1) $\G, \xo; \D \vdash \lambda\y[1][\s'].~e : \s'\to_1\vp$\\
   (2) $\G; \cdot \vdash e' : \sigma$\\
   (3) $\G, \xo; \D, \y[1][\s'] \vdash e : \vp$ \` by inversion on $\lambda I_1$\\
-  (4) $\G; \D, \y[1][\s'] \vdash e[e'/x] : \vp$ \` by induction hypothesis (2,3)\\
+  (4) $\G; \D, \y[1][\s'] \vdash e[e'/x] : \vp$ \` by i.h.(1) (2,3)\\
   (5) $\G; \D \vdash \lambda\y[1][\s'].~e[e'/x] : \s' \to_1\vp$ \` by $\lambda I_1$\\
   (6) $(\lambda \y[\pi][\s'].~e)[e'/x] = (\lambda \y[\pi][\s'].~e[e'/x])$ \` by def. of subst.\\
 \end{tabbing}
@@ -55,7 +56,7 @@ By structural induction on the first derivation.
   (1) $\G, \xo; \D \vdash \lambda\y[\omega][\s'].~e : \s'\to_\omega\vp$\\
   (2) $\G; \cdot \vdash e' : \sigma$\\
   (3) $\G, \xo, \y[\omega][\s']; \D \vdash e : \vp$ \` by inversion on $\lambda I_\omega$\\
-  (4) $\G, \y[\omega][\s']; \D, \vdash e[e'/x] : \vp$ \` by induction hypothesis (2,3)\\
+  (4) $\G, \y[\omega][\s']; \D, \vdash e[e'/x] : \vp$ \` by i.h.(1) (2,3)\\
   (5) $\G; \D \vdash \lambda\y[\omega][\s'].~e[e'/x] : \s' \to_\omega\vp$ \` by $\lambda I_\omega$\\
   (6) $(\lambda \y[\pi][\s'].~e)[e'/x] = (\lambda \y[\pi][\s'].~e[e'/x])$ \` by def. of subst.\\
 \end{tabbing}
@@ -99,8 +100,8 @@ By structural induction on the first derivation.
   % (3) $\G, \xo, \xo, \G'' \vdash e~e'' : \vp$ \` by $Contract_\omega$\\
   (3) $\G, \xo; \D \vdash e : \s'\to_{1,p}\vp$ \` by inversion on $\lambda E_{1,p}$\\
   (4) $\G, \xo; \D' \vdash e'' : \s'$ \` by inversion on $\lambda E_{1,p}$\\
-  (5) $\G; \D \vdash e[e'/x] : \s'\to_{1,p}\vp$ \` by induction hypothesis (2,3)\\
-  (6) $\G; \D' \vdash e''[e'/x] : \s'$ \` by induction hypothesis (2,4)\\
+  (5) $\G; \D \vdash e[e'/x] : \s'\to_{1,p}\vp$ \` by i.h.(1) (2,3)\\
+  (6) $\G; \D' \vdash e''[e'/x] : \s'$ \` by i.h.(1) (2,4)\\
   (7) $\G; \D, \D' \vdash e[e'/x]~e''[e'/x] : \vp$ \` by $\lambda E_{1,p}$ (5,6)\\
   % (9) $\G, \G'', \G' \vdash e[e'/x]~e''[e'/x] : \vp$ \` by $Contract_\omega$ (3)\\
   (8) $(e~e'')[e'/x] = (e[e'/x]~e''[e'/x])$ \` by def. of subst.\\
@@ -112,8 +113,8 @@ By structural induction on the first derivation.
     (2) $\G; \cdot \vdash e' : \s$\\
     (3) $\G, \xo; \D \vdash e : \s'\to_\omega\vp$ \` by inversion on $\lambda E_\omega$\\
     (4) $\G, \xo; \cdot \vdash e'' : \s'$ \` by inversion on $\lambda E_\omega$\\
-    (5) $\G; \D \vdash e[e'/x] : \s'\to_1\vp$ \` by induction hypothesis (2,3)\\
-    (6) $\G; \cdot \vdash e''[e'/x] : \s'$ \` by induction hypothesis (2,4)\\
+    (5) $\G; \D \vdash e[e'/x] : \s'\to_1\vp$ \` by i.h.(1) (2,3)\\
+    (6) $\G; \cdot \vdash e''[e'/x] : \s'$ \` by i.h.(1)  (2,4)\\
     (7) $\G; \D \vdash e[e'/x]~e''[e'/x] : \vp$ \` by $\lambda E_\omega$ (5,6)\\
     (8) $(e~e'')[e'/x] = (e[e'/x]~e''[e'/x])$ \` by def. of subst.\\
 \end{tabbing}
@@ -124,8 +125,8 @@ By structural induction on the first derivation.
     (2) $\G; \cdot \vdash e' : \sigma$\\
     (3) $\G,\xo,\yD; \D, \D' \vdash e'' \vp$ \` by inversion on $Let$\\
     (4) $\G,\xo; \D \vdash e : \s'$ \` by inversion on $Let$\\
-    (5) $\G,\yD; \D \vdash e''[e'/x] : \vp$ \` by induction hypothesis (2,3)\\
-    (6) $\G; \D \vdash e[e'/x] : \s'$ \` by induction hypothesis (2,4)\\
+    (5) $\G,\yD; \D \vdash e''[e'/x] : \vp$ \` by i.h.(1) (2,3)\\
+    (6) $\G; \D \vdash e[e'/x] : \s'$ \` by i.h.(1) (2,4)\\
     (7) $\G;\D,\D' \vdash \llet{\yD = e[e'/x]}{e''[e'/x]}$ \` by $Let$ (5,6)\\
     (8) $(\llet{\yD = e}{e''})[e'/x] = (\llet{\yD = e[e'/x]}{e''[e'/x]})$
 \end{tabbing}
@@ -136,8 +137,8 @@ By structural induction on the first derivation.
     (2) $\G'; \cdot \vdash e' : \sigma$\\
     (3) $\G,\xo,\ov{\yD}; \D, \D' \vdash e'' : \vp$ \` by inversion on $LetRec$\\
     (4) $\ov{\G,\xo, \ov{\yD}; \D \vdash e : \s'}$ \` by inversion on $LetRec$\\
-    (5) $\G, \ov{\yD}; \D, \D' \vdash e''[e'/x] : \vp$ \` by induction hypothesis (2,3)\\
-    (6) $\ov{\G,\ov{\yD}; \D \vdash e[e'/x] : \s'}$ \` by induction hypothesis (2,4)\\
+    (5) $\G, \ov{\yD}; \D, \D' \vdash e''[e'/x] : \vp$ \` by i.h.(1) (2,3)\\
+    (6) $\ov{\G,\ov{\yD}; \D \vdash e[e'/x] : \s'}$ \` by i.h.(1) (2,4)\\
     (7) $\G; \D, \D' \vdash \lletrec{\ov{\yD = e[e'/x]}}{e''[e'/x]} : \vp$ \` by $LetRec$ (5,6)\\
     (8) $(\lletrec{\ov{\yD = e}}{e''})[e'/x] = (\lletrec{\ov{\yD = e[e'/x]}}{e''[e'/x]})$
 \end{tabbing}
@@ -147,10 +148,10 @@ By structural induction on the first derivation.
     (1) $\G;\cdot \vdash e' : \s$\\
     (2) $\G,\xo;\D,\D' \vdash \ccase{e}{\z[\D][\s']~\{\ov{\rho \to e''}\}} : \vp$\\
     (3) $\G,\xo;\D \vdash e :\s$\\
-    (4) $\G;\D \vdash e [e'/x] : \s'$\`by i.h.\\
+    (4) $\G;\D \vdash e [e'/x] : \s'$\`by i.h.(1)\\
     (5) $e$ is in WHNF\\
     (6) $\ov{\G,\xo,\z[\D][\s'];\D,\D' \vdash \rho \to e'' :_{\D} \s' \Rightarrow \vp}$\\
-    (7) $\ov{\G,\z[\D][\s'];\D,\D' \vdash \rho \to e''[e'/x] :_{\D} \s' \Rightarrow \vp}$\` by unr. subst.  on alts lemma\\
+    (7) $\ov{\G,\z[\D][\s'];\D,\D' \vdash \rho \to e''[e'/x] :_{\D} \s' \Rightarrow \vp}$\` by i.h.(2)\\
     (8) $\G;\D,\D' \vdash \ccase{e[e'/x]}{\z[\D][\s']~\{\ov{\rho \to e''[e'/x]}\}} : \vp$\\
 \end{tabbing}
 
@@ -159,24 +160,25 @@ By structural induction on the first derivation.
     (1) $\G;\cdot \vdash e' : \s$\\
     (2) $\G,\xo;\D,\D' \vdash \ccase{e}{\z[\irr{\D}][\s']~\{\ov{\rho \to e''}\}} : \vp$\\
     (3) $\G,\xo;\D \vdash e :\s$\\
-    (4) $\G;\D \vdash e [e'/x] : \s'$\`by i.h.\\
+    (4) $\G;\D \vdash e [e'/x] : \s'$\`by i.h.(1)\\
     (5) $e$ is definitely not in WHNF\\
     (6) $\ov{\G,\xo,\z[\irr{\D}][\s'];\irr{\D},\D' \vdash \rho \to e'' :_{\irr{\D}} \s' \Rrightarrow \vp}$\\
-    (6) $\ov{\G,\z[\irr{\D}][\s'];\irr{\D},\D' \vdash \rho \to e''[e'/x] :_{\irr{\D}} \s' \Rrightarrow \vp}$\`by unr. subst.  on alts lemma\\
+    (6) $\ov{\G,\z[\irr{\D}][\s'];\irr{\D},\D' \vdash \rho \to e''[e'/x] :_{\irr{\D}} \s' \Rrightarrow \vp}$\`by i.h.(2)\\
     (8) $\G;\D,\D' \vdash \ccase{e[e'/x]}{\z[\irr{\D}][\s']~\{\ov{\rho \to e''[e'/x]}\}} : \vp$\\
 \end{tabbing}
 
 \end{description}
 
-\end{proof}
+Statement (2):
+%\end{proof}
 
-\noindent Similarly, we also prove the substitution of unrestricted variables preserves types on an alternative case expression:
-%
-\UnrestrictedSubstitutionAltsLemma
-%\unrestrictedsubstaltslemma*
+% \noindent Similarly, we also prove the substitution of unrestricted variables preserves types on an alternative case expression:
+% %
+% \UnrestrictedSubstitutionAltsLemma
+% %\unrestrictedsubstaltslemma*
 
-\begin{proof}
-By structural induction on the $alt$ judgment.
+%\begin{proof}
+%By structural induction on the $alt$ judgment.
 
 \begin{description}
 
@@ -185,7 +187,7 @@ By structural induction on the $alt$ judgment.
     (1) $\G; \cdot \vdash e : \s$\\
     (2) $\G,\xo;\D \vdash_{alt} \konstructor~\to e \prescript{\dag}{}{:^z_{\ov{\D_i}^n}} \s' \Mapsto \vp$\\
     (3) $\G,\xo,\ov{\xo},\ov{y_i{:}_{\D_i}\s_i}; \D \vdash e : \vp $\\
-    (4) $\G,\ov{\xo},\ov{y_i{:}_{\D_i}\s_i}; \D \vdash e[e'/x] : \vp $\` by i.h.\\
+    (4) $\G,\ov{\xo},\ov{y_i{:}_{\D_i}\s_i}; \D \vdash e[e'/x] : \vp $\` by i.h.(1)\\
     (5) $\G;\D \vdash_{alt} \konstructor~\to e[e'/x] \prescript{\dag}{}{:^z_{\ov{\D_i}^n}} \s' \Mapsto \vp$\` by $AltN$\\
 \end{tabbing}
 
@@ -195,7 +197,7 @@ By structural induction on the $alt$ judgment.
     (2) $\G,\xo;\D \vdash_{alt} \konstructor~\to e \prescript{\ddag}{}{:^z_{\D_s}} \s' \Rrightarrow \vp$\\
     (3) $\ov{\D_i} = \ov{\lctag{\D_s}{K_j}}^n$\\
     (4) $\G,\xo,\ov{\xo},\ov{y_i{:}_{\D_i}\s_i}; \D \vdash e : \vp $\` by inv.\\
-    (5) $\G,\ov{\xo},\ov{y_i{:}_{\D_i}\s_i}; \D \vdash e[e'/x] : \vp $\` by i.h.\\
+    (5) $\G,\ov{\xo},\ov{y_i{:}_{\D_i}\s_i}; \D \vdash e[e'/x] : \vp $\` by i.h.(1)\\
     (6) $\G;\D \vdash_{alt} \konstructor~\to e[e'/x] \prescript{\ddag}{}{:^z_{\D_s}} \s' \Rrightarrow \vp$\` by $AltN$\\
 \end{tabbing}
 
@@ -204,7 +206,7 @@ By structural induction on the $alt$ judgment.
     (1) $\G;\cdot \vdash e' : \s$\\
     (2) $\G,\xo; \D \vdash_{alt} K~\ov{\xo}~\to e :^z_{\D_s} \s' \Rightarrow \vp$\\
     (3) $\G[\cdot/\D_s]_z,\xo,\ov{\xo}; \D[\cdot/\D_s] \vdash e : \vp$\` by inv.\\
-    (4) $\G[\cdot/\D_s]_z,\ov{\xo}; \D[\cdot/\D_s] \vdash e[e'/x] : \vp$\` by i.h.\\
+    (4) $\G[\cdot/\D_s]_z,\ov{\xo}; \D[\cdot/\D_s] \vdash e[e'/x] : \vp$\` by i.h.(1)\\
     (5) $\G; \D \vdash_{alt} K~\ov{\xo}~\to e :^z_{\D_s} \s' \Rightarrow \vp$\` by $Alt0$\\
 \end{tabbing}
 
@@ -213,7 +215,7 @@ By structural induction on the $alt$ judgment.
     (1) $\G;\cdot \vdash e : \s$\\
     (2) $\G,\xo;\D \vdash_{alt} \_ \to e :_{\D_s} \s' \Rightarrow \vp$\\
     (3) $\G,\xo;\D \vdash e : \vp$\\
-    (4) $\G;\D \vdash e[e'/x] : \vp$\` by i.h.\\
+    (4) $\G;\D \vdash e[e'/x] : \vp$\` by i.h.(1)\\
     (5) $\G;\D \vdash_{alt} \_ \to e[e'/x] :^z_{\D_s} \s' \Rightarrow \vp$\` by $Alt_\_$\\
 \end{tabbing}
 

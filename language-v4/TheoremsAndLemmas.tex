@@ -45,9 +45,15 @@ $\G,\xo; \D \vdash e : \s$ iff $\G,\x[\cdot]; \D \vdash e : \s$
 
 
 \newcommand{\LinearSubstitutionLemma}{
-\begin{restatable}[Substitution of linear variables preserves typing]{lemma}{linearsubstlemma}~\\
-  If $\judg[\G][\D,\xl]{e}{\vp}$ and $\judg[\G][\D']{e}{\s}$
-  then $\judg[\subst{\G}{\D'}{x}][\D,\D']{e[e'/x]}{\vp}$
+\begin{restatable}[Substitution of linear variables preserves typing]{lemma}{linearsubstlemma}~
+  \begin{enumerate}
+  \item If $\judg[\G][\D,\xl]{e}{\vp}$ and $\judg[\G][\D']{e}{\s}$
+    then $\judg[\subst{\G}{\D'}{x}][\D,\D']{e[e'/x]}{\vp}$
+  \item If $\judg[\G][\D,\xl]{\rho\to e}{\s \Rightarrow \vp}[alt][\D_s][z]$ and
+    $\judg[\G][\D']{e'}{\s}$ and
+    $\D_s \subseteq \D,x$ then
+    $\judg[\subst{\G}{\D'}{x}][\D,\D']{\rho \to e[e'/x]}{\s \Rightarrow \vp}[alt][\subst{\D_s}{\D'}{x}][z]$
+  \end{enumerate}
 \end{restatable}
 }
 
@@ -61,8 +67,16 @@ $\G,\xo; \D \vdash e : \s$ iff $\G,\x[\cdot]; \D \vdash e : \s$
 }
 
 \newcommand{\UnrestrictedSubstitutionLemma}{
-\begin{restatable}[Substitution of unrestricted variables preserves typing]{lemma}{unrestrictedsubstlemma}~\\
-If $\Gamma, x{:}_\omega\sigma; \Delta \vdash e : \varphi$ and $\Gamma; \cdot \vdash e' : \sigma$ then $\G,\D \vdash e[e'/x] : \varphi$
+\begin{restatable}[Substitution of unrestricted variables preserves
+  typing]{lemma}{unrestrictedsubstlemma}~\\
+  \begin{enumerate}
+\item If $\Gamma, x{:}_\omega\sigma; \Delta \vdash e : \varphi$ and
+  $\Gamma; \cdot \vdash e' : \sigma$ then $\G,\D \vdash e[e'/x] :
+  \varphi$
+ \item If $\G, \xo; \D \vdash_{alt} \rho \to e :^z_{\Delta_s} \s' \Rightarrow \vp$ and $\G; \D \vdash e' : \s$
+    then $\G; \D \vdash_{alt} \rho \to e[e'/x] :^z_{\Delta_s} \s' \Rightarrow \vp$
+  \end{enumerate}
+
 \end{restatable}
 }
 
@@ -76,8 +90,15 @@ If $\G, \xo; \D \vdash_{alt} \rho \to e :^z_{\Delta_s} \s' \Rightarrow \vp$ and 
 
 \newcommand{\DeltaSubstitutionLemma}{
 % usage environments only record linear variables.
-\begin{restatable}[Substitution of $\Delta$-variables preserves typing]{lemma}{deltasubstlemma}~\\
-If $\G,\xD; \D, \D' \vdash e : \varphi$ and $\G; \D \vdash e' : \sigma$ then $\G; \D, \D' \vdash e[e'/x] : \varphi$
+\begin{restatable}[Substitution of $\Delta$-variables preserves
+  typing]{lemma}{deltasubstlemma}~\\
+  \begin{enumerate}
+\item If $\G,\xD; \D, \D' \vdash e : \varphi$ and $\G; \D \vdash e' :
+  \sigma$ then $\G; \D, \D' \vdash e[e'/x] : \varphi$
+ \item If $\G,\xD; \D,\D' \vdash_{alt} \rho \to e :^z_{\Delta_s} \s' \Rightarrow \vp$ and
+    $\G; \D \vdash e' : \s$ and $\Delta_s \subseteq (\Delta,\Delta')$ then $\G; \D, \D' \vdash_{alt} \rho \to e[e'/x] :^z_{\Delta_s} \s' \Rightarrow \vp$
+  \end{enumerate}
+
 % TODO: Write a paragraph about why this lemma has to have the same delta in the subst.
 % Do we still need the $Delta = empty$ restriction?
 % I think yes, and if we have $Delta = empty$ we never call delta substitution, but rather move the variable to be unrestricted and then call unr. subst. lemma
