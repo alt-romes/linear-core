@@ -94,7 +94,8 @@ use any pattern variables introduced by $\rho$, the case binder nor variables bo
 context $E[{-}]$
 then 
 $\G ; \D_1,\D_2,\D_3  \vdash \llet{x = e_1}{\ccase{e}{\{\overline{\rho_j\to
-           e_j}, \rho \to E[t], \overline{\rho_k\to e_k}\}}} : \vp$
+           e_j}, \rho \to E[x], \overline{\rho_k\to e_k}\}}} : \vp$,
+     for some fresh $x$.
               
    \end{theorem}
    
