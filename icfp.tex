@@ -2788,7 +2788,7 @@ then $\G[x/\irr{\D}]; \D',\xl \vdash e :\vp$.
 \renewcommand{\LinearDeltaRelationLemma}{
   \begin{restatable}[Linear to $\Delta$-bound]{lemma}{onedelta}\label{lem:onedelta}
 If $\G; \D',\xl \vdash e :\vp$
-then $\G[\D/x],\xD; \D,\D' \vdash e : \vp$, with fresh $\D$.
+then $\G[\D/x],\xD; \D,\D' \vdash e : \vp$ ($\Delta$ fresh).
 \end{restatable}
 }
 
@@ -2803,12 +2803,10 @@ $\G,\xo; \D \vdash e : \vp$ iff $\G,\x[\cdot]; \D \vdash e : \vp$
 variables:
 A well-typed program with a linear variable ($\xl$) is equivalently
 well-typed if the linear variable were instead $\D$-bound ($\xD$) with
-usage environment $\D$, with $\D$
+usage environment $\D$, with $\D$ available in the linear context (and the unrestricted context updated accordingly).
 
-
-available in the linear context instead of
-the linear variable (and the unrestricted context updated accordingly).
 \LinearDeltaRelationLemma
+
 
 \noindent Dually, any $\Delta$-bound variable with an irrelevant usage
 environment can be made into a linear variable as long as its
