@@ -846,8 +846,7 @@ when \incode{bool} is \incode{True}, we'll use the resource \incode{x};
  when \incode{bool} is \incode{False}, we recurse by calling \incode{go} on \incode{True}, which in turn will use the resource \incode{x}.
 %\end{itemize}
 In \incode{go}'s body, \incode{x} is used directly in one branch and indirectly in the
-other, by recursively calling \incode{go} (which we know will result in using \incode{x}
-linearly).
+other (by recursing, which we know will result in using \incode{x} linearly).
 % ROMES:TODO:!!
 %\todo{this bit is quite hard to explain. It is some sort of cyclic
 %argument -- we kind of assume go uses x linearly s.t. when go itself is used
@@ -986,7 +985,7 @@ linear resources, as we discuss in Section~\ref{sec:recursivelets}.
 Finally, we discuss case expressions,
 which are the key ingredient that brings together the
 semantic linearity insights developed thus far given that
-\emph{case expressions drive evaluation} and semantic linearity can only be
+\emph{case expressions drive evaluation}, and semantic linearity can only be
 understood in terms of how expressions are evaluated.
 
 Up until now, there
@@ -1028,7 +1027,7 @@ to consume a value of atomic base type (such as~\texttt{Int} or
         to consume a function value exactly once, apply it to one argument,
         and consume its result exactly once;
         % \item
-        To consume a value of an algebraic datatype exactly once,
+        to consume a value of an algebraic datatype exactly once,
         pattern-match on it, and consume all its linear components exactly once.
         % For example, a linear pair (equivalent to $\tensor$) is consumed exactly
         % once if pattern-matched on \emph{and} both the first and second element are
@@ -1075,7 +1074,7 @@ match. This is well-typed in Linear Haskell:
 \begin{working}
 \begin{lstlisting}
 f6 :: a *' $\lolli$ '* b *' $\lolli$ '* (a *' $\lolli$ '* b *' $\lolli$ '* c) -> c
-f6 x y use = case (x,y) of { (a,b) -> use a b }
+f6 x y use = case (x,y) of z { (a,b) -> use a b }
 \end{lstlisting}
 \end{working}
 What might be more surprising is that a similar program which discards the
@@ -1128,7 +1127,7 @@ f10 x y use = case use x y of z { (a,b) -> z }
 \end{lstlisting}
 \end{notyet}
 Unlike when the scrutinee was in WHNF, we can no longer use $x,y$ in the case
-alternatives, but we \emph{must} still use either the case binder $z$ or the linear
+alternatives, but we must still use either the case binder $z$ or the linear
 pattern variables $a,b$. %  e.g. it would be quite disastrous if any of the following typechecked:
 % \begin{noway}
 % \begin{lstlisting}
@@ -1175,7 +1174,7 @@ Consequently, in a branch of a constructor without linear fields we know the
 result of evaluating the scrutinee to be unrestricted, so we can use the case
 binder unrestrictedly and refer to it zero or more times. For example,
 the program in Figure~\ref{fig:nolin} is semantically linear.
-
+%
 \begin{figure}[t]
  \begin{minipage}{0.5\textwidth}
 \begin{notyet}
@@ -1198,20 +1197,18 @@ f12 x = case K1 x of z { K2 -> x; K1 a -> x }
 \caption{Absurd Branches\label{fig:absurd}}
 \end{minipage}
 \end{figure}
-
+%
 A second example of an unrestricted pattern, where \incode{K2} has no fields and \incode{K1}
 has one linear field, is shown in Figure~\ref{fig:absurd}. Seemingly, the resource
 $x$ must have been fully consumed to take the \incode{K2} branch, but because the
 scrutinee is known to be \incode{K1}, the \incode{K2} branch is \emph{absurd}, so, in reality
 any resource could be freely used in that branch, and the example is
 \emph{semantically} linear (despite not being seen as so by our system).
-%
-%
-%
-This particular example might seem unrealistic due to the pattern
-match on a known constructor, but we note that during the
+
+Many of these examples might seem unrealistic due to the pattern
+match on a known constructor, but we note that, during the
 transformations programs undergo in an optimising compiler, many
-programs such as this naturally occur (e.g.,~if the definition of a
+such programs naturally occur (e.g.,~if the definition of a
 function is inlined in the scrutinee).
 %
 % However, the scrutinee before evaluation likely isn't in WHNF, thus scrutinee
