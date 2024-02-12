@@ -3055,8 +3055,9 @@ preserving in Linear Core (i.e.,~preserve linearity semantically).
       \llet{v =  e}{\ccase{b}{\{\overline{\rho\to e'}\}}}
                                &
                                  \mbox{Commuting let-case}\\
-      (\ccase{e}{\{\overline{\rho_j\to e_j}, \rho \to E[e_1], \overline{\rho_k\to e_k}\}} ) \qquad (\mbox{with $x$ fresh}) \\
-     \Longrightarrow \llet{x = e_1}{\ccase{e}{\{\overline{\rho_j\to e_j}, \rho \to E[t], \overline{\rho_k\to e_k}\}}} 
+      (\ccase{e}{\{\overline{\rho_j\to e_j}, \rho \to E[e_1],
+      \overline{\rho_k\to e_k}\}} ) \qquad (\mbox{$x$ fresh}) \\
+     \Longrightarrow \llet{x = e_1}{\ccase{e}{\{\overline{\rho_j\to e_j}, \rho \to E[x], \overline{\rho_k\to e_k}\}}} 
                                                                         & \mbox{Commuting case-let}\\
       (\llet{x = (\llet{v = e}{b})}{c}) \Longrightarrow \llet{v = e}{\llet{x = b}{c}}
                                                                       & \mbox{Commuting let-let}\\
@@ -3068,7 +3069,11 @@ preserving in Linear Core (i.e.,~preserve linearity semantically).
       %                                                                 & \mbox{Reverse binder swap}
     \end{array}
   \]}
-  \caption{Optimising transformations validated by Linear Core\label{fig:opttrans} (see Appendix~\ref{app:optimisations} for details)} 
+  \caption{Optimising transformations validated by Linear
+    Core\label{fig:opttrans} (for commuting case-let we
+      require $e_1$ not to capture the case binder, variables bound by the
+      pattern $\rho$ and the context $E[{-}]$ -- see Appendix~\ref{app:optimisations} for
+    details).} 
 \end{figure}
 
 

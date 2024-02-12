@@ -87,3 +87,122 @@ We prove let floating transformations \emph{full-laziness} and three
 
 
 
+\begin{theorem}
+If $\G; \D_1,\D_2,\D_3 \vdash \ccase{e}{\{\overline{\rho_j\to e_j}, \rho \to
+  E[e_1], \overline{\rho_k\to e_k}\}}  : \vp$ and $e_1$ does not
+use any pattern variables introduced by $\rho$, the case binder nor variables bound in
+context $E[{-}]$
+then 
+$\G ; \D_1,\D_2,\D_3  \vdash \llet{x = e_1}{\ccase{e}{\{\overline{\rho_j\to
+           e_j}, \rho \to E[t], \overline{\rho_k\to e_k}\}}} : \vp$
+              
+   \end{theorem}
+   
+   \begin{proof}
+   ~  
+     \begin{tabbing}
+       Subcase: $e$ is in WHNF\\
+       (1) $\G;\D_1 \Vdash e:\s \gtrdot \ov{\D_i}$ \` by inversion\\
+       (2) $\G ; \D_1 \vdash e : \s$ \` by inversion and constructor rule
+       if needed\\
+       (3) $\G,\var[z][\ov{\D_i}];\ov{\D_i},\D_2,\D_3 \vdash_{alt} \rho_j
+       \to e' :^z_{\ov{\D_i}} \s \Mapsto \vp$ \` by inversion\\
+       (4) $\ov{\judg[\G,z{:}_{\irr{\D_1}}\s][\irr{\D_1},\D_2,\D_3]{\rho\to e'}{\s
+           \Rrightarrow \vp}[alt][\irr{\D_1}][z]}$ \` by inversion\\
+       (5) $e$ matches $\rho_j$ \` by inversion\\
+       Subsubcase: $\rho_j$ corresponds to branch containing $E[e_1]$\\
+       Subsubsubcase: (3) derived by $\textrm{AltN}_{\textrm{WHNF}}$\\
+       $\judg[\G, z{:}_{\ov{\Delta_i}} \sigma,\ov{\xo},\ov{y_i{:}_{\D_i}\s_i}^n][\ov{\D_i},\D_2,\D_3]{E[e_1]}{\vp}$
+       \` by inversion\\
+       
+       $\judg[\G, z{:}_{\ov{\Delta_i}} \sigma,\ov{\xo},\ov{y_i{:}_{\D_i}\s_i}^n][\D_2]{e_1}{\sigma'}$
+       \` by inversion\\
+       $\judg[\G, x{:}_{\D_2}\sigma', z{:}_{\ov{\Delta_i}} \sigma,\ov{\xo},\ov{y_i{:}_{\D_i},\s_i}^n][\D_2]{x}{\sigma'}$
+       \` by Var$_\Delta$, with $x$ fresh\\
+      $\judg[\G][\D_2]{e_1}{\sigma'}$
+       \` by assumption\\
+       $\judg[\G,
+       x{:}_{\D_2}\sigma', z{:}_{\ov{\Delta_i}} \sigma,\ov{\xo},\ov{y_i{:}_{\D_i}\s_i}^n][\ov{\D_i},\D_2,\D_3]{E[x]}{\vp}$
+       \` by context instantiation\\
+       $\G,x{:}_{\D_2}\sigma',\var[z][\ov{\D_i}];\ov{\D_i},\D_2,\D_3 \vdash_{alt} \rho_j
+       \to E[x] :^z_{\ov{\D_i}} \s \Mapsto \vp$ \` by
+       $\textrm{AltN}_{\textrm{WHNF}}$\\
+       $\G,x{:}_{\D_2}\sigma'; \D_1,\D_2,\D_3 \vdash \ccase{e}{\{\overline{\rho_j\to e_j}, \rho \to
+  E[x], \overline{\rho_k\to e_k}\}} : \vp$ \` by $\textrm{Case}_\textrm{WHNF}$\\
+       $\G ; \D_1 , \D_2 , \D_3 \vdash \llet{\x[\D_2] = e_1}{\ccase{e}{\{\overline{\rho_j\to e_j}, \rho \to
+           E[x], \overline{\rho_k\to e_k}\}}} : \vp$ \` by $\mathit{Let}$\\
+       Subsubsubcase: (3) derived by $\textrm{Alt}0$\\
+       $\judg[\subst{\G, z{:}_{\ov{\Delta_i}} \sigma}{\cdot}{\ov{\D_i}}_z,\ov{\xo}][\subst{\ov{\D_i},\D_2,\D_3}{\cdot}{\ov{\D_i}}]{E[e_1]}{\vp}$
+       \` by inversion\\
+       $\judg[\G,z{:}_{\cdot}\s,\ov{\xo}][\D_2]{e_1}{\sigma'}$
+       \` by inversion\\
+       $\judg[\G][\D_2]{e_1}{\sigma'}$ \` by assumption\\
+       $\judg[\G,x{:}_{\D_2}\sigma' , z{:}_{\cdot}\s,\ov{\xo}][\D_2]{x}{\sigma'}$ \` by Var$_\Delta$, with $x$ fresh\\
+       $\judg[\subst{\G,x{:}_{\D_2}\sigma', z{:}_{\ov{\Delta_i}}
+         \sigma }{\cdot}{\ov{\D_i}}_z,\ov{\xo}][\subst{\ov{\D_i},\D_2,\D_3}{\cdot}{\ov{\D_i}}]{E[x]}{\vp}$
+       \` by context instantiation\\
+             $\G,x{:}_{\D_2}\sigma'; \D_1,\D_2,\D_3 \vdash \ccase{e}{\{\overline{\rho_j\to e_j}, \rho \to
+  E[x], \overline{\rho_k\to e_k}\}} : \vp$ \` by $\textrm{Alt}0$ and
+$\textrm{Case}_\textrm{WHNF}$\\
+$\G ; \D_1 , \D_2 , \D_3 \vdash \llet{\x[\D_2] = e_1}{\ccase{e}{\{\overline{\rho_j\to e_j}, \rho \to
+           E[x], \overline{\rho_k\to e_k}\}}} : \vp$ \` by
+       $\mathit{Let}$\\
+       Subsubsubcase: (3) derived by $\textrm{Alt}\_$\\
+       $\G , z{:}_{\ov{\Delta_i}} \sigma; \D_2,\D_3 \vdash E[e_1] : \vp$ \` by inversion\\
+       $\judg[\G , z{:}_{\ov{\Delta_i}} \sigma][\D_2]{e_1}{\sigma'}$
+       \` by inversion\\
+       $\judg[\G, , z{:}_{\ov{\Delta_i}} \sigma ,x{:}_{\D_2}\sigma'][\D_2]{x}{\sigma'}$ \` by Var$_\Delta$, with $x$ fresh\\
+       $\G, z{:}_{\ov{\Delta_i}} \sigma ,x{:}_{\D_2}\sigma'; \D_2,\D_3 \vdash E[e_1] : \vp$ \` by
+       context instantiation\\
+       $\G,x{:}_{\D_2}\sigma'; \D_1,\D_2,\D_3 \vdash \ccase{e}{\{\overline{\rho_j\to e_j}, \rho \to
+  E[x], \overline{\rho_k\to e_k}\}} : \vp$ \` by $\textrm{Alt}\_$ and
+$\textrm{Case}_\textrm{WHNF}$\\
+       $\G ; \D_1 , \D_2 , \D_3 \vdash \llet{\x[\D_2] = e_1}{\ccase{e}{\{\overline{\rho_j\to e_j}, \rho \to
+           E[x], \overline{\rho_k\to e_k}\}}} : \vp$ \` by
+       $\mathit{Let}$\\
+       Subsubcase: $\rho_j$ does not correspond to branch containing
+       $E[e_1]$\\
+       (6) $\judg[\G,z{:}_{\irr{\D_1}}\s][\irr{\D_1},\D_2,\D_3]{\rho\to E[e_1]}{\s
+         \Rrightarrow \vp}[alt][\irr{\D_1}][z]$ \` this subsubcase\\
+       Subsubsubcase: (6) derived by $\textrm{AltN}_{\textrm{Not
+           WHNF}}$\\
+       $\judg[\G, z{:}_{\irr{\D_1}}\s,\ov{\xo},\ov{y_i{:}_{\D_i}\s_i}][\irr{\D_1},\D_2,\D_3]{E[e_1]}{\vp}$
+       and $\ov{\D_i} = \ov{\lctag{\D_1}{K_i}}^n$ \` by inversion\\
+       $\judg[\G,
+       z{:}_{\irr{\D_1}}\s,\ov{\xo},\ov{y_i{:}_{\D_i}\s_i}][\D_2]{e_1}{\sigma'}$
+       \` by inversion\\
+       $\judg[\G,x{:}_{\D_2}\sigma',
+       z{:}_{\irr{\D_1}}\s,\ov{\xo},\ov{y_i{:}_{\D_i}\s_i}][\D_2]{x}{\sigma'}$
+       \` by Var$_\Delta$, with $x$ fresh\\
+       $\judg[\G, x{:}_{\D_2}\sigma', z{:}_{\irr{\D_1}}\s,\ov{\xo},\ov{y_i{:}_{\D_i}\s_i}][\irr{\D_1},\D_2,\D_3]{E[x]}{\vp}$
+       and $\ov{\D_i} = \ov{\lctag{\D_1}{K_i}}^n$ \` by context
+       instantiation\\
+         $\G,x{:}_{\D_2}\sigma'; \D_1,\D_2,\D_3 \vdash \ccase{e}{\{\overline{\rho_j\to e_j}, \rho \to
+  E[x], \overline{\rho_k\to e_k}\}} : \vp$ \` by $\textrm{AltN}_{\textrm{Not
+           WHNF}}$ and
+       $\textrm{Case}_\textrm{WHNF}$\\
+         $\G ; \D_1 , \D_2 , \D_3 \vdash \llet{\x[\D_2] = e_1}{\ccase{e}{\{\overline{\rho_j\to e_j}, \rho \to
+           E[x], \overline{\rho_k\to e_k}\}}} : \vp$ \` by
+       $\mathit{Let}$\\
+       Subsubsubcase: (6) derived by $\textrm{Alt}\_$ or
+       $\textrm{Alt}0$\\
+       Identical to subsubsubcases above.\\
+       Subcase: $e$ is not in WHNF\\
+       (1) $\G ; \D_1 \vdash e : \s$ \` by inversion\\
+       (2) $\ov{\judg[\G,z{:}_{\irr{\D_1}}\s][\irr{\D_1},\D_2,\D_3]{\rho\to
+           e'}{\s \Rrightarrow \vp}[alt][\irr{\D_1}][z]}$ \` by
+       inversion\\
+       (3) $\judg[\G,z{:}_{\irr{\D_1}}\s][\irr{\D_1},\D_2,\D_3]{\rho\to
+           E[e_1]}{\s \Rrightarrow \vp}[alt][\irr{\D_1}][z]$ \` by
+         inversion\\
+       Subsubcase: (3) derived by $\textrm{AltN}_{\textrm{Not
+           WHNF}}$, $\textrm{Alt}\_$ or
+       $\textrm{Alt}0$\\
+       Identical to Subsubsubcases above.
+     \end{tabbing}
+
+   \end{proof}
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: "../../../icfp"
+%%% End:
