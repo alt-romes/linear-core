@@ -729,23 +729,28 @@ instance:
 \begin{notyet}
 \begin{lstlisting}
 f :: (a *' $\lolli$ '* a) -> Bool -> a *' $\lolli$ '* a
-f use bool x = let y = use x in case bool of
-      True -> x 
-      False -> y
+f use bool x = let y = use x in
+  case bool of
+    True -> x 
+    False -> y
 \end{lstlisting}
 \end{notyet}
 %
-This example uses \lstinline{x} directly in one
-branch and the let-bound \lstinline{y} in the other. Semantically, this program is linear because
-the linear resource \lstinline{x} ends up is used exactly once in both case
-alternatives, directly in the \lstinline{True} branch or via the
+This example uses \lstinline{x} directly in one branch and the let-bound
+\lstinline{y} in the other. Semantically, as opposed to syntactically, this
+program is linear (i.e. linear resources are used \emph{exactly once}) because
+the linear resource \lstinline{x} is used exactly once in both case
+alternatives, either directly in the \lstinline{True} branch, or \emph{via} the
 let-bound \lstinline{y} in the \lstinline{False} branch.
 
-Shifting our focus from not using a let binding to using it
-more than once.
-Despite the binder body only being evaluated
-once due to call-by-need, and thus its resources being only used once to compute a result, we can still
-only consume the result of the computation once -- perhaps surprisingly, as the
+% Shifting our focus from not using a let binding to using it
+% more than once.
+On the other hand, let us consider a let-binding \lstinline{y} that is used
+twice, and that binds an expression that depends on a linear resource
+\lstinline{x}.
+Despite the binder body only being evaluated once due to call-by-need, and thus
+its resources being only used once to compute a result, we can still only
+consume the result of the computation once -- perhaps surprisingly, as the
 perception so far is that ``resources are consumed during computation'' and
 multiple uses of the same let binder share the result that was computed only
 once. Illustratively, the following program must \emph{not} typecheck:
@@ -762,16 +767,17 @@ despite being effectively computed just once, since the result may
 still capture (parts of) the linear resource. The trivial example is \lstinline{f1} applied to
 \incode{id} -- the result of computing \incode{id x} is \incode{x}, and \incode{x} must definitely not be
 shared. Indeed, if the result of the computation involving the linear resource
-was, e.g., an unrestricted integer, then sharing the result would not involve consuming the
-resource more than once.
+was insteaed, e.g., an unrestricted integer, then sharing the result would not
+involve consuming the resource more than once.
 % ROMES:TODO:!!!!
 %\todo{this kind of hints that maybe somehow in the
 %alternative scrutinizing a "trivial" atom we could make the let binding
 %unrestricted after we were sure it was evaluated once, but that isn't easy
 %without erasing too many things before, we kind of tried this once}
 %
-Concretely, the result of evaluating a let binder body using linear resources, if computed, must be
-consumed exactly once, or, otherwise, we risk discarding or duplicating said resources.
+The result of evaluating a let-binder's body which depends on linear resources,
+if computed, must be consumed exactly once, or, otherwise, we risk discarding
+or duplicating (the parts of) the resources that were captured in the result.
 
 Lastly, consider a program which defines two let bindings \incode{z} and \incode{y}, where
 \incode{z} uses \incode{y} which in turn uses the linear resource \incode{x}:
@@ -786,7 +792,7 @@ f2 use x = let y = use x in let z = use y in ()
 Even though the binding \incode{y} is used in \incode{z}, \incode{x} is still never consumed because
 \incode{z} isn't evaluated in the let body, and consequently \incode{y} isn't evaluated
 either -- never consuming \incode{x}. We use this example to highlight that even for
-let bound variables, the syntactic occurrence of a variable isn't enough to
+let-bound variables, the syntactic occurrence of a variable isn't enough to
 determine whether it is used. Instead, we ought to think of uses of \incode{y} as
 implying using \incode{x}, and therefore uses of \incode{z} imply using \incode{x}, however, if
 neither is used, then \incode{x} isn't used. Since \incode{x} is effectively discarded, this
