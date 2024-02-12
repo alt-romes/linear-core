@@ -487,29 +487,38 @@ makes clear, when considering linear type systems for non-strict
 languages, a distinction between using
 resources \emph{syntactically} and \emph{semantically} is needed.
 %
-Consider the following program in a functional Haskell-like language,
-where a computation that closes the given \lstinline{handle} is bound to \lstinline{x} before the
-\lstinline{handle} is returned:
+For instance, in the following program in a Haskell-like language there are two
+syntactic occurrences of \emph{handle}, and a let-bound computation that closes
+this handle is bound to \lstinline{x} before the \lstinline{handle} is
+returned. However, if the program is evaluated lazily, the handle is \emph{not}
+closed because the computation that closes the handle is never evaluated (since
+\lstinline{x} goes unused).
 %
 \begin{lstlisting}
 f : Handle *' $\lolli$ '* Handle
 f handle = let x = close handle in handle
 \end{lstlisting}
 %
-
-In the code above, the \lstinline{handle} appears to be closed before
-returned, whereas in fact the handle will only be closed if the let bound
-computation is effectively run (i.e.,~evaluated).
+% Intuitively, a computation that depends on a linear resource to produce a
+% result consumes that resource iff the result is effectively computed; in
+% contrast, a computation that depends on a linear resource, but is never run,
+% will not consume that resource.
 %
-The example illustrates that \emph{consuming} a resource is not necessarily
-synonymous with its syntactic occurrences, since depending on the evaluation strategy
-of the language the computation that closes the handle might not be
-executed, and if so, the \lstinline{handle} in that unused computation
-is not consumed.
+% Even though there are two occurrences of \lstinline{handle} in the program, and
+% it looks as though the \lstinline{handle} may be closed before returned, this function may
+% actually only \emph{consume} used once -- it depends on the evaluation strategy of the
+% language -- the \lstinline{handle} is closed iff the let bound computation is
+% evaluated.
 %
-Expanding on this, consider the above example program under
-under call-by-need semantics.  %With \emph{eager}
-% evaluation semantics,
+%
+% Intuitively, \emph{consuming} a resource is not necessarily synonymous with its
+% syntactic occurrence. In the example, \emph{non-strict} evaluation means the
+% handle is never closed by the function.
+%
+%
+% Depending on the evaluation strategy of the language, a computation that closes
+% a handle might not be evaluated, and thus is not consumed.
+% With \emph{eager} evaluation semantics,
 % the let
 %   bound expression \lstinline{close handle} is eagerly evaluated, and the \lstinline{handle} will be closed before being
 % returned. It is clear that a linear type system should not accept such a
@@ -518,22 +527,29 @@ under call-by-need semantics.  %With \emph{eager}
 % the function;
 % %
 % on the other hand, with \emph{call-by-need},
-The let
-bound expression will only be evaluated when the binding \lstinline{x} is needed. We return
-the \lstinline{handle} right away, and the let binding is forgotten as it cannot be
-used outside the scope of the function, so the handle is not closed by
-calling \lstinline{f}.
-Under the lens of \emph{call-by-need}, \emph{using} a resource in a
-let binding only results in the resource being \emph{consumed} if the binding
-itself is \emph{consumed}. We argue that a linear type system under
-\emph{call-by-need} evaluation should accept the above program, unlike a linear
-type system for the same program evaluated with \emph{call-by-value}, where
-the let-bound expression is always evaluated.
+%
+% Reconsider the \lstinline{handle} example program under
+% \emph{call-by-need} evaluation semantics:
+% The let bound expression is only evaluated if the binding \lstinline{x} is
+% needed. The function returns the \lstinline{handle} right away, and forgets the
+% let bound \lstinline{x} as its scope is exited, such that \lstinline{x} will
+% never be needed -- consequently, the \lstinline{handle} is never closed by the
+% function...
+%
+%
+%
 
 Intuitively, a computation that depends on a linear resource to produce a
-result consumes that resource iff the result is effectively computed; in
+result consumes that resource iff the result is effectively consumed; in
 contrast, a computation that depends on a linear resource, but is never run,
 will not consume that resource.
+Under the lens of \emph{non-strict} evaluation, this means that a syntactic
+occurrence of a resource in a let binding only entails consuming that resource
+iff the binding itself is consumed.
+%
+We argue that a linear type system for a language with non-strict evaluation
+semantics should accept the above program, unlike a linear type system for the
+same program if it were to be evaluated \emph{eagerly}.
 %
 From this observation, and exploring the connection between computation and evaluation,
 % it becomes clear that \emph{linearity} and \emph{consuming resources}, in the
@@ -571,7 +587,7 @@ Aligned with our original motivation of typechecking linearity in GHC Core such
 that optimising transformations preserve linearity, and with the goal
 of understanding linearity in a non-strict context, this section aims to
 build an intuition for semantic linearity through examples of Core
-programs that are semantically linear but rejected by (the current) Core linear type
+programs that are semantically linear but are rejected by (the current) Core linear type
 system.
 % BETTER?:
 %Aligned with our motivation of typechecking linearity in GHC Core such
@@ -584,7 +600,7 @@ system.
 In the examples, a \colorbox{working}{\workingcolorname} background highlights programs that are
 syntactically linear and accepted by Core's naive linear type system. A
 \colorbox{notyet}{\notyetcolorname} or \colorbox{limitation}{\limitationcolorname} background mark programs that are
-\emph{semantically} linear, but are not seen as linear by Core's (naive wrt laziness) linear type
+\emph{semantically} linear, but are not seen as linear by Core's (naive wrt lazy evaluation) linear type
 system. Notably, the linear type system we develop in this work accepts all
 \colorbox{notyet}{\notyetcolorname} programs.
 % (while the few \colorbox{limitation}{\limitationcolorname} programs are not accepted).
