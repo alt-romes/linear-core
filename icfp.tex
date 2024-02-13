@@ -1795,8 +1795,9 @@ binds, and either \emph{must} be used.
 % alternative ways of consuming linear resources (between $\D$-vars and direct
 % resource usage). 
 Let-bound variables are the canonical example of a
-$\Delta$-bound variable, that is, let-bound variables bind expressions in which
-the resources required to type them are consumed lazily rather than eagerly.
+$\Delta$-bound variable.
+% , that is, let-bound variables bind expressions in which
+% the resources required to type them are consumed lazily rather than eagerly.
 %
 Annotating let-bound variables with a usage environment $\D$
 \emph{delays} the consumption of resources to when the variables themselves are
@@ -1808,10 +1809,11 @@ The rule for (non-recursive) let bindings splits the linear environment in $\D$
 and $\D'$. $\D$ is used to type the body $e$ of the let binding $x$. Perhaps
 surprisingly, the resources $\D$ used to type $e$ are still available in the
 environment to type the let body $e'$, alongside the unrestricted $x$ binding
-annotated with the usage environment $\D$. Ultimately, the resources being
-available in $e'$ reflects the fact that typing a lazily bound expression
-doesn't consume resources, and the binding $x$ being $\D$-bound reflects that
-its usage entails consuming the resources $\D$ the expression it binds depends on.
+annotated with the usage environment $\D$. In essence, the resources of $e$ being
+available in $e'$ reflects how typing the body of a lazy binder
+doesn't consume resources, and the binding $x$ being an unrestricted
+$\D$-variable ensures that using it will consume the resources $\D$ the
+expression it binds depends on.
 % \todo[inline]{Let bindings are hard, if they are used then we use resources. If
 % they don't get used then we use no resources! In practice, resources that show
 % up in the body of the let must be used, be it by using the let binder, or by
