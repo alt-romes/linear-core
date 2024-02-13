@@ -1697,18 +1697,19 @@ A \emph{usage environment} $\Delta$ is the means to encode the idea that lazy
 bindings do not consume the resources required by the bound expression when
 defined, but rather when the bindings themselves are consumed.
 Specifically, we annotate so-called $\Delta$-bound variables with a \emph{usage
-environment} to denote that consuming these variables equates to consuming the
-resources in the annotated usage environment $\D$ (i.e.,~essentially a multiset of linear resources).
+environment} to denote that consuming these $\D$-variables equates to consuming the
+resources in the annotated usage environment $\D$ (which is essentially a
+multiset of linear resources).
 %
-$\Delta$-bound
-variables are introduced by several of constructs: (recursive) let
-binders, case binders, and case pattern variables. In the following example, as
-per the insights developed in
-Section~\ref{sec:semantic-linearity-examples}, the resources required to
-typecheck the body of the binder $u$, $x$ and $y$, are only used if
-the let-bound variable
-$u$ is consumed in the let-body $e$.  Accordingly, the usage environment of
-the let-bound $u$ is $\{x,y\}$:
+$\Delta$-bound variables are introduced by several constructs as (recursive)
+let binders, case binders, and case pattern variables.
+%
+For example, the let-binder $u$ in the following program is annotated with a
+usage environment $\{x,y\}$, the resources that are used in its body. Thus, in
+the expression $e$, consuming $u$ will equate to consuming the linear resources
+$x$ and $y$:
+% , as per the insights developed in
+% Section~\ref{sec:semantic-linearity-examples},
 \[
 f = \lambda \xl.~\lambda \y[1].~\llet{u = (x,y)}{e}
 \]
@@ -1719,13 +1720,14 @@ usage environment, meaning they are no longer available for direct usage.
 Dually, using the linear resources directly means they are no longer available
 to consume through the usage environment of the $\Delta$-bound variable.
 
-Finally, we note that usage environments bear a strong resemblance to the linear
-typing environments in the main typing judgement,
-i.e. the environment with the linear resources required to type an expression.
+% Finally, we note that usage environments bear a strong resemblance to the linear
+% typing environments in the main typing judgement,
+% i.e. the environment with the linear resources required to type an expression.
 %
-In fact, usage environments and linear typing contexts differ only in that the
-former are used to annotate variables, while the latter used to type
-expressions.
+% In fact, usage environments and linear typing contexts differ only in that the
+% former used to annotate variables, while the latter used to type
+% expressions.
+%
 % Yet, this distinction is slightly blurred after introducing how
 % typing environments can be moved to usage environments, or otherwise occurs in
 % rules relating the two.
@@ -1747,13 +1749,14 @@ A $\Delta$-bound variable $u$ is a variable annotated with a usage environment $
 Fortunately, since linear resources must be linearly split across
 sub-derivations, (2) follows from (1) since consuming the linear
 resources in $\Delta$ to type $u$ makes them unavailable in the
-context of any other derivation. Therefore, expressions using these
-resources a second time, directly, or indirectly through the same (or
-other) usage environment, are ill-typed, as the resources are already
-allocated to the derivation of $u$. Similarly, (3) also follows from
-(1), because if the linear resources aren't consumed in the
-$\Delta$-var derivation, they must be consumed in an alternative
-derivation (or otherwise the expression is ill-typed).
+context of any other derivation.
+% Therefore, expressions using these
+% resources a second time, directly, or indirectly through the same (or
+% other) usage environment, are ill-typed, as the resources are already
+% allocated to the derivation of $u$.
+Similarly, (3) also follows from (1), because if the linear resources aren't
+consumed in the $\Delta$-var derivation, they must be consumed in an
+alternative derivation (or otherwise the expression is ill-typed).
 %
 These observations all lead to the typing rule for $\Delta$-bound
 variables:
