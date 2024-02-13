@@ -387,26 +387,26 @@ Our contributions are as follows:
 
 \item We introduce the concept of \emph{semantic} linearity, in
 contrast to \emph{syntactic} linearity in Haskell, by example
-($\S$~\ref{sec:linearity-semantically}).
+(Section~\ref{sec:linearity-semantically}).
 
 \item We introduce Linear Core, a type system for a linear lazy language with
 the key features from Core (except for type equality coercions), which,
 accounts for semantic linearity in the presence of laziness. To the
 best of our knowledge, this is the first type system to capture linearity
 semantically in this context
-($\S$~\ref{sec:main:linear-core}).
+(Section~\ref{sec:main:linear-core}).
 
 \item We show the type soundness of Linear Core and prove that
   multiple optimising transformations, which
 fail to type check in Core, are validated by Linear
-Core ($\S$~\ref{sec:main:metatheory}).
+Core (Section~\ref{sec:main:metatheory}).
 
 \item We discuss our implementation of Linear Core as a GHC
   plugin\footnote{We plan to submit our implementation as a companion
     artifact to this paper.} which checks linearity in
 all intermediate Core programs produced during the compilation process, showing
 it accepts the programs resulting from transformations in libraries such as
-\texttt{linear-base} ($\S$~\ref{sec:discuss:implementation}).
+\texttt{linear-base} (Section~\ref{sec:discuss:implementation}).
 
 \end{itemize}
 
@@ -1410,27 +1410,26 @@ Section~\ref{sec:optimisations-preserve-types-meta}.
 In this section, we develop a linear calculus $\lambda_\Delta^\pi$,
 dubbed \emph{Linear Core}, that combines the linearity-in-the-arrow
 and multiplicity polymorphism introduced by Linear
-Haskell~\cite{cite:linearhaskell}, featuring algebraic datatypes, case
-expressions, recursive let bindings, and multiplicity polymorphism.
-(i.e.,~all of Core's features with the exception of equality
-coercions).  We discuss multiplicity coercions as future work in
+Haskell~\cite{cite:linearhaskell} with all the key features from GHC's Core
+language (algebraic datatypes, case expressions, and recursive lazy let bindings)
+except for equality coercions, which we discuss as future work in
 Section~\ref{sec:future-work}.
 %
-
-
+%
 Linear Core makes precise the various insights discussed in the
-previous chapter by crystallizing them together in a linear type system for which we
+previous section by crystallizing them together in a linear type system for which we
 prove soundness via the standard type preservation and progress theorems. Crucially,
 Linear Core typing accepts all the \emph{semantically linear} examples
 (highlighted with \colorbox{notyet}{\notyetcolorname})
 from Section~\ref{sec:semantic-linearity-examples}, which Core currently
 rejects.
 %
-% Besides type safety, we prove that multiple optimising Core-to-Core
-% transformations preserve linearity in Linear Core. These same transformations
-% don't preserve linearity under Core's current type system. As far as we know,
-% we are the first to prove optimisations preserve types in a non-strict linear
-% language.
+Besides type safety, we prove that multiple optimising Core-to-Core
+transformations preserve linearity in Linear Core, while violating linearity
+under Core's current type system.
+%
+% As far as we know, we are the first to prove optimisations preserve types in
+% a non-strict linear language.
 
 The first key idea for typing linearity semantically is to delay \emph{consuming a
 resource} to when a computation that depends on that resource is effectively
@@ -1441,25 +1440,23 @@ The second key idea is to have two distinct rules for case
 expressions, branching on whether the scrutinee is in Weak Head Normal
 Form, and using ``proof irrelevance'' to track resources that are no
 longer available but haven't yet been fully consumed
-(Section~\ref{sec:lc-case-exps}). Additionally, we introduce tagged
-resources to split the resources between the pattern-bound variables
-as usage environments, encoding that pattern variables jointly
-``finish consuming'' the scrutinee resources.
+(Section~\ref{sec:lc-case-exps}). Additionally, we introduce tags to split
+resources between the pattern-bound variables, %^as usage environments
+encoding that all linear components of a pattern must be used.
 % 
 We also note that despite the focus on GHC Core, the fundamental ideas for
 understanding linearity in a call-by-need calculus can be readily applied to
 other non-strict languages.
 
 We present Linear Core's syntax and type system incrementally, starting with the
-judgements and base linear calculi rules ($\S~\ref{sec:base-calculi}$).
+judgements and base linear calculi rules (Section~\ref{sec:base-calculi}).
 %
 Then, usage environments, the rule for $\Delta$-bound variables, and rules for
-(recursive) let bindings ($\S~\ref{sec:usage-environments}$).
+(recursive) let bindings (Section~\ref{sec:usage-environments}).
 %
 Finally, we introduce the rules to typecheck case expressions and alternatives,
 along with the key insights to do so, namely branching on WHNF-ness of
-scrutinee, proof irrelevant resources, and tagged variables
-($\S~\ref{sec:lc-case-exps}$).
+scrutinee, proof irrelevant resources, and tagging (Section~\ref{sec:lc-case-exps}).
 
 % We start by introducing the Core-like language, $\dots$ usage environments as a
 % way to encode choice between the way a resource is used $\dots$\todo{$\dots$}
@@ -1515,7 +1512,7 @@ i.e. there is always at least one pattern which matches the scrutinized expressi
 % Section~\ref{sec:linear-mini-core}.
 
 Datatype declarations $\datatype{T~\overline{p}}{\overline{K:\overline{\sigma
-\to_\pi}~T~\overline{p} }}$ involve the name of the type being declared $T$
+\to_\pi}~T~\overline{p} }}$ have the name of the type being declared $T$
 parametrized over multiplicity variables $\ov{p}$, and a set of the data
 constructors $K$ with signatures indicating the type and multiplicity of the
 constructor arguments. Note that a linear resource is used many times when a
@@ -1544,8 +1541,8 @@ our type system understands linearity, while being simpler to reason about than
 call-by-need operational semantics.
 % which is traditionally modelled with a
 % mutable heap to store \emph{thunks} and the values they are overwritten with.
-Furthermore, linear function applications, even in a \emph{call-by-need} system, are
-usually reduced \emph{call-by-name} as the function argument is guaranteed to
+Furthermore, linear function applications, even in a \emph{call-by-need} system, can
+usually be reduced \emph{call-by-name} as the function argument is guaranteed to
 be used exactly once (thus avoiding unnecessarily allocating memory on the heap
 for a redundant \emph{thunk}).
 %
@@ -1570,7 +1567,7 @@ case expressions, and alternatives (in its purpose to type semantic linearity).
 % algebraic treatment of multiplicities with semiring operations!!! Would it be
 % sufficient to add a rule for application of variable multiplicity functions?}
 %
-
+%
 The core rules of the calculus for, multiplicity and term,
 abstraction and application are similar to that of $\lambda^q_\to$ and
 mostly standard. 
@@ -1655,11 +1652,11 @@ linear variables can be used to type them.
 % once in the function body. Thus, argument expressions to unrestricted functions must also
 % be unrestricted, i.e. no linear variables can be used to type them.
 % %
-
+%
 Typing linear and unrestricted function applications separately is less general
 than typing applications of functions of any multiplicity $\pi$ by scaling (per the multiplicity
 semiring) the multiplicities of the resources used to type the argument by $\pi$, however, our objective of typing semantic
-linearity does not benefit much from doing so and so we opt for a
+linearity does not benefit much from doing so and therefore we opt for a
 simpler design. 
 % \todo{We might only need multiplicities for the case-of-case definition as it
 % exists in ghc?, even then couldn't we do semiring scaling without variables?
@@ -1668,10 +1665,10 @@ simpler design.
 Multiplicity abstractions ($\Lambda p.~e$) introduce a multiplicity variable
 $p$ (in the unrestricted context), and construct expressions of type
 $\forall p.~\s$, i.e. a type universally quantified over a multiplicity
-variable $p$. We note that, in the body of the abstraction, function types annotated
-with a $p$ variable and datatype fields with multiplicity $p$ are typed as
-thought they are linear functions and linear fields, because $p$ can be
-instantiated at both $\omega$ and $1$.
+variable $p$. Again, conservatively, in the body of the abstraction, function
+types annotated with a $p$ variable and datatype fields with multiplicity $p$
+are typed as thought they are linear functions and linear fields, because $p$
+can be instantiated at both $\omega$ and $1$.
 \[
 \TypeMultLamIntro \quad \TypeMultLamElim
 \]
@@ -1698,7 +1695,7 @@ in-scope  multiplicity variable in $\G$.
 
 A \emph{usage environment} $\Delta$ is the means to encode the idea that lazy
 bindings do not consume the resources required by the bound expression when
-defined, but rather when the bindings themselves are fully consumed.
+defined, but rather when the bindings themselves are consumed.
 Specifically, we annotate so-called $\Delta$-bound variables with a \emph{usage
 environment} to denote that consuming these variables equates to consuming the
 resources in the annotated usage environment $\D$ (i.e.,~essentially a multiset of linear resources).
