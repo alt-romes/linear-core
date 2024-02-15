@@ -1829,29 +1829,31 @@ expression it binds depends on.
 % Recursive let bindings are very similar to non-recursive ones, the main
 % exception being that the recursive bindings may be defined in terms of
 % themselves, and we may have more than one binding.
-In our system, groups of
-recursive let bindings are always assumed to be strongly connected, that is,
-all the bindings in a recursive let group are mutually recursive in the sense
-that they all (transitively) depend on one another.
 %
-As before, recursive let bindings bind expressions \emph{lazily}, so they similarly
-introduce a $\D$-variable for each binding, and resources required to type the
+Recursive let bindings also bind expressions \emph{lazily}, so, similarly, we
+introduce a $\D$-variable for each binding. Resources required to type the
 let-bindings are still available in the body of the let, to later be consumed
-via $\D$-variables or directly, if the let-bindings are unused.
+via $\D$-variables, or, directly, if the let-bindings are unused.
 %
-However, as discussed in Section
-\ref{sec:semantic-linearity-examples:recursive-lets}, we must consider how
-recursive uses of a binder in its own definition entails consuming all resources otherwise
-required to type the binder's body.
-%, i.e. a least upper bound.
+Additionally, as seen in Section
+\ref{sec:semantic-linearity-examples:recursive-lets}, recursive uses of a
+binder in its own definition entail consuming all resources otherwise required
+to type the binder's body.
 
-Extrapolating to a strongly-connected group of recursive bindings, (mutually)
-recursive uses of binders entail consuming all resources
-required to type those binders. By definition, those binders in turn
-recursively use binders that used them, and thus all the resources otherwise
-required to type them.
+As for groups of recursive let bindings, we recall that, in our
+system, all recursive let groups are strongly-connected -- all bindings in a
+recursive let group are mutually recursive in the sense that they all
+(transitively) depend on one another.
 %
-Ultimately, all binders in a strongly-connected group of mutually recursive let
+% In light of it, (mutually) recursive uses of binders entail consuming all the
+% resources required to type all of the binders.
+%
+By definition of strongly-connected, any binder in the mutually recursive group
+may end up using any binder from the group. Accordingly, occurrences of any
+such binder must be typed conservatively, using up the sum of resources needed
+to type each of the binders,
+%
+i.e., all binders in a strongly-connected group of mutually recursive let
 bindings have to be typed with the same linear resources (which are the least
 upper bound of resources needed to type the bodies of all binders, accounting
 for uses of mutually-recursive binders).
@@ -1860,14 +1862,14 @@ for uses of mutually-recursive binders).
 % mutually recursive group of let bindings to be the same for any such group that
 % is strongly-connected.
 
-The typing rule for recursive groups of bindings leverages our assumption that
-all recursive let bindings are strongly connected and the observation
-that every binder in a strongly connected group of recursive bindings is typed
-with the same linear context. Consequently, all bindings of the recursive group
-are introduced as $\D$-vars with the same $\D$ environment -- using any one of
-the bindings in a recursive group entails consuming all resources required to
-type that same group, which is also why we can use the same linear resources to
-type each binder:
+The typing rule for recursive groups of bindings leverages both the assumption
+that all recursive let bindings are strongly connected and the observation that
+every binder in a strongly connected group of recursive bindings is typed with
+the same linear context. Consequently, all bindings of the recursive group are
+introduced as $\D$-vars with the same $\D$ environment -- using any one of the
+bindings in a recursive group entails consuming all resources required to type
+that same group, which is also why we can use the same linear resources to type
+each binder:
 \[
 \TypeLetRec
 \]
@@ -1890,9 +1892,9 @@ developed in this section.
 % The algorithm is a $O(n^2)$ traversal over the so-called \emph{naive usage
 % environments} used to type each binding.
 %
-Inference of usage environments for recursive binding groups bears some
-resemblance to the inference of principle types for recursive bindings
-traditionally achieved through the Hindley–Milner inference
+However, we note that inference of usage environments for recursive binding
+groups bears some resemblance to the inference of principle types for recursive
+bindings traditionally achieved through the Hindley–Milner inference
 algorithm~\cite{DBLP:conf/popl/DamasM82}. % , there might be an opportunity to
 % develop a better algorithm leveraging existing inference techniques.
 % %
