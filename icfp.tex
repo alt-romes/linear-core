@@ -1917,7 +1917,7 @@ Case expressions \emph{drive evaluation} --
 %expression can effectively consume resources rather than just 
 %
 a case expression \emph{evaluates its scrutinee} to Weak Head Normal
-Form (WHNF)~\cite{10.5555/1096899}, \emph{then} selects the case
+Form (WHNF)~\cite{10.5555/1096899}, and \emph{then} selects the case
 alternative corresponding to the pattern matching the WHNF of the
 scrutinee\footnote{In our calculus, the alternatives are always
   exhaustive, i.e. there always exists at least one pattern which
@@ -1934,9 +1934,9 @@ application to be in WHNF. % (if otherwise all sub-expressions
 % (that is why it is called \emph{weak} head normal form).
 %
 Accordingly, these sub-expressions might still depend on linear resources to be
-well-typed (these resources will be consumed when the expression is evaluated).
+well-typed (these resources will be consumed when the expressions are evaluated).
 
-As will be made clear in later sections, we need to devise a specialized typing
+As will be made clear in this section, we need to devise a specialized typing
 judgement for scrutinees that is able to distinguish between terms
 in WHNF and terms that are not in WHNF.
 Following the discussion on expressions in WHNF, we present a
@@ -1959,10 +1959,9 @@ $\ov{\D_i}$ required to type each linear argument individually and return exactl
 that split of the resources; the unrestricted $e_\omega$ expressions must be
 typed on an empty linear environment. A lambda expression is typed with
 the main typing judgement and trivially ``outputs'' the whole $\D$ environment,
-as there is always only a single sub-expression in lambdas (the lambda body).
+as there is always only a single sub-expression in lambda abstractions (the body).
 
-Recall that the operational semantics encode the evaluation of case
-expressions such that 
+% Precisamos disto?
 % %
 % \begin{tabbing}
 % $\ccase{e}{z~\{\ov{\rho_i \to e_i}\}} \longrightarrow^* \ccase{e'}{z~\{\ov{\rho_i \to e_i}\}}$\`where $e'$ is in WHNF and $e$ is not\\
@@ -1970,13 +1969,15 @@ expressions such that
 % $\ccase{e}{z~\{\_ \to e_i\}} \longrightarrow e_i[e/z]$\`where $e$ is in WHNF\\
 % \end{tabbing}
 % %
-when a scrutinee $K~\ov{e}$ matches a constructor pattern $K~\ov{\x[\pi]}$,
-evaluation proceeds in the case alternative corresponding to the matching
-pattern, with occurrences of $\ov{x}$ being substituted by $\ov{e}$, and
-occurrences of the case binder $z$ substituted by the whole scrutinee
-$K~\ov{e}$. Constructors and lambda expressions otherwise match the wildcard
-pattern whose alternative body is evaluated only substituting the case binder by the
-scrutinee. 
+% Recall how the operational semantics encode the evaluation of case
+% expressions such that,
+% when a scrutinee $K~\ov{e}$ matches a constructor pattern $K~\ov{\x[\pi]}$,
+% evaluation proceeds in the case alternative corresponding to the matching
+% pattern, with occurrences of $\ov{x}$ being substituted by $\ov{e}$ and
+% occurrences of the case binder $z$ substituted by the whole scrutinee
+% $K~\ov{e}$. Constructors and lambda expressions may otherwise match match the wildcard
+% pattern, resuming evaluation on the alternative body only substituting the case
+% binder by the scrutinee. 
 
 We highlight that, when evaluating a case expression, computation only
 happens when a scrutinee (not in WHNF) is evaluated to
@@ -2082,11 +2083,11 @@ variable whose usage environment is the linear resources used to type the
 scrutinee. We also 
 make all the resources $\ov{\D_i}$ used to type the scrutinee
 available in the linear typing environment.
-
+%
 The $\vdash_{alt}$ judgement is 
 annotated with the disjoint set of linear resources $\ov{\D_i}$ used
 to typecheck the scrutinee sub-expressions,
-the name of the case binder $z$.
+and the name of the case binder $z$.
 
 %
 Despite the key intuitions of typing a case expressions whose scrutinee is in
@@ -2177,98 +2178,83 @@ pattern is unrestricted when evaluated to WHNF, implying that all linear
 resources have been consumed to produce it, and the result may 
 be freely discarded or duplicated.
 %
-This ensures that when we match on an unrestricted pattern we no longer need to
-consume the scrutinee resources. Otherwise, for example,
-$\ccase{K_1~x}{\{K_2 \to K_2,K_1~y \to K_1~y\}}$ would not be well-typed since
-the resource $x$ is not consumed in the first branch.
+Reactively deleting the resources that typed the scrutinee from the linear
+environment ensures that when we match on an unrestricted pattern there are no
+remaining linear resources to consume. Otherwise, e.g., $\ccase{K_1~x}{\{K_2 \to
+K_2,K_1~y \to K_1~y\}}$ would not be well-typed since the resource $x$ would
+be left \emph{un}-consumed in the first alternative, even though we know by
+matching on $K_1$ that it has already been consumed.
 %
 Furthermore, since the case binder in such an alternative refers to the
 unrestricted expression, the case binder too may be used unrestrictedly, which
-we allow by making its usage environment empty.
+we allow by emptying its usage environment.
 
-It might seem as though deleting the resources from the environment in this
-rule is necessary to guarantee a resource is not used after it is consumed.
-%
-However, let us consider two situations -- pattern matches in a case
-expression whose scrutinee is in WHNF, and matches on a case expression whose
-scrutinee is \emph{not} in WHNF:
-%
-%\begin{enumerate}
-When the scrutinee is in WHNF, it is either an unrestricted expression
-against which any match will only introduce unrestricted variables, or an
-expression that depends on linear resources. The former trivially allows
-any resource from the scrutinee in the alternatives as well. The latter is
-further divided: 
-%\begin{enumerate}
-%
-%\item
-The pattern is unrestricted while the
-scrutinee is not, so entering this branch is impossible as long as the case
-expression is well-typed; by contradiction, the linear resources from the
-scrutinee could occur unrestrictedly in that branch.
-%
-For uniformity, we type such alternatives as those for scrutinees that
-are not in WHNF;
-%
-The pattern is linear and matches the scrutinee, in which case the
-$AltN_{\textrm{WHNF}}$ is applicable instead of $Alt0$;
-%
-The pattern is linear but does not match the scrutinee and so any
-resource could be used in such alternatives. For uniformity,
-it is also typed as though the scrutinee were not in WHNF.
+%It might seem as though deleting the resources from the environment in $\textsc{Alt}_0$
+%is necessary to guarantee a resource is not used after it is consumed.
+%%
+%However, let us consider two situations -- pattern matches in a case
+%expression whose scrutinee is in WHNF, and matches on a case expression whose
+%scrutinee is \emph{not} in WHNF:
+%%
+%%\begin{enumerate}
+%When the scrutinee is in WHNF, it is either an unrestricted expression
+%against which any match will only introduce unrestricted variables, or an
+%expression that depends on linear resources. The former trivially allows
+%any resource from the scrutinee in the alternatives as well. The latter is
+%further divided: 
+%%\begin{enumerate}
+%%
+%%\item
+%The pattern is unrestricted while the
+%scrutinee is not, so entering this branch is impossible as long as the case
+%expression is well-typed; by contradiction, the linear resources from the
+%scrutinee could occur unrestrictedly in that branch.
+%%
+%For uniformity, we type such alternatives as those for scrutinees that
+%are not in WHNF;
+%%
+%The pattern is linear and matches the scrutinee, in which case the
+%$AltN_{\textrm{WHNF}}$ is applicable instead of $Alt0$;
+%%
+%The pattern is linear but does not match the scrutinee and so any
+%resource could be used in such alternatives. For uniformity,
+%it is also typed as though the scrutinee were not in WHNF.
 
-If the scrutinee is not in WHNF, the resources occurring in the
-scrutinee will be consumed when evaluation occurs. Therefore, the resources
-used in the scrutinee cannot occur in the alternative body
-(e.g. $x$ cannot occur in $e$ in $\ccase{close~x}{\{K_1 \to e\}}$)
--- regardless of the pattern.
-%
-% In fact, the resources from a scrutinee that is not in weak head normal form
-% cannot occur in any of the alternatives, even ones matching on constructors
-% with linear components, as the resources may have been consumed when evaluating
-% the expression to weak head normal form.
-%
-We guarantee resources from a scrutinee that is not in WHNF
-cannot occur/directly be used in any case alternative in our rule for typing
-cases not in WHNF, which we introduce below.
+%If the scrutinee is not in WHNF, the resources occurring in the
+%scrutinee will be consumed when evaluation occurs. Therefore, the resources
+%used in the scrutinee cannot occur in the alternative body
+%(e.g. $x$ cannot occur in $e$ in $\ccase{close~x}{\{K_1 \to e\}}$)
+%-- regardless of the pattern.
+%%
+%% In fact, the resources from a scrutinee that is not in weak head normal form
+%% cannot occur in any of the alternatives, even ones matching on constructors
+%% with linear components, as the resources may have been consumed when evaluating
+%% the expression to weak head normal form.
+%%
+%We guarantee resources from a scrutinee that is not in WHNF
+%cannot occur/directly be used in any case alternative in our rule for typing
+%cases not in WHNF, which we introduce below.
 
 %\end{enumerate}
 
-% \todo[inline]{The trick here is to separate the case rules into two separate
-% rules, one that fires when the scrutinee is in WHNF, the other when it isn't.}
-
-\todo[inline]{Considerar alguns exemplos aqui para ilustrar esta
-  ``análise de casos''}
-
 \subsubsection{Pattern matching on non-WHNF terms via proof irrelevant resources}
 
-% \todo[inline]{O que é que eu vou fazer aqui? O que falta é conseguir tratar uma
-% case expression de forma flexivel o suficiente. Explorar o scrutinee estar em
-% WHNF ou não, agora é preciso usar essas ideias em typing rules.  Só preciso de
-% dizer que para tipificar o caso em que não está em WHNF de forma rigorosa num
-% sistema de tipos: Manter resources in scope pq é preciso consumir; Mas não
-% podem ser usadas diretamente}
+Resources used to type a scrutinee that is not in WHNF \emph{must not} be used in
+the case alternatives.
+%
+However, evaluating the scrutinee to WHNF is not sufficient to
+consume all resources used by the scrutinee, since sub-expressions such
+as constructor arguments will be left unevaluated and may still contain
+(``parts of'') the linear resources. To \emph{fully} consume all
+resources occurring in the scrutinee, all linear components of the
+constructor must also be fully evaluated, as witnessed by the
+$\textsc{Alt}_0$ rule above.
+%
+In essence, to type cases scrutinizing expressions not in WHNF, we need to
+forbid the usage of the scrutinee resources while tracking that we necessarily
+``finish consuming'' them, either via the case binder, or by linearly using all
+linear pattern-bound variables introduced in the alternative.
 
-
-\todo[inline]{Todo este paragrafo que esta commented out parece-me redundante}
-% Resources used in a scrutinee that is not in WHNF must
-% not be used in the case alternatives.
-% %
-% %
-% However, it is not sufficient to evaluate the scrutinee to weak head normal
-% form to \emph{fully} consume all resources used in the scrutinee, since
-% sub-expressions such as constructor arguments will be left unevaluated. To
-% \emph{fully} consume all resources occurring in the scrutinee, the scrutinee
-% must be evaluated either to \emph{normal form} or such that all linear components of
-% the scrutinee are fully evaluated, as witnessed by the $Alt0$ rule above. In short,
-% for a case expression whose scrutinee is not in WHNF, the scrutinee
-% resources must \emph{not} be used directly in the case alternatives,
-% but the result of evaluating the scrutinee to WHNF must still be
-% consumed, as all sub-expressions of the scrutinee remain unevaluated and must
-% be consumed. Since the scrutinee resources cannot be consumed directly, they must be
-% consumed indirectly through $\D$-variables, namely, either the case binder, or
-% the linear pattern-bound variables introduced in the alternative.
-%ATE AQUI
 % We tackle this in due time, in the proof irrelevance section.
 % \begin{itemize}
 
@@ -2299,13 +2285,13 @@ cases not in WHNF, which we introduce below.
 We introduce \emph{proof irrelevant} resources, written as linear resources
 within square brackets $[ x{:}\s]$ and lifted to contexts as $[\D]$,
 to encode linear resources that cannot be
-directly used (i.e.,~to which the $Var$ rule is not applicable). Proof irrelevant resources
+directly used (i.e.,~to which the $\textsc{Var}$ rule is not applicable). Proof irrelevant resources
 are linear resources in all other senses, meaning they must be used
 \emph{exactly once}. However, since proof irrelevant resources cannot be
 discarded nor used directly, they have to be consumed \emph{indirectly} --
-by $\D$-bound variables.
+by $\D$-bound variables, namely, the case binder, or the linear pattern-bound variables.
 
-To type a case expression whose scrutinee is in weak head normal form, we
+Hence, to type a case expression whose scrutinee is in weak head normal form, we
 type the scrutinee with linear resources $\D$ and type the case
 alternatives by introducing the case binder with a usage environment $[\D]$,
 having the same proof irrelevant linear context $[\D]$ in the typing
@@ -2340,11 +2326,10 @@ only makes sense for the constructor pattern matching the scrutinee.
 % determined, and must be treated with the specialized $\Mapsto$ judgement, which
 % only applies to the matching constructor.
 % %
-Alternatives not matching the scrutinee, as mentioned in the discussion of the
-$Alt0$ rule, could use resources arbitrarily as they will never be executed,
-however, we uniformly treat non-matching alternatives as if the scrutinee were
-not in WHNF. Having introduced proof irrelevant resources, we can now
-present the correct $Case_\textrm{WHNF}$ rule:
+Alternatives not matching the scrutinee could use resources arbitrarily as they
+will never be executed, however, we uniformly treat non-matching alternatives
+as if the scrutinee were not in WHNF. Having introduced proof irrelevant
+resources, we can now present the correct $Case_\textrm{WHNF}$ rule:
 \[
 \TypeCaseWHNF
 \]
