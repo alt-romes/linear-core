@@ -2495,315 +2495,6 @@ resources in $\D$.
 
 % }}}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% {{{ Linear Core as a GHC Plugin
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-%Trocar ordem com a metatheory
-\section{Linear Core as a GHC Plugin\label{sec:discuss:implementation}}
-
-We have implemented the Linear Core type system as a plugin for the Glasgow
-Haskell Compiler.
-GHC plugins allow developers to inspect and modify programs being compiled by
-GHC, at different stages of compilation~\cite{10.1145/3331545.3342599}.
-%
-In particular, for any given Haskell module, Core plugins run for (and receive
-as input) every intermediate program produced in the compilation process, i.e.
-from desugaring and after each optimising transformation.
-%
-This implementation further substantiates our claim that Linear Core is
-suitable for the intermediate language of an optimising compiler.
-%\todo[inline]{Tem de ser anonimizado, provavelmente alterando a bib
-  %entry para omitir autores e o proprio link}
-The GHC Linear Core plugin~\cite{cite:linear-core-plugin} implements a
-typechecker for Linear Core: given a Core program, our plugin typechecks the
-linearity of all expressions bound in that program, failing if a linear
-resource is not used \emph{exactly once} according to semantic linearity of the
-$(\lambda^\pi_\Delta)$ system.
-%
-The plugin successfully validates linearity throughout the
-(optimising) compilation of linearity-heavy libraries, namely
-\texttt{linear-base} and \texttt{linear-smc}, except in expressions whose
-linearity depends on so-called \emph{multiplicity coercions}, which are an
-avenue of future work (Section~\ref{sec:future-work}) exploring the intersection
-of Linear Core with type equality coercions.
-% Furthermore, the implementation accepts all example programs from Chapter~\ref{sec:linearity-semantically}
-% deemed well-typed by Linear Core, which are marked with a
-% \colorbox{notyet}{\notyetcolorname} background.
-
-% Additionally, we discuss the implementation of the Linear Core type system
-% directly in the Glasgow Haskell Compiler.
-
-% This section discusses the implementation of Linear Core as a GHC Plugin, with
-% a dash of painful history in the attempt of implementing Linear Core directly
-% into GHC.
-
-The implementation of Linear Core as a typechecker does not follow
-directly from the description of the type system because Linear Core
-is not \emph{syntax-directed}. Specifically, the most challenging
-features are splitting linear resources amongst sub-derivations and
-consuming fragments of resources through pattern-bound variables.
-Instead of non-deterministically splitting linear resources amongst
-sub-derivations, we thread input/output linear resources through each
-derivation~\cite{DBLP:journals/tcs/CervesatoHP00}.  Pattern variables
-bound in a case alternative for a scrutinee not in WHNF, are
-introduced as $\D$-variables with usage environment
-$\lctag{\irr{\D}}{K_i}$, where $\D$ are the scrutinee resources and
-$K_i$ the tag of that pattern variable. To use the resources through
-the pattern-bound $\D$-vars, they must be first $Split$ into
-fragments. We consume tagged fragments of a resource \emph{as needed},
-i.e., when a resource, whose usage environment has a fragmented
-resource with tag $K_j$, is used, we $Split$ the matching resource
-according to the constructor $K$ and consume the fragment $K_j$,
-rather than eagerly determining which resources need to be fragmented
-to do so.
-Finally, our implementation must infer the usage environments of binders in
-a recursive let group before using them to typecheck the let body. We use a
-naive $O(n^2)$ algorithm (where $n$ is the number of let bindings) to determine
-these usage environments. Further research regarding
-this inference challenge is discussed in Section~\ref{sec:future-work}.
-%
-%
-%
-% We use the following techniques to tackle the \emph{non-syntax-directedness} of
-% Linear Core:
-%
-% \begin{itemize}
-
-% % \item Instead of non-deterministically splitting linear resources amongst
-% % sub-derivations, we thread input/output linear resources through each
-% % derivation using the resource management for linear logic described
-% % by~\cite{DBLP:journals/tcs/CervesatoHP00}.
-% % \todo{Escrever uma regra?}
-
-% % In a case expression whose scrutinee is not in WHNF,
-% \item Pattern variables bound in a case alternative, for a scrutinee not in WHNF,
-% are introduced as $\D$-variables with usage environment $\lctag{\irr{\D}}{K_i}$,
-% where $\D$ are the scrutinee resources and $K_i$ the tag of that pattern
-% variable. To use the resources through the pattern-bound $\D$-vars, they must
-% be first $Split$ into fragments.
-
-% We consume tagged fragments of a resource \emph{as needed}, i.e., when a resource,
-% whose usage environment has a fragmented resource with tag $K_j$, is used, we $Split$
-% the matching resource according to the constructor $K$ and consume the fragment
-% $K_j$, rather than eagerly determining which resources need to be fragmented to
-% do so.
-% %
-% We note that it is safe to destructively fragment the resource, i.e. removing
-% the whole resource and only leaving the split fragments, because resources are
-% only $Split$ when a fragment is needed and, consequently, if a fragment is
-% consumed, using the ``whole'' resource as well violates linearity.
-
-% \end{itemize}
-%
-
-
-% The usage environments of a recursive group of binders (that is not necessarily
-% strongly-connected) is computed in two separate passes.
-% %
-% First, we calculate a \emph{naive environment} by recording the linear
-% resources semantically used in the binder bodies, while counting \emph{uses}
-% (not syntactic occurrences) of the mutually recursive let variables.
-% %
-% Second, the binder names and corresponding \emph{naive environment} (mapping
-% each linear resource to $1$ and the recursive variables to the $n$ number of
-% times they are \emph{used}) in Cartesian pairs are given as input to
-% % Algorithm~\ref{computeRecUsages},
-% an algorithm which computes the actual usage environment
-% of each binder.
-%
-% TODO: I should probably use the re-computed usageEnvs instead of the naiveUsageEnvs.
-% I'm pretty sure it might fail in some inputs if I keep using the naiveUsageEnvs.
-% \begin{algorithm}
-% $usageEnvs \gets naiveUsageEnvs.map(fst)$\;
-% \For{$(bind, U) \in naiveUsageEnvs$}{
-%     \For{$V \in usageEnvs$}{
-%         $V \gets sup(V[bind]*U\setminus\{bind\}, V\setminus\{bind\})$
-%     }
-% }
-% \caption{computeRecUsages\label{computeRecUsages}}
-% \end{algorithm}
-%
-% Intuitively, the algorithm, for each recursive binder, iterates over the
-% (initially naive) usage environments and substitutes occurrences of the
-% recursive binders by their corresponding usage environment,
-% scaled up by the amount of times that recursive binder is used in the
-% environment being updated. The result is the least upper bound of linear
-% resources used by each strongly-connected group of mutually recursive bindings
-% (for each binder of such a group), since all occurrences of the recursive
-% binders in the usage environments will be substituted away by the corresponding
-% recursive usage environments.
-%
-% The high-level description is:
-% \begin{itemize}
-%     \item Given a list of binders and their naive environment ($(f, F), (g, G),
-%     (h, H)$) in which each use of $f, g, h$ is mapped to a count $n$ in $F, G, H$
-%
-%     \item For each pair of a letrec-bound variable and corresponding usage
-%     environment, update all bindings and their usage as described in the
-%     algorithm
-%
-%     \item After iterating through all bound rec vars, all usage environments
-%         will be free of recursive bind usages, and hence describe the ``final'' usage environment
-% \end{itemize}
-%
-% The complexity of computing a usage environment for $n$ recursive let binders
-% is quadratic in $n$,
-% % i.e. the algorithm has $O(n^2)$ complexity,
-% but this is not an issue since it is uncommon to have more than a handful of
-% binders in the same recursive let block.
-
-The results of running the Linear Core GHC plugin on large 
-libraries focused around linear types are given by
-Figure~\ref{fig:core-plugin-res}.
-%
-We compiled the libraries \texttt{linear-smc}~\cite{10.1145/3471874.3472980} (1500 lines), \texttt{linear-base} (4000
-lines), the Haskell standard library for programming with linear types,
-comprised of over 100 modules, and
-\texttt{priority-sesh}~\cite{10.1145/3471874.3472979} (1400 lines), a
-session-types library, using our plugin.
-%
-We count the number of programs accepted by our implementation, where
-each top-level binding in a module counts as a program, and every such
-binding is typechecked once per optimisation pass. i.e., we typecheck
-all intermediate programs produced by GHC. The total amount of
-programs rejected by the typechecker are given in the ``Total
-Rejected'' column, but we distil these rejections into ``Unique
-Rejections'' by removing duplicate rejections (those of the same
-program and for the same linearity-violating reason, but occurring at
-different stages). We further categorize the unique rejections into
-``Linear modulo Call-by-name'', ``Linear Rejected'', ``Not Linear
-Rejected'', and ``Unknown Rejected''.  We note that our implementation
-is not performance conscious. For instance, \texttt{linear-base} takes
-35 seconds to compile with our plugin, instead of 20 seconds.
-%
-% Using the plugin, \texttt{linear-base} takes 35 seconds to compile, instead of
-% 20 seconds. We note, however, that the implementation is not performance
-% conscious, and types every intermediate program from scratch, instead of
-% maintaining linearity information throughout the pipeline.
-
-Programs ``linear modulo call-by-name'' are a class of programs
-which scrutinize a variable, but then use the variable in the case
-alternatives of the case scrutinizing it. As discussed in
-Section~\ref{sec:reverse-binder-swap-considered-harmful}, these programs can be
-understood as linear as long as applications of linear functions binding these
-variables are \emph{not} reduced \emph{call-by-name}.
-In Core, these programs are not seen as
-linear, and thus GHC does not not reduce them using a call-by-name evaluation strategy.
-% We have a flag in our implementation to accept some of these programs...
-%
-``Linear Rejected'' programs include different kinds of programs which are
-rejected by the Linear Core system, but are still semantically linear. An
-example is a program to which a rewrite rule was applied, resulting in an
-application of unrestricted function to a linear resource.
-% in the first argument
-% to \incode{build}:
-% \begin{lstlisting}
-% take :: Int -> Replicator a *' $\lolli$ '* [a]
-% take = \ (ds :: Int) (r :: Replicator b) ->
-%      case ds of
-%        1 -> build (\(c :: b -> a -> a) (n :: a) -> c (extract r) n)
-%        ...
-% \end{lstlisting}
-% We know the linear resource is still used linearly because \incode{build} will
-% always instance the unrestricted function to $(:)$ (read \emph{Cons}), which is
-% linear. Additionally, these include programs scrutinizing a value of a type of
-% which all constructors have no linear components, but only matching on the
-% default alternative, programs where common-sub-expression elimination
-% substituted more than one occurrence of \incode{Ur x} by \incode{y}, in the body of
-% scrutinizing \incode{y} (a linear variable), and other programs affected by rewrite rules.
-%
-``Not Linear Rejected'' indicate programs that we do not understand as linear,
-semantically, and are simultaneously rejected by Linear Core and its
-implementation. % These programs were not necessarily identified as bad
-% by the linter.\footnote{rever}
-% An example, where the last component of \incode{HashMap}, \incode{wwz},
-% is linear, but is not being consumed in the case alternative matching on it:
-% \begin{lstlisting}
-% jssvi :: Ur Bool *' $\lolli$ '* Set Int *' $\lolli$ '* Ur (TestT IO ())
-% jssvi (a :: Ur Bool) (b :: Set Int)
-%   = case a of
-%      Ur ss -> case b of { HashMap wwx wwy wwz -> jump wjssAd ss }
-% \end{lstlisting}
-%
-Finally, ``Unknown Rejected'' programs are those whose validity we did not
-check. These include both programs accepted by Linear Core, but not by its
-implementation, and programs that are simply rejected by Linear Core, but which
-were not categorized.
-
-{\small
-  \input{prototype/core-plugin-results}
-  }
-
-The results indicate our mostly direct implementation of Linear Core is
-successful in accepting the vast majority of the thousands of intermediate
-programs produced by GHC when compiling libraries that make extensive use of
-linear types.
-%
-The programs rejected by the Linear Core plugin, in \texttt{linear-base},
-besides validating that our implementation is faithful to the
-$\lambda^\pi_\Delta$ system of insofar as programs that should not be accepted
-are deemed ill-typed, provide further insight into the remaining
-details required to fully typecheck linearity in a mature optimising compiler.
-
-
-% Talk about using our plugin on linear-base and other code bases... If I can get
-% a few more case studies it would be pretty good. But then it's imperative to
-% also use -dlinear-lint and make sure my plugin rejects a few of the examples
-
-%%% \subsection{Consuming tagged resources as needed}
-%%% 
-%%% As discussed in Section~\ref{}, pattern-bound linear variables are
-%%% put in the context with a \emph{tagged} usage environment with the resources of
-%%% the scrutinee. In a \emph{tagged} usage environment environment, all resources
-%%% are tagged with a constructor and an index into the many fields of the
-%%% constructor.
-%%% 
-%%% In practice, a resource might have more than one tag. For example, in the following
-%%% program, after the first pattern match, |a| and |b| have, respectively, usage
-%%% environments $\{\lctag{x}{K_1}\}$ and $\{\lctag{x}{K_2}\}$:
-%%% \begin{code}
-%%% f x = case x of
-%%%        K a b -> case a of
-%%%         Pair n p -> (n,p)
-%%% \end{code}
-%%% However, in the following alternative, |n| has usage environment
-%%% $\{\lctag{\lctag{x}{K_1}}{Pair_1}\}$ and |p| has
-%%% $\{\lctag{\lctag{x}{K_1}}{Pair_2}\}$. To typecheck
-%%% |(n,p)|, one has to $Split$ |x| first on |K| and then on |Pair|, in order for
-%%% the usage environments to match.
-%%% 
-%%% In our implementation, we split resources on demand (and don't directly allow
-%%% splitting linear resources), i.e. when we use a tagged resource we split the
-%%% linear resource in the linear environment (if available), but never split otherwise.
-%%% %
-%%% Namely, starting on the innermost tag (the closest to the variable name), we
-%%% substitute the linear resource for its split fragments, and then we iteratively
-%%% further split those fragments if there are additional tags.
-%%% %
-%%% We note that it is safe to destructively split the resource (i.e. removing the
-%%% original and only leaving the split fragments) because we only split resources
-%%% when we need to consume a fragment, and as soon as one fragment is consumed
-%%% then using the original ``whole'' variable would violate linearity.
-%%% 
-%%% In the example, if |n| is used, we have to use its usage environment, which in
-%%% turn entails using $\lctag{\lctag{x}{K_1}}{Pair_1}$, which has two tags. In this order, we:
-%%% \begin{itemize}
-%%% \item Split $x$ into $\lctag{x}{K_1}$ and $\lctag{x}{K_2}$
-%%% \item Split $\lctag{x}{K_1}$ and $\lctag{x}{K_2}$ into
-%%%   \begin{itemize}
-%%%   \item $\lctag{\lctag{x}{K_1}}{Pair_1}$ and $\lctag{\lctag{x}{K_1}}{Pair_2}$
-%%%   \item Leave $\lctag{x}{K_2}$ untouched, as we only split on demand, and we aren't using a fragment of $\lctag{x}{K_2}$.
-%%%   \end{itemize}
-%%% \item Consume $\lctag{\lctag{x}{K_1}}{Pair_1}$, the usage environment of $n$, by removing it from the typing environment.
-%%% \end{itemize}
-
-%%%\subsection{Merging Linear Core into GHC\label{sec:merging-linear-core}}
-%%%
-%%%Describe the ticket for linear Core, the pending MRs, and the difficulty in
-%%%even annotating the bind site across optimisations regardless of multiplicities.
-
-% }}}
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % {{{ Metatheory
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Metatheory of Linear Core\label{sec:main:metatheory}}
@@ -3085,6 +2776,7 @@ preserving in Linear Core (i.e.,~preserve linearity semantically).
                                   \mbox{Case of known constr.}\\
       (\ccase{(\ccase{e_c}{\z[\D]~\{\ov{\rho_{c_i}\to e_{c_i}}\}})}{\var[w][\irr{\D,\D'}][\s']~\{\ov{\rho_i\to e_i}\}})\\
             \Longrightarrow 
+            %{{{
       \ccase{e_c}{\z[\D]~\{\ov{\rho_{c_i} \to \ccase{e_{c_i}}{w~\{\ov{\rho_i\to e_i}\}}}\}}
       & \mbox{Case-of-case}\\
       (\lambda \y[\pi].~\llet{\xD = e}{e'})
@@ -3092,11 +2784,13 @@ preserving in Linear Core (i.e.,~preserve linearity semantically).
       \llet{\xD=e}{\lambda\y[\pi].~e'} & \mbox{Commuting let-$\lambda$}\\
       ((\llet{v = e}{b})~a) \Longrightarrow \llet{v = e}{b~a} &\mbox{Commuting let-app.}\\
       (\ccase{(\llet{v = e}{b})}{\{\overline{\rho\to e'}\}}) \Longrightarrow
+      %{{{
       \llet{v =  e}{\ccase{b}{\{\overline{\rho\to e'}\}}}
                                &
                                  \mbox{Commuting let-case}\\
       (\ccase{e}{\{\overline{\rho_j\to e_j}, \rho \to E[e_1],
       \overline{\rho_k\to e_k}\}} ) \qquad (\mbox{$x$ fresh}) \\
+      %{{{
      \Longrightarrow \llet{x = e_1}{\ccase{e}{\{\overline{\rho_j\to e_j}, \rho \to E[x], \overline{\rho_k\to e_k}\}}} 
                                                                         & \mbox{Commuting case-let}\\
       (\llet{x = (\llet{v = e}{b})}{c}) \Longrightarrow \llet{v = e}{\llet{x = b}{c}}
@@ -3379,6 +3073,348 @@ variable, which is indeed semantically linear in $x$.
 % well-typed for any scrutinee consuming arbitrary resources. The proof is given in Section~\ref{sec:proof:caseofcase}.
 
 % \CaseOfCaseTheorem
+
+% }}}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% {{{ Linear Core as a GHC Plugin
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Linear Core as a GHC Plugin\label{sec:discuss:implementation}}
+
+We have implemented the Linear Core type system as a plugin for the Glasgow
+Haskell Compiler.
+GHC plugins allow developers to inspect and modify programs being compiled by
+GHC, at different stages of compilation~\cite{10.1145/3331545.3342599}.
+%
+In particular, for any given Haskell module, Core plugins run for (and receive
+as input) every intermediate program produced in the compilation process, i.e.
+from desugaring and after each optimising transformation.
+%
+This implementation further substantiates our claim that Linear Core is
+suitable for the intermediate language of an optimising compiler.
+%\todo[inline]{Tem de ser anonimizado, provavelmente alterando a bib
+  %entry para omitir autores e o proprio link}
+The GHC Linear Core plugin~\cite{cite:linear-core-plugin} implements a
+typechecker for Linear Core: given a Core program, our plugin typechecks the
+linearity of all expressions bound in that program, failing if a linear
+resource is not used \emph{exactly once} according to semantic linearity of the
+$(\lambda^\pi_\Delta)$ system.
+%
+% Furthermore, the implementation accepts all example programs from Chapter~\ref{sec:linearity-semantically}
+% deemed well-typed by Linear Core, which are marked with a
+% \colorbox{notyet}{\notyetcolorname} background.
+
+% Additionally, we discuss the implementation of the Linear Core type system
+% directly in the Glasgow Haskell Compiler.
+
+% This section discusses the implementation of Linear Core as a GHC Plugin, with
+% a dash of painful history in the attempt of implementing Linear Core directly
+% into GHC.
+
+The implementation of Linear Core as a typechecker does not follow
+directly from the description of the type system because Linear Core
+is not \emph{syntax-directed}. Specifically, the most challenging
+features are splitting linear resources amongst sub-derivations and
+consuming fragments of resources through pattern-bound variables.
+Instead of non-deterministically splitting linear resources amongst
+sub-derivations, we thread input/output linear resources through each
+derivation~\cite{DBLP:journals/tcs/CervesatoHP00}.
+%
+Pattern variables bound in a case alternative, for a scrutinee not in WHNF, are
+introduced as $\D$-variables with usage environment $\lctag{\irr{\D}}{K_i}$,
+where $\D$ are the scrutinee resources and $K_i$ the tag of that pattern
+variable. To use these pattern variables, the scrutinee resources must be first
+$Split$ into fragments. Instead of guessing which resources need to be split,
+the implementation consumes tagged fragments of a resource \emph{as needed},
+i.e., only when consuming a resource whose usage environment has a resource
+tagged $K_j$ do we $Split$ that resource on $K$ and consume the $K_j$ fragment.
+%
+Finally, our implementation must infer the usage environments of binders in
+a recursive let group before using them to typecheck the let body. We use a
+naive $O(n^2)$ algorithm (where $n$ is the number of let bindings) to determine
+these usage environments. Further research regarding
+this inference challenge is discussed in Section~\ref{sec:future-work}.
+%
+%
+%
+% We use the following techniques to tackle the \emph{non-syntax-directedness} of
+% Linear Core:
+%
+% \begin{itemize}
+
+% % \item Instead of non-deterministically splitting linear resources amongst
+% % sub-derivations, we thread input/output linear resources through each
+% % derivation using the resource management for linear logic described
+% % by~\cite{DBLP:journals/tcs/CervesatoHP00}.
+% % \todo{Escrever uma regra?}
+
+% % In a case expression whose scrutinee is not in WHNF,
+% \item Pattern variables bound in a case alternative, for a scrutinee not in WHNF,
+% are introduced as $\D$-variables with usage environment $\lctag{\irr{\D}}{K_i}$,
+% where $\D$ are the scrutinee resources and $K_i$ the tag of that pattern
+% variable. To use the resources through the pattern-bound $\D$-vars, they must
+% be first $Split$ into fragments.
+
+% We consume tagged fragments of a resource \emph{as needed}, i.e., when a resource,
+% whose usage environment has a fragmented resource with tag $K_j$, is used, we $Split$
+% the matching resource according to the constructor $K$ and consume the fragment
+% $K_j$, rather than eagerly determining which resources need to be fragmented to
+% do so.
+% %
+% We note that it is safe to destructively fragment the resource, i.e. removing
+% the whole resource and only leaving the split fragments, because resources are
+% only $Split$ when a fragment is needed and, consequently, if a fragment is
+% consumed, using the ``whole'' resource as well violates linearity.
+
+% \end{itemize}
+%
+
+% The usage environments of a recursive group of binders (that is not necessarily
+% strongly-connected) is computed in two separate passes.
+% %
+% First, we calculate a \emph{naive environment} by recording the linear
+% resources semantically used in the binder bodies, while counting \emph{uses}
+% (not syntactic occurrences) of the mutually recursive let variables.
+% %
+% Second, the binder names and corresponding \emph{naive environment} (mapping
+% each linear resource to $1$ and the recursive variables to the $n$ number of
+% times they are \emph{used}) in Cartesian pairs are given as input to
+% % Algorithm~\ref{computeRecUsages},
+% an algorithm which computes the actual usage environment
+% of each binder.
+%
+% TODO: I should probably use the re-computed usageEnvs instead of the naiveUsageEnvs.
+% I'm pretty sure it might fail in some inputs if I keep using the naiveUsageEnvs.
+% \begin{algorithm}
+% $usageEnvs \gets naiveUsageEnvs.map(fst)$\;
+% \For{$(bind, U) \in naiveUsageEnvs$}{
+%     \For{$V \in usageEnvs$}{
+%         $V \gets sup(V[bind]*U\setminus\{bind\}, V\setminus\{bind\})$
+%     }
+% }
+% \caption{computeRecUsages\label{computeRecUsages}}
+% \end{algorithm}
+%
+% Intuitively, the algorithm, for each recursive binder, iterates over the
+% (initially naive) usage environments and substitutes occurrences of the
+% recursive binders by their corresponding usage environment,
+% scaled up by the amount of times that recursive binder is used in the
+% environment being updated. The result is the least upper bound of linear
+% resources used by each strongly-connected group of mutually recursive bindings
+% (for each binder of such a group), since all occurrences of the recursive
+% binders in the usage environments will be substituted away by the corresponding
+% recursive usage environments.
+%
+% The high-level description is:
+% \begin{itemize}
+%     \item Given a list of binders and their naive environment ($(f, F), (g, G),
+%     (h, H)$) in which each use of $f, g, h$ is mapped to a count $n$ in $F, G, H$
+%
+%     \item For each pair of a letrec-bound variable and corresponding usage
+%     environment, update all bindings and their usage as described in the
+%     algorithm
+%
+%     \item After iterating through all bound rec vars, all usage environments
+%         will be free of recursive bind usages, and hence describe the ``final'' usage environment
+% \end{itemize}
+%
+% The complexity of computing a usage environment for $n$ recursive let binders
+% is quadratic in $n$,
+% % i.e. the algorithm has $O(n^2)$ complexity,
+% but this is not an issue since it is uncommon to have more than a handful of
+% binders in the same recursive let block.
+
+% TOdo: INCLUDE THIS??
+% The plugin successfully validates linearity throughout the
+% (optimising) compilation of linearity-heavy libraries, namely
+% \texttt{linear-base} and \texttt{linear-smc}, except in expressions whose
+% linearity depends on so-called \emph{multiplicity coercions}, which are an
+% avenue of future work (Section~\ref{sec:future-work}) exploring the intersection
+% of Linear Core with type equality coercions.
+
+The results of running the Linear Core GHC plugin on large 
+libraries focused around linear types are given by
+Figure~\ref{fig:core-plugin-res}.
+%
+%
+We compiled the Haskell standard library for programming with linear types,
+\texttt{linear-base} (4000 lines, comprising over 100 modules), the
+\texttt{linear-smc}~\cite{10.1145/3471874.3472980} (1500 lines) library, and
+\texttt{priority-sesh}~\cite{10.1145/3471874.3472979} (1400 lines), a
+session-types library, using our plugin.
+%
+We count the number of programs accepted by our implementation, where
+each top-level binding in a module counts as a program, and every such
+binding is typechecked once per optimisation pass. i.e., we typecheck
+all intermediate programs produced by GHC. The total amount of programs
+rejected by the typechecker are counted dually, also accross every optimisation
+pass, without halting compilation when a program is rejected. We note that our
+implementation is not performance conscious, and types every intermediate
+program from scratch, instead of preserving information throughout the
+pipeline.
+
+%``Total Rejected'' column, but we distil these rejections into ``Unique
+%Rejections'' by removing duplicate rejections (those of the same
+%program and for the same linearity-violating reason, but occurring at
+%different stages). We further categorize the unique rejections into
+%``Linear modulo Call-by-name'', ``Linear Rejected'', ``Not Linear
+%Rejected'', and ``Unknown Rejected''.  We note that our implementation
+%is not performance conscious. For instance, \texttt{linear-base} takes
+%35 seconds to compile with our plugin, instead of 20 seconds.
+%%
+%% Using the plugin, \texttt{linear-base} takes 35 seconds to compile, instead of
+%% 20 seconds. We note, however, that the implementation is not performance
+%% conscious, and types every intermediate program from scratch, instead of
+%% maintaining linearity information throughout the pipeline.
+
+%Programs ``linear modulo call-by-name'' are a class of programs
+%which scrutinize a variable, but then use the variable in the case
+%alternatives of the case scrutinizing it. As discussed in
+%Section~\ref{sec:reverse-binder-swap-considered-harmful}, these programs can be
+%understood as linear as long as applications of linear functions binding these
+%variables are \emph{not} reduced \emph{call-by-name}.
+%In Core, these programs are not seen as
+%linear, and thus GHC does not not reduce them using a call-by-name evaluation strategy.
+%% We have a flag in our implementation to accept some of these programs...
+%%
+%``Linear Rejected'' programs include different kinds of programs which are
+%rejected by the Linear Core system, but are still semantically linear. An
+%example is a program to which a rewrite rule was applied, resulting in an
+%application of unrestricted function to a linear resource.
+%% in the first argument
+%% to \incode{build}:
+%% \begin{lstlisting}
+%% take :: Int -> Replicator a *' $\lolli$ '* [a]
+%% take = \ (ds :: Int) (r :: Replicator b) ->
+%%      case ds of
+%%        1 -> build (\(c :: b -> a -> a) (n :: a) -> c (extract r) n)
+%%        ...
+%% \end{lstlisting}
+%% We know the linear resource is still used linearly because \incode{build} will
+%% always instance the unrestricted function to $(:)$ (read \emph{Cons}), which is
+%% linear. Additionally, these include programs scrutinizing a value of a type of
+%% which all constructors have no linear components, but only matching on the
+%% default alternative, programs where common-sub-expression elimination
+%% substituted more than one occurrence of \incode{Ur x} by \incode{y}, in the body of
+%% scrutinizing \incode{y} (a linear variable), and other programs affected by rewrite rules.
+%%
+%``Not Linear Rejected'' indicate programs that we do not understand as linear,
+%semantically, and are simultaneously rejected by Linear Core and its
+%implementation. % These programs were not necessarily identified as bad
+%% by the linter.\footnote{rever}
+%% An example, where the last component of \incode{HashMap}, \incode{wwz},
+%% is linear, but is not being consumed in the case alternative matching on it:
+%% \begin{lstlisting}
+%% jssvi :: Ur Bool *' $\lolli$ '* Set Int *' $\lolli$ '* Ur (TestT IO ())
+%% jssvi (a :: Ur Bool) (b :: Set Int)
+%%   = case a of
+%%      Ur ss -> case b of { HashMap wwx wwy wwz -> jump wjssAd ss }
+%% \end{lstlisting}
+%%
+%Finally, ``Unknown Rejected'' programs are those whose validity we did not
+%check. These include both programs accepted by Linear Core, but not by its
+%implementation, and programs that are simply rejected by Linear Core, but which
+%were not categorized.
+
+{\small
+  \input{prototype/core-plugin-results-2}
+  }
+%
+The results indicate our mostly direct implementation of Linear Core is
+successful in accepting the vast majority of the thousands of intermediate
+programs produced by GHC when compiling libraries that make extensive use of
+linear types.
+
+However, Linear Core does not accept every single program produced by the
+optimisation pipeline of GHC. Our manual analysis of rejected programs revealed
+excellent results. Programs considered ill-typed by the Linear Core
+implementation include:
+%
+\begin{itemize}
+    \item Programs we expected GHC to produce, but know are not seen as linear by $\lambda^\pi_\Delta$.
+        Namely, programs which scrutinize a variable, but then use the variable in the
+        case alternatives of the case scrutinizing it. As discussed in
+        Section~\ref{sec:reverse-binder-swap-considered-harmful}, these programs can be
+        understood as linear as long as applications of linear functions binding these
+        variables are reduced \emph{call-by-need}, which is not the case in our system.
+
+    \item Programs rejected due to the lack of ``linearity coercions'' in
+        $\lambda^\pi_\Delta$. So-called \emph{multiplicity coercions} extending
+        Linear Core could make these programs be understood as linear.
+
+    \item Programs which \emph{actually violate linearity}, in that the term
+        violates the linear type it is annotated with. These are the programs
+        we ultimately want to be able to reject by having a linearly typed Core
+        validate intermediate programs. We found both a program which outright
+        discarded a linear resource, and that rewrite rules implementing stream
+        fusion~\cite{10.1145/165180.165214,10.1145/1291151.1291199,10.1007/978-3-642-24276-2_2}, and
+        others too, could produce linearly-invalid programs (in one such case,
+        the type of \lstinline{build} was not general enough to accommodate linearity).
+\end{itemize}
+%
+Overall, the programs rejected by the Linear Core plugin,
+%, in \texttt{linear-base},
+besides validating that our implementation is faithful to the
+$\lambda^\pi_\Delta$ system of insofar as programs that should not be accepted
+are deemed ill-typed, provide further insight into the remaining
+details required to fully typecheck linearity in a mature optimising compiler.
+
+
+% Talk about using our plugin on linear-base and other code bases... If I can get
+% a few more case studies it would be pretty good. But then it's imperative to
+% also use -dlinear-lint and make sure my plugin rejects a few of the examples
+
+%%% \subsection{Consuming tagged resources as needed}
+%%% 
+%%% As discussed in Section~\ref{}, pattern-bound linear variables are
+%%% put in the context with a \emph{tagged} usage environment with the resources of
+%%% the scrutinee. In a \emph{tagged} usage environment environment, all resources
+%%% are tagged with a constructor and an index into the many fields of the
+%%% constructor.
+%%% 
+%%% In practice, a resource might have more than one tag. For example, in the following
+%%% program, after the first pattern match, |a| and |b| have, respectively, usage
+%%% environments $\{\lctag{x}{K_1}\}$ and $\{\lctag{x}{K_2}\}$:
+%%% \begin{code}
+%%% f x = case x of
+%%%        K a b -> case a of
+%%%         Pair n p -> (n,p)
+%%% \end{code}
+%%% However, in the following alternative, |n| has usage environment
+%%% $\{\lctag{\lctag{x}{K_1}}{Pair_1}\}$ and |p| has
+%%% $\{\lctag{\lctag{x}{K_1}}{Pair_2}\}$. To typecheck
+%%% |(n,p)|, one has to $Split$ |x| first on |K| and then on |Pair|, in order for
+%%% the usage environments to match.
+%%% 
+%%% In our implementation, we split resources on demand (and don't directly allow
+%%% splitting linear resources), i.e. when we use a tagged resource we split the
+%%% linear resource in the linear environment (if available), but never split otherwise.
+%%% %
+%%% Namely, starting on the innermost tag (the closest to the variable name), we
+%%% substitute the linear resource for its split fragments, and then we iteratively
+%%% further split those fragments if there are additional tags.
+%%% %
+%%% We note that it is safe to destructively split the resource (i.e. removing the
+%%% original and only leaving the split fragments) because we only split resources
+%%% when we need to consume a fragment, and as soon as one fragment is consumed
+%%% then using the original ``whole'' variable would violate linearity.
+%%% 
+%%% In the example, if |n| is used, we have to use its usage environment, which in
+%%% turn entails using $\lctag{\lctag{x}{K_1}}{Pair_1}$, which has two tags. In this order, we:
+%%% \begin{itemize}
+%%% \item Split $x$ into $\lctag{x}{K_1}$ and $\lctag{x}{K_2}$
+%%% \item Split $\lctag{x}{K_1}$ and $\lctag{x}{K_2}$ into
+%%%   \begin{itemize}
+%%%   \item $\lctag{\lctag{x}{K_1}}{Pair_1}$ and $\lctag{\lctag{x}{K_1}}{Pair_2}$
+%%%   \item Leave $\lctag{x}{K_2}$ untouched, as we only split on demand, and we aren't using a fragment of $\lctag{x}{K_2}$.
+%%%   \end{itemize}
+%%% \item Consume $\lctag{\lctag{x}{K_1}}{Pair_1}$, the usage environment of $n$, by removing it from the typing environment.
+%%% \end{itemize}
+
+%%%\subsection{Merging Linear Core into GHC\label{sec:merging-linear-core}}
+%%%
+%%%Describe the ticket for linear Core, the pending MRs, and the difficulty in
+%%%even annotating the bind site across optimisations regardless of multiplicities.
 
 % }}}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
