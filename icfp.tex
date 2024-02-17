@@ -2355,58 +2355,78 @@ in which intermediate programs commonly scrutinize expressions in WHNF.
 % variables (for uniformity, we also treat alternatives that do not match a
 % scrutinee in WHNF this way).
 
-Unlike with scrutinees in WHNF, the resources used by a
-scrutinee not in WHNF do not necessarily match those used by each
-sub-expression of the expression evaluated to WHNF.
+As opposed to scrutinees in WHNF, where the resources used to type a scrutinee
+can be cleanly divided amongst the various sub-expressions of e.g. the
+constructor and henceforth each pattern variable, there is no direct mapping
+between the resources typing a scrutinee \emph{not in WHNF} and the usage
+environments of pattern variables in any alternative.
+
 %
-Therefore, there is no direct mapping between the usage environments of the
-linear pattern-bound variables and the resources used in the scrutinee.
+% That is, there is no direct mapping between the usage environments of the
+% linear pattern-bound variables and the resources used in the scrutinee.
 % \todo{WAIT, there never was!
 % Only when the K matches the scrutinee. Maybe we need a separate judgement for
 % typing other constructors, which would be standalone and show up in this
 % section too?}
 %
-We introduce \emph{tagged resources} to guarantee all linearly-bound pattern
-variables are jointly used to consume all resources occurring in the
-environment (in alternative to the case binder), or not at all. Given linear
-resources $[\D_s]$ used to type a scrutinee, and a pattern
-$K~\ov{x_\omega},\ov{y_i}$ with $i$ linear components, we assign a usage
-environment $\D_i$ to each linear pattern variable where, $\D_i$ is obtained from the
-scrutinee environment \emph{tagged} with the constructor name and linear-variable
-index $\lctag{\D_s}{K_i}$, and $\y[\D_i]$ is introduced in $\G$.
+We introduce \emph{tagged resources} as a means to enforce all pattern-bound
+variables for a scrutinee not in WHNF are either \emph{jointly} used to consume
+all resources occurring in the environment, or not at all (instead, the case
+binder may be used). Given linear resources $[\D_s]$ used to type a scrutinee,
+and a pattern $K~\ov{x_\omega},\ov{y_i}$ with $i$ linear components, we assign
+a usage environment $\D_i$ to each linear pattern variable where $\D_i$ is
+obtained from the scrutinee environment \emph{tagged} with the constructor name
+and linear-variable index $\lctag{\irr{\D_s}\!}{K_i}$. $y_i{:}_{\D_i}\s$ is
+introduced in $\G$, just like other $\D$-variables.
 \[
   \begin{array}{cc}
     \TypeAltNNotWHNF & \TypeVarSplit
     \end{array}
 \]
-The tag consists of a constructor name $K$ and an index $i$ identifying the
-position of the pattern variable among all bound variables in that pattern.
 %
-The key idea is that a linear resource $x$ can be split into $n$ resources at a
-given constructor, where $n$ is the number of positional linear arguments of
-the constructor.
+% The tag consists of a constructor name $K$ and an index $i$ identifying the
+% position of the pattern variable among all bound variables in that pattern.
 %
-This is given by the Split rule. By assigning to each linear pattern
-variable a fragment of the scrutinee resources with a tag, we
-guarantee that all linear pattern variables are simultaneously used to
-consume all the scrutinee resources.
-For instance, in the term $\lambda x.~\ccase{x}{z~\{K~a~b\to
+Having tagged the resources in the usage environment of each pattern variable
+differently, we need now only to express that (1) the pattern $\D$-variables
+can be used (i.e., the tagged resources need be available in the linear
+environment in order for the $\textsc{Var}_\D$ rule to be applicable) and (2)
+if we consume one of the pattern variables with a non-empty usage environment,
+then \emph{all} pattern variables for linear components must also be consumed.
+
+The key idea to guarantee these is to provide a $\textsc{Split}$ rule that
+allows a linear resource $x{:}_1\s$ to be split into $n$ resources at a given
+constructor $K$, where $n$ is the number of linear components of the
+constructor, and each resource resulting from the split is \emph{tagged} with
+$K$ and the positional index of a linear component (i.e. $x{:}_1\s$ can be
+split into $\ov{\lctag{x{:}_1\s}{K_i}}^n$).
+%
+By assigning to each pattern variable a \emph{fragment} of the scrutinee
+resources (with a tag), we require the scrutinee resources to be
+$\textsc{Split}$ in order to use pattern variables at all.  Moreover, the
+remaining tagged resources cannot be used directly, yet need still be consumed
+exactly once. Thus, the choice to consume the tagged resources via usage
+environments of the other pattern variables is forced, ensuring that no
+variable for a constructor's linear component can go unused (the tagged environments are disjoint).
+
+For instance, in the term $\lambda x.~\ccase{f~x}{z~\{K~a~b\to
   (a,b)\}}$, where $x$ is a linear variable, the case alternative is
 typed with $\irr{x}$,
 the case binder $z$ is introduced as $\z[\irr{x}]$, and the pattern variables
 are introduced as $\var[a][\lctag{\irr{x}}{K_1}]$ and
 $\var[b][\lctag{\irr{x}}{K_2}]$, assuming both components of $K$ are linear.
-\todo[inline]{Previous explanation was very confusing, try to explain
-  what the split is doing in terms of the example!}
+%
+The occurrences of $a$ and $b$ are well-typed because we can first
+$\textsc{Split}$ $[x{:}_1\s]$ into $\lctag{[x{:}_1\s]}{K_1}, \lctag{[x{:}_1\s]}{K_2}$,
+%
 % since for any of the scrutinee
 % resources to be used by a linear pattern-bound variable usage, the
 % resources must be $Split$ for the fragments corresponding to that
 % $\D$-var to be consumed, and, consequently, the remaining fragments
 % have to be consumed through the other linear pattern-bound variables.
-
-
 %
-We note how $Split$ can be applied both to relevant and proof irrelevant linear resources in $\D$.
+noting that $Split$ can be applied both to relevant and proof irrelevant linear
+resources in $\D$.
 
 % Using tags for fragments instead of fractions (e.g. $\D_s*i/n$) is necessary
 % to guarantee we cannot use the same variable multiple times to consume
