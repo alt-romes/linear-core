@@ -918,3 +918,75 @@ keywords = {linear haskell, session types, deadlock freedom},
 location = {Virtual, Republic of Korea},
 series = {Haskell 2021}
 }
+
+@inproceedings{10.1145/165180.165214,
+author = {Gill, Andrew and Launchbury, John and Peyton Jones, Simon L.},
+title = {A short cut to deforestation},
+year = {1993},
+isbn = {089791595X},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+url = {https://doi.org/10.1145/165180.165214},
+doi = {10.1145/165180.165214},
+booktitle = {Proceedings of the Conference on Functional Programming Languages and Computer Architecture},
+pages = {223–232},
+numpages = {10},
+location = {Copenhagen, Denmark},
+series = {FPCA '93}
+}
+
+@article{10.1145/1291220.1291199,
+author = {Coutts, Duncan and Leshchinskiy, Roman and Stewart, Don},
+title = {Stream fusion: from lists to streams to nothing at all},
+year = {2007},
+issue_date = {September 2007},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+volume = {42},
+number = {9},
+issn = {0362-1340},
+url = {https://doi.org/10.1145/1291220.1291199},
+doi = {10.1145/1291220.1291199},
+abstract = {This paper presents an automatic deforestation system, stream fusion, based on equational transformations, that fuses a wider range of functions than existing short-cut fusion systems. In particular, stream fusion is able to fuse zips, left folds and functions over nested lists, including list comprehensions. A distinguishing feature of the framework is its simplicity: by transforming list functions to expose their structure, intermediate values are eliminated by general purpose compiler optimisations.We have reimplemented the Haskell standard List library on top of our framework, providing stream fusion for Haskell lists. By allowing a wider range of functions to fuse, we see an increase in the number of occurrences of fusion in typical Haskell programs. We present benchmarks documenting time and space improvements.},
+journal = {SIGPLAN Not.},
+month = {oct},
+pages = {315–326},
+numpages = {12},
+keywords = {program transformation, program optimisation, program fusion, functional programming, deforestation}
+}
+
+@inproceedings{10.1145/1291151.1291199,
+author = {Coutts, Duncan and Leshchinskiy, Roman and Stewart, Don},
+title = {Stream fusion: from lists to streams to nothing at all},
+year = {2007},
+isbn = {9781595938152},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+url = {https://doi.org/10.1145/1291151.1291199},
+doi = {10.1145/1291151.1291199},
+abstract = {This paper presents an automatic deforestation system, stream fusion, based on equational transformations, that fuses a wider range of functions than existing short-cut fusion systems. In particular, stream fusion is able to fuse zips, left folds and functions over nested lists, including list comprehensions. A distinguishing feature of the framework is its simplicity: by transforming list functions to expose their structure, intermediate values are eliminated by general purpose compiler optimisations.We have reimplemented the Haskell standard List library on top of our framework, providing stream fusion for Haskell lists. By allowing a wider range of functions to fuse, we see an increase in the number of occurrences of fusion in typical Haskell programs. We present benchmarks documenting time and space improvements.},
+booktitle = {Proceedings of the 12th ACM SIGPLAN International Conference on Functional Programming},
+pages = {315–326},
+numpages = {12},
+keywords = {program transformation, program optimisation, program fusion, functional programming, deforestation},
+location = {Freiburg, Germany},
+series = {ICFP '07}
+}
+
+@InProceedings{10.1007/978-3-642-24276-2_2,
+author="Hinze, Ralf
+and Harper, Thomas
+and James, Daniel W. H.",
+editor="Hage, Jurriaan
+and Moraz{\'a}n, Marco T.",
+title="Theory and Practice of Fusion",
+booktitle="Implementation and Application of Functional Languages",
+year="2011",
+publisher="Springer Berlin Heidelberg",
+address="Berlin, Heidelberg",
+pages="19--37",
+abstract="There are a number of approaches for eliminating intermediate data structures in functional programs---this elimination is commonly known as fusion. Existing fusion strategies are built upon various, but related, recursion schemes, such as folds and unfolds. We use the concept of recursive coalgebras as a unifying theoretical and notational framework to explore the foundations of these fusion techniques. We first introduce the calculational properties of recursive coalgebras and demonstrate their use with proofs and derivations in a calculational style, then provide an overview of fusion techniques by bringing them together in this setting. We also showcase these developments with examples in Haskell.",
+isbn="978-3-642-24276-2"
+}
+
+
