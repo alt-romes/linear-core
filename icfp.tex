@@ -1885,14 +1885,14 @@ In practice, determining this typing environment $\D$ amounts to finding a
 least upper bound of the resources needed to type each mutually-recursive
 binding that (transitively) uses all binders in the recursive group.
 %
-We propose a naive $O(n^2)$ algorithm for inferring usage environments of recursive
-bindings in Section~\ref{sec:discuss:implementation}, orthogonally to the theory
-developed in this section.
+Our implementation uses a naive $O(n^2)$ algorithm for inferring usage
+environments of recursive bindings.
+% , which is not relevant to the theory developed in this section.
 %
 % The algorithm is a $O(n^2)$ traversal over the so-called \emph{naive usage
 % environments} used to type each binding.
 %
-However, we note that inference of usage environments for recursive binding
+Moreover, we note that inference of usage environments for recursive binding
 groups bears some resemblance to the inference of principle types for recursive
 bindings traditionally achieved through the Hindley–Milner inference
 algorithm~\cite{DBLP:conf/popl/DamasM82}. % , there might be an opportunity to
@@ -3525,25 +3525,24 @@ details required to fully typecheck linearity in a mature optimising compiler.
 %         types.
 % \end{itemize}
 % %
-Linear Haskell~\cite{cite:linearhaskell} augments Haskell with 
-linear types. However, the development is
-not concerned with extending GHC's intermediate language(s),
-which presents its own challenges. 
+Linear Haskell~\cite{cite:linearhaskell} augments the Haskell surface language
+with linear types, but it is not concerned with extending GHC's intermediate
+language(s), which presents its own challenges. 
 %
-Nonetheless, while Linear Haskell keeps GHC Core unchanged, its
-implementation in GHC does modify and extend Core with linearity/multiplicity
-annotations. Core's type system is unable to type \emph{semantic} linearity of
-programs in the sense elaborated in our work, which results in Core
-rejecting linear programs resulting from optimising transformations that
-leverage the non-strict semantics of Core.
+However, the implementation Linear Haskell in GHC does modify and extend Core
+with linearity/multiplicity annotations. Core's type system is unable to type
+\emph{semantic} linearity of programs in the sense elaborated in our work,
+which results in Core rejecting most linear programs resulting from optimising
+transformations that leverage the non-strict semantics of Core.
 %
 Our work overcomes the limitations of Core's linear type system derived from
-Linear Haskell by understanding linearity semantically, in the presence of laziness,
-and accepting multiple Core-to-Core passes.
-Linear Core can
-also be seen as a system that validates the programs written in Linear Haskell
-and are compiled by GHC, by guaranteeing (through typing) that linear resources
-are still used exactly once throughout the optimising transformations.
+Linear Haskell by understanding linearity semantically in the presence of
+laziness, and by proving linearity-preserving multiple Core-to-Core
+optimisations GHC.
+Linear Core can also be seen as a system that validates the programs written in
+Linear Haskell and are compiled by GHC, by guaranteeing (through typing) that
+linear resources are still used exactly once throughout the optimising
+transformations.
 
 \paragraph{Linear Mini-Core\label{sec:linear-mini-core}}
 
@@ -3587,12 +3586,13 @@ certain optimisations (in particular, let-floating and inlining) greatly
 benefit from linearity analysis and, in order to improve those transformation,
 special purpose linear-type-inspired systems were created and implemented.
 %
-By fully supporting linear types in Core, these optimising transformations
-could be informed by the language's intrinsic linearity, and, consequently, avoid
-an ad-hoc or incomplete linear type inference pass that is custom-built for
-optimisations. Additionally, the linearity information may potentially be used
-to the benefit of optimising transformations that currently do not take 
-linearity into account.
+Preserving linear types in Core throughout the compilation pipeline allows the
+optimiser to leverage non-heuristic linearity information where, previously, it
+would resort solely to ad-hoc or incomplete custom-built linearity inference
+passes (naturally, these passes are still necessary to optimise programs not
+using explicit linearity or multiplicity annotations). Linearity may
+potentially be used to the benefit of other optimising transformations that
+currently do not take it into account.
 
 % \begin{itemize}
 % \item Transfs. core to core aparecem em vários artigos, e são desenhadas no contexto de uma linguagem tipificada mas que não é linearly typed.
@@ -3637,7 +3637,7 @@ Core's type system.
 %
 Coercions %briefly explained in Section~\ref{sec:core},
 allow the Core intermediate language to encode a panoply of Haskell source
-type-level features such as GADTs, type families or newtypes.
+type-level features such as GADTs, type families, or newtypes.
 %
 In Linear Haskell, multiplicities are introduced as annotations to function
 arrows which specify the linearity of the function. In practice,
@@ -3700,24 +3700,23 @@ in~\cite{cite:let-floating,peytonjones1997a}. An obvious candidate is
 \emph{inlining}, which is applied based on heuristics from information provided
 by the \emph{cardinality analysis} pass that counts occurrences of bound
 variables.  Linearity can be used to non-heuristically inform
-the inliner~\cite{cite:linearhaskell}. Additionally, we argue that in Linear
-Core accepting more programs as linear there are more chances to use linearity,
-in contrast to a linear type system which does not account for lazy evaluation
-and thus rejects more programs.
+the inliner~\cite{cite:linearhaskell}.
+% Additionally, we argue that in Linear Core accepting more programs as linear
+% there are more chances to use linearity, in contrast to a linear type system
+% which does not account for lazy evaluation and thus rejects more programs.
 
-\paragraph{Usage environment resource inference.}
-In Section~\ref{sec:linearity-semantically}, we explained that the linear
-resources used by a group of recursive bindings aren't obvious and must be
-consistent with each other (i.e. considering the mutually-recursive calls) as
-though the resources used by each binder are the solution to a set determined
-by the recursive bindings group.  In Section~\ref{sec:main:linear-core}, we
-further likened the challenge of determining usage environments for a recursive
-group of bindings to a unification problem as that solved by the Hindley-Milner
-type inference algorithm~\cite{DBLP:conf/popl/DamasM82} based on generating and solving
-constraints. Even though these are useful observations, our implementation of
-Linear Core uses a naive algorithm to determine the usage environments, thereby
-leaving as future work the design of a principled algorithm to determine the
-usage environments of recursive group of bindings.
+% \paragraph{Usage environment resource inference.}
+% In Section~\ref{sec:linearity-semantically}, we discussed how there is not an obvious way to determine the set of linear
+% resources used by a group of (mutually) recursive bindings, .
+% though the resources used by each binder are the solution to a set determined
+% by the recursive bindings group.  In Section~\ref{sec:main:linear-core}, we
+% further likened the challenge of determining usage environments for a recursive
+% group of bindings to a unification problem as that solved by the Hindley-Milner
+% type inference algorithm~\cite{DBLP:conf/popl/DamasM82} based on generating and solving
+% constraints. Even though these are useful observations, our implementation of
+% Linear Core uses a naive algorithm to determine the usage environments, thereby
+% leaving as future work the design of a principled algorithm to determine the
+% usage environments of recursive group of bindings.
 
 \paragraph{Linear Core in the Glasgow Haskell Compiler.}
 Linear Core is suitable as the intermediate language of an optimising compiler
@@ -3737,12 +3736,13 @@ pipeline of GHC both validates the correctness of the compiler, which is
 already achieved to a great extent by preserving (non-linear) types, and
 informs optimisations, allowing the compiler to generate more performant programs.
 %
-Implementing Linear Core in GHC is a challenging endeavour, since we must account
-for all other Core features (e.g. strict constructor fields) and more
-optimisations. Despite our initiative in this
-direction\footnote{[Link removed due to anonymization]}%\footnote{https://gitlab.haskell.org/ghc/ghc/-/issues/23218}
-, we leave
-this as future work.
+Implementing Linear Core in GHC is a challenging endeavour, since we must
+account for all other Core features (e.g. strict constructor fields), propagate
+new or modified data throughout the entire pipeline, and accept more
+optimisations. Despite our initiative in this direction\footnote{[Link removed
+due to
+anonymization]}%\footnote{https://gitlab.haskell.org/ghc/ghc/-/issues/23218} ,
+we leave this as future work.
 
 \paragraph{Generalizing Linear Core to Haskell.}
 Linear types, despite their compile-time correctness guarantees regarding
