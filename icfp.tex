@@ -2758,7 +2758,7 @@ A main goal of the Linear Core type system is
 to serve as a typed intermediate representation for optimising
 compilers of lazy languages with linearity. In light of this,
 we show that multiple optimising transformations are type
-preserving in Linear Core (i.e.,~preserve linearity semantically).
+preserving in Linear Core. %(i.e.,~preserve linearity semantically).
 
 % The optimising transformations proved sound wrt Linear Core in this section
 % have been previously explained and motivated in
@@ -2889,22 +2889,16 @@ they are chained in the compiler pipeline to expose optimisation opportunities.
 
 \paragraph{Reverse Binder Swap\label{sec:reverse-binder-swap-considered-harmful}}
 
-We now discuss an issue we have found with the so-called reverse binder swap
-transformation.
-%
-%
-Reverse binder swap is dual to the binder swap transformation,
-substituting occurrences of the case
-binder $z$ by the scrutinee in the special case when the scrutinee is a
-variable $x$.
+Reverse binder swap is dual to the binder swap transformation, substituting
+occurrences of the case binder $z$ by the scrutinee in the special case when
+the scrutinee is a variable $x$.
 %
 % his is dual to what the binder swap transformation
 % does in hope of eliminating multiple uses of $x$ (allowing for inlining). 
-By
-using the scrutinee $x$ instead of the case binder, we might be able to float
-out expressions from the alternative using the case binder. For example, we
-might float an expensive computation involving $z$ out of the case alternative,
-where $z$ is now out of scope:
+By using the scrutinee $x$ instead of the case binder, we might be able to
+float out expressions from the alternative using the case binder. For example,
+we might float an expensive computation involving $z$ out of the case
+alternative, where $z$ is now out of scope:
 
 {\small\[
 \begin{array}{l}
@@ -2919,14 +2913,15 @@ where $z$ is now out of scope:
 \noindent If $go$ is compiled into a loop, we only compute
 $\mathit{expensive}~x$ once instead of in every loop iteration.
 
-Despite GHC applying the reverse binder swap transformation 
-during its Core-to-Core optimisation passes, this optimisation actually \emph{breaks} linearity
-when considered as a transformation on Linear Core programs. In practice, the
-optimisation preserves linearity when applied as part of the GHC
-pipeline due to the occurrence analyser being naive with
-regard to semantic linearity. Initially, it might seem as though an expression
-in which a variable $x$ occurs both in the case scrutinee and in the
-alternatives is linear (e.g.,~$\ccase{x}{\_ \to x}$):
+Even though GHC applies the reverse binder swap transformation in the
+Core-to-Core passes, \emph{this optimisation violates linearity} when considered
+as a transformation \emph{on Linear Core programs} because the result (second program
+above) is ill-typed -- the resource $x$ of the scrutinee not in WHNF is used
+again in an alternative, despite it no longer being available according to our system.
+
+An expression in which a variable $x$ occurs both in the case scrutinee and in
+the alternatives (e.g.,~$\ccase{x}{\_ \to x}$) could be considered linear if
+considered in isolation:
 % \[
 % \G; \xl \vdash \ccase{x}{\_ \to x} : \s
 % \]
@@ -2934,8 +2929,8 @@ alternatives is linear (e.g.,~$\ccase{x}{\_ \to x}$):
 % WHNF or an unevaluated thunk.
 % \begin{itemize}
 % \item
-  If $x$ refers to an unevaluated expression, then scrutinizing it results
-in the expression bound by $x$ to be evaluated to WHNF. In a subsequent use of
+If $x$ refers to an unevaluated expression, then scrutinizing will force the expression
+bound by $x$ to be evaluated to WHNF. In a subsequent use of
 $x$ in the alternatives, $x$ refers to the evaluated scrutinee in WHNF, which
 must be consumed. Since $x$ is just another name (like the case binder) for the
 scrutinee in WHNF, we may use it instead of the case binder or pattern
@@ -2944,53 +2939,82 @@ variables.
 On the other hand, if $x$ already refers to an expression evaluated to WHNF, then
 scrutinizing it in a case expression is a no-op, thus we may use it again (in
 mutual exclusion with the case binder and pattern variables).
-%\end{itemize}
-%
-% This idea would be encoded by a possible rule like $$\TypeCaseVar$$
-%
 
-Even though, on its own, it makes intuitive sense that this example indeed uses
-$x$ linearly, when considered as part of a complete type system, allowing this
-expression to be linear makes the system \emph{unsound}.
-To see why this is the case, recall that $\beta$-reduction reduces an application of a linear function
-using call-by-name -- if we know the argument is used exactly once, a binding
-to share the result of computing the argument is unnecessary, so we instead
-substitute the argument expression for the linearly-bound variable in the
-$\lambda$-body directly.
-
+However, allowing this expression to be linear makes $\lambda^\pi_\Delta$ unsound!
 Consider the function application $(\lambda x.~\ccase{x}{\_ \to x})~(use~y)$
-where $y$ is a free linear variable. Assuming $\lambda x.~\ccase{x}{\_ \to x}$
-is a linear function, $\beta$-reduction transforms the
-application into $\ccase{use~y}{\_ \to
-  use~y}$. Now, $y$ is a linear variable \emph{consumed} in the scrutinee of the case
-that also occurs in the case alternative --
-linearity is violated by using the linear resource $y$ twice.
+where $y$ is a free linear variable, and assume $\lambda x.~\ccase{x}{\_ \to x}$
+to be a linear function. According to $\lambda^\pi_\Delta$'s call-by-name
+$\beta$-reduction, we have:
+\[
+\begin{array}{l}
+(\lambda x.~\ccase{x}{\_ \to x})~(use~y)
+\Longrightarrow_\textrm{CBName}
+\ccase{use~y}{\_ \to use~y}
+\end{array}
+\]
+After the reduction, $y$ is a linear variable \emph{consumed} in the scrutinee
+of the case that also occurs in the case alternative -- the resource
+$y$ is being effectively duplicated.
 %
-% Essentially, Linear Core would be unsound, and even duplicate resources, if the
-% above kind of expressions, where linear variable scrutinees occur in the
-% alternatives body, were well-typed, because of its interaction with the
-% call-by-name reduction of linear functions.
-In this sense, the reverse binder
-swap is an optimisation that creates ill-typed expressions from well-typed
-ones, so it is deemed an \emph{invalid} optimisation that does not preserve types in
-our system.
+If the application were instead reduced with call-by-need
+\[
+\begin{array}{l}
+(\lambda x.~\ccase{x}{\_ \to x})~(use~y)
+\Longrightarrow_\textrm{CBNeed}
+\llet{x = use~y}{\ccase{x}{\_ \to x}}
+\end{array}
+\]
+then the computation using $y$ would be let-bound, and $y$ would be used as a
+scrutinee variable, which preserves semantic linearity.
 
-Reverse binder swap is not a problem in the GHC simplifier because of the
-weaker notion of linearity understood by occurrence analysis. Occurrence
-analysis is a static analysis pass which can be used to determine whether a
-lambda application can be $\beta$-reduced call-by-name, and $\ccase{x}{\_ \to
-x}$ is \emph{not} seen as using $x$ linearly by the analysis. Thus,
-$\beta$-reduction is done with call-by-need on such an expression. If the above
-example were reduced with call-by-need
-% \[
-% \begin{array}{l}
-% (\lambda x.~\ccase{x}{\_ \to x})~(use~y)
-% \Longrightarrow_\textrm{CBNeed}
-% \llet{x = use~y}{\ccase{y}{\_ \to y}}
-% \end{array}
-% \]
-then the computation using $y$ would be let-bound, and $y$ used as a scrutinee
-variable, which is indeed semantically linear in $x$.
+For an optimising compiler such as GHC, the reverse binder swap transformation
+violating linearity in Linear Core is relevant because optimising
+compilers do not necessarily allocate a binding/use call-by-need for
+every function application -- our result shows that failing to do so
+when calling a function such as the one above is \emph{unsound}.
+%
+In an optimising compiler, a binding may be deemed unnecessary if the function
+argument is inferred to be used exactly once. Linearity can play a
+(non-heuristic) role in this inference, for a linear function uses its
+argument exactly once by definition.
+%
+% Since the compiler may leverage this information (we
+% briefly discuss \emph{linearity-influenced optimisations} in
+% Section~\ref{sec:discussion}).
+%
+However, it is incompatible to both type expressions like $(\lambda
+x.~\ccase{x}{\_ \to x})$ as linear functions and consider
+call-by-name $\beta$-reduction of linear functions unconditionally
+safe (without risk of duplicating resources nor work).
+%
+Furthermore, considering such an use of $x$ to be linear also makes inlining of
+linear let bindings no longer unconditionally safe.
+
+% $\beta$-reduction reduces an application of a linear function using
+% call-by-name -- If we know the argument is used exactly once, a binding to
+% share the result of computing the argument is unnecessary, so we instead
+% substitute the argument expression for the linearly-bound variable in the
+% $\lambda$-body directly.
+%%
+%% Essentially, Linear Core would be unsound, and even duplicate resources, if the
+%% above kind of expressions, where linear variable scrutinees occur in the
+%% alternatives body, were well-typed, because of its interaction with the
+%% call-by-name reduction of linear functions.
+%In this sense, the reverse binder
+%swap is an optimisation that creates ill-typed expressions from well-typed
+%ones, so it is deemed an \emph{invalid} optimisation that does not preserve types in
+%our system.
+
+%% Reverse binder swap is not a problem in the GHC simplifier because of the
+%% weaker notion of linearity understood by occurrence analysis. Occurrence
+%% analysis is a static analysis pass which can be used to determine whether a
+%% lambda application can be $\beta$-reduced call-by-name, and $\ccase{x}{\_ \to
+%% x}$ is \emph{not} seen as using $x$ linearly by the analysis. Thus,
+%% $\beta$-reduction is done with call-by-need on such an expression.
+%
+% In practice, the optimisation preserves linearity when applied as part of the
+% GHC pipeline due to the occurrence analyser being naive with regard to semantic
+% linearity.
 
 % Concluding, in being able to understand more programs as linear, our type
 % system allows more expressions to be considered linear for $\beta$-reduction
@@ -3347,7 +3371,7 @@ implementation include:
         we ultimately want to be able to reject by having a linearly typed Core
         validate intermediate programs. We found both a program which outright
         discarded a linear resource, and that rewrite rules implementing stream
-        fusion~\cite{10.1145/165180.165214,10.1145/1291151.1291199,10.1007/978-3-642-24276-2_2}, and
+        fusion~\cite{10.1145/165180.165214,10.1145/1291151.1291199}, and
         others too, could produce linearly-invalid programs (in one such case,
         the type of \lstinline{build} was not general enough to accommodate linearity).
 \end{itemize}
