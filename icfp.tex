@@ -767,7 +767,7 @@ despite being effectively computed just once, since the result may
 still capture (parts of) the linear resource. The trivial example is \lstinline{f1} applied to
 \incode{id} -- the result of computing \incode{id x} is \incode{x}, and \incode{x} must definitely not be
 shared. Indeed, if the result of the computation involving the linear resource
-was insteaed, e.g., an unrestricted integer, then sharing the result would not
+was instead, e.g., an unrestricted integer, then sharing the result would not
 involve consuming the resource more than once.
 % ROMES:TODO:!!!!
 %\todo{this kind of hints that maybe somehow in the
