@@ -77,7 +77,15 @@
   %\infer[(LetRec)]
     {\ov{\judg[\G,\ov{x_i{:}_{\D}\s_i}][\D]{e_i}{\s}} \\ \judg[\G,\ov{x_i{:}_{\D}\s_i}][\D,\D']{e'}{\vp}}
     {\judg[\G][\D,\D']{\lletrec{\ov{\var[x_i][\D][\s_i] = e_i}}{e'}}{\vp}}
-}
+  }
+
+  \newcommand{\TypeConstr}{
+    \infer[(Constr)]
+    {\ov{\G;\cdot\vdash e_\omega : \sigma_i} \and \ov{\G ; \D_j \vdash
+          e_j : \sigma_j} \and \ov{\D_j} = \D \and K : \ov{ \sigma_i
+          \rightarrow_\omega \sigma_j \lolli} \vp }
+    {\judg[\G][\D]{K~\ov{e_\omega}\ov{e_i} }{\vp}}
+    }
 
 \newcommand{\TypeCaseWHNFIntermediate}{
     \mprset{flushleft}
@@ -193,8 +201,10 @@
 
 \newcommand{\TypeWHNFCons}{
     \infer[($\textrm{WHNF}_K$)]
-    { \ov{\G; \cdot \vdash e_\omega : \s} \\ \ov{\G; \D_i \vdash e_i : \s} \\ \ov{\D_i} = \D}
-    { \G; \D \Vdash K~\ov{e_\omega}\ov{e_i} : \s \gtrdot \ov{\D_i} }
+    { \ov{\G; \cdot \vdash e_\omega : \s_i} \\ \ov{\G; \D_j \vdash e_j
+        : \s_j} \\ \ov{\D_j} = \D \\ K : \ov{\s_i \rightarrow_\omega
+        \s_j \lolli} \vp}
+    { \G; \D \Vdash K~\ov{e_\omega}\ov{e_i} : \vp \gtrdot \ov{\D_i} }
 }
 
 \newcommand{\TypeWHNFLam}{
@@ -243,8 +253,10 @@
 \\
     \TypeLinearVar
 \qquad
-    \TypeLamElimW
-\\
+  \TypeLamElimW
+\\[0.2cm]
+  \TypeConstr
+\\[0.3cm]
     \TypeLet
 \quad
     \TypeLetRec

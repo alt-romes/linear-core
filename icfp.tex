@@ -1091,7 +1091,8 @@ the tuple being scrutinized is already in WHNF and so evaluating it will
 not consume either $x$ nor $y$. Even if the tuple was constructed with
 two expressions using $x$ and $y$ respectively, no computation would happen
 since we are not using $a$ or $b$ (thereby never forcing the arguments
-of the tuple). However, if we did use $a$ in the case body, then $x$ would be unavailable:
+of the tuple). However, if we did use $a$ in the case body, then $x$
+would be unavailable (and so \incode{f8} below cannot be accepted):
 \begin{noway}
 \begin{lstlisting}
 f8 :: a *' $\lolli$ '* b *' $\lolli$ '* (a *' $\lolli$ '* a *' $\lolli$ '* c) -> c
@@ -1112,7 +1113,7 @@ f9 :: a *' $\lolli$ '* b *' $\lolli$ '* (a *' $\lolli$ '* b *' $\lolli$ '* c) ->
 f9 x y use = case (x,y) of z { (a,b) -> uncurry use z }
 \end{lstlisting}
 \end{notyet}
-Again, $z$ is mutually exclusive with $a,b$ and with $x,y$, but at least one of
+Again, $z$ is mutually exclusive with $(a,b)$ and with $(x,y)$, but at least one of
 the three must occur to ensure the linear resources are consumed. In this
 example, we can think that using $a$ entails using the resource $x$, $b$ the
 resource $y$, and the case binder $z$ entails using both $a$ and $b$.
@@ -1156,7 +1157,7 @@ that the resources used in the scrutinee are fully consumed. %, or
                                 %risk them being only ``almost''
                                 %consumed.
 For instance, take
-\incode{use} in \incode{f10} to be \incode{(,)}: it is not sufficient for \incode{use x y} to be
+\incode{use} in \incode{f10} to be the pairing function \incode{(,)}: it is not sufficient for \incode{use x y} to be
 evaluated to WHNF to consume \incode{x} and \incode{y}. Otherwise, if all the resources were
 considered to be fully consumed after the scrutinee were evaluated in a case
 expression, we could simply ignore the pattern variables, potentially
@@ -1274,16 +1275,16 @@ $.
 It might seem as though this function is linear:
 %begin{itemize}
 % \item
-if $x$ is in WHNF, then scrutinizing it is a no-op, and returning $x$
+if the argument instantiating $x$ is in WHNF, then scrutinizing it is a no-op, and returning $x$
 just returns the resource intact;
 % \item
-if $x$ is not in WHNF, then scrutinizing it evaluates it to WHNF, and returning
+if the argument instantiating$x$ is not in WHNF, then scrutinizing it evaluates it to WHNF, and returning
 $x$ returns the result of evaluating $x$ that still had to be consumed exactly
 once.
 %\end{itemize}
 However, in practice, this program's linearity can only be determined by
-further branching down on the non-strict evaluation strategy. If linear
-function applications, in general, are $\beta$-reduced \emph{call-by-name} (a desireable
+further analysis on the non-strict evaluation strategy. If linear
+function applications, in general, are $\beta$-reduced \emph{call-by-name} (a desirable
 practice, as linear functions are known to use their argument exactly once)
 % and thus call-by-name reduction will definitely not duplicate computation
 while the above function is considered linear, then such an application might
@@ -1299,12 +1300,12 @@ On the other hand, if linear function applications are reduced
 \emph{call-by-need}, the above example would instead be semantically linear
 because the result of freeing $x$ would be bound to some $y$ first.
 %
-The type system we present in the next section, which evaluates linear
+The system we present in the next section, which evaluates linear
 applications call-by-name, does not accept the above function scrutinizing a
 variable as linear. 
-This interaction between evaluation and linearity comes up in the type
-preservation proof of our program, and is again explored with the reverse
-binder swap transformation in
+This interaction between evaluation and linearity arises in the type
+preservation proof of our system, and is again explored with the reverse
+binder swap transformation discussed in
 Section~\ref{sec:optimisations-preserve-types-meta}.
 
 % \parawith{Summary}
@@ -1501,7 +1502,7 @@ pattern $\_$, which matches any expression, or a constructor $K$ and a set of
 variables that bind its arguments, where each field of the constructor has an
 associated multiplicity denoting whether the pattern-bound variables must
 consumed linearly (ultimately, in order to consume the scrutinee linearly).
-Additionally, the set of patterns in a case expression is guaranteed to be exhaustive,
+Additionally, the set of patterns in a case expression is assumed to be exhaustive,
 i.e. there is always at least one pattern which matches the scrutinized expression.
 
 
@@ -1766,7 +1767,7 @@ variables:
 \TypeVarDelta
 \]
 The rule reads that an occurrence of a $\Delta$-bound variable is well-typed if
-the linear environment is exactly the resources in the usage environment of
+the linear environment is made up exactly of the resources in the usage environment of
 that variable.
 %
 $\D$-variables are unrestricted 
@@ -1919,7 +1920,7 @@ Case expressions \emph{drive evaluation} --
 a case expression \emph{evaluates its scrutinee} to Weak Head Normal
 Form (WHNF)~\cite{10.5555/1096899}, and \emph{then} selects the case
 alternative corresponding to the pattern matching the WHNF of the
-scrutinee\footnote{In our calculus, the alternatives are always
+scrutinee\footnote{In our calculus, the alternatives are assumed to be
   exhaustive, i.e. there always exists at least one pattern which
   matches the scrutinee in its WHNF, so we're guaranteed to have an
   expression to progress evaluation.}. An expression in WHNF can either be %\begin{itemize}
@@ -1937,7 +1938,7 @@ Accordingly, these sub-expressions might still depend on linear resources to be
 well-typed (these resources will be consumed when the expressions are evaluated).
 
 As will be made clear in this section, we need to devise a specialized typing
-judgement for scrutinees that is able to distinguish between terms
+for scrutinees that distinguishes between terms
 in WHNF and terms that are not in WHNF.
 Following the discussion on expressions in WHNF, we present a
 typing judgement $\G;\D \Vdash e : \s \gtrdot \ov{\D_i}$, and a rule for each
@@ -2033,7 +2034,7 @@ constructor arguments).
 
 The dichotomy between evaluation (i.e.,~resource usage) of a case expression
 whose scrutinee is in weak head normal form, or otherwise, leads to one of our
-key insights: we must \emph{branch on weak head normal formed-ness} to
+key insights: we must \emph{branch} on weak head normal formed-ness to
 accurately type case expressions.
 %
 When the scrutinee is already in WHNF, the resources are
@@ -2097,7 +2098,7 @@ scrutinees not in WHNF.
 
 The alternative judgement $\G;\D \vdash_{alt} \rho \to e :^z_\D \s \Rightarrow
 \vp$ is used to type case alternatives, encompassing three
-``modes``, distinguished by the kind of arrow that is used:
+``modes'', distinguished by the kind of arrow that is used:
 for alternatives of case expressions whose scrutinee is in WHNF ($\Mapsto$),
 for case expressions in which the scrutinee is not in WHNF ($\Rrightarrow$),
 and for alternatives agnostic to the WHNF-ness of the scrutinee
@@ -2291,7 +2292,7 @@ are linear resources in all other senses, meaning they must be used
 discarded nor used directly, they have to be consumed \emph{indirectly} --
 by $\D$-bound variables, namely, the case binder, or the linear pattern-bound variables.
 
-Hence, to type a case expression whose scrutinee is in weak head normal form, we
+Hence, to type a case expression whose scrutinee is in WHNF, we
 type the scrutinee with linear resources $\D$ and type the case
 alternatives by introducing the case binder with a usage environment $[\D]$,
 having the same proof irrelevant linear context $[\D]$ in the typing
@@ -2394,7 +2395,7 @@ environment in order for the $\textsc{Var}_\D$ rule to be applicable) and (2)
 if we consume one of the pattern variables with a non-empty usage environment,
 then \emph{all} pattern variables for linear components must also be consumed.
 
-The key idea to guarantee these is to provide a $\textsc{Split}$ rule that
+The key idea to guarantee these is to provide a $\textit{Split}$ rule that
 allows a linear resource $x{:}_1\s$ to be split into $n$ resources at a given
 constructor $K$, where $n$ is the number of linear components of the
 constructor, and each resource resulting from the split is \emph{tagged} with
@@ -2829,8 +2830,8 @@ The behaviour of most transformations can be inferred from its name:
 Inlining substitutes a let-bound expression in the let body; $\beta$-reduction
 and case of known constructor effectively perform evaluation of the given expression;
 case-of-case commutes cases in scrutinee position inside the outer case alternatives;
-let floating and  for let-bound expressions to be floated out of $\lambda$-abstractions;
-the four commuting conversions allow let-bound expressions to be commuted with other
+%let floating and  for let-bound expressions to be floated out of $\lambda$-abstractions;
+the five commuting conversions allow let-bound expressions to be commuted with other
 Core constructs; $\eta$-expansion and reduction apply the $\eta$-laws to terms of function type;
 finally, binder swap substitutes occurrences of a scrutinee variable for the
 case binder. While many of the transformations above are not obviously optimising,
@@ -3156,8 +3157,8 @@ tagged $K_j$ do we $Split$ that resource on $K$ and consume the $K_j$ fragment.
 Finally, our implementation must infer the usage environments of binders in
 a recursive let group before using them to typecheck the let body. We use a
 naive $O(n^2)$ algorithm (where $n$ is the number of let bindings) to determine
-these usage environments. Further research regarding
-this inference challenge is discussed in Section~\ref{sec:future-work}.
+these usage environments. %Further research regarding
+%this inference challenge is discussed in Section~\ref{sec:future-work}.
 %
 %
 %
@@ -3269,9 +3270,9 @@ session-types library, using our plugin.
 %
 We count the number of programs accepted by our implementation, where
 each top-level binding in a module counts as a program, and every such
-binding is typechecked once per optimisation pass. i.e., we typecheck
-all intermediate programs produced by GHC. The total amount of programs
-rejected by the typechecker are counted dually, also accross every optimisation
+binding is typechecked once per optimisation pass (i.e., we typecheck
+all intermediate programs produced by GHC). The total amount of programs
+rejected by the typechecker are counted dually, also across every optimisation
 pass, without halting compilation when a program is rejected. We note that our
 implementation is not performance conscious, and types every intermediate
 program from scratch, instead of preserving information throughout the
@@ -3364,15 +3365,16 @@ implementation include:
 
     \item Programs rejected due to the lack of ``linearity coercions'' in
         $\lambda^\pi_\Delta$. So-called \emph{multiplicity coercions} extending
-        Linear Core could make these programs be understood as linear.
+        Linear Core could make these programs be understood as linear
+        (discussed in Section~\ref{sec:future-work}).
 
     \item Programs which \emph{actually violate linearity}, in that the term
         violates the linear type it is annotated with. These are the programs
         we ultimately want to be able to reject by having a linearly typed Core
         validate intermediate programs. We found both a program which outright
         discarded a linear resource, and that rewrite rules implementing stream
-        fusion~\cite{10.1145/165180.165214,10.1145/1291151.1291199}, and
-        others too, could produce linearly-invalid programs (in one such case,
+        fusion~\cite{10.1145/165180.165214,10.1145/1291151.1291199}
+        (among others), could produce linearly-invalid programs (in one such case,
         the type of \lstinline{build} was not general enough to accommodate linearity).
 \end{itemize}
 %
