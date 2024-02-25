@@ -19,8 +19,7 @@
 
 % TODO: split tagged stuff and proof irrelevant stuff
 \newcommand{\TypeVarSplit}{
-  % \infer*[right=($Split$)]
-  \infer[(Split)]
+  \infer*[right=(Split)]
     {\judg[\G][\D,\x]{e}{\vp} \and \hasargs{K}{n}}
     {\judg[\G][\D,\ov{\xt{K_i}}^n]{e}{\s}}
 }
@@ -80,7 +79,7 @@
   }
 
   \newcommand{\TypeConstr}{
-    \infer[(Constr)]
+    \infer*[right=(Constr)]
     {\ov{\G;\cdot\vdash e_\omega : \sigma_i} \and \ov{\G ; \D_j \vdash
           e_j : \sigma_j} \and \ov{\D_j} = \D \and K : \ov{ \sigma_i
           \rightarrow_\omega \sigma_j \lolli} \vp }
@@ -260,7 +259,7 @@
     \TypeLet
 \quad
     \TypeLetRec
-\\
+\\[0.3cm]
     \TypeCaseWHNF
 \\
     \TypeCaseNotWHNF
