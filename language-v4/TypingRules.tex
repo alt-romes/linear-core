@@ -19,7 +19,7 @@
 
 % TODO: split tagged stuff and proof irrelevant stuff
 \newcommand{\TypeVarSplit}{
-  \infer*[right=(Split)]
+  \infer[(Split)]
     {\judg[\G][\D,\x]{e}{\vp} \and \hasargs{K}{n}}
     {\judg[\G][\D,\ov{\xt{K_i}}^n]{e}{\s}}
 }
