@@ -1,18 +1,18 @@
 % We don't need explicit weaking and contract: contexts without context are always split, contexts without weaking must be empty in the var rule.
 \newcommand{\TypeVarOmega}{
-    \infer*[right=($Var_\omega$)]
+    \infer*[right=(Var$_\omega$)]
     {\,}
     {\judg[\G,\xo][\cdot]{x}{\s}}
 }
 
 \newcommand{\TypeLinearVar}{
-    \infer*[right=($Var_1$)]
+    \infer*[right=(Var$_1$)]
     {\,}
     {\judg[\G][\xl]{x}{\s}}
 }
 
 \newcommand{\TypeVarDelta}{
-    \infer*[right=($Var_{\D}$)]
+    \infer*[right=(Var$_{\D}$)]
     {\,}
     {\judg[\G,\xD][\D]{x}{\s}}
 }
@@ -20,7 +20,7 @@
 % TODO: split tagged stuff and proof irrelevant stuff
 \newcommand{\TypeVarSplit}{
   % \infer*[right=($Split$)]
-  \infer[$\mathit{(Split)}$]
+  \infer[(Split)]
     {\judg[\G][\D,\x]{e}{\vp} \and \hasargs{K}{n}}
     {\judg[\G][\D,\ov{\xt{K_i}}^n]{e}{\s}}
 }
@@ -65,7 +65,7 @@
 }
 
 \newcommand{\TypeLet}{
-     \infer*[right=($Let$)]
+     \infer*[right=(Let)]
     %\infer[(Let)]
     {\judg[\G][\D]{e}{\s} \\ \judg[\G,\xr{\D}{\s}][\D,\D']{e'}{\vp}}
     {\judg[\G][\D,\D']{\llet{\x[\D] = e}{e'}}{\vp}}
@@ -73,7 +73,7 @@
 
 
 \newcommand{\TypeLetRec}{
-     \infer*[right=($LetRec$)]
+     \infer*[right=(LetRec)]
   %\infer[(LetRec)]
     {\ov{\judg[\G,\ov{x_i{:}_{\D}\s_i}][\D]{e_i}{\s}} \\ \judg[\G,\ov{x_i{:}_{\D}\s_i}][\D,\D']{e'}{\vp}}
     {\judg[\G][\D,\D']{\lletrec{\ov{\var[x_i][\D][\s_i] = e_i}}{e'}}{\vp}}
@@ -89,17 +89,17 @@
 
 \newcommand{\TypeCaseWHNFIntermediate}{
     \mprset{flushleft}
-    \infer[($\textrm{Case}_\textrm{WHNF}$)]
+    \infer[(Case$_\textrm{WHNF}$)]
     {\textrm{e is in \emph{WHNF}} \\ \G;\D \Vdash e:\s \gtrdot \ov{\D_i}
     \\ \ov{\G,\var[z][\ov{\D_i}];\ov{\D_i},\D' \vdash_{alt} \rho\to e' :^z_{\ov{\D_i}} \s \Mapsto \vp}}
     {\judg[\G][\D,\D']{\ccase{e}{\var[z][\ov{\D_i}]~\{\ov{\rho \to e'}\}}}{\vp}}
 }
 
 \newcommand{\TypeCaseWHNF}{
-    \infer[($\textrm{Case}_\textrm{WHNF}$)]
+    \infer[(Case$_\textrm{WHNF}$)]
     {\textrm{e is in \emph{WHNF}} \and \G;\D \Vdash e:\s \gtrdot \ov{\D_i} \and e~\textsf{matches}~\rho_j
-    \\ \G,\var[z][\ov{\D_i}];\ov{\D_i},\D' \vdash_{alt} \rho_j \to e' :^z_{\ov{\D_i}} \s \Mapsto \vp
-    \\ \ov{\judg[\G,z{:}_{\irr{\D}}\s][\irr{\D},\D']{\rho\to e'}{\s \Rrightarrow \vp}[alt][\irr{\D}][z]}
+    \\ \G,\var[z][\ov{\D_i}];\ov{\D_i},\D' \vdash_{alt} \rho_j \to e' :^z_{\ov{\D_i}} \s \Rightarrow_\mathsf{WHNF} \vp
+    \\ \ov{\judg[\G,z{:}_{\irr{\D}}\s][\irr{\D},\D']{\rho\to e'}{\s \Rightarrow_\mathsf{NWHNF} \vp}[alt][\irr{\D}][z]}
     }
     {\judg[\G][\D,\D']{\ccase{e}{\var[z][\ov{\D_i}]~\{\ov{\rho \to e'}\}}}{\vp}}
 }
@@ -116,10 +116,10 @@
 
 \newcommand{\TypeCaseNotWHNF}{
     \mprset{flushleft}
-    \infer[($\textrm{Case}_\textrm{Not WHNF}$)]
+    \infer[(Case$_\textrm{Not WHNF}$)]
     {\textrm{e is not in \emph{WHNF}} \\
     \judg{e}{\s}
-    \\ \ov{\judg[\G,z{:}_{\irr{\D}}\s][\irr{\D},\D']{\rho\to e'}{\s \Rrightarrow \vp}[alt][\irr{\D}][z]}
+    \\ \ov{\judg[\G,z{:}_{\irr{\D}}\s][\irr{\D},\D']{\rho\to e'}{\s \Rightarrow_\mathsf{NWHNF} \vp}[alt][\irr{\D}][z]}
     }
     {\splitjudg{\ccase{e}{\z[\irr{\D}]~\{\ov{\rho \to e'}\}}}{\vp}}
     % TODO: Add that [d1] entails moving all delta usages to [delta] usages in all vars i d1
@@ -164,23 +164,23 @@
 
 \newcommand{\TypeAltNNotWHNF}{
     \mprset{flushleft}
-    \infer[($\textrm{AltN}_{\textrm{Not WHNF}}$)]
+    \infer[(AltN$_{\textrm{Not WHNF}}$)]
     { \judg[\G,\ov{\xo},\ov{y_i{:}_{\D_i}\s_i}][\D]{e}{\vp}
     \\ \ov{\D_i} = \ov{\lctag{\D_s}{K_i}}^n
     % \\ n > 0
     % \\ K:\ov{\s \to_\pi} \s \in \G
     }
-    {\judg{K~\ov{\xo},\ov{y_i{:}_1\s_i}^n\to e}{\s \Rrightarrow \vp}[alt][\D_s][z]}
+    {\judg{K~\ov{\xo},\ov{y_i{:}_1\s_i}^n\to e}{\s \Rightarrow_\mathsf{NWHNF} \vp}[alt][\D_s][z]}
 }
 
 \newcommand{\TypeAltNWHNF}{
     \mprset{flushleft}
-    \infer[($\textrm{AltN}_{\textrm{WHNF}}$)]
+    \infer[(AltN$_{\textrm{WHNF}}$)]
     { \judg[\G,\ov{\xo},\ov{y_i{:}_{\D_i}\s_i}^n][\D]{e}{\vp}
     % \\ n > 0
     % \\ K:\of{\s \to_\pi} \s \in \G
     }
-    {\judg{K~\ov{\xo},\ov{y_i{:}_1\s_i}^n\to e}{\s \Mapsto \vp}[alt][\ov{\D_i}^n][z]}
+    {\judg{K~\ov{\xo},\ov{y_i{:}_1\s_i}^n\to e}{\s \Rightarrow_\mathsf{WHNF} \vp}[alt][\ov{\D_i}^n][z]}
 }
 
 \newcommand{\TypeAltZero}{
@@ -204,7 +204,7 @@
     { \ov{\G; \cdot \vdash e_\omega : \s_i} \\ \ov{\G; \D_j \vdash e_j
         : \s_j} \\ \ov{\D_j} = \D \\ K : \ov{\s_i \rightarrow_\omega
         \s_j \lolli} \vp}
-    { \G; \D \Vdash K~\ov{e_\omega}\ov{e_i} : \vp \gtrdot \ov{\D_i} }
+    { \G; \D \Vdash K~\ov{e_\omega}\ov{e_j} : \vp \gtrdot \ov{\D_j} }
 }
 
 \newcommand{\TypeWHNFLam}{

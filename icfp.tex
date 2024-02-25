@@ -779,7 +779,7 @@ The result of evaluating a let-binder's body which depends on linear resources,
 if computed, must be consumed exactly once, or, otherwise, we risk discarding
 or duplicating (the parts of) the resources that were captured in the result.
 
-Lastly, consider a program which defines two let bindings \incode{z} and \incode{y}, where
+Lastly, consider a (ill-typed) program which defines two let bindings \incode{z} and \incode{y}, where
 \incode{z} uses \incode{y} which in turn uses the linear resource \incode{x}:
 %
 \begin{noway}
@@ -925,7 +925,7 @@ once (e.g. if \incode{go} was applied to \incode{True}).
 
 Note that if we use a linear resource \incode{x} in one case alternative, and invoke
 the recursive call more than once, we might eventually consume \incode{x} more than
-once:
+once (and so \incode{f5} below is ill-typed):
 %
 \begin{noway}
 \begin{lstlisting}
@@ -1106,7 +1106,7 @@ defined in terms of the linear variables used for that constructor
 argument. Otherwise, if we do not use the pattern variables, then we
 do not run the computation and thus no resources are consumed.
 
-A third option is to use the case binder $z$ instead of $a,b$ or $x,y$:
+A third (semantically well-typed, but rejected by Linear Haskell) option is to use the case binder $z$ instead of $a,b$ or $x,y$:
 \begin{notyet}
 \begin{lstlisting}
 f9 :: a *' $\lolli$ '* b *' $\lolli$ '* (a *' $\lolli$ '* b *' $\lolli$ '* c) -> c
@@ -1120,7 +1120,8 @@ resource $y$, and the case binder $z$ entails using both $a$ and $b$.
 %
 Dually, consider the scrutinee to be an expression that's not in WHNF, s.t.
 evaluating it to WHNF will require performing computation and thus consume linear
-resources:
+resources (\incode{f10} below is well-typed in our system but rejected
+by Linear Haskell):
 \begin{notyet}
 \begin{lstlisting}
 f10 :: a *' $\lolli$ '* b *' $\lolli$ '* (a *' $\lolli$ '* b *' $\lolli$ '* (c,d)) -> (c,d)
@@ -2099,15 +2100,15 @@ scrutinees not in WHNF.
 The alternative judgement $\G;\D \vdash_{alt} \rho \to e :^z_\D \s \Rightarrow
 \vp$ is used to type case alternatives, encompassing three
 ``modes'', distinguished by the kind of arrow that is used:
-for alternatives of case expressions whose scrutinee is in WHNF ($\Mapsto$),
-for case expressions in which the scrutinee is not in WHNF ($\Rrightarrow$),
+for alternatives of case expressions whose scrutinee is in WHNF ($\Rightarrow_\mathsf{WHNF}$),
+for case expressions in which the scrutinee is not in WHNF ($\Rightarrow_\mathsf{NWHNF}$),
 and for alternatives agnostic to the WHNF-ness of the scrutinee
 ($\Rightarrow$), with $\Rightarrow$ also generalizing the other two.
 %
 % Following the $Case_\textrm{WHNF}$ rule in which we use the $\Mapsto$ alternative
 % judgement, t
 The rule for typing an alternative whose pattern is a
-constructor with $n > 0$ linear components (in mode $\Mapsto$) is:
+constructor with $n > 0$ linear components (in mode $\Rightarrow_{\mathsf{NWHNF}}$) is:
 \[
 \TypeAltNWHNF
 \]
@@ -2292,7 +2293,7 @@ are linear resources in all other senses, meaning they must be used
 discarded nor used directly, they have to be consumed \emph{indirectly} --
 by $\D$-bound variables, namely, the case binder, or the linear pattern-bound variables.
 
-Hence, to type a case expression whose scrutinee is in WHNF, we
+Hence, to type a case expression whose scrutinee is not in WHNF, we
 type the scrutinee with linear resources $\D$ and type the case
 alternatives by introducing the case binder with a usage environment $[\D]$,
 having the same proof irrelevant linear context $[\D]$ in the typing
@@ -3857,6 +3858,9 @@ work to apply the ideas from this work to the surface Haskell language.
 \appendix
 
 \section{Type Safety Proofs}\label{app:proofs}
+
+In the following we write $\Mapsto$ to stand for
+$\Rightarrow_\mathsf{WHNF}$ and $\Rrightarrow$ for $\Rightarrow_\mathsf{NWHNF}$.
 
 \subsection{Auxiliary Lemmas}
 The following lemmas presuppose the variable names across the typing
