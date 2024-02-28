@@ -1707,13 +1707,13 @@ $\Delta$-bound variables are introduced by several constructs as (recursive)
 let binders, case binders, and case pattern variables.
 %
 For example, the let-binder $u$ in the following program is annotated with a
-usage environment $\{x,y\}$, the resources that are used in its body. Thus, in
+usage environment $\{x{:}_1\s,y{:}_1\s\}$, the resources that are used in its body. Thus, in
 the expression $e$, consuming $u$ will equate to consuming the linear resources
 $x$ and $y$:
 % , as per the insights developed in
 % Section~\ref{sec:semantic-linearity-examples},
 \[
-f = \lambda \xl.~\lambda \y[1].~\llet{u = (x,y)}{e}
+f = \lambda \xl.~\lambda \y[1].~\llet{u_{\{x:_1\s,y:_1\s\}} = (x,y)}{e}
 \]
 Furthermore, usage environments guarantee that using a $\Delta$-bound variable
 is mutually exclusive with directly using the resources it is annotated with --
