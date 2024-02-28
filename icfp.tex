@@ -2298,7 +2298,7 @@ type the scrutinee with linear resources $\D$ and type the case
 alternatives by introducing the case binder with a usage environment $[\D]$,
 having the same proof irrelevant linear context $[\D]$ in the typing
 environment, annotating the judgement with the proof irrelevant resources,
-and using the $\Rrightarrow$ judgement:
+and using the $\Rightarrow_{\textsf{NWHNF}}$ judgement:
 \[
 \TypeCaseNotWHNF
 \]
@@ -2320,7 +2320,7 @@ judgement annotation to be made irrelevant.
 % resources, be those irrelevant or relevant resources}
 
 Finally, we recall the tentative $Case_\textrm{WHNF}$ rule presented before and
-highlight its flaw: the $\G;\D \vdash_{alt} \rho \to e :^z_{\D_s} \s \Mapsto
+highlight its flaw: the $\G;\D \vdash_{alt} \rho \to e :^z_{\D_s} \s \Rightarrow_{\textsf{WHNF}}
 \vp$ judgement is only well-defined for patterns $\rho$ matching the WHNF form
 of the scrutinee, as the distribution of resources per constructor components
 only makes sense for the constructor pattern matching the scrutinee.
