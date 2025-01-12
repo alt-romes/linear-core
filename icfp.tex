@@ -521,16 +521,15 @@ well-typed under a linear type system intrinsically depends on the
 definition of \emph{consuming} a resource.
 In general, \emph{consuming} a resource is equated with its 
 \emph{syntactic occurrence} in the program. However, as this section
-makes clear, when considering linear type systems for non-strict
+makes clear, in linear type systems for non-strict
 languages, a distinction between using
 resources \emph{syntactically} and \emph{semantically} is needed.
 %
-For instance, in the following program in a Haskell-like language there are two
-syntactic occurrences of \emph{handle}, and a let-bound computation that closes
-this handle is bound to \lstinline{x} before the \lstinline{handle} is
-returned. However, if the program is evaluated lazily, the handle is \emph{not}
-closed because the computation that closes the handle is never evaluated (since
-\lstinline{x} goes unused).
+For instance, in the following Haskell-like program, there are two syntactic
+occurrences of \lstinline{handle}: one is in a let-bound computation that
+closes this handle, the other is returned. If the program is evaluated lazily,
+the handle will not be closed because the computation that closes the handle is
+never evaluated (\lstinline{x} goes unused).
 %
 \begin{lstlisting}
 f : Handle *' $\lolli$ '* Handle
@@ -581,23 +580,22 @@ Intuitively, a computation that depends on a linear resource to produce a
 result consumes that resource iff the result is effectively consumed; in
 contrast, a computation that depends on a linear resource, but is never run,
 will not consume that resource.
-Under the lens of \emph{non-strict} evaluation, this means that a syntactic
+Under the lens of non-strict evaluation, this means that a syntactic
 occurrence of a resource in a let binding only entails consuming that resource
 iff the binding itself is consumed.
 %
 We argue that a linear type system for a language with non-strict evaluation
 semantics should accept the above program, unlike a linear type system for the
-same program if it were to be evaluated \emph{eagerly}.
+same program if it were to be evaluated eagerly.
 %
 From this observation, and exploring the connection between computation and evaluation,
 % it becomes clear that \emph{linearity} and \emph{consuming resources}, in the
 % above example and for programs in general, should be defined in function of the
 % language's evaluation strategy.
 %
-we turn our focus to \emph{linearity} under \emph{call-by-need}, not only
-because GHC Core is \emph{call-by-need}, but also because the distinction
-between semantically and syntactically consuming a resource is only exposed
-under \emph{non-strict} semantics.
+we turn our focus to linearity under non-strict evaluation, both since GHC Core is
+non-strict and because the distinction between semantically and syntactically
+consuming a resource is only exposed under non-strict semantics.
 %
 % Indeed, under \emph{call-by-value}, syntactic occurrences of a linear resource
 % directly correspond to semantically using that resource\footnote{With the minor exception
@@ -621,12 +619,12 @@ under \emph{non-strict} semantics.
 
 \subsection{Semantic Linearity by Example\label{sec:semantic-linearity-examples}}
 
-Aligned with our original motivation of typechecking linearity in GHC Core such
+Aligned with our motivation of typing linearity in GHC Core such
 that optimising transformations preserve linearity, and with the goal
 of understanding linearity in a non-strict context, this section aims to
 build an intuition for semantic linearity through examples of Core
-programs that are semantically linear but are rejected by (the current) Core linear type
-system.
+programs that are semantically linear but are rejected by (the current) Core
+linear type system.
 % BETTER?:
 %Aligned with our motivation of typechecking linearity in GHC Core such
 %that optimising transformations preserve linearity, and in order to explain
@@ -638,7 +636,7 @@ system.
 In the examples, a \colorbox{working}{\workingcolorname} background highlights programs that are
 syntactically linear and accepted by Core's naive linear type system. A
 \colorbox{notyet}{\notyetcolorname} or \colorbox{limitation}{\limitationcolorname} background mark programs that are
-\emph{semantically} linear, but are not seen as linear by Core's (naive wrt lazy evaluation) linear type
+semantically linear, but are not seen as linear by Core's (naive wrt lazy evaluation) linear type
 system. Notably, the linear type system we develop in this work accepts all
 \colorbox{notyet}{\notyetcolorname} programs.
 % (while the few \colorbox{limitation}{\limitationcolorname} programs are not accepted).
@@ -648,20 +646,24 @@ discards or duplicates linear resources. We discuss the three main
 syntactic constructs of Core, let bindings (non-recursive and
 recursive) and case expressions.
 
+\todo{Should we have a section starting with simple function application?}
+
 \paragraph{Let bindings}
-We start our discussion with non-strict (non-recursive) let bindings, i.e. let bindings whose
-body is evaluated only when the binding is needed, rather than when declared.
-In Core, a let binding entails the creation of a \emph{thunk} that suspends the
-evaluation of the let body.
-% (for background, see
-% Section~\ref{sec:background:evaluation-strategies})
-When the binding itself is evaluated, the \emph{thunk} is
-\emph{forced} and the evaluation is carried out. The result overwrites the
-\emph{thunk} -- the let binding now points to the result of the evaluation.
+% We start our discussion with non-strict (non-recursive) let bindings, i.e. let bindings whose
+% body is evaluated only when the binding is needed, rather than when declared.
+%
+% In Core, let bindings entail creating \emph{thunks} that suspends the
+% evaluation of the let body.
+% % (for background, see
+% % Section~\ref{sec:background:evaluation-strategies})
+% When the binding itself is evaluated, the \emph{thunk} is
+% \emph{forced} and the evaluation is carried out. The result overwrites the
+% \emph{thunk} -- the let binding now points to the result of the evaluation.
+%
 % A \emph{thunk} is \emph{forced} (and the suspended computation is evaluated) when
 % the binding itself is evaluated.
-
-    %\begin{notyet}
+%
+%\begin{notyet}
 % \begin{lstlisting}
 % f1 :: (a *' $\lolli$ '* b) -> a *' $\lolli$ '* b
 % f1 use x = let y = use x in y
@@ -674,7 +676,7 @@ When the binding itself is evaluated, the \emph{thunk} is
 % the let binding body. In the following example, we assign a computation that
 % depends on the resource \lstinline{x} to a binder, which is then
 % returned.
-
+%
 % \begin{figure}
 %   \begin{minipage}{.33\textwidth}
 %     \begin{notyet}
@@ -707,10 +709,10 @@ When the binding itself is evaluated, the \emph{thunk} is
 % \caption{Three}
 % \end{minipage}%
 % \end{figure}
-
-
-
-
+%
+%
+%
+%
 % %
 % The linear resource \lstinline{x} is used exactly once, since it is used exactly once in
 % the body of the binding and the binding is used exactly once in the let body.
@@ -749,20 +751,16 @@ When the binding itself is evaluated, the \emph{thunk} is
 % from transformations such as inlining, which can substitute out occurrences
 % of the binder (e.g. \incode{y} is inlined in the let body).
 
-% \todo[inline]{Cut this one}
-In the example from the beginning of
-Section~\ref{sec:linearity-semantically} (similar to that towards the end
-of Section~\ref{sec:intro}), we discussed a scenario where an
-unused let binding can be used to justify a function where its
-argument occurs both in the (unused) let-bound expression and in the
-body of the let.
-Let bindings can also go unused if they are defined before branching on case
-alternatives. At runtime, depending on the branch taken, the let binding will
-be evaluated only if it occurs in that branch.
-Both optimising transformations (float-out), and programmers used to
-non-strict evaluation often produce
-programs with bindings that are selectively used in case alternatives, for
-instance:
+The example at the start of Section~\ref{sec:linearity-semantically}
+% (similar to towards the end of Section~\ref{sec:intro}),
+trivially showed how linearity can be more subtle in a non-strict language with
+a simple unused let binding.
+%
+Less trivially, let-bound expressions that capture linears variables
+may be evaluated depending on the case-expression branch taken at runtime.
+Both optimising transformations (float-out) and programmers used to
+non-strict evaluation are keen to write programs with bindings that are selectively
+used in case alternatives, such as:
 %
 \begin{notyet}
 \begin{lstlisting}
@@ -774,24 +772,19 @@ f use bool x = let y = use x in
 \end{lstlisting}
 \end{notyet}
 %
-This example uses \lstinline{x} directly in one branch and the let-bound
+This example returns \lstinline{x} in one branch and the let-bound
 \lstinline{y} in the other. Semantically, as opposed to syntactically, this
-program is linear (i.e. linear resources are used \emph{exactly once}) because
-the linear resource \lstinline{x} is used exactly once in both case
-alternatives, either directly in the \lstinline{True} branch, or \emph{via} the
+program is linear % (i.e. linear resources are used exactly once)
+because the linear resource \lstinline{x} is used exactly once regardless of which branch is
+taken: either directly in the \lstinline{True} branch, or \emph{via} the
 let-bound \lstinline{y} in the \lstinline{False} branch.
 
-% Shifting our focus from not using a let binding to using it
-% more than once.
-On the other hand, let us consider a let-binding \lstinline{y} that is used
-twice, and that binds an expression that depends on a linear resource
-\lstinline{x}.
-Despite the binder body only being evaluated once due to call-by-need, and thus
-its resources being only used once to compute a result, we can still only
-consume the result of the computation once -- perhaps surprisingly, as the
-perception so far is that ``resources are consumed during computation'' and
-multiple uses of the same let binder share the result that was computed only
-once. Illustratively, the following program must \emph{not} typecheck:
+That said, a let-bound \lstinline{y} that captures a linear resource
+\lstinline{x} must still be used exactly once, regardless of whether evaluation
+inlines the let (ala call-by-name) or creates a thunk (ala call-by-need):
+%
+% \lstinline{y} must still be used exactly once.  When \lstinline{y} is inlined
+% in the body, this is trivial to see since multiple occurrences of will be 
 %
 \begin{noway}
 \begin{lstlisting}
@@ -800,22 +793,29 @@ f1 use x = let y = use x in (y, y)
 \end{lstlisting}
 \end{noway}
 %
-Intuitively, the result of the computation must also be used exactly once,
-despite being effectively computed just once, since the result may
-still capture (parts of) the linear resource. The trivial example is \lstinline{f1} applied to
-\incode{id} -- the result of computing \incode{id x} is \incode{x}, and \incode{x} must definitely not be
-shared. Indeed, if the result of the computation involving the linear resource
-was instead, e.g., an unrestricted integer, then sharing the result would not
-involve consuming the resource more than once.
-% ROMES:TODO:!!!!
-%\todo{this kind of hints that maybe somehow in the
-%alternative scrutinizing a "trivial" atom we could make the let binding
-%unrestricted after we were sure it was evaluated once, but that isn't easy
-%without erasing too many things before, we kind of tried this once}
+Linearity is trivially violated if \lstinline{y} is inlined.
 %
-The result of evaluating a let-binder's body which depends on linear resources,
-if computed, must be consumed exactly once, or, otherwise, we risk discarding
-or duplicating (the parts of) the resources that were captured in the result.
+On the other hand, if the computation using the resource is suspended under a
+thunk, it will be evaluated only once when the binding is first forced and
+re-used subsequently. Despite the computation (here, \lstinline{use x}) only
+being evaluated once, the program must still be rejected.
+%
+Intuitively, linearity may be violated if the computation leaks
+the resource or parts of it. For instance, if \lstinline{use = id}, the program
+must clearly be rejected.
+%
+% TODO:NEW: Include?
+% If the computation fully consumed the linear resource to produce an
+% unrestricted result which was forced, the binding could be shared...
+% OLD Indeed, if the result of the computation involving the linear resource
+% was instead, e.g., an unrestricted integer, then sharing the result would not
+% involve consuming the resource more than once.
+%
+%
+% Redundant?
+% In short, the result of evaluating a let-binder's body which depends on linear resources,
+% if computed, must be consumed exactly once, or, otherwise, we risk discarding
+% or duplicating (the parts of) the resources that were captured in the result.
 
 Lastly, consider a (ill-typed) program which defines two let bindings \incode{z} and \incode{y}, where
 \incode{z} uses \incode{y} which in turn uses the linear resource \incode{x}:
