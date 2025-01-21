@@ -206,7 +206,7 @@ syntactic linearity but that aim to preserve the program's semantics.
 We present Linear Core, the first type system that understands semantic
 linearity in the presence of non-strict evaluation, suitable for the Core
 intermediate language of the Glasgow Haskell Compiler. We prove Linear Core
-guarantees linear resource usage via a type safety argument and prove
+guarantees linear resource usage via a type safety and bisimilarity argument and prove
 multiple optimising transformations preserve linearity in Linear Core while
 failing to do so in Core. We have implemented Linear Core as a compiler
 plugin to validate the system against linearity-heavy libraries, including
@@ -231,7 +231,7 @@ plugin to validate the system against linearity-heavy libraries, including
 % the motto ``well-typed programs do not go wrong''.%~\cite{}.
 
 Linear type systems~\cite{cite:linear-logic,cite:barberdill} add expressiveness
-to existing type systems by enforcing that certain \emph{resources} (e.g.~a
+to existing type systems by enforcing that certain resources (e.g.~a
 file handle) are used \emph{exactly once}.
 %
 In programming languages with a linear type system, not using certain resources
@@ -297,7 +297,7 @@ expressions, making them easy to spot.
 Both Haskell and its intermediate language Core are lazily
         evaluated.
         % -- expressions in Haskell are only evaluated when needed.
-        As we make clear in this paper, \emph{lazy evaluation interacts non-trivially with linearity}.
+        As we make clear in this paper, \emph{non-strict evaluation interacts non-trivially with linearity}.
         Intuitively, a syntactic occurrence of a linear resource does not
         necessarily entail consuming that resource because expressions are not
         necessarily evaluated (i.e., if the expression is not evaluated, the
@@ -317,7 +317,7 @@ Both Haskell and its intermediate language Core are lazily
 
 Just as Core's type system provides a degree of validation to the
 translation from Haskell (dubbed \emph{desugaring}) and the subsequent
-optimising transformations, a \emph{linearly typed Core} would guarantee that
+optimising transformations, a linearly typed Core would guarantee that
 linear resource usage in the source language is not violated by desugaring
 and the compiler optimisation passes. Moreover, linearity information in
 Core can inform Core-to-Core optimising 
@@ -365,7 +365,7 @@ such as inlining and $\beta$-reduction, to produce more efficient programs.
 Despite the advantages of a linearly typed Core, the status quo is
 that linearity is effectively ignored in Core, despite being checked
 in the source Haskell code. The reason is that the desugaring
-and the subsequent Core-to-Core optimising transformations
+and subsequent Core-to-Core optimising transformations
 eliminate and rearrange most of the syntactic constructs through
 which linearity checking is performed -- often resulting in programs
 that are syntactically very different from the original, especially
@@ -378,12 +378,11 @@ a \emph{naive} syntactic analysis of the optimised programs (as
 performed by the current Core type checker) often fails to recognize
 the program as linear.
 %
-For instance, let $x$ be a linear resource in the two following programs, where
-the latter results from inlining $y$ in the let body of the former. Even though
-the program no longer appears linear (as there are now two 
-occurrences of $x$), the program is indeed linear
-because the let-bound expression is never evaluated, so $x$ is
-consumed exactly once (when it is freed in the let body):
+As a trivial example, let $x$ be a linear resource in the next two expressions,
+where the latter results from inlining $y$ without eliminating the binder. Even
+though the second expression no longer appears linear (as there are now two occurrences
+of $x$), it is indeed linear because the let-bound expression is never
+evaluated, thus $x$ is still consumed exactly once (when it is freed in the let body):
 % executed, $x$ will be freed exactly once:
 %
 % , \emph{is} linear, as the let bound expression freeing $x$
@@ -403,12 +402,12 @@ consumed exactly once (when it is freed in the let body):
 % \end{boxedminipage}
 
 The Core optimising transformations expose a fundamental limitation of Core's
-linear type system: it does not account for the lazy evaluation model
+linear type system: it does not account for the non-strict evaluation model
 of Core and, thus, a whole class of programs that are linear under the lens of
-lazy evaluation are rejected by Core's current linear type system.
+non-strict evaluation are rejected by Core's current linear type system.
 %
 In this work, we address this limitation by exploring how syntactic linearity
-breaks down in the presence of laziness and designing a type system which,
+breaks down in the presence of non-strictness and designing a type system which,
 derived from our observations, accepts the vast majority of valid non-strict
 programs and optimising transformations previously rejected by traditional
 linear typing disciplines. Additionally, we show our system
@@ -427,17 +426,16 @@ Our contributions are as follows:
 contrast to \emph{syntactic} linearity in Haskell, by example
 (Section~\ref{sec:linearity-semantically}).
 
-\item We introduce Linear Core, a type system for a linear lazy language with
-the key features from Core (except for type equality coercions), which,
+\item We introduce Linear Core, a non-strict linear language with
+the key features from Core (except for type equality coercions), whose type system
 accounts for semantic linearity in the presence of laziness. To the
 best of our knowledge, this is the first type system to capture linearity
 semantically in this context
 (Section~\ref{sec:main:linear-core}).
 
-\item We show the type soundness of Linear Core and prove that
-  multiple optimising transformations, which
-fail to type check in Core, are validated by Linear
-Core (Section~\ref{sec:main:metatheory}).
+\item We prove our type system is sound, guarantees linear resource usage, and
+    prove that multiple optimising transformations, which are rejected in Core,
+        are validated by Linear Core (Section~\ref{sec:main:metatheory}).
 
 \item We discuss our implementation of Linear Core as a GHC
   plugin\footnote{We plan to submit our implementation as a companion
@@ -516,10 +514,10 @@ and~\ref{app:optimisations}.
 \section{Linearity, Semantically\label{sec:linearity-semantically}}
 
 A linear type system statically guarantees that linear resources are
-\emph{consumed} exactly once. Consequently, whether a program is
+consumed exactly once. Consequently, whether a program is
 well-typed under a linear type system intrinsically depends on the
-definition of \emph{consuming} a resource.
-In general, \emph{consuming} a resource is equated with its 
+definition of consuming a resource.
+In general, consuming a resource is equated with its 
 \emph{syntactic occurrence} in the program. However, as this section
 makes clear, in linear type systems for non-strict
 languages, a distinction between using
@@ -576,13 +574,14 @@ f handle = let x = close handle in handle
 %
 %
 
+%Under the lens of non-strict evaluation, a syntactic
+%occurrence of a resource in an expression only entails consuming that resource
+%iff the expression itself is fully consumed.
+%
 Intuitively, a computation that depends on a linear resource to produce a
-result consumes that resource iff the result is effectively consumed; in
+result consumes that resource iff the result is fully consumed; in
 contrast, a computation that depends on a linear resource, but is never run,
 will not consume that resource.
-Under the lens of non-strict evaluation, this means that a syntactic
-occurrence of a resource in a let binding only entails consuming that resource
-iff the binding itself is consumed.
 %
 We argue that a linear type system for a language with non-strict evaluation
 semantics should accept the above program, unlike a linear type system for the
@@ -594,7 +593,7 @@ From this observation, and exploring the connection between computation and eval
 % language's evaluation strategy.
 %
 we turn our focus to linearity under non-strict evaluation, both since GHC Core is
-non-strict and because the distinction between semantically and syntactically
+lazy and because the distinction between semantically and syntactically
 consuming a resource is only exposed under non-strict semantics.
 %
 % Indeed, under \emph{call-by-value}, syntactic occurrences of a linear resource
