@@ -185,12 +185,12 @@
 \begin{document}
 
 \begin{abstract}
-Linear type systems guarantee linear resources are used \emph{exactly once}.
+Linear type systems guarantee linear resources are used exactly once.
 Traditionally, using a resource is synonymous with its \emph{syntactic}
-occurrence in the program, however, under the lens of \emph{lazy} evaluation,
+occurrence in the program, however, under the lens of non-strict evaluation,
 linearity can be further understood \emph{semantically}, where a
 syntactic occurrence of a resource does not necessarily entail
-\emph{using} that resource when the program is executed.
+using that resource when the program is executed.
 Semantic linearity becomes especially vital when considering the
 internal language of an optimising compiler, where optimisations
 heavily rewrite the source program in ways that can often break
@@ -203,14 +203,14 @@ syntactic linearity but that aim to preserve the program's semantics.
 % conservatively.
 %
 
-\todo{REWRITE}
 We present Linear Core, the first type system that understands semantic
-linearity in the presence of laziness, suitable for the Core intermediate
-language of the Glasgow Haskell Compiler. We prove Linear Core is both type
-safe and that multiple optimising transformations preserve linearity in Linear
-Core while failing to do so in Core. We have implemented Linear Core as a
-compiler plugin to validate the system against linearity-heavy libraries,
-including \texttt{linear-base}.%^, in the heart of the compiler.
+linearity in the presence of non-strict evaluation, suitable for the Core
+intermediate language of the Glasgow Haskell Compiler. We prove Linear Core
+guarantees linear resource usage via a type safety argument and prove
+multiple optimising transformations preserve linearity in Linear Core while
+failing to do so in Core. We have implemented Linear Core as a compiler
+plugin to validate the system against linearity-heavy libraries, including
+\texttt{linear-base}.%^, in the heart of the compiler.
 \end{abstract}
 
 \maketitle
