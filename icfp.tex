@@ -618,12 +618,15 @@ consuming a resource is only exposed under non-strict semantics.
 
 \subsection{Semantic Linearity by Example\label{sec:semantic-linearity-examples}}
 
-Aligned with our motivation of typing linearity in GHC Core such
-that optimising transformations preserve linearity, and with the goal
-of understanding linearity in a non-strict context, this section aims to
-build an intuition for semantic linearity through examples of Core
-programs that are semantically linear but are rejected by (the current) Core
-linear type system.
+This section aims to build an intuition for semantic linearity through examples
+of Core programs that can be understood as linear but are rejected by Core's
+linear type system (or, in fact, by all linear type systems we are aware of).
+%
+% Needed?
+%Aligned with our motivation of typing linearity in GHC Core such
+%that optimising transformations preserve linearity, and with the goal
+%of understanding linearity in a non-strict context,
+%
 % BETTER?:
 %Aligned with our motivation of typechecking linearity in GHC Core such
 %that optimising transformations preserve linearity, and in order to explain
@@ -632,12 +635,17 @@ linear type system.
 %Core's linear type system -- building intuition towards semantic linearity in a
 %lazy language.
 %
-In the examples, a \colorbox{working}{\workingcolorname} background highlights programs that are
-syntactically linear and accepted by Core's naive linear type system. A
-\colorbox{notyet}{\notyetcolorname} or \colorbox{limitation}{\limitationcolorname} background mark programs that are
-semantically linear, but are not seen as linear by Core's (naive wrt lazy evaluation) linear type
-system. Notably, the linear type system we develop in this work accepts all
+In the examples, a \colorbox{working}{\workingcolorname} background highlights
+programs that are syntactically linear and accepted by Core's linear type
+system.
+%
+A \colorbox{notyet}{\notyetcolorname} or
+\colorbox{limitation}{\limitationcolorname} background mark programs that are
+semantically linear, but not seen as linear by Core's type system.
+%
+Notably, the linear type system we develop in this work accepts all
 \colorbox{notyet}{\notyetcolorname} programs.
+%
 % (while the few \colorbox{limitation}{\limitationcolorname} programs are not accepted).
 A \colorbox{noway}{\nowaycolorname} background indicates that the program
 violates linearity semantically, i.e.~the program effectively
@@ -645,7 +653,7 @@ discards or duplicates linear resources. We discuss the three main
 syntactic constructs of Core, let bindings (non-recursive and
 recursive) and case expressions.
 
-\todo{Should we have a section starting with simple function application?}
+%\todo{Should we have a subsection starting with simple function application?}
 
 \paragraph{Let bindings}
 % We start our discussion with non-strict (non-recursive) let bindings, i.e. let bindings whose
@@ -755,8 +763,8 @@ The example at the start of Section~\ref{sec:linearity-semantically}
 trivially showed how linearity can be more subtle in a non-strict language with
 a simple unused let binding.
 %
-Less trivially, let-bound expressions that capture linears variables
-may be evaluated depending on the case-expression branch taken at runtime.
+Less trivially, a let-bound expression that captures a linear variable
+could be conditionally needed at runtime, depending on the branch taken.
 Both optimising transformations (float-out) and programmers used to
 non-strict evaluation are keen to write programs with bindings that are selectively
 used in case alternatives, such as:
@@ -795,7 +803,7 @@ f1 use x = let y = use x in (y, y)
 Linearity is trivially violated if \lstinline{y} is inlined.
 %
 On the other hand, if the computation using the resource is suspended under a
-thunk, it will be evaluated only once when the binding is first forced and
+thunk, it will only be evaluated once, when the binding is first forced, and
 re-used subsequently. Despite the computation (here, \lstinline{use x}) only
 being evaluated once, the program must still be rejected.
 %
@@ -827,7 +835,7 @@ f2 use x = let y = use x in let z = use y in ()
 \end{noway}
 %
 Even though the binding \incode{y} is used in \incode{z}, \incode{x} is still never consumed because
-\incode{z} isn't evaluated in the let body, and consequently \incode{y} isn't evaluated
+\incode{z} isn't evaluated in the let body, and, consequently, \incode{y} isn't evaluated
 either -- never consuming \incode{x}. We use this example to highlight that even for
 let-bound variables, the syntactic occurrence of a variable isn't enough to
 determine whether it is used. Instead, we ought to think of uses of \incode{y} as
@@ -841,13 +849,16 @@ example also violates linearity.
 In essence, an unused let binding doesn't consume any
 resources, and a let binding used exactly once consumes its resources exactly
 once. Let binders that depend on linear resources must be used \emph{at most
-once} -- let bound variables are \emph{affine} in the let body.
+once}, mutually exclusively with the linear resources themselves
+(in a sense, let-vars are affine in the let-body).
 %
-Moreover, if the let binding ($y$) isn't used in the let body, then the
-resources it depends on ($\ov{x}$) must still be used -- the binding $y$ is
-mutually exclusive with the resources $\ov{x}$ (for the resources to be used
-linearly, either the binder occurs exactly once $y$, or the resources $\ov{x}$
-do). We discuss how to encode this principle between let bindings and their dependencies using so called \emph{usage
+%Moreover, if the let binding \incode{y} isn't used in the let body, then the
+%resources it depends on ($\ov{x}$) must still be used -- the binding $y$ is
+%mutually exclusive with the resources $\ov{x}$ (for the resources to be used
+%linearly, either the binder occurs exactly once $y$, or the resources $\ov{x}$
+%do).
+%
+We discuss how to encode this principle between let bindings and their dependencies using so called \emph{usage
 environments}, in Section~\ref{sec:usage-environments}.
 
 %\vspace{-.5cm}
