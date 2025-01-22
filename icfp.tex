@@ -834,14 +834,14 @@ f2 use x = let y = use x in let z = use y in ()
 \end{lstlisting}
 \end{noway}
 %
-Even though the binding \incode{y} is used in \incode{z}, \incode{x} is still never consumed because
-\incode{z} isn't evaluated in the let body, and, consequently, \incode{y} isn't evaluated
-either -- never consuming \incode{x}. We use this example to highlight that even for
-let-bound variables, the syntactic occurrence of a variable isn't enough to
-determine whether it is used. Instead, we ought to think of uses of \incode{y} as
-implying using \incode{x}, and therefore uses of \incode{z} imply using \incode{x}, however, if
-neither is used, then \incode{x} isn't used. Since \incode{x} is effectively discarded, this
-example also violates linearity.
+Even though the binding \incode{y} is used in \incode{z}, \incode{x} is never
+consumed because \incode{z} isn't evaluated in the let body, and, thus,
+\incode{y} isn't evaluated either. We use this example to highlight that even
+for let-bound variables, the syntactic occurrence of a variable isn't enough to
+determine whether it is used. Instead, we ought to think of uses of \incode{y}
+as implying using \incode{x}, and therefore uses of \incode{z} imply using
+\incode{x}, however, if neither is used, then \incode{x} isn't used. Since
+\incode{x} is effectively discarded, this example also violates linearity.
 
 % \parawith{Summary}
 % The examples so far build an intuition for semantic linearity in the presence
@@ -849,7 +849,7 @@ example also violates linearity.
 In essence, an unused let binding doesn't consume any
 resources, and a let binding used exactly once consumes its resources exactly
 once. Let binders that depend on linear resources must be used \emph{at most
-once}, mutually exclusively with the linear resources themselves
+once} in mutual exclusion with the linear resources themselves
 (in a sense, let-vars are affine in the let-body).
 %
 %Moreover, if the let binding \incode{y} isn't used in the let body, then the
@@ -863,13 +863,23 @@ environments}, in Section~\ref{sec:usage-environments}.
 
 %\vspace{-.5cm}
 \paragraph{Recursive let bindings\label{sec:semantic-linearity-examples:recursive-lets}}
-% Second, we look into recursive let bindings.
-For the most part,
-recursive let bindings behave as non-recursive let bindings, i.e. we must use them \emph{at
-most once} because, when evaluated, the linear resources used in the binders
-bodies are consumed. The defining property of a group of mutually recursive let
-bindings is that the binders bound in that group can occur, without restrictions, in
-the bodies of those same binders. % The same way that, in a let body, evaluating
+
+%Recursive lets behave similarly to non-recursive let bindings in the sense we
+%must use them \emph{at most once} because, when evaluated, the linear resources
+%used in the binders bodies are consumed.
+%
+
+Mutually recursive let-bindings, i.e. bindings with definitions that
+recursively depend on the bindings they define, behave similarly to
+non-recursive lets as far as their usage in the let continuation is concerned.
+%recursive lets must still be used at most once, in mutual exclusion with the
+%linear resources they capture.
+%
+The challenge lies in understanding linearity in the definitions of the
+recursive binders and which resources exactly are consumed when one of the
+binders in the recursive group is used.
+
+% The same way that, in a let body, evaluating
 % a binding that uses some resource exactly once consumes that resource once,
 % using the binding in its own definition also entails using that resource once.
 Consider the following program, that calls a recursive let-bound function
