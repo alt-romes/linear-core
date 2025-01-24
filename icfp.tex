@@ -4084,12 +4084,12 @@ mutated in order to express lazy evaluation. Terms are explicit about
 their sharing (in the sense of shared reductions in lazy evaluation),
 and so we perform a translation step that makes all sharing explicit
 through let-binders.
-Below we write $\llet{x{:}_{\Delta}\sigma = e,\dots,y{:}_{\Delta'}=e''
-}{e'}$ for the iterated let-binding of variables $x , \dots , y$.       
+Below we write $\llet{\ov{x_i{:}_{\Delta_i}\sigma = e_i}}{e'}$ for the iterated
+let-binding of variables $\ov{x_i}$.
 \[
   \begin{array}{lclr}
     x^* & \triangleq & x\\
-                       
+
     (\Lambda p.~e)^* & \triangleq & \Lambda p.~(e)^*\\
     (\lambda x:_\pi\sigma .e)^* & \triangleq & \lambda x:_\pi\sigma . (e)^*\\
     (e~\pi)^* & \triangleq & (e)^*~\pi\\
@@ -4097,19 +4097,14 @@ Below we write $\llet{x{:}_{\Delta}\sigma = e,\dots,y{:}_{\Delta'}=e''
     (e~e')^* & \triangleq & \llet{x{:}_{\Delta}\sigma =
                             (e')^*}{(e)^*~x}     \\ &&\qquad \mbox{with
                             $\Gamma;\Delta' \vdash e :
-                            \sigma\rightarrow_\pi \varphi$ and
-                                                   $\Gamma;\Delta \vdash e' : \sigma$}\\
-    K~e_1~\dots~e_n & \triangleq & \llet{x_1:_{\Delta_1} \sigma_1 =
-                                   (e_1)^*,\dots,x_n:_{\Delta_n}
-                                   \sigma_n =
-                                   (e_n)^*}{K~x_1~\dots~x_n} \\ &&
-                                                               \qquad\mbox{with
-                                                               $\Gamma;\Delta_1\vdash
-                                                               e_1 :
-                                                               \sigma_1
-                                                               \dots \Gamma;\Delta_n\vdash
-                                                               e_n :
-                                                               \sigma_n$}\\                                              
+                            \sigma\rightarrow_\pi \varphi$} \\ &&\qquad \mbox{and
+                                       $\Gamma;\Delta \vdash e' : \sigma$}\\
+      K~\ov{e_i} & \triangleq & \llet{\ov{x_i:_{\Delta_i} \sigma_i =
+                                   (e_i)^*}}{K~\ov{x_i}} \\ &&
+                                       \qquad\mbox{with
+                                       $\ov{\Gamma;\Delta_i\vdash
+                                       e_i :
+                                       \sigma_i}$}\\                                              
 (\ccase{e}{z{:}_{\Delta}\sigma~\{\overline{\rho\to e'}\}})^* &
                                                                \triangleq
                                 &
@@ -4154,17 +4149,17 @@ variable $x$ of the given type.
     }\\[1.5em]
     \infer[]
     {\,}
-    {\Gamma : K~x_1~\dots~x_n \Downarrow \Gamma : K~x_1~\dots~x_n}
+    {\Gamma : K~\ov{x_i} \Downarrow \Gamma : K~\ov{x_i}}
     \qquad
     \infer[]
-    {\Gamma : e \Downarrow \Delta : K~x_1~\dots~x_n \quad
-    \Delta : e'[x_i/y_i][K~x_1~\dots~x_n/z] \Downarrow \Theta : v }
+    {\Gamma : e \Downarrow \Delta : K~\ov{x_i} \quad
+    \Delta : e'\ov{[x_i/y_i]}[K~\ov{x_i}/z] \Downarrow \Theta : v }
     {\Gamma :
     \ccase{e}{z{:}_{\Delta'}\sigma~\{{\dots,K~\ov{y_i}, {\dots} \to e'}\}}
     \Downarrow \Theta : v}\\[1.5em]
     \infer[]
-    {\Gamma : e \Downarrow \Delta : K~x_1~\dots~x_n \quad
-    \Delta : e'[K~x_1~\dots~x_n/z] \Downarrow \Theta : v }
+    {\Gamma : e \Downarrow \Delta : K~\ov{x_i} \quad
+    \Delta : e'[K~\ov{x_i}/z] \Downarrow \Theta : v }
     {\Gamma :
     \ccase{e}{z{:}_{\Delta'}\sigma~\{\dots , \_\to
     e'}\} \Downarrow \Theta : v}
@@ -4206,7 +4201,7 @@ its resulting value, both of type $\sigma$.
     \infer[]
     {\Gamma ; \Delta \vdash (\Theta \mid  e) \Downarrow (\Theta' \mid
     \Lambda p.e') : \forall p . \sigma \quad \Gamma ;\Delta \vdash
-    (\Theta' \mid e'[\pi/p]) \Downarrow (\Theta'' : v) : \sigma}
+    (\Theta' \mid e'[\pi/p]) \Downarrow (\Theta'' \mid v) : \sigma}
     {\Gamma ; \Delta \vdash (\Theta \mid e~\pi) \Downarrow (\Theta''
     \mid v) : \sigma  }\\[1.5em]
     \infer[]
@@ -4219,7 +4214,7 @@ its resulting value, both of type $\sigma$.
     \lambda y:_\pi \sigma . e') : \sigma \rightarrow_\pi \tau
     \quad
     \Gamma ; \Delta \vdash (\Theta' \mid e'[x/y]) \Downarrow (\Theta''
-    : v) : \tau }
+    \mid v) : \tau }
     {\Gamma ; \Delta\vdash (\Theta \mid  e~x ) \Downarrow (\Theta'
     \mid v) : \tau}\\[1.5em]
     
@@ -4239,21 +4234,21 @@ its resulting value, both of type $\sigma$.
     \infer[]
     {\Gamma ;\Delta \vdash (\Theta,x:_{\Delta'} \sigma = e \mid e')
     \Downarrow (\Theta' \mid v) : \tau}
-    {\Gamma ; \Delta \vdash (\Theta \mid \llet{x{:}_{\Delta}\sigma =
+    {\Gamma ; \Delta \vdash (\Theta \mid \llet{x{:}_{\Delta'}\sigma =
     e}{e'})\Downarrow (\Theta' \mid v) : \tau
     }\\[1.5em]
     
     \infer[]
     {\,}
-    {\Gamma ; \Delta \vdash (\Theta \mid K~x_1~\dots~x_n) \Downarrow
-    (\Theta \mid K~x_1~\dots~x_n) : T}
+    {\Gamma ; \Delta \vdash (\Theta \mid K~\ov{x_i}) \Downarrow
+    (\Theta \mid K~\ov{x_i}) : T}
     \\[1.5em]
     
     \infer[]
     {\Gamma;\Delta \vdash (\Theta \mid e) \Downarrow (\Theta' :
-    K~x_1~\dots~x_n) : T \quad
-    \Gamma ;\Delta \vdash (\Theta' \mid e'[x_i/y_i][K~x_1~\dots~x_n/z]
-    ) \Downarrow (\Theta'' : v) :\tau }
+    K~\ov{x_i}) : T \quad
+    \Gamma ;\Delta \vdash (\Theta' \mid e'\ov{[x_i/y_i]}[K~\ov{x_i}/z]
+    ) \Downarrow (\Theta'' \mid v) :\tau }
     {\Gamma ;\Delta \vdash (\Theta \mid
     \ccase{e}{z{:}_{\Delta'}\sigma~\{{\dots,K~\ov{y_i}, {\dots} \to e'}\}})
     \Downarrow (\Theta'' \mid  v) : \tau}\\[1.5em]
@@ -4261,8 +4256,8 @@ its resulting value, both of type $\sigma$.
     
     \infer[]
     {\Gamma ;\Delta \vdash (\Theta \mid e) \Downarrow (\Theta' \mid
-    K~x_1~\dots~x_n) : T \quad
-    \Gamma ;\Delta \vdash (\Theta' \mid  e'[K~x_1~\dots~x_n/z])
+    K~\ov{x_i}) : T \quad
+    \Gamma ;\Delta \vdash (\Theta' \mid  e'[K~\ov{x_i}/z])
     \Downarrow (\Theta'' \mid v) : \tau }
     {\Gamma ; \Delta \vdash (\Theta \mid 
     \ccase{e}{z{:}_{\Delta'}\sigma~\{\dots , \_\to
