@@ -4113,7 +4113,7 @@ variable $x$ of the given type.
     {\Gamma : \lambda x:_\pi \sigma . e \Downarrow \Gamma : \lambda x:_\pi \sigma . e }
     \qquad
     \infer[]
-    {\Gamma : e \Downarrow \Delta : \lambda x:_\pi \sigma . e' \quad
+    {\Gamma : e \Downarrow \Delta : \lambda y:_\pi \sigma . e' \quad
     \Delta : e'[x/y] \Downarrow \Theta : v }
     {\Gamma : e~x \Downarrow \Theta : v}\\[1.5em]
     \infer[]
@@ -4122,8 +4122,8 @@ variable $x$ of the given type.
     \sigma = v) : v}
     \qquad
     \infer[]
-    {(\Gamma,x:_\omega \sigma = e) : e' \Downarrow \Delta : v}
-    {\Gamma : \llet{x{:}_{\Delta}\sigma = e}{e'}\Downarrow \Delta : v
+    {(\Gamma,x:_\omega \sigma = e) : e' \Downarrow \Theta : v}
+    {\Gamma : \llet{x{:}_{\Delta}\sigma = e}{e'}\Downarrow \Theta : v
     }\\[1.5em]
     \infer[]
     {\,}
@@ -4131,9 +4131,17 @@ variable $x$ of the given type.
     \qquad
     \infer[]
     {\Gamma : e \Downarrow \Delta : K~x_1~\dots~x_n \quad
-    \Delta : e'[x_i/y_i] \Downarrow \Theta : v }
-    {\Gamma : \ccase{e}{z{:}_{\Delta}\sigma~\{\overline{\dots,K~y_1~\dots~y_n\to e'}\}}
+    \Delta : e'[x_i/y_i][K~x_1~\dots~x_n/z] \Downarrow \Theta : v }
+    {\Gamma :
+    \ccase{e}{z{:}_{\Delta'}\sigma~\{{\dots,K~\ov{y_i}, {\dots} \to e'}\}}
     \Downarrow \Theta : v}\\[1.5em]
+    \infer[]
+    {\Gamma : e \Downarrow \Delta : K~x_1~\dots~x_n \quad
+    \Delta : e'[K~x_1~\dots~x_n/z] \Downarrow \Theta : v }
+    {\Gamma :
+    \ccase{e}{z{:}_{\Delta'}\sigma~\{\dots , \_\to
+    e'}\} \Downarrow \Theta : v}
+    \qquad
     \infer[]
     {% (\Gamma, \overline{x_i:_\omega \sigma_i = e_i}) : e_1 \Downarrow \Theta_1
     % : v_1 \dots  (\Gamma, \overline{x_i:_\omega \sigma_i = e_i}) : e_n
@@ -4149,7 +4157,103 @@ variable $x$ of the given type.
 
 
 We follow an approach
-similar to that of \cite{cite:linearhaskell}.
+similar to that of \cite{cite:linearhaskell}, defining a linearity
+aware operational semantics in which linear variables are erased from
+the runtime environment, ensuring that any term violating linearity
+will result in a stuck state. The semantics is type-aware, defined by
+the judgment $\Gamma ; \Delta \vdash (\Theta \mid e) \Downarrow (\Theta'
+\mid v) : \sigma$ where $\Gamma$ and $\Delta$ are typing judgments
+($\Gamma$ tracks unrestricted variables, $\Delta$ tracks linear
+assumptions);
+$\Theta$ and $\Theta'$ are runtime environments, consisting of bindings of the form
+$x :_\pi \sigma = e$; $e$ is the expression being evaluated and $v$
+its resulting value, both of type $\sigma$.
+
+\[
+  \begin{array}{c}
+    \infer[]
+    {\,}
+    {\Gamma;\Delta \vdash (\Theta \mid \Lambda p.e) \Downarrow (\Theta \mid
+    \Lambda p.e) : \forall p . \sigma }
+    \\[1.5em]
+    \infer[]
+    {\Gamma ; \Delta \vdash (\Theta \mid  e) \Downarrow (\Theta' \mid
+    \Lambda p.e') : \forall p . \sigma \quad \Gamma ;\Delta \vdash
+    (\Theta' \mid e'[\pi/p]) \Downarrow (\Theta'' : v) : \sigma}
+    {\Gamma ; \Delta \vdash (\Theta \mid e~\pi) \Downarrow (\Theta''
+    \mid v) : \sigma  }\\[1.5em]
+    \infer[]
+    {\,}
+    {\Gamma ;\Delta \vdash (\Theta \mid \lambda x:_\pi \sigma . e)
+    \Downarrow (\Theta \mid \lambda x:_\pi\sigma .e) : \sigma
+    \rightarrow_\pi \tau }\\[1.5em]
+    \infer[]
+    {\Gamma;\Delta \vdash  (\Theta \mid e) \Downarrow (\Theta' \mid
+    \lambda y:_\pi \sigma . e') : \sigma \rightarrow_\pi \tau
+    \quad
+    \Gamma ; \Delta \vdash (\Theta' \mid e'[x/y]) \Downarrow (\Theta''
+    : v) : \tau }
+    {\Gamma ; \Delta\vdash (\Theta \mid  e~x ) \Downarrow (\Theta'
+    \mid v) : \tau}\\[1.5em]
+    
+       \infer[]
+    {\Gamma , x:_{\Delta'} \sigma ; \Delta  \vdash (\Theta \mid e)
+    \Downarrow (\Theta' \mid v) : \sigma}
+    {\Gamma ; \Delta \vdash (\Theta , x:_{\Delta'} \sigma = e \mid x)
+    \Downarrow (\Theta' , x:_{\Delta'} \sigma = v \mid v) : \sigma}
+    \\[1.5em]
+           \infer[]
+    {\Gamma ;\Delta  \vdash (\Theta \mid e)
+    \Downarrow (\Theta' \mid v) : \sigma}
+    {\Gamma ; \Delta \vdash (\Theta , x:_1 \sigma = e \mid x)
+    \Downarrow (\Theta' \mid v) : \sigma}
+    \\[1.5em]
+    
+    \infer[]
+    {\Gamma ;\Delta \vdash (\Theta,x:_{\Delta'} \sigma = e \mid e')
+    \Downarrow (\Theta' \mid v) : \tau}
+    {\Gamma ; \Delta \vdash (\Theta \mid \llet{x{:}_{\Delta}\sigma =
+    e}{e'})\Downarrow (\Theta' \mid v) : \tau
+    }\\[1.5em]
+    
+    \infer[]
+    {\,}
+    {\Gamma ; \Delta \vdash (\Theta \mid K~x_1~\dots~x_n) \Downarrow
+    (\Theta \mid K~x_1~\dots~x_n) : T}
+    \\[1.5em]
+    
+    \infer[]
+    {\Gamma;\Delta \vdash (\Theta \mid e) \Downarrow (\Theta' :
+    K~x_1~\dots~x_n) : T \quad
+    \Gamma ;\Delta \vdash (\Theta' \mid e'[x_i/y_i][K~x_1~\dots~x_n/z]
+    ) \Downarrow (\Theta'' : v) :\tau }
+    {\Gamma ;\Delta \vdash (\Theta \mid
+    \ccase{e}{z{:}_{\Delta'}\sigma~\{{\dots,K~\ov{y_i}, {\dots} \to e'}\}})
+    \Downarrow (\Theta'' \mid  v) : \tau}\\[1.5em]
+
+    
+    \infer[]
+    {\Gamma ;\Delta \vdash (\Theta \mid e) \Downarrow (\Theta' \mid
+    K~x_1~\dots~x_n) : T \quad
+    \Gamma ;\Delta \vdash (\Theta' \mid  e'[K~x_1~\dots~x_n/z])
+    \Downarrow (\Theta'' \mid v) : \tau }
+    {\Gamma ; \Delta \vdash (\Theta \mid 
+    \ccase{e}{z{:}_{\Delta'}\sigma~\{\dots , \_\to
+    e'}\}) \Downarrow (\Theta'' \mid v) : \tau}
+    \\[1.5em]
+    \infer[]
+    {% (\Gamma, \overline{x_i:_\omega \sigma_i = e_i}) : e_1 \Downarrow \Theta_1
+    % : v_1 \dots  (\Gamma, \overline{x_i:_\omega \sigma_i = e_i}) : e_n
+    % \Downarrow \Theta_n : v_n \quad
+    (\Gamma ; \Delta \vdash (\Theta, \overline{x_i:_\omega \sigma_i =
+    e_i} \mid e' )\Downarrow (\Theta'
+    \mid v) : \tau
+    }
+    {\Gamma ;\Delta \vdash (\Theta \mid \lletrec{\overline{x_i{:}_{\Delta}\sigma_i = e_i}}{e'})
+    \Downarrow (\Theta' \mid v) : \tau}
+
+   \end{array}
+\]
 
 
 % }}}
