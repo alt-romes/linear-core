@@ -4213,9 +4213,9 @@ its resulting value, both of type $\sigma$.
     {\Gamma;\Delta \vdash  (\Theta \mid e) \Downarrow (\Theta' \mid
     \lambda y:_\pi \sigma . e') : \sigma \rightarrow_\pi \tau
     \quad
-    \Gamma ; \Delta \vdash (\Theta' \mid e'[x/y]) \Downarrow (\Theta''
+    \Gamma ; \Delta \vdash (\Theta' , y:_{\pi} \sigma = x \mid e') \Downarrow (\Theta''
     \mid v) : \tau }
-    {\Gamma ; \Delta\vdash (\Theta \mid  e~x ) \Downarrow (\Theta'
+    {\Gamma ; \Delta\vdash (\Theta \mid  e~x ) \Downarrow (\Theta''
     \mid v) : \tau}\\[1.5em]
     
        \infer[]
@@ -4275,8 +4275,22 @@ its resulting value, both of type $\sigma$.
     \Downarrow (\Theta' \mid v) : \tau}
 
    \end{array}
-\]
+ \]
 
+ \begin{definition}[Well-typed State]
+   We write $\vdash \Theta \mid e : \tau$ to denote:
+
+   \[
+\vdash \llet{\Theta}{e} : \tau
+   \]
+   
+ \end{definition}
+
+
+\begin{theorem}[Type Preservation]
+  Let $(\Theta \mid e) \Downarrow (\Theta' \mid v) : \tau$.
+  If $\vdash \Theta \mid e : \tau$ then $\vdash \Theta' \mid v : \tau$. 
+ \end{theorem}
 
 % }}}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
