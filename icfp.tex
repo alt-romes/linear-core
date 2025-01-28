@@ -4289,8 +4289,44 @@ its resulting value, both of type $\sigma$.
 
 \begin{theorem}[Type Preservation]
   Let $(\Theta \mid e) \Downarrow (\Theta' \mid v) : \tau$.
-  If $\vdash \Theta \mid e : \tau$ then $\vdash \Theta' \mid v : \tau$. 
- \end{theorem}
+  If $\vdash \Theta \mid e : \tau$ then $\vdash \Theta' \mid v : \tau$
+  
+\end{theorem}
+
+% G ; D |- (Theta | e x) \Downarrow (Theta'' | v) : tau, Sigma
+
+% QUEREMOS PROVAR:
+% Se
+% G ; D |- (Theta | e x) : tau , Sigma
+% entao
+% G ; D |- (Theta'' | v) : tau, Sigma    
+
+% por i.h.
+% Se G;D |- (Theta | e) : sigma -> tau, x:tau , Sigma
+% entao
+% G ; D |- (Theta' | \y:sigma.e') : sigma->tau, x:tau,Sigma
+
+% por i.h.
+% Se G ; D |- (Theta' , y:sigma = x | e') : tau, Sigma
+% entao
+% G;D |- (Theta'' | v) : tau , Sigma
+
+
+% Gamma ; Delta |- [Theta | (e x , terms(Sigma))] : (tau , types(Sigma))
+% Gamma ; Delta |- [Theta | (e , terms(x:tau,Sigma))] : (tau->sigma , types(x:tau,Sigma))
+
+
+% Daqui Gamma ; Delta |- [Theta' | (\y:_1 sigma.e' , terms(x:tau,Sigma))] : (sigma->tau, types(x:tau,Sigma))
+% tirar Gamma ; Delta |- [Theta',y:sigma = x | (e' , terms(Sigma))] : (sigma->tau, types(Sigma))
+
+
+% [Theta' , x_1 : tau = y | e] = (\x_1:tau . [Theta' | e] ) y
+% [ Theta' , x_Delta:tau = e' | e] = let x_Delta = e' in [Theta' | e]
+% [ . | (e,e')] = (e,e')
+
+% Gamma ; Delta |- [Theta | (e , terms(Sigma))] : (tau , types(Sigma))
+
+ % Gamma ; Delta |- Theta | e  : tau, Sigma
 
 % }}}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
