@@ -4155,7 +4155,7 @@ variable $x$ of the given type.
     {\Gamma : e \Downarrow \Delta : K~\ov{x_i} \quad
     \Delta : e'\ov{[x_i/y_i]}[K~\ov{x_i}/z] \Downarrow \Theta : v }
     {\Gamma :
-    \ccase{e}{z{:}_{\Delta'}\sigma~\{{\dots,K~\ov{y_i}, {\dots} \to e'}\}}
+    \ccase{e}{z{:}_{\Delta'}\sigma~\{{\dots,K~\ov{y_i} \to e', {\dots}}\}}
     \Downarrow \Theta : v}\\[1.5em]
     \infer[]
     {\Gamma : e \Downarrow \Delta : K~\ov{x_i} \quad
@@ -4184,112 +4184,136 @@ aware operational semantics in which linear variables are erased from
 the runtime environment, ensuring that any term violating linearity
 will result in a stuck state. The semantics is type-aware, defined by
 the judgment $\Gamma ; \Delta \vdash (\Theta \mid e) \Downarrow (\Theta'
-\mid v) : \sigma$ where $\Gamma$ and $\Delta$ are typing judgments
+\mid v) : \sigma , \Sigma$ where $\Gamma$ and $\Delta$ are typing judgments
 ($\Gamma$ tracks unrestricted variables, $\Delta$ tracks linear
 assumptions);
 $\Theta$ and $\Theta'$ are runtime environments, consisting of bindings of the form
 $x :_\pi \sigma = e$; $e$ is the expression being evaluated and $v$
-its resulting value, both of type $\sigma$.
+its resulting value, both of type $\sigma$; $\Sigma$ is a list of assignments of the form
+$e :_\pi \tau$ or $x :_\Delta \tau$ which are expressions in which variables in $\Theta$ are used.
 
 \[
   \begin{array}{c}
     \infer[]
     {\,}
     {\Gamma;\Delta \vdash (\Theta \mid \Lambda p.e) \Downarrow (\Theta \mid
-    \Lambda p.e) : \forall p . \sigma }
+    \Lambda p.e) : \forall p . \sigma , \Sigma }
     \\[1.5em]
     \infer[]
     {\Gamma ; \Delta \vdash (\Theta \mid  e) \Downarrow (\Theta' \mid
-    \Lambda p.e') : \forall p . \sigma \quad \Gamma ;\Delta \vdash
-    (\Theta' \mid e'[\pi/p]) \Downarrow (\Theta'' \mid v) : \sigma}
+    \Lambda p.e') : \forall p . \sigma , \Sigma \quad \Gamma ;\Delta \vdash
+    (\Theta' \mid e'[\pi/p]) \Downarrow (\Theta'' \mid v) : \sigma, \Sigma}
     {\Gamma ; \Delta \vdash (\Theta \mid e~\pi) \Downarrow (\Theta''
-    \mid v) : \sigma  }\\[1.5em]
+    \mid v) : \sigma , \Sigma  }\\[1.5em]
     \infer[]
     {\,}
     {\Gamma ;\Delta \vdash (\Theta \mid \lambda x:_\pi \sigma . e)
     \Downarrow (\Theta \mid \lambda x:_\pi\sigma .e) : \sigma
-    \rightarrow_\pi \tau }\\[1.5em]
+    \rightarrow_\pi \tau,\Sigma }\\[1.5em]
     \infer[]
     {\Gamma;\Delta \vdash  (\Theta \mid e) \Downarrow (\Theta' \mid
-    \lambda y:_\pi \sigma . e') : \sigma \rightarrow_\pi \tau
+    \lambda y:_\pi \sigma . e') : \sigma \rightarrow_\pi \tau , x:\sigma, \Sigma
     \quad
     \Gamma ; \Delta \vdash (\Theta' , y:_{\pi} \sigma = x \mid e') \Downarrow (\Theta''
-    \mid v) : \tau }
+    \mid v) : \tau , \Sigma  }
     {\Gamma ; \Delta\vdash (\Theta \mid  e~x ) \Downarrow (\Theta''
-    \mid v) : \tau}\\[1.5em]
+    \mid v) : \tau , \Sigma }\\[1.5em]
     
        \infer[]
     {\Gamma , x:_{\Delta'} \sigma ; \Delta  \vdash (\Theta \mid e)
-    \Downarrow (\Theta' \mid v) : \sigma}
+    \Downarrow (\Theta' \mid v) : \sigma , \Sigma}
     {\Gamma ; \Delta \vdash (\Theta , x:_{\Delta'} \sigma = e \mid x)
-    \Downarrow (\Theta' , x:_{\Delta'} \sigma = v \mid v) : \sigma}
+    \Downarrow (\Theta' , x:_{\Delta'} \sigma = v \mid v) : \sigma, \Sigma}
     \\[1.5em]
            \infer[]
     {\Gamma ;\Delta  \vdash (\Theta \mid e)
-    \Downarrow (\Theta' \mid v) : \sigma}
+    \Downarrow (\Theta' \mid v) : \sigma,\Sigma}
     {\Gamma ; \Delta \vdash (\Theta , x:_1 \sigma = e \mid x)
-    \Downarrow (\Theta' \mid v) : \sigma}
+    \Downarrow (\Theta' \mid v) : \sigma,\Sigma}
     \\[1.5em]
     
     \infer[]
     {\Gamma ;\Delta \vdash (\Theta,x:_{\Delta'} \sigma = e \mid e')
-    \Downarrow (\Theta' \mid v) : \tau}
+    \Downarrow (\Theta' \mid v) : \tau,\Sigma}
     {\Gamma ; \Delta \vdash (\Theta \mid \llet{x{:}_{\Delta'}\sigma =
-    e}{e'})\Downarrow (\Theta' \mid v) : \tau
+    e}{e'})\Downarrow (\Theta' \mid v) : \tau , \Sigma
     }\\[1.5em]
     
     \infer[]
     {\,}
     {\Gamma ; \Delta \vdash (\Theta \mid K~\ov{x_i}) \Downarrow
-    (\Theta \mid K~\ov{x_i}) : T}
+    (\Theta \mid K~\ov{x_i}) : T , \Sigma}
     \\[1.5em]
     
     \infer[]
-    {\Gamma;\Delta \vdash (\Theta \mid e) \Downarrow (\Theta' :
-    K~\ov{x_i}) : T \quad
+    { K : \ov{ \sigma_i
+    \rightarrow_\omega \sigma_j \lolli} T
+    \\
+    \Gamma, \ov{x_i :_\omega \sigma_i} , z:_{\Delta'} T ;\Delta , \ov{x_j :_1 \sigma_j} \vdash (\Theta \mid e) \Downarrow (\Theta' :
+    K~\ov{x_i}) : T , e' : \tau ,\Sigma \\
     \Gamma ;\Delta \vdash (\Theta' \mid e'\ov{[x_i/y_i]}[K~\ov{x_i}/z]
-    ) \Downarrow (\Theta'' \mid v) :\tau }
+    ) \Downarrow (\Theta'' \mid v) :\tau , \Sigma }
     {\Gamma ;\Delta \vdash (\Theta \mid
-    \ccase{e}{z{:}_{\Delta'}\sigma~\{{\dots,K~\ov{y_i}, {\dots} \to e'}\}})
-    \Downarrow (\Theta'' \mid  v) : \tau}\\[1.5em]
+    \ccase{e}{z{:}_{\Delta'}T~\{{\dots,K~\ov{y_i} \to e', {\dots} }\}})
+    \Downarrow (\Theta'' \mid  v) : \tau , \Sigma}\\[1.5em]
 
     
     \infer[]
-    {\Gamma ;\Delta \vdash (\Theta \mid e) \Downarrow (\Theta' \mid
-    K~\ov{x_i}) : T \quad
+    {K : \ov{ \sigma_i
+    \rightarrow_\omega \sigma_j \lolli} T\\
+    \Gamma, z:_{\Delta'} T ;\Delta \vdash (\Theta \mid e) \Downarrow (\Theta' \mid
+    K~\ov{x_i}) : T , e' , \Sigma \quad
     \Gamma ;\Delta \vdash (\Theta' \mid  e'[K~\ov{x_i}/z])
-    \Downarrow (\Theta'' \mid v) : \tau }
+    \Downarrow (\Theta'' \mid v) : \tau,\Sigma }
     {\Gamma ; \Delta \vdash (\Theta \mid 
-    \ccase{e}{z{:}_{\Delta'}\sigma~\{\dots , \_\to
+    \ccase{e}{z{:}_{\Delta'}T~\{\dots , \_\to
     e'}\}) \Downarrow (\Theta'' \mid v) : \tau}
     \\[1.5em]
-    \infer[]
-    {% (\Gamma, \overline{x_i:_\omega \sigma_i = e_i}) : e_1 \Downarrow \Theta_1
-    % : v_1 \dots  (\Gamma, \overline{x_i:_\omega \sigma_i = e_i}) : e_n
-    % \Downarrow \Theta_n : v_n \quad
-    (\Gamma ; \Delta \vdash (\Theta, \overline{x_i:_\omega \sigma_i =
-    e_i} \mid e' )\Downarrow (\Theta'
-    \mid v) : \tau
-    }
-    {\Gamma ;\Delta \vdash (\Theta \mid \lletrec{\overline{x_i{:}_{\Delta}\sigma_i = e_i}}{e'})
-    \Downarrow (\Theta' \mid v) : \tau}
+    % \infer[]
+    % {% (\Gamma, \overline{x_i:_\omega \sigma_i = e_i}) : e_1 \Downarrow \Theta_1
+    % % : v_1 \dots  (\Gamma, \overline{x_i:_\omega \sigma_i = e_i}) : e_n
+    % % \Downarrow \Theta_n : v_n \quad
+    % (\Gamma ; \Delta \vdash (\Theta, \overline{x_i:_\omega \sigma_i =
+    % e_i} \mid e' )\Downarrow (\Theta'
+    % \mid v) : \tau
+    % }
+    % {\Gamma ;\Delta \vdash (\Theta \mid \lletrec{\overline{x_i{:}_{\Delta}\sigma_i = e_i}}{e'})
+    % \Downarrow (\Theta' \mid v) : \tau}
 
    \end{array}
  \]
 
+ We write $\Theta {\uparrow^1}$ for the linear bindings in evaluation environment $\Theta$ and $\Theta {\uparrow^\omega}$ for all other bindings.
+ 
+ \begin{definition}[Environment Expansion]
+   We rely on an expansion of a runtime environment $\Theta$ for the evaluation of a term $e$ into a (typed) term, written $[\Theta \mid e]$, defined inductively as follows:
+   \[
+     \begin{array}{lcl}
+       \left[ \cdot \mid e \right] & \triangleq & e\\
+       \left[ \Theta , x:_1\sigma = e' \mid e \right] & \triangleq  & (\lambda x_1:\sigma . [\Theta \mid e])~e'\\
+       \left[\Theta , x:_\Delta \sigma = e' \mid e \right] & \triangleq & \llet{x:_\Delta \sigma = e'}{[\Theta \mid e]}
+    \end{array}
+   \]
+ \end{definition}
+ 
  \begin{definition}[Well-typed State]
-   We write $\vdash \Theta \mid e : \tau$ to denote:
+   We write $\G;\D \vdash \Theta \mid e : \tau,\Sigma$ to denote the following typing judgment:
 
    \[
-\vdash \llet{\Theta}{e} : \tau
+\G ; \D \vdash [ \Theta \mid (e,\mathit{terms}(\Sigma))] : \tau \otimes \bigotimes(\Sigma)
    \]
-   
+   where $\mathit{terms}(e_1 : \sigma_1 , \dots , e_n : \sigma_n)$ stands for the tuple $(e_1 ,( \dots , (e_n , ())))$ and
+   $\bigotimes(e_1 : \sigma_1 , \dots , e_n : \sigma_n)$ for $\sigma_1 \otimes ( \dots (\sigma_n \otimes ()))$.
  \end{definition}
 
+ \begin{lemma}
+   Let $\G ; \D , \ov{x_i :_{\Delta_i} \tau_i} ; \ov{x_j :_1 : \tau_j} \vdash  e : \sigma$, we have that
+   $\G ; \D , \ov{\Delta_i} \vdash [ \ov{x_i :_{\Delta_i} \tau_i = e_i} , \ov{x_j :_1 : \tau_j = e_j} \mid e] : \sigma$
+   \end{lemma}
 
 \begin{theorem}[Type Preservation]
-  Let $(\Theta \mid e) \Downarrow (\Theta' \mid v) : \tau$.
-  If $\vdash \Theta \mid e : \tau$ then $\vdash \Theta' \mid v : \tau$
+  Let $\G ; \D \vdash (\Theta \mid e) \Downarrow (\Theta' \mid v) : \tau , \Sigma$.
+  If $\G ; \D \vdash \Theta \mid e : \tau , \Sigma$ then $\G ; \D \vdash \Theta' \mid v : \tau , \Sigma$
   
 \end{theorem}
 
