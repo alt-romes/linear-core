@@ -4307,8 +4307,8 @@ $e :_\pi \tau$ or $x :_\Delta \tau$ which are expressions in which variables in 
  \end{definition}
 
  \begin{lemma}
-   Let $\G ; \D , \ov{x_i :_{\Delta_i} \tau_i} ; \ov{x_j :_1 : \tau_j} \vdash  e : \sigma$, we have that
-   $\G ; \D , \ov{\Delta_i} \vdash [ \ov{x_i :_{\Delta_i} \tau_i = e_i} , \ov{x_j :_1 : \tau_j = e_j} \mid e] : \sigma$
+   Iff $\G ; \D \vdash [ \ov{x_i :_{\Delta_i,\omega} \tau_i = e_i} , \ov{x_j :_1 : \tau_j = e_j} \mid e] : \sigma$
+   then $\G , \ov{x_i :_{\Delta_i,\omega} \tau_i} ; \D , \ov{x_j :_1 : \tau_j} \vdash  e : \sigma$
    \end{lemma}
 
 \begin{theorem}[Type Preservation]
