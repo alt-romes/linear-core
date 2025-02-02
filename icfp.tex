@@ -4202,9 +4202,9 @@ $e :_\pi \tau$ or $x :_\Delta \tau$ which are expressions in which variables in 
     \infer[]
     {\Gamma ; \Delta \vdash (\Theta \mid  e) \Downarrow (\Theta' \mid
     \Lambda p.e') : \forall p . \sigma , \Sigma \quad \Gamma ;\Delta \vdash
-    (\Theta' \mid e'[\pi/p]) \Downarrow (\Theta'' \mid v) : \sigma, \Sigma}
+      (\Theta' \mid e'[\pi/p]) \Downarrow (\Theta'' \mid v) : \sigma[\pi/p], \Sigma}
     {\Gamma ; \Delta \vdash (\Theta \mid e~\pi) \Downarrow (\Theta''
-    \mid v) : \sigma , \Sigma  }\\[1.5em]
+      \mid v) : \sigma[\pi/p] , \Sigma  }\\[1.5em]
     \infer[]
     {\,}
     {\Gamma ;\Delta \vdash (\Theta \mid \lambda x:_\pi \sigma . e)
@@ -4290,8 +4290,8 @@ $e :_\pi \tau$ or $x :_\Delta \tau$ which are expressions in which variables in 
    \[
      \begin{array}{lcl}
        \left[ \cdot \mid e \right] & \triangleq & e\\
-       \left[ \Theta , x:_1\sigma = e' \mid e \right] & \triangleq  & (\lambda x_1:\sigma . [\Theta \mid e])~e'\\
-       \left[\Theta , x:_\Delta \sigma = e' \mid e \right] & \triangleq & \llet{x:_\Delta \sigma = e'}{[\Theta \mid e]}
+       \left[ \Theta , x:_1\sigma = e' \mid e \right] & \triangleq  & [\Theta \mid (\lambda x_1:\sigma . e)~e']\\
+       \left[\Theta , x:_\Delta \sigma = e' \mid e \right] & \triangleq & [\Theta \mid \llet{x:_\Delta \sigma = e'}{e}]
     \end{array}
    \]
  \end{definition}
