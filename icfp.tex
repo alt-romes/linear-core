@@ -4223,7 +4223,7 @@ $e :_\pi \tau$ or $x :_\Delta \tau$ which are expressions in which variables in 
     {\Gamma ; \Delta  \vdash (\Theta \mid e)
     \Downarrow (\Theta' \mid v) : \sigma , \Sigma}
     {\Gamma ; \Delta \vdash (\Theta , x:_{\Delta'} \sigma = e \mid x)
-    \Downarrow (\Theta' , x:_{\Delta'} \sigma = v \mid v) : \sigma, \Sigma}
+      \Downarrow (\Theta' , x:_{\Delta''} \sigma = v \mid v) : \sigma, \Sigma}
     \\[1.5em]
            \infer[]
     {\Gamma ;\Delta  \vdash (\Theta \mid e)
@@ -4307,8 +4307,8 @@ $e :_\pi \tau$ or $x :_\Delta \tau$ which are expressions in which variables in 
  \end{definition}
 
  \begin{lemma}
-   Iff $\G ; \D \vdash [ \ov{x_i :_{\Delta_i,\omega} \tau_i = e_i} , \ov{x_j :_1 : \tau_j = e_j} \mid e] : \sigma$
-   then $\G , \ov{x_i :_{\Delta_i,\omega} \tau_i} ; \D , \ov{x_j :_1 : \tau_j} \vdash  e : \sigma$
+   Iff $\G ; \D \vdash [ \Theta \mid e] : \sigma$
+     then $\G , \Theta\uparrow^{\omega} ; \D , \Theta\uparrow^1 \vdash  (e, \Theta\downarrow_e) : \sigma \otimes \bigotimes(\Theta\downarrow_\sigma)$
    \end{lemma}
 
 \begin{theorem}[Type Preservation]

@@ -1,0 +1,29 @@
+2 versões do lemma que nos permite transformar os bindings do \Theta em bindings no \Gamma e no \Delta
+```
+v1:
+\G; \D |- \Theta | e : \s
+==>
+\G, \Theta^\omega; \D, \Theta^1 |- e : \s
+```
+e
+```
+v2:
+\G; \D |- \Theta | e : \s
+==>
+\G, \Theta^\omega; \D, \Theta^1 |- (e, \Theta_es) : \s \otimes \bigotimes (\Theta_sigmas)
+```
+nenhum dos dois está correto.
+
+Contra exemplo da `v1`:
+```
+\G; \D |- y\D = e, x_1 = y | x
+===>
+\G, y\D; \D, x_1 |- (x) <!--- Se não pusermos o "e" aqui, ñao estamos a usar todos os recursos do \D
+```
+
+Contra exemplo da `v2`:
+```
+\G; \D |- x_D=v | v : \sigma
+pelo lemma C.3
+\G, x_D; \D |- (v, v) : \sigma \otimes \sigma <!--- não é possivel usar o \D para tipificar dois `v`s, pq o \D é usado para tipificar apenas um `v` pela premissa
+```
