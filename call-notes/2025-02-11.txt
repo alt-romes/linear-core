@@ -1,0 +1,80 @@
+. ; x |- case K x of z{x} _ -> x
+==>
+z , y... ; x |- (K x, x)
+
+1) G; D |- (\T | case e of z K y_is -> e') \Downarrow (\T'' | v) : \t, \S
+2) G; D |- \T | case e of z K y_is -> e' : \t, \S
+3) G, y_omgs, z; D, ... |- (\T | e) \Downarrow (\T' | K x_is), e', \S
+        by inv (1)
+4) G, \O^ws; D, \O^1s |- 
+
+
+. |- (\x -> case K x of _ -> x) ()
+. |- let y = () in (\x:1 -> case K x of _ -> x) y
+. |- y = () | (\x -> case K x of _ -> x) y
+. |- y = (), x:1 = y | case K x of _ -> x
+. |- y = (), x:1 = y | K x : T, x
+. |- [ y = e, x:1 = y | (K x, x) ]
+y; x |- (K x, x, y)
+
+x |- case K x{D_i} of z{x} K y -> x 
+==>
+x |- (e=K x, y_1 |- e'[y_i/D_i])
+
+x, y |- (K x{D_i}, x[y/x])
+==>
+x, y |- (K x, y)
+
+x |- case K x{D_i} of z{x} K y -> z
+
+ys |- e'[ys/xs][K ys/z]
+
+1) e' ocorre xs
+2) e' ocorre ys
+2a) e' ocorre xs,ys de forma disjunta
+3) e' ocorre z
+
+--------------------------------------------------------------------------------
+
+(\y -> e') e{x,y,z}
+
+(y:1 = e | e'), e
+
+x z |- (\y -> e') e
+y |- e'
+x, z, y |- e', e
+
+--------------------------------------------------------------------------------
+
+Se fizermos: e'[ys/xs][K ys/z]
+
+1a)
+. ; x |- case K x of z{x} K y -> x
+==>
+z ; x, y |- (K x, x[y/x][K y/z])
+
+1b)
+. ; x |- case K x of z{x} K y -> z
+==>
+z ; x, y |- (K x, z[y/x][K y/z])
+==>
+z ; x, y |- (K x, K y)
+
+1c)
+. ; x |- case K x of z{x} K y -> y
+==>
+z ; x, y |- (K x, y[y/x][K y/z])
+==>
+z ; x, y |- (K x, y)
+
+2a)
+. ; x, y |- case K x y of z{x, y} _ -> x && y
+==>
+z ; x, y, x, y |- (K x y, x && y)
+          ----
+
+2b)
+. ; x, y |- case K x y of z{x, y} _ -> z
+==>
+z ; x, y, x, y |- (K x y, K x y)
+          ----
