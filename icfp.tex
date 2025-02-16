@@ -4249,8 +4249,8 @@ $e :_\pi \tau$ or $x :_\Delta \tau$ which are expressions in which variables in 
     { K : \ov{ \sigma_i
     \rightarrow_\omega \sigma_j \lolli} T
     \\
-    \Gamma, \ov{y_i :_\omega \sigma_i} , z:_{\Delta'} T ;\Delta , \ov{y_j :_1 \sigma_j} \vdash (\Theta \mid e) \Downarrow (\Theta' :
-      K~\ov{x_i}) : T , e'\ov{[x_i/y_{i,j}]}[K~\ov{y_{i,j}}/z] : \tau ,\Sigma \\
+    \Gamma, \ov{y_i :_\omega \sigma_i} ;\Delta , \ov{y_j :_1 \sigma_j} \vdash (\Theta \mid e) \Downarrow (\Theta' \mid
+      K~\ov{x_i}) : T , e'\ov{[y_{i,j}/x_i]}[K~\ov{y_{i,j}}/z] : \tau ,\Sigma \\
     \Gamma ;\Delta \vdash (\Theta' \mid e'\ov{[x_i/y_{i,j}]}[K~\ov{x_i}/z]
     ) \Downarrow (\Theta'' \mid v) :\tau , \Sigma }
     {\Gamma ;\Delta \vdash (\Theta \mid
@@ -4261,7 +4261,7 @@ $e :_\pi \tau$ or $x :_\Delta \tau$ which are expressions in which variables in 
     \infer[]
     {K : \ov{ \sigma_i
     \rightarrow_\omega \sigma_j \lolli} T\\
-    \Gamma, z:_{\Delta'} T ; \Delta, \Delta' \vdash (\Theta \mid e) \Downarrow (\Theta' \mid
+    \Gamma, ; \Delta, \Delta' \vdash (\Theta \mid e) \Downarrow (\Theta' \mid
     K~\ov{x_i}) : T , e'[K~\ov{x_i}/z], \Sigma \quad
     \Gamma ;\Delta \vdash (\Theta' \mid  e'[K~\ov{x_i}/z])
     \Downarrow (\Theta'' \mid v) : \tau,\Sigma }

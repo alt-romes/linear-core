@@ -2642,9 +2642,11 @@ unchanged. To prove the theorems, we don't need a ``stronger'' substitution of
 $\D$-vars lemma (allowing arbitrary resources $\D''$ to type $e'$, as in other
 substitution lemmas), as we only ever substitute $\D$-variables by expressions
 whose typing environment matches the variables usage environment. However, it
-is not obvious whether such a lemma is possible to prove for $\D$-variables
-(e.g. let $\G;\D \vdash e :\s$ and $\G; \D' \vdash \llet{x = e'}{x}$, if we
-substitute $e$ for $x$ the resources $\D'$ are no longer consumed).
+is not obvious whether such a lemma is possible to prove for $\D$-variables,
+even if the resulting environment were modified, because they $\D$-variables are
+not necessarily used.
+% (e.g. let $\G;\D \vdash e :\s$ and $\G; \D' \vdash \llet{x = e'}{x}$, if we
+% substitute $e$ for $x$ the resources $\D'$ are no longer consumed).
 
 The $\D$-substitution lemma on case alternatives reflects again that the typing
 environment of the expression substitution the variable must match its usage
