@@ -2561,16 +2561,30 @@ resources in $\D$.
 
 We begin by presenting the operational semantics of $\lambda^\pi_\D$,
 consisting of two lazy big-step semantics in the
-style of Launchbury~\cite{10.1145/158511.158618}.
+style of Launchbury~\cite{10.1145/158511.158618}, one of which is
+instrumented with linearity information, producing stuck states when
+linearity is violated. We then show the
+type safety  of $\lambda^\pi_\D$ via the standard progress  and type
+preservation results (Section~\ref{sec:typesafe}), which in our setting entails that programs
+preserve linearity. Finally, we show that multiple optimising
+transformations such as those performed by GHC on (Linear) Core are
+type preserving
+(Section~\ref{sec:optimisations-preserve-types-meta}), and thus
+linearity preserving.
 
 \subsection{Operational Semantics}
 
 The first semantics, presented in Figure~\ref{fig:opsem}, captures
-lazy evaluation but ignores linearity information. The second
-semantics is instrumented with type information and is thus
+standard lazy evaluation but ignores linearity information. The second
+semantics is significantly instrumented with type information and is thus
 \emph{linearity aware}, resulting in a stuck state when a linear
-variable is used more than once. We show that for well-typed terms,
-the two semantics coincide.
+variable is used more than once. The former is a more direct model of
+an implementation of lazy evaluation, however it is not so convenient
+to reason about formally. The latter semantics is augmented with the additional
+information necessary to strengthen the induction hypothesis to make our
+type safety proofs go through.
+%
+We show that for well-typed terms, the two semantics coincide. 
 
 Both semantics are
 equipped with an environment which assigns values to variables and is
@@ -2653,17 +2667,20 @@ similar to that of \cite{cite:linearhaskell}, defining a
 linearity-aware operational semantics in which linear variables are
 erased from 
 the runtime environment, ensuring that any term violating linearity
-will result in a stuck state. The semantics is also type-aware (for
-the purposes of proving type safety), defined by
+will result in a stuck state. The semantics is also type-aware and
+carries with it sufficient data to reconstruct typing derivations (for
+the purposes of proving type safety). The semantics is defined by
 the judgment $\Gamma ; \Delta \vdash (\Theta \mid e) \Downarrow (\Theta'
 \mid v) : \sigma , \Sigma$ where $\Gamma$ and $\Delta$ are typing judgments
-($\Gamma$ tracks unrestricted variables, $\Delta$ tracks linear
+($\Gamma$ tracks unrestricted and $\Delta$-bound variables, $\Delta$ tracks linear
 assumptions);
 $\Theta$ and $\Theta'$ are runtime environments, consisting of bindings of the form
 $x :_\pi \sigma = e$; $e$ is the expression being evaluated and $v$
 its resulting value, both of type $\sigma$; $\Sigma$ is a list of assignments of the form
 $e :_\pi \tau$ or $x :_\Delta \tau$ which are expressions in which
-variables in $\Theta$ are used.
+bindings in $\Theta$ are used. This additional data is needed to
+inductively show that the evaluation state is well-typed (and
+linearity preserving).
 
 \begin{figure}
 \[
@@ -2760,7 +2777,7 @@ variables in $\Theta$ are used.
   
 \end{figure}
 
-\subsection{Results}
+\subsection{Type Safety}\label{sec:typesafe}
 
 The $\lambda^\pi_\D$ type system is sound: well-typed programs in Linear Core do not
 get \emph{stuck}. Besides type safety, we
@@ -2877,7 +2894,7 @@ directly.
 % %
 % The proof is given in Section~\ref{sec:proof:irrelevance}.
 
-\subsection{Type safety\label{sec:type-safety-meta}}
+%\subsection{Type safety\label{sec:type-safety-meta}}
 
 We prove type safety of the Linear Core system via the standard type
 preservation and progress results. As is customary, we make use of multiple
@@ -4486,7 +4503,30 @@ $e :_\pi \tau$ or $x :_\Delta \tau$ which are expressions in which variables in 
    \end{array}
  \]
 
+ Following~\cite{Gunter1993APA,cite:linearhaskell}, we also consider
+ partial derivations of our semantics in order to be able to state a
+ progress result. Given our set of rules defining judgments of the
+ form $a \Downarrow b$ with ordered premises, we define a total
+ derivation of $a \Downarrow b$ as a tree in the standard way. A
+ partial derivation $a \Downarrow?$ is either a root labelled with $a
+ \Downarrow?$ or an application of a rule matching $a$ on the left of
+ the evaluation arrow, where exactly one of the premises $a'
+ \Downarrow?$ has a partial  derivation, all the premises to the left
+ of $a' \Downarrow?$ have a total derivation, and the premises to the
+ right of $a'\Downarrow?$ are not known yet.
+ %
+
+ By construction, in a partial derivation, there is only one premise
+ $b\Downarrow?$ with no sub-derivation. We call $b$ the head of such a
+ partial derivation.
+We write $a \Downarrow^* b$ for the relation which holds when $b$ is
+the head of some partial derivation with root $a \Downarrow?$.  We
+write $a \Downarrow^* b$  the partial evaluation relation.
+ 
  We write $\Theta {\uparrow^1}$ for the linear bindings in evaluation environment $\Theta$ and $\Theta {\uparrow^\omega}$ for all other bindings.
+
+
+
  
  \begin{definition}[Environment Expansion]
    We rely on an expansion of a runtime environment $\Theta$ for the evaluation of a term $e$ into a (typed) term, written $[\Theta \mid e]$, defined inductively as follows:
@@ -4515,10 +4555,27 @@ $e :_\pi \tau$ or $x :_\Delta \tau$ which are expressions in which variables in 
    \end{lemma}
 
 \begin{theorem}[Type Preservation]
-  Let $\G ; \D \vdash (\Theta \mid e) \Downarrow (\Theta' \mid v) : \tau , \Sigma$.
+  Let $\G ; \D \vdash (\Theta \mid e) \Downarrow (\Theta' \mid v) :
+  \tau , \Sigma$ or $\G ; \D \vdash (\Theta \mid e) \Downarrow^* (\Theta' \mid v) :
+  \tau , \Sigma$.
   If $\G ; \D \vdash \Theta \mid e : \tau , \Sigma$ then $\G ; \D \vdash \Theta' \mid v : \tau , \Sigma$
   
 \end{theorem}
+
+\begin{theorem}[Progress]
+Let $\G ; \D \vdash \Theta \mid e : \tau,\Sigma$. Any partial derivation $\G; \D \vdash (\Theta \mid e)
+\Downarrow?,\Sigma$ can be extended. 
+\end{theorem}
+
+\begin{proof}
+ Essentially all cases are standard. The only potential issue is the
+ (linear) variable rule.
+It suffices to show that whenever a variable is evaluated it is
+present in the evaluation environment. This situation is impossible
+since the state
+$\G ; \D \vdash \Theta \mid x : \tau , \Sigma$ where $x$ is absent
+from $\Theta$ is not well-typed and so cannot be the head of a partial derivation.
+\end{proof}
 
 % G ; D |- (Theta | e x) \Downarrow (Theta'' | v) : tau, Sigma
 
