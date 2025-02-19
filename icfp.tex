@@ -1526,7 +1526,7 @@ scrutinee, proof irrelevant resources, and tagging (Section~\ref{sec:lc-case-exp
 %iterativamente. Podemos começar com as triviais e avançar para os dois pontos
 %mais difíceis : Lets e Cases}
 
-\subsection{Language Syntax and Operational Semantics}
+\subsection{Language Syntax}
 
 The complete syntax of Linear Core is given in Figure~\ref{fig:full-linear-core-syntax}.
 % Figure~\ref{fig:linear-core-types} and Figure~\ref{fig:linear-core-terms}.
@@ -1594,25 +1594,25 @@ used unrestrictedly.
 %a linear lambda calculus with algebraic datatypes, case
 %expressions, recursive let bindings, and multiplicity abstractions. The 
 
-The (small-step) operational semantics of Linear Core are given in
-Figure~\ref{fig:linear-core-operational-semantics}. We use call-by-name
-evaluation for Linear Core as it captures the non-strict semantics in which
-our type system understands linearity, while being simpler to reason about than
-call-by-need operational semantics.
-% which is traditionally modelled with a
-% mutable heap to store \emph{thunks} and the values they are overwritten with.
-Furthermore, linear function applications, even in a \emph{call-by-need} system, can
-usually be reduced \emph{call-by-name} as the function argument is guaranteed to
-be used exactly once (thus avoiding unnecessarily allocating memory on the heap
-for a redundant \emph{thunk}).
-%
-Specifically, function applications are reduced by the standard
-\emph{call-by-name} $\beta$-reduction, substituting the argument by
-occurrences of the binder in its body, case expressions evaluate their
-scrutinee to WHNF, substituting the result by the case binder and constructor
-arguments for pattern-bound bound variables matching on that same constructor.
+% The (small-step) operational semantics of Linear Core are given in
+% Figure~\ref{fig:linear-core-operational-semantics}. We use call-by-name
+% evaluation for Linear Core as it captures the non-strict semantics in which
+% our type system understands linearity, while being simpler to reason about than
+% call-by-need operational semantics.
+% % which is traditionally modelled with a
+% % mutable heap to store \emph{thunks} and the values they are overwritten with.
+% Furthermore, linear function applications, even in a \emph{call-by-need} system, can
+% usually be reduced \emph{call-by-name} as the function argument is guaranteed to
+% be used exactly once (thus avoiding unnecessarily allocating memory on the heap
+% for a redundant \emph{thunk}).
+% %
+% Specifically, function applications are reduced by the standard
+% \emph{call-by-name} $\beta$-reduction, substituting the argument by
+% occurrences of the binder in its body, case expressions evaluate their
+% scrutinee to WHNF, substituting the result by the case binder and constructor
+% arguments for pattern-bound bound variables matching on that same constructor.
 
-\input{language-v4/OperationalSemantics}
+% \input{language-v4/OperationalSemantics}
 
 \subsection{Base Typing System\label{sec:base-calculi}}
 
@@ -2558,6 +2558,209 @@ resources in $\D$.
 % {{{ Metatheory
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Metatheory of Linear Core\label{sec:main:metatheory}}
+
+We begin by presenting the operational semantics of $\lambda^\pi_\D$,
+consisting of two lazy big-step semantics in the
+style of Launchbury~\cite{10.1145/158511.158618}.
+
+\subsection{Operational Semantics}
+
+The first semantics, presented in Figure~\ref{fig:opsem}, captures
+lazy evaluation but ignores linearity information. The second
+semantics is instrumented with type information and is thus
+\emph{linearity aware}, resulting in a stuck state when a linear
+variable is used more than once. We show that for well-typed terms,
+the two semantics coincide.
+
+Both semantics are
+equipped with an environment which assigns values to variables and is
+mutated in order to express lazy evaluation. Terms are explicit about
+their sharing (in the sense of shared reductions in lazy evaluation),
+and so we perform a translation step that makes all sharing explicit
+through let-binders (see Appendix~\ref{app:opsem}).
+We write $\llet{\ov{x_i{:}_{\Delta_i}\sigma = e_i}}{e'}$ for the iterated
+let-binding of variables $\ov{x_i}$. 
+
+\begin{figure}
+
+  {\small
+    \[
+  \begin{array}{c}
+    \infer[]
+    {\,}
+    {\Theta : \Lambda p.e \Downarrow \Theta : \Lambda p.e}
+    \qquad
+    \infer[]
+    {\Theta : e\Downarrow \Theta' : \Lambda p.e' \quad \Theta' :
+    e'[\pi/p]\Downarrow \Theta'' : v}
+    {\Theta : e~\pi\Downarrow \Theta'' : v }\\[1.5em]
+    \infer[]
+    {\,}
+    {\Theta : \lambda x:_\pi \sigma . e \Downarrow \Theta : \lambda x:_\pi \sigma . e }
+    \qquad
+    \infer[]
+    {\Theta : e \Downarrow \Theta' : \lambda y:_\pi \sigma . e' \quad
+    \Theta' : e'[x/y] \Downarrow \Theta'' : v }
+    {\Gamma : e~x \Downarrow \Theta'' : v}\\[1.5em]
+    \infer[]
+    {\Theta : e \Downarrow \Theta' : v}
+    {(\Theta , x:_\omega \sigma = e) : x \Downarrow (\Theta',x:_\omega
+    \sigma = v) : v}
+    \qquad
+    \infer[]
+    {(\Theta,x:_\omega \sigma = e) : e' \Downarrow \Theta' : v}
+    {\Theta : \llet{x{:}_{\Delta}\sigma = e}{e'}\Downarrow \Theta' : v
+    }\\[1.5em]
+    \infer[]
+    {\,}
+    {\Theta : K~\ov{x_i} \Downarrow \Theta : K~\ov{x_i}}
+    \qquad
+    \infer[]
+    {\Theta : e \Downarrow \Theta' : K~\ov{x_i} \quad
+    \Theta' : e'\ov{[x_i/y_i]}[K~\ov{x_i}/z] \Downarrow \Theta'' : v }
+    {\Theta :
+    \ccase{e}{z{:}_{\Delta'}\sigma~\{{\dots,K~\ov{y_i} \to e', {\dots}}\}}
+    \Downarrow \Theta'' : v}\\[1.5em]
+    \infer[]
+    {\Theta : e \Downarrow \Theta' : K~\ov{x_i} \quad
+    \Theta' : e'[K~\ov{x_i}/z] \Downarrow \Theta'' : v }
+    {\Theta :
+    \ccase{e}{z{:}_{\Delta'}\sigma~\{\dots , \_\to
+    e'}\} \Downarrow \Theta'' : v}
+    \qquad
+    \infer[]
+    {% (\Gamma, \overline{x_i:_\omega \sigma_i = e_i}) : e_1 \Downarrow \Theta_1
+    % : v_1 \dots  (\Gamma, \overline{x_i:_\omega \sigma_i = e_i}) : e_n
+    % \Downarrow \Theta_n : v_n \quad
+    (\Theta, \overline{x_i:_\omega \sigma_i = e_i}) : e' \Downarrow \Theta'
+    : v
+    }
+    {\Theta : \lletrec{\overline{x_i{:}_{\Delta}\sigma_i = e_i}}{e'}
+    \Downarrow \Theta' : v}
+    \end{array}
+\]}
+    \caption{Operational Semantics of $\lambda^\pi_\D$\label{fig:opsem}}
+  \end{figure}
+
+  The lazy big-step operational semantics is defined via the relation
+$\Theta : e \Downarrow \Theta' : v$ where $e$ is an expression, $v$ a
+value, $\Theta$ and $\Theta'$ are environments with bindings of the
+form $x:_\omega\sigma = e$ which assigns the expression $e$ to the
+variable $x$ of the given type.
+
+We follow an approach
+similar to that of \cite{cite:linearhaskell}, defining a
+linearity-aware operational semantics in which linear variables are
+erased from 
+the runtime environment, ensuring that any term violating linearity
+will result in a stuck state. The semantics is also type-aware (for
+the purposes of proving type safety), defined by
+the judgment $\Gamma ; \Delta \vdash (\Theta \mid e) \Downarrow (\Theta'
+\mid v) : \sigma , \Sigma$ where $\Gamma$ and $\Delta$ are typing judgments
+($\Gamma$ tracks unrestricted variables, $\Delta$ tracks linear
+assumptions);
+$\Theta$ and $\Theta'$ are runtime environments, consisting of bindings of the form
+$x :_\pi \sigma = e$; $e$ is the expression being evaluated and $v$
+its resulting value, both of type $\sigma$; $\Sigma$ is a list of assignments of the form
+$e :_\pi \tau$ or $x :_\Delta \tau$ which are expressions in which
+variables in $\Theta$ are used.
+
+\begin{figure}
+\[
+  \begin{array}{c}
+    \infer[]
+    {\,}
+    {\Gamma;\Delta \vdash (\Theta \mid \Lambda p.e) \Downarrow (\Theta \mid
+    \Lambda p.e) : \forall p . \sigma , \Sigma }
+    \\[1.5em]
+    \infer[]
+    {\Gamma ; \Delta \vdash (\Theta \mid  e) \Downarrow (\Theta' \mid
+    \Lambda p.e') : \forall p . \sigma , \Sigma \quad \Gamma ;\Delta \vdash
+      (\Theta' \mid e'[\pi/p]) \Downarrow (\Theta'' \mid v) : \sigma[\pi/p], \Sigma}
+    {\Gamma ; \Delta \vdash (\Theta \mid e~\pi) \Downarrow (\Theta''
+      \mid v) : \sigma[\pi/p] , \Sigma  }\\[1.5em]
+    \infer[]
+    {\,}
+    {\Gamma ;\Delta \vdash (\Theta \mid \lambda x:_\pi \sigma . e)
+    \Downarrow (\Theta \mid \lambda x:_\pi\sigma .e) : \sigma
+    \rightarrow_\pi \tau,\Sigma }\\[1.5em]
+    \infer[]
+    {\Gamma;\Delta \vdash  (\Theta \mid e) \Downarrow (\Theta' \mid
+    \lambda y:_\pi \sigma . e') : \sigma \rightarrow_\pi \tau , x:\sigma, \Sigma
+    \quad
+    \Gamma ; \Delta \vdash (\Theta' , y:_{\pi} \sigma = x \mid e') \Downarrow (\Theta''
+    \mid v) : \tau , \Sigma  }
+    {\Gamma ; \Delta\vdash (\Theta \mid  e~x ) \Downarrow (\Theta''
+    \mid v) : \tau , \Sigma }\\[1.5em]
+    
+       \infer[]
+    {\Gamma ; \Delta  \vdash (\Theta \mid e)
+    \Downarrow (\Theta' \mid v) : \sigma , \Sigma}
+    {\Gamma ; \Delta \vdash (\Theta , x:_{\Delta'} \sigma = e \mid x)
+      \Downarrow (\Theta' , x:_{\Delta''} \sigma = v \mid v) : \sigma, \Sigma}
+    \\[1.5em]
+           \infer[]
+    {\Gamma ;\Delta  \vdash (\Theta \mid e)
+    \Downarrow (\Theta' \mid v) : \sigma,\Sigma}
+    {\Gamma ; \Delta \vdash (\Theta , x:_1 \sigma = e \mid x)
+    \Downarrow (\Theta' \mid v) : \sigma,\Sigma}
+    \\[1.5em]
+    
+    \infer[]
+    {\Gamma ;\Delta \vdash (\Theta,x:_{\Delta'} \sigma = e \mid e')
+    \Downarrow (\Theta' \mid v) : \tau,\Sigma}
+    {\Gamma ; \Delta \vdash (\Theta \mid \llet{x{:}_{\Delta'}\sigma =
+    e}{e'})\Downarrow (\Theta' \mid v) : \tau , \Sigma
+    }\\[1.5em]
+    
+    \infer[]
+    {\,}
+    {\Gamma ; \Delta \vdash (\Theta \mid K~\ov{x_i}) \Downarrow
+    (\Theta \mid K~\ov{x_i}) : T , \Sigma}
+    \\[1.5em]
+    
+    \infer[]
+    { K : \ov{ \sigma_i
+    \rightarrow_\omega \sigma_j \lolli} T
+    \\
+    \Gamma, \ov{y_i :_\omega \sigma_i} ;\Delta , \ov{y_j :_1 \sigma_j} \vdash (\Theta \mid e) \Downarrow (\Theta' \mid
+      K~\ov{x_i}) : T , e' : \tau ,\Sigma \\
+    \Gamma ;\Delta \vdash (\Theta' \mid e'\ov{[x_i/y_{i,j}]}[K~\ov{x_i}/z]
+    ) \Downarrow (\Theta'' \mid v) :\tau , \Sigma }
+    {\Gamma ;\Delta \vdash (\Theta \mid
+    \ccase{e}{z{:}_{\Delta'}T~\{{\dots,K~\ov{y_{i,j}} \to e', {\dots} }\}})
+    \Downarrow (\Theta'' \mid  v) : \tau , \Sigma}\\[1.5em]
+
+    
+    \infer[]
+    {K : \ov{ \sigma_i
+    \rightarrow_\omega \sigma_j \lolli} T\\
+    \Gamma ; \Delta, z{:}_1\s \vdash (\Theta \mid e) \Downarrow (\Theta' \mid
+    K~\ov{x_i}) : T , e', \Sigma \quad
+    \Gamma ;\Delta \vdash (\Theta' \mid  e'[K~\ov{x_i}/z])
+    \Downarrow (\Theta'' \mid v) : \tau,\Sigma }
+    {\Gamma ; \Delta \vdash (\Theta \mid 
+    \ccase{e}{z{:}_{\Delta'}T~\{\dots , \_\to
+    e'}\}) \Downarrow (\Theta'' \mid v) : \tau}
+    \\[1.5em]
+    % \infer[]
+    % {% (\Gamma, \overline{x_i:_\omega \sigma_i = e_i}) : e_1 \Downarrow \Theta_1
+    % % : v_1 \dots  (\Gamma, \overline{x_i:_\omega \sigma_i = e_i}) : e_n
+    % % \Downarrow \Theta_n : v_n \quad
+    % (\Gamma ; \Delta \vdash (\Theta, \overline{x_i:_\omega \sigma_i =
+    % e_i} \mid e' )\Downarrow (\Theta'
+    % \mid v) : \tau
+    % }
+    % {\Gamma ;\Delta \vdash (\Theta \mid \lletrec{\overline{x_i{:}_{\Delta}\sigma_i = e_i}}{e'})
+    % \Downarrow (\Theta' \mid v) : \tau}
+
+   \end{array}
+ \]
+ \caption{Linearity-aware Operational Semantics~\label{fig:linopsem}}
+  
+\end{figure}
+
+\subsection{Results}
 
 The $\lambda^\pi_\D$ type system is sound: well-typed programs in Linear Core do not
 get \emph{stuck}. Besides type safety, we
@@ -4075,7 +4278,7 @@ usage environment is empty because $x$ is unrestricted).
 \input{language-v4/proofs/optimizations/BinderSwap}
 
 
-\section{Instrumented Operational Semantics}
+\section{Instrumented Operational Semantics}\label{app:opsem}
 
 In this section we develop a lazy big-step operational semantics for $\lambda_\Delta^\pi$ in the
 style of Launchbury~\cite{10.1145/158511.158618}. The semantics is
