@@ -2709,7 +2709,15 @@ linearity preserving).
     \mid v) : \tau , \Sigma  }
     {\Gamma ; \Delta\vdash (\Theta \mid  e~x ) \Downarrow (\Theta''
     \mid v) : \tau , \Sigma }\\[1.5em]
-    
+           \infer[]
+    {\Gamma;\Delta \vdash  (\Theta \mid e) \Downarrow (\Theta' \mid
+    \lambda y:_\omega \sigma . e') : \sigma \rightarrow_\omega \tau , x:\sigma, \Sigma
+    \quad
+            \Gamma ; \Delta \vdash (\Theta' \mid e'[x/y]) \Downarrow (\Theta''
+    \mid v) : \tau , \Sigma  }
+    {\Gamma ; \Delta\vdash (\Theta \mid  e~x ) \Downarrow (\Theta''
+    \mid v) : \tau , \Sigma }\\[1.5em]
+     
        \infer[]
     {\Gamma ; \Delta  \vdash (\Theta \mid e)
     \Downarrow (\Theta' \mid v) : \sigma , \Sigma}
@@ -4432,13 +4440,20 @@ $e :_\pi \tau$ or $x :_\Delta \tau$ which are expressions in which variables in 
     \rightarrow_\pi \tau,\Sigma }\\[1.5em]
     \infer[]
     {\Gamma;\Delta \vdash  (\Theta \mid e) \Downarrow (\Theta' \mid
-    \lambda y:_\pi \sigma . e') : \sigma \rightarrow_\pi \tau , x:\sigma, \Sigma
+    \lambda y:_1 \sigma . e') : \sigma \rightarrow_1 \tau , x:\sigma, \Sigma
     \quad
-    \Gamma ; \Delta \vdash (\Theta' , y:_{\pi} \sigma = x \mid e') \Downarrow (\Theta''
+    \Gamma ; \Delta \vdash (\Theta' , y:_{1} \sigma = x \mid e') \Downarrow (\Theta''
     \mid v) : \tau , \Sigma  }
     {\Gamma ; \Delta\vdash (\Theta \mid  e~x ) \Downarrow (\Theta''
     \mid v) : \tau , \Sigma }\\[1.5em]
-    
+        \infer[]
+    {\Gamma;\Delta \vdash  (\Theta \mid e) \Downarrow (\Theta' \mid
+    \lambda y:_\omega \sigma . e') : \sigma \rightarrow_\omega \tau , x:\sigma, \Sigma
+    \quad
+            \Gamma ; \Delta \vdash (\Theta' \mid e'[x/y]) \Downarrow (\Theta''
+    \mid v) : \tau , \Sigma  }
+    {\Gamma ; \Delta\vdash (\Theta \mid  e~x ) \Downarrow (\Theta''
+    \mid v) : \tau , \Sigma }\\[1.5em]
        \infer[]
     {\Gamma ; \Delta  \vdash (\Theta \mid e)
     \Downarrow (\Theta' \mid v) : \sigma , \Sigma}
@@ -4554,7 +4569,7 @@ write $a \Downarrow^* b$  the partial evaluation relation.
      then $\G , \Theta\uparrow^{\omega} ; \D , \Theta\uparrow^1 \vdash  (e, \Theta\downarrow^1_e) : \sigma \otimes \bigotimes(\Theta\downarrow^1_\sigma)$
    \end{lemma}
 
-\begin{theorem}[Type Preservation]
+\begin{theorem}[Type Preservation]\label{thm:typepres}
   Let $\G ; \D \vdash (\Theta \mid e) \Downarrow (\Theta' \mid v) :
   \tau , \Sigma$ or $\G ; \D \vdash (\Theta \mid e) \Downarrow^* (\Theta' \mid v) :
   \tau , \Sigma$.
@@ -4562,7 +4577,7 @@ write $a \Downarrow^* b$  the partial evaluation relation.
   
 \end{theorem}
 
-\begin{theorem}[Progress]
+\begin{theorem}[Progress]\label{thm:prog}
 Let $\G ; \D \vdash \Theta \mid e : \tau,\Sigma$. Any partial derivation $\G; \D \vdash (\Theta \mid e)
 \Downarrow?,\Sigma$ can be extended. 
 \end{theorem}
@@ -4574,8 +4589,80 @@ It suffices to show that whenever a variable is evaluated it is
 present in the evaluation environment. This situation is impossible
 since the state
 $\G ; \D \vdash \Theta \mid x : \tau , \Sigma$ where $x$ is absent
-from $\Theta$ is not well-typed and so cannot be the head of a partial derivation.
+from $\Theta$ is not well-typed and so cannot be the head of a partial
+derivation. 
 \end{proof}
+
+
+We now relate our two operational semantics through a bisimulation,
+allowing us to transfer type safety of the instrumented semantics to
+the lazy big-step semantics.
+
+\begin{definition}[Bisimulation]
+We define the relation $\gamma(\Theta : e)(\G ; \D \vdash \Theta' \mid
+e' : \tau,\Sigma)$ between a well-typed state and an ordinary state of
+the lazy big-step semantics if $e = e'$ and $\Theta' \leq \Theta\uparrow^\omega$
+\end{definition}
+
+\begin{lemma}~\label{lem:naturaltoinstr}
+  \begin{itemize}
+    \item For all $\gamma(\Theta : e)(\G ; \D \vdash \Theta' \mid
+e : \tau,\Sigma)$ such that $\Theta : e \Downarrow \Theta'' : v$
+there exists a well-typed state $\G ; \D \vdash (\Theta''' \mid v) :
+\tau,\Sigma$ such that $\G ; \D \vdash (\Theta' \mid e) \Downarrow
+(\Theta''' \mid v) : \tau,\Sigma$ and $\gamma(\Theta'' : v)(\G ; \D
+\vdash \Theta''' \mid v : \tau,\Sigma)$
+\item For all $\gamma(\Theta : e)(\G ; \D \vdash \Theta' \mid
+e : \tau,\Sigma)$ such that $\Theta : e \Downarrow^* \Theta'' : v$
+there exists a well-typed state $\G ; \D \vdash (\Theta''' \mid v) :
+\tau,\Sigma$ such that $\G ; \D \vdash (\Theta' \mid e) \Downarrow^*
+(\Theta''' \mid v) : \tau,\Sigma$ and $\gamma(\Theta'' : v)(\G ; \D
+\vdash \Theta''' \mid v : \tau,\Sigma)$
+\end{itemize}
+\end{lemma}
+\begin{proof}
+By induction on the given operational semantics rules.
+  \end{proof}
+
+\begin{lemma}~\label{lem:instrtonatural}
+  \begin{itemize}
+\item  For all $\gamma(\Theta : e)(\G ; \D \vdash \Theta' \mid
+e : \tau,\Sigma)$ such that $\G ; \D \vdash (\Theta' \mid e) \Downarrow
+(\Theta'' \mid v) : \tau,\Sigma$, there exists a state $\Theta''' : v$
+such that $\Theta : e \Downarrow \Theta''' : v$ and
+$\gamma(\Theta''' : v)(\G ; \D \vdash (\Theta'' \mid v) :
+\tau,\Sigma)$
+\item For all $\gamma(\Theta : e)(\G ; \D \vdash \Theta' \mid
+e : \tau,\Sigma)$ such that $\G ; \D \vdash (\Theta' \mid e) \Downarrow^*
+(\Theta'' \mid v) : \tau,\Sigma$, there exists a state $\Theta''' : v$
+such that $\Theta : e \Downarrow^* \Theta''' : v$ and
+$\gamma(\Theta''' : v)(\G ; \D \vdash (\Theta'' \mid v) :
+\tau,\Sigma)$
+   \end{itemize}
+ \end{lemma}
+\begin{proof}
+By induction on the given operational semantics rules.
+  \end{proof}
+
+
+  We now derive type safety for the lazy natural semantics.
+
+  \begin{theorem}[Type Preservation]
+For any well-typed $[\Theta \mid e]$, if $\Theta : e \Downarrow
+\Theta' : e'$ or $\Theta : e \Downarrow^* \Theta' e'$ then we have
+that $[\Theta \mid e']$ is well-typed.
+\end{theorem}
+\begin{proof}
+By Lemma~\ref{lem:naturaltoinstr} and Theorem~\ref{thm:typepres}.
+\end{proof}
+
+\begin{theorem}[Progress]
+For any partial derivation of $\Theta : e \Downarrow?$, for $[\Theta |
+e]$ well-typed, the derivation can be extended.
+\end{theorem}
+\begin{proof}
+Follows from Lemma~\ref{lem:instrtonatural} and Theorem~\ref{thm:prog}.
+ \end{proof}
 
 % G ; D |- (Theta | e x) \Downarrow (Theta'' | v) : tau, Sigma
 
