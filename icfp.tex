@@ -1069,19 +1069,24 @@ Recursive let bindings in our system are discussed in Section~\ref{sec:recursive
 % inferring it with our implementation.
 
 \paragraph{Case expressions}
-Finally, we discuss case expressions,
-which are the key ingredient that brings together the
-semantic linearity insights developed thus far given that
-\emph{case expressions drive evaluation}, and semantic linearity can only be
-understood in terms of how expressions are evaluated.
+Above, we have observed more programs can be accepted as linear by delaying
+resource consumption in (recursive) let bindings until they are evaluated.
+On the other hand, \emph{case expressions drive evaluation} -- and, therefore,
+do consume resources.
 
-Up until now, there
-have been no examples in which linear resources are \emph{fully consumed} in
-the bodies of linear functions. In other words, all example functions so far
-return a value that has to be itself consumed exactly once to ensure the linear
-argument is, in turn, consumed exactly once -- as opposed to functions whose
-application simply needs to be evaluated to guarantee its linear argument is
-consumed (e.g.,~functions that return an unrestricted value).
+%and semantic linearity can only be understood in terms of how expressions are
+%evaluated.
+
+%Up until now, there have been no examples in which linear resources are
+%\emph{fully consumed} in the bodies of linear functions.
+
+%%%%%%%%%%%%%%% KEEEP ????? %%%%%%%
+%%%%%%%%%All example functions so far returned a value that has to be itself consumed
+%%%%%%%%%exactly once to ensure the linear argument is, in turn, consumed exactly once
+%%%%%%%%%-- as opposed to functions whose application simply needs to be evaluated to
+%%%%%%%%%guarantee its linear argument is consumed (e.g.,~functions that return an
+%%%%%%%%%unrestricted value).
+
 %
 %The latter are of particular relevance because linearly-typed abstractions
 %usually require such a function to provide newly-created linear resources to.
@@ -1100,8 +1105,8 @@ consumed (e.g.,~functions that return an unrestricted value).
 %
 % ROMES:TODO: Há qualquer coisa que não gosto nada! na coerência deste paragrafo
 %
-Case expressions enable us to consume resources and so write
-functions that fully consume their linear arguments.
+%Case expressions enable us to consume resources and so write
+%functions that fully consume their linear arguments.
 % CORTEI
 To understand exactly how,
 we turn to the definition of \emph{consuming} a resource from Linear
@@ -1120,15 +1125,15 @@ to consume a value of atomic base type (such as~\texttt{Int} or
         % once if pattern-matched on \emph{and} both the first and second element are
         % consumed once.
 %\end{itemize}
-Thus, we can consume a linear resource by fully evaluating it, through case
-expressions.
+Thus, we can consume a linear resource by fully evaluating it -- and evaluation
+happens in case expressions.
 
 %%% In Section~\ref{sec:generalizing-evaluation-consuming} we generalize the idea
 %%% that consuming a resource is deeply tied to evaluation.  Here, we continue
 %%% building intuition for semantic linearity, first reviewing how case expressions
 %%% evaluate expressions, and then exploring how they consume resources, by way of example.
 
-In Core, case expressions are of the form $\ccase{e_s}{z~\{\ov{\rho_i \to e_i}\}}$,
+In Core, cases are of the form $\ccase{e_s}{z~\{\ov{\rho_i \to e_i}\}}$,
 where $e_s$ is the case \emph{scrutinee}, $z$ is the case \emph{binder}, and
 $\ov{\rho_i \to e_i}$ are the case \emph{alternatives}, composed of a pattern
 $\rho_i$ and of the corresponding expression $e_i$. 
@@ -1179,7 +1184,7 @@ not consume either $x$ nor $y$. Even if the tuple was constructed with
 two expressions using $x$ and $y$ respectively, no computation would happen
 since we are not using $a$ or $b$ (thereby never forcing the arguments
 of the tuple). However, if we did use $a$ in the case body, then $x$
-would be unavailable (and so \incode{f8} below cannot be accepted):
+would be unavailable (as opposed to \incode{y}) and \incode{f8} below must be rejected:
 \begin{noway}
 \begin{lstlisting}
 f8 :: a *' $\lolli$ '* b *' $\lolli$ '* (a *' $\lolli$ '* a *' $\lolli$ '* c) -> c
@@ -1204,7 +1209,7 @@ Again, $z$ is mutually exclusive with $(a,b)$ and with $(x,y)$, but at least one
 the three must occur to ensure the linear resources are consumed. In this
 example, we can think that using $a$ entails using the resource $x$, $b$ the
 resource $y$, and the case binder $z$ entails using both $a$ and $b$.
-%
+
 Dually, consider the scrutinee to be an expression that's not in WHNF, s.t.
 evaluating it to WHNF will require performing computation and thus consume linear
 resources (\incode{f10} below is well-typed in our system but rejected
@@ -1254,17 +1259,17 @@ short, if the scrutinee is not in WHNF we must either consume the case binder
 or the linear components of the pattern.
 
 
-We now focus on pattern matching on constructors without
-any linear components. If the constructor has no linear fields, it means the
-result can be consumed unrestrictedly and, therefore, all linear resources used
-in the computation have been fully consumed.
+On the other hand, if we match on a constructor without any linear components,
+all linear resources used in the scrutinee must have been fully consumed in
+that branch since the result of evaluating it can be consumed unrestrictedly
+(by definition, a constructor application to unrestricted arguments is also
+unrestricted).
 %
-Consequently, in a branch of a constructor without linear fields we know the
-result of evaluating the scrutinee to be unrestricted, so we can use the case
-binder unrestrictedly and refer to it zero or more times. For example,
-the program in Figure~\ref{fig:nolin} is semantically linear.
+Hence, in the branch for a constructor without linear fields, the case
+binder can also be used unrestrictedly. For example, the program in
+Figure~\ref{fig:nolin} is semantically linear.
 %
-\begin{figure}[t]
+\begin{figure}[h]
  \begin{minipage}{0.5\textwidth}
 \begin{notyet}
 \begin{lstlisting}
@@ -1287,18 +1292,17 @@ f12 x = case K1 x of z { K2 -> x; K1 a -> x }
 \end{minipage}
 \end{figure}
 %
-A second example of an unrestricted pattern, where \incode{K2} has no fields and \incode{K1}
-has one linear field, is shown in Figure~\ref{fig:absurd}. Seemingly, the resource
-$x$ must have been fully consumed to take the \incode{K2} branch, but because the
-scrutinee is known to be \incode{K1}, the \incode{K2} branch is \emph{absurd}, so, in reality
-any resource could be freely used in that branch, and the example is
-\emph{semantically} linear (despite not being seen as so by our system).
+A second example of an unrestricted pattern, where \incode{K2} has no fields
+and \incode{K1} has one linear field, is shown in Figure~\ref{fig:absurd}.
+The use of \incode{x} in the \incode{K2} branch is valid despite \incode{x}
+also occurring in the scrutinee because this branch is never taken. In fact,
+any arbitrary resource could be used in absurd branches and be understood as
+linear (despite not being seen as such by our system).
 
-Many of these examples might seem unrealistic due to the pattern
-match on a known constructor, but we note that, during the
-transformations programs undergo in an optimising compiler, many
-such programs naturally occur (e.g.,~if the definition of a
-function is inlined in the scrutinee).
+Many of these examples might seem unrealistic due to the pattern match on a
+known constructor, but we note that in between the transformations programs
+undergo in an optimising compiler, many such programs naturally occur (e.g.,~if
+the definition of a function is inlined in the scrutinee).
 %
 % However, the scrutinee before evaluation likely isn't in WHNF, thus scrutinee
 % resources cannot directly occur in the case alternatives, since they might be
@@ -1342,20 +1346,20 @@ function is inlined in the scrutinee).
 
 As for \emph{default} case alternatives, also known as \emph{wildcards}
 (written $\_$): matching a wildcard doesn't provide new linearity information,
-unlike matching against a pattern with or without linear components, however,
-the scrutinee will still be evaluated to WHNF.
+unlike a pattern with linear or unrestricted components, however, the
+scrutinee is still evaluated to WHNF.
 %
 % so linearity is seen as before but without
 % fully consuming the scrutinee linear resources (in non-linear patterns) nor
 % binding new linear resources (in linear patterns).
 %
-Briefly, when matching a wildcard, if the scrutinee is already in WHNF, we can
-either use the resources from the scrutinee directly, or the case binder in
-that alternative. If the scrutinee is not in WHNF, we \emph{must} use the case
-binder, as it's the only way to linearly consume the result of evaluating the
-scrutinee.
+Briefly, when matching a wildcard, if the scrutinee is already in WHNF,
+programs that either use the resources from the scrutinee directly, or the case
+binder in that alternative, can be seen as linear. If the scrutinee is not in
+WHNF, we \emph{must} use the case binder, as it's the only way to linearly
+consume the result of evaluating the scrutinee.
 
-Finally, we discuss case expressions which scrutinize a
+Finally, we discuss the special case of scrutinizing a
 single variable $x$, e.g.:
 $
 \lambda x.~\ccase{x}{\_ \to x}
@@ -1372,10 +1376,11 @@ once.
 %\end{itemize}
 However, in practice, this program's linearity can only be determined by
 further analysis on the non-strict evaluation strategy. If linear
-function applications, in general, are $\beta$-reduced \emph{call-by-name} (a desirable
-practice, as linear functions are known to use their argument exactly once)
+function applications are $\beta$-reduced \emph{call-by-name}
+(often desirable, as linear functions are known to use their argument exactly
+once)
 % and thus call-by-name reduction will definitely not duplicate computation
-while the above function is considered linear, then such an application might
+while the example function is considered linear, then such an application might
 duplicate linear resources during evaluation. For instance:
 \[
 \begin{array}{l}
@@ -1388,13 +1393,12 @@ On the other hand, if linear function applications are reduced
 \emph{call-by-need}, the above example would instead be semantically linear
 because the result of freeing $x$ would be bound to some $y$ first.
 %
-The system we present in the next section, which evaluates linear
-applications call-by-name, does not accept the above function scrutinizing a
-variable as linear. 
-This interaction between evaluation and linearity arises in the type
-preservation proof of our system, and is again explored with the reverse
-binder swap transformation discussed in
-Section~\ref{sec:optimisations-preserve-types-meta}.
+The system we present in the next section does accept this function
+scrutinizing a variable as linear, as our operational semantics are
+call-by-need.
+This interaction between evaluation and linearity is considered specifically in the
+reverse binder swap transformation discussed in
+Section~\ref{sec:optimisations-preserve-types-meta}.\todo{Figure out precisely reverse binder swap proof and reevaluate}
 
 % \parawith{Summary}
 % In summary, case expressions evaluate their scrutinees to WHNF,
@@ -4070,6 +4074,11 @@ Constraints~\cite{cite:linearconstraints}). Linear Core eases the restrictions
 of linear typing by being more flexible in understanding linearity for lazy
 languages. In this sense, it is an avenue of future
 work to apply the ideas from this work to the surface Haskell language.
+
+\section*{Acknowledgements}
+
+We thank Arnaud Spiwack for insightful discussions and Well-Typed for funding
+this work.\todo{Do these have to be anonymized?}
 
 % \begin{itemize}
 % 
