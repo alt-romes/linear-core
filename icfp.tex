@@ -592,7 +592,7 @@ From this observation, and exploring the connection between computation and eval
 % above example and for programs in general, should be defined in function of the
 % language's evaluation strategy.
 %
-we turn our focus to linearity under non-strict evaluation, both since GHC Core is
+we turn our focus to linearity under \todo{either non strict simpler sentence or say focus on lazy. decide}non-strict evaluation, both since GHC Core is
 lazy and because the distinction between semantically and syntactically
 consuming a resource is only exposed under non-strict semantics.
 %
@@ -649,9 +649,9 @@ Notably, the linear type system we develop in this work accepts all
 % (while the few \colorbox{limitation}{\limitationcolorname} programs are not accepted).
 A \colorbox{noway}{\nowaycolorname} background indicates that the program
 violates linearity semantically, i.e.~the program effectively
-discards or duplicates linear resources. We discuss the three main
-syntactic constructs of Core, let bindings (non-recursive and
-recursive) and case expressions.
+discards or duplicates linear resources.
+
+% We discuss recursive and recursive let bindings, and case expressions.
 
 %\todo{Should we have a subsection starting with simple function application?}
 
@@ -800,16 +800,15 @@ f1 use x = let y = use x in (y, y)
 \end{lstlisting}
 \end{noway}
 %
-Linearity is trivially violated if \lstinline{y} is inlined.
+If \lstinline{y} is inlined, linearity is trivially violated.
 %
-On the other hand, if the computation using the resource is suspended under a
-thunk, it will only be evaluated once, when the binding is first forced, and
-re-used subsequently. Despite the computation (here, \lstinline{use x}) only
-being evaluated once, the program must still be rejected.
+On the other hand, if \lstinline{y} becomes a thunk, \lstinline{use x} will
+only be evaluated once regardless of how many times \lstinline{y} is used.
+Even so, this program must be rejected under call-by-need.
 %
-Intuitively, linearity may be violated if the computation leaks
-the resource or parts of it. For instance, if \lstinline{use = id}, the program
-must clearly be rejected.
+Intuitively, linearity is violated if the computation leaks the resource or
+parts of it. For instance, if \lstinline{use = id}, the program must clearly be
+rejected.
 %
 % TODO:NEW: Include?
 % If the computation fully consumed the linear resource to produce an
@@ -846,11 +845,11 @@ as implying using \incode{x}, and therefore uses of \incode{z} imply using
 % \parawith{Summary}
 % The examples so far build an intuition for semantic linearity in the presence
 % of lazy let bindings. 
-In essence, an unused let binding doesn't consume any
-resources, and a let binding used exactly once consumes its resources exactly
-once. Let binders that depend on linear resources must be used \emph{at most
-once} in mutual exclusion with the linear resources themselves
-(in a sense, let-vars are affine in the let-body).
+In essence, an unused let binding doesn't consume any resources, and a let
+binding used exactly once consumes the resources it captures exactly once. Let
+binders that depend on linear resources must be used \emph{at most once} in
+mutual exclusion with the linear resources themselves (in a sense, let-vars are
+affine in the let-body).
 %
 %Moreover, if the let binding \incode{y} isn't used in the let body, then the
 %resources it depends on ($\ov{x}$) must still be used -- the binding $y$ is
@@ -869,20 +868,21 @@ environments}, in Section~\ref{sec:usage-environments}.
 %used in the binders bodies are consumed.
 %
 
-Mutually recursive let-bindings, i.e. bindings with definitions that
-recursively depend on the bindings they define, behave similarly to
-non-recursive lets as far as their usage in the let continuation is concerned.
+Recursive let-bindings
+%, i.e. bindings with definitions that recursively depend on the bindings they define,
+behave similarly to non-recursive lets as far as their usage in the let
+continuation is concerned.
 %recursive lets must still be used at most once, in mutual exclusion with the
 %linear resources they capture.
 %
 The challenge lies in understanding linearity in the definitions of the
 recursive binders and which resources exactly are consumed when one of the
 binders in the recursive group is used.
-
+%
 % The same way that, in a let body, evaluating
 % a binding that uses some resource exactly once consumes that resource once,
 % using the binding in its own definition also entails using that resource once.
-Consider the following program, that calls a recursive let-bound function
+Consider the following program, which calls a recursive let-bound function
 defined in terms of the linear resource \incode{x} and itself:
 %
 \begin{notyet}
@@ -912,7 +912,7 @@ other (by recursing, which we know will result in using \incode{x} linearly).
 %
 
 It so happens that \incode{go} will terminate on any input, and will always consume
-\incode{x}. However, termination is not a requirement for a binding to use \incode{x} linearly,
+\incode{x}. However, termination is not a requirement for a binding to use a resource linearly,
 and we could have a similar example in which \incode{go} might never terminate but still
 uses \incode{x} linearly if evaluated:
 
@@ -944,8 +944,12 @@ of \incode{f4}, so we do not promise anything about \incode{x} being consumed (\
 linearity holds trivially). If it did terminate, it would consume \incode{x} exactly
 once (e.g. if \incode{go} was applied to \incode{True}).
 
+That said, the linear type system must statically reject any recursive group that could
+lead to non-linear resource usage.
+%
 % Determining the linear resources used in a recursive binding might feel
-% peculiar since we need to know the linear resources used by the binder to determine the linear resources it uses.
+% peculiar since we need to know the linear resources used by the binder to
+% determine the linear resources it uses.
 % %
 % The paradoxical definition is difficult to grasp, just how learning that a
 % function can be defined in terms of itself is perplexing when one is first
@@ -977,13 +981,14 @@ once (e.g. if \incode{go} was applied to \incode{True}).
 %\todo{We might not need the inferrence phase, somehow. Anyhow it seems like
 %our inferrence is not really about determining a solution but more about
 %determining how many times each thing gets used}
-
+%
 % There might not be a solution to the set of equations. In this case, the
 % binding undoubtedly entails using a linear resource more than once.
-
-Note that if we use a linear resource \incode{x} in one case alternative, and invoke
-the recursive call more than once, we might eventually consume \incode{x} more than
-once (and so \incode{f5} below is ill-typed):
+%
+For instance, if the linear resource \incode{x} is used in one case alternative and
+recursion used more than once in the other, \incode{x} may end up being consumed
+more than once:
+% (thus, \incode{f5} below is ill-typed):
 %
 \begin{noway}
 \begin{lstlisting}
@@ -996,12 +1001,36 @@ f5 bool x =
   in go bool
 \end{lstlisting}
 \end{noway}
-However, if we returned \incode{x} instead of \incode{go bool} in the let body, then, despite
-the binding using \incode{x} more than once, we would consume \incode{x} exactly once,
-since recursive bindings are still lazy.
+%However, if we returned \incode{x} instead of \incode{go bool} in the let body, then, despite
+%the binding using \incode{x} more than once, we would consume \incode{x} exactly once,
+%since recursive bindings are still lazy.
 %
-These ideas extend to mutually recursive bindings that depend on
-linear resources, as we discuss in Section~\ref{sec:recursivelets}.
+
+%Intuitively, to statically determine whether a group of recursive 
+%
+%Informally, we \emph{assume} the recursive binding will consume some linear resources
+%exactly once, and use that assumption when reasoning about recursive calls such
+%that those linear resources are used exactly once.
+
+To determine whether the usage of a binding from a recursive group is linearly
+valid, we must infer the superset of resources that may end up being consumed
+in a single use of any of the bindings. For a strongly connected recursive
+group, this superset is the same for all bindings by definition.
+%
+Intuitively, this inference amounts to finding a set of linear resources
+($\Delta$) that satisfies the set of equations derived from the bindings
+$\ov{x_i}$ in the group such that
+%\begin{enumerate}
+occurrences of $x_i$ in its own body are synonymous with using all resources in $\Delta$ exactly once.
+%(2) and if the binding $x$ is fully evaluated, then all resources in $\Delta$ are consumed exactly once.
+%\end{enumerate}
+%Finding a solution to this equation is akin to finding a (principle) type for a
+%recursive binding such that occurrences of itself in its definition are also well-typed.
+%
+It follows from the solution being the same for all bindings that
+at most a single variable from the recursive group can be used in the continuation.
+%
+Recursive let bindings in our system are discussed in Section~\ref{sec:recursivelets}.
 
 % Lastly, we extend our single-binding running example to use two mutually recursive bindings that
 % depend a linear resource:
