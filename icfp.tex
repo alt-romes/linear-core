@@ -1504,42 +1504,46 @@ In this section, we develop a linear calculus $\lambda_\Delta^\pi$,
 dubbed \emph{Linear Core}, that combines the linearity-in-the-arrow
 and multiplicity polymorphism introduced by Linear
 Haskell~\cite{cite:linearhaskell} with all the key features from GHC's Core
-language (algebraic datatypes, case expressions, and recursive lazy let bindings)
+language (algebraic datatypes, case expressions, and recursive lazy let bindings),
 except for equality coercions, which we discuss as future work in
 Section~\ref{sec:future-work}.
 %
-%
+
 Linear Core makes precise the various insights discussed in the
-previous section by crystallizing them together in a linear type system for which we
-prove soundness via the standard type preservation and progress theorems. Crucially,
-Linear Core typing accepts all the \emph{semantically linear} examples
+previous section in a linear type system that we prove is sound and guarantees
+linear resource usage at runtime via a standard soundness argument on a
+call-by-need big-step operational semantics that becomes stuck when linear
+variables in the runtime heap are used more than once.
+\todo{O que digo aqui sobre a semantica launchbury style?}
+Crucially,
+Linear Core typing accepts all the semantically linear examples
 (highlighted with \colorbox{notyet}{\notyetcolorname})
 from Section~\ref{sec:semantic-linearity-examples}, which Core currently
 rejects.
 %
-Besides type safety, we prove that multiple optimising Core-to-Core
-transformations preserve linearity in Linear Core, while violating linearity
-under Core's current type system.
+Additionally, we prove that multiple optimising Core-to-Core transformations
+preserve linearity in Linear Core, while violating it under Core's
+current type system.
 %
-% As far as we know, we are the first to prove optimisations preserve types in
-% a non-strict linear language.
+%To the best of our knowledge, we are the first to prove optimisations preserve
+%types in a non-strict linear language.
+% 
+Despite the focus on GHC Core, the fundamental ideas for
+understanding linearity in our call-by-need calculus can be readily applied to
+other non-strict languages.
 
-The first key idea for typing linearity semantically is to delay \emph{consuming a
-resource} to when a computation that depends on that resource is effectively
-evaluated or returned, by annotating relevant binders with \emph{usage
-environments} (Section~\ref{sec:usage-environments}).
+Linear Core's first key idea is to delay consuming
+resources until a computation that depends on those resources is effectively
+evaluated or returned. Delayed consumption is tracked by annotating relevant
+binders with \emph{usage environments} (Section~\ref{sec:usage-environments}).
 %
 The second key idea is to have two distinct rules for case
 expressions, branching on whether the scrutinee is in Weak Head Normal
-Form, and using ``proof irrelevance'' to track resources that are no
+Form or not, and using ``proof irrelevance'' to track resources that are no
 longer available but haven't yet been fully consumed
 (Section~\ref{sec:lc-case-exps}). Additionally, we introduce tags to split
-resources between the pattern-bound variables, %^as usage environments
-encoding that all linear components of a pattern must be used.
-% 
-We also note that despite the focus on GHC Core, the fundamental ideas for
-understanding linearity in a call-by-need calculus can be readily applied to
-other non-strict languages.
+resources amongst pattern-bound variables and %^as usage environments
+encode that all linear components of a pattern must be used together.
 
 We present Linear Core's syntax and type system incrementally, starting with the
 judgements and base linear calculi rules (Section~\ref{sec:base-calculi}).
@@ -1547,7 +1551,7 @@ judgements and base linear calculi rules (Section~\ref{sec:base-calculi}).
 Then, usage environments, the rule for $\Delta$-bound variables, and rules for
 (recursive) let bindings (Section~\ref{sec:usage-environments}).
 %
-Finally, we introduce the rules to typecheck case expressions and alternatives,
+Finally, we introduce the rules to type case expressions and case alternatives,
 along with the key insights to do so, namely branching on WHNF-ness of
 scrutinee, proof irrelevant resources, and tagging (Section~\ref{sec:lc-case-exps}).
 
@@ -1579,21 +1583,21 @@ $\lambda \x[\pi].~e$ and applications $e~e'$, where lambda binders are
 annotated with a multiplicity $\pi$ and a type $\s$. Then, there are
 non-recursive let bindings $\llet{\xD = e}{e'}$, recursive let bindings
 $\lletrec{\ov{\xD = e}}{e'}$, where the overline denotes a set of distinct
-bindings $x_1{:}_{\D_1}\s_1\dots x_n{:}_{\D_n}\s_n$ and associated expressions
+bindings $x_1{:}_{\D}\s_1\dots x_n{:}_{\D}\s_n$ and associated expressions
 $e_1\dots e_n$, and case expressions $\ccase{e}{\zD~\{\ov{\rho \to e'}\}}$,
 where $z$ is the case binder and the overline denotes a set of distinct
 patterns $\rho_1\dots \rho_n$ and corresponding right hand sides $e'_1\dots
 e'_n$. We often omit the case binder $z$ when it is unused. Notably, (recursive) let-bound
 binders and case-bound binders are annotated
 with a so-called \emph{usage environment} $\Delta$ -- a fundamental construct
-for type-checking semantic linearity in the presence of laziness we present in
+for typing semantic linearity in the presence of laziness that we present in
 Section~\ref{sec:usage-environments}.
 %
-Case patterns $\rho$ can be either the \emph{default} or \emph{wildcard}
+Case patterns $\rho$ can be either the \emph{default/wildcard}
 pattern $\_$, which matches any expression, or a constructor $K$ and a set of
 variables that bind its arguments, where each field of the constructor has an
-associated multiplicity denoting whether the pattern-bound variables must
-consumed linearly (ultimately, in order to consume the scrutinee linearly).
+associated multiplicity denoting which pattern-bound variables must be
+consumed linearly or unrestrictedly.
 Additionally, the set of patterns in a case expression is assumed to be exhaustive,
 i.e. there is always at least one pattern which matches the scrutinized expression.
 
