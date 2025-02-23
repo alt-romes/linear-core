@@ -1873,15 +1873,16 @@ since that would imply non-linear usage of linear resources.
 \subsection{Lazy let bindings}
 
 In Section~\ref{sec:semantic-linearity-examples}, we discussed how linear
-resources used in let-bound expressions are only consumed when the same let-bound
-expressions are fully evaluated, i.e. linear resources required by let-bound
-expressions are consumed lazily.
+resources used in let-bound expressions are only consumed when the respective
+binders are evaluated in the let-continuation.
+%, i.e. linear resources required by let-bound expressions are consumed lazily.
 %
-Moreover, resources from a let-bound expression cannot be used \emph{together}
-with the variable binding, since said resources would end up being consumed
-more than once, violating (semantic) linearity -- the binder has to be used in
-mutual exclusion with the linear resources required to type the expression it
-binds, and either \emph{must} be used.
+Moreover, resources captured by a let-bound expression cannot be used
+simultaneously with the let-binder in the continuation, since said
+resources would end up being consumed more than once and violate (semantic)
+linearity. The binder has to be used in mutual exclusion with the linear
+resources captured by the expression it binds, and either the binding or the
+resources \emph{must} be used.
 
 % Indeed, usage environments allow us to encode mutual exclusivity between
 % alternative ways of consuming linear resources (between $\D$-vars and direct
@@ -1891,9 +1892,9 @@ $\Delta$-bound variable.
 % , that is, let-bound variables bind expressions in which
 % the resources required to type them are consumed lazily rather than eagerly.
 %
-Annotating let-bound variables with a usage environment $\D$
-\emph{delays} the consumption of resources to when the variables themselves are
-used:
+Annotating let-bound variables with a usage environment $\D$ delays the
+consumption of resources to when the variables themselves are used and
+guarantees the desired mutual exclusivity property between the binder and the resources:
 \[
 \TypeLet
 \]
@@ -1905,7 +1906,7 @@ annotated with the usage environment $\D$. In essence, the resources of $e$ bein
 available in $e'$ reflects how typing the body of a lazy binder
 doesn't consume resources, and the binding $x$ being an unrestricted
 $\D$-variable ensures that using it will consume the resources $\D$ the
-expression it binds depends on.
+expression captures, \emph{if} it is used.
 % \todo[inline]{Let bindings are hard, if they are used then we use resources. If
 % they don't get used then we use no resources! In practice, resources that show
 % up in the body of the let must be used, be it by using the let binder, or by
