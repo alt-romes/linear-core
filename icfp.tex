@@ -2015,7 +2015,7 @@ as future work.
 %In lazy let bindings, computations  can be a case
 %expression can effectively consume resources rather than just 
 %
-A case expressions drive evaluation by evaluating their scrutinee to Weak Head
+A case expression drives evaluation by evaluating its scrutinee to Weak Head
 Normal Form (WHNF)~\cite{10.5555/1096899}. Then, the case
 alternative whose pattern matches the result of evaluating the
 scrutinee is taken\footnote{In our calculus, the alternatives are assumed to be
@@ -2089,13 +2089,16 @@ having performed any additional computation.
 %
 In terms of linearity, resources are consumed only if evaluation happens.
 Therefore, resources used to type a scrutinee not in
-WHNF will be consumed when the case is evaluated, making said resources unavailable in the case
+WHNF will be consumed when the case is evaluated and no longer be directly available in the case
 alternatives. Conversely, when the scrutinee is already in WHNF, linear
-resources required to type the scrutinee are still available in the alternatives.
-The linear resources used by an expression in WHNF are exactly those which
-occur to the right of $\gtrdot$ in the WHNF judgement shown above
-(corresponding to the resources required to typecheck the lambda body or the
-constructor arguments).
+resources required to type the scrutinee are still directly available in the
+alternatives.
+%
+%%%%???
+%%%%The linear resources used to type an expression in WHNF are exactly those which
+%%%%occur to the right of $\gtrdot$ in the WHNF judgement shown above
+%%%%(corresponding to the resources required to typecheck the lambda body or the
+%%%%constructor arguments).
 
 %Recalling that patterns are either a wildcard that matches anything or data
 %constructors parametrised by variables to bind the constructor arguments in the
@@ -2131,10 +2134,10 @@ constructor arguments).
 
 \subsubsection{Branching on WHNF-ness}
 
-The dichotomy between evaluation (i.e.,~resource usage) of a case expression
-whose scrutinee is in weak head normal form, or otherwise, leads to one of our
-key insights: we must \emph{branch} on weak head normal formed-ness to
-accurately type case expressions.
+The dichotomy between evaluation (and resource usage) of a case expression
+whose scrutinee is in weak head normal form and one whose scrutinee is not
+leads to one of the key insights of $\lambda^\pi_\Delta$: we must \emph{branch}
+on weak head normal formed-ness to accurately type case expressions.
 %
 When the scrutinee is already in WHNF, the resources are
 unused upon evaluation and thus available in the alternatives.
@@ -2145,10 +2148,10 @@ alternative.
 To illustrate, consider the following case expressions:
 \[
 \begin{array}{ccc}
-(1)~\lambda x.~\ccase{K~x}{\_ \to x} &  & (2)~\lambda x.~\ccase{free~x}{\_ \to x}
+    (1)~\lambda x.~\ccase{K~x}{z~\{\_ \to x\}} &  & (2)~\lambda x.~\ccase{free~x}{z~\{\_ \to x\}}
 \end{array}
 \]
-The first function uses $x$ linearly, while the second does not.
+The first function uses $x$ linearly, but the second does not.
 %
 Alternatives may also use the case binder or pattern variables, referring to, respectively,
 the whole scrutinee (and all resources used to type the scrutinee) or
@@ -2156,92 +2159,103 @@ constructor arguments (and the resources to type each argument).
 % Using the case binder entails using all the resources required by the scrutinee, and using a pattern
 % variable implies using the resources of the corresponding constructor argument.
 
-There are three \emph{competing} ways
+There are three competing ways
 to use the resources from a scrutinee in WHNF in a case alternative: directly, via
-the case binder, or by using \emph{all} the pattern-bound variables.
+the case binder, or by using pattern-bound variables.
 %
 Recall how $\D$-variables can encode mutual exclusivity between alternative
 ways of consuming resources -- it follows that case binders and pattern-bound
-variables are another instance of $\D$-bound variables. Intuitively, resources
-in a scrutinee that is already in WHNF are only properly consumed when all
-(linear) fields of the pattern are used, satisfying the definition of
-consuming resources given in Linear Haskell.
+variables are yet another instance of $\D$-bound variables.
+%
+%Resources in a scrutinee that is already in WHNF are only consumed when all
+%(linear) fields of the pattern are used, satisfying the definition of
+%consuming resources given in Linear Haskell.
 %
 % We type a case expression whose scrutinee is in weak head normal form with
-This suggests the following first attempt at a rule for cases of
-scrutinees in WHNF:
+This suggests the following first rule for cases of scrutinees already in WHNF:
 \[
 \TypeCaseWHNFIntermediate
 \]
+
 First, we assert this rule is only applicable to expressions in weak head
 normal form. Second, we appeal to the typing judgement for expressions in WHNF
 to determine the split of resources amongst the scrutinee
 sub-expressions. Finally, we type all case alternatives with the same context, using the
 $\vdash_{alt}$ judgement, introducing
-the case binder $z$ in the environment as a $\D$-bound
-variable whose usage environment is the linear resources used to type the
-scrutinee. We also 
-make all the resources $\ov{\D_i}$ used to type the scrutinee
-available in the linear typing environment.
+the case binder $z$ in the unrestricted environment as a $\D$-bound
+variable whose usage environment is the linear resources $\ov{\D_i}$ used to type the
+scrutinee. Those same resources $\ov{\D_i}$ are again made available in the
+linear typing environment of the alternative, similarly to how the resources
+used to type a $Let$ binder are still available in the continuation.
 %
-The $\vdash_{alt}$ judgement is 
-annotated with the disjoint set of linear resources $\ov{\D_i}$ used
-to typecheck the scrutinee sub-expressions,
-and the name of the case binder $z$.
+%The $\vdash_{alt}$ judgement is 
+%annotated with the disjoint set of linear resources $\ov{\D_i}$ used
+%to type the scrutinee sub-expressions,
+%and the name of the case binder $z$.
 
 %
-Despite the key intuitions of typing a case expressions whose scrutinee is in
-WHNF being conveyed by this rule, our treatment of such a case expression is
-slightly more involved, as will be presented after discussing cases of
-scrutinees not in WHNF.
+Despite the main idea for typing ``WHNF case expressions'' being conveyed by
+this rule, in our system it is slightly more involved, as will be seen after
+discussing cases of scrutinees not in WHNF.
 
 The alternative judgement $\G;\D \vdash_{alt} \rho \to e :^z_\D \s \Rightarrow
 \vp$ is used to type case alternatives, encompassing three
-``modes'', distinguished by the kind of arrow that is used:
-for alternatives of case expressions whose scrutinee is in WHNF ($\Rightarrow_\mathsf{WHNF}$),
-for case expressions in which the scrutinee is not in WHNF ($\Rightarrow_\mathsf{NWHNF}$),
+``modes'' distinguished by the kind of arrow that is used:
+for alternatives of case expressions whose scrutinee is in WHNF
+($\Rightarrow_\mathsf{WHNF}$), not in WHNF ($\Rightarrow_\mathsf{NWHNF}$),
 and for alternatives agnostic to the WHNF-ness of the scrutinee
 ($\Rightarrow$), with $\Rightarrow$ also generalizing the other two.
 %
 % Following the $Case_\textrm{WHNF}$ rule in which we use the $\Mapsto$ alternative
 % judgement, t
-The rule for typing an alternative whose pattern is a
-constructor with $n > 0$ linear components (in mode $\Rightarrow_{\mathsf{NWHNF}}$) is:
+
+First, an alternative whose pattern is a constructor with $n > 0$ linear components
+under the $\Rightarrow_{\mathsf{NWHNF}}$ mode is typed as:
 \[
 \TypeAltNWHNF
 \]
-The rule states that, for such a pattern matching a scrutinee already in
+The rule states that, for such a match on a scrutinee already in
 WHNF, we introduce the linear components of the pattern as $\D$-bound variables
-whose usage environment matches the linear resources required to type the
-corresponding constructor argument in the scrutinee, which is annotated in
-the judgement ($\ov{\D_i}$). Unrestricted fields of the constructor are
-introduced as unrestricted variables. We note that the typing environment $\D$
-always contains the resources $\ov{\D_i}$ in uses of the alternative
-judgement.
+with usage environment matching the linear resources required to type the
+corresponding constructor argument in the scrutinee. The resources required to
+type each constructor sub-expression come annotated in the judgement (as
+${:}_{\ov{\D_i}}$). Unrestricted fields of the constructor are introduced as
+unrestricted variables. We note that the typing environment $\D$ always
+contains the resources $\ov{\D_i}$ in uses of the alternative judgement.
 
-The rule for alternatives that match on the wildcard pattern is:
+Second, the rule for alternatives that match on the wildcard pattern, be the
+original scrutinee in WHNF or not (note the use of $\Rightarrow$, which
+is applicable both under $\Rightarrow_{WHNF}$ and $\Rightarrow_{NWHNF}$):
 \[
 \TypeAltWild
 \]
 To type a wildcard alternative we simply type the expression with the main
-judgement, ignoring all annotations on the judgement. We recall that the case
-binder was already introduced in the environment with the appropriate usage
-environment by the case expression.
+judgement, ignoring all annotations on the judgement. The case binder will
+have already been introduced in the environment with the appropriate usage
+environment by the relevant (WHNF or not) case expression rule.
 
-Finally, consider an alternative matching on a case constructor without any
-linear components. According to the definition of consuming a resource from
-Linear Haskell, the linear resources of a scrutinee matching such a pattern are
-fully consumed in the body of the corresponding alternative, since the
-scrutinee must have been evaluated to a form that does not have any linear
-components.
+Lastly, consider an alternative matching on a data constructor without any
+linear components. The linear resources used to type a scrutinee matching such
+a pattern are fully consumed during evaluation: the resulting unrestricted
+constructor application can only be well-typed under an empty linear
+environment.
 %
-This definition agrees with the intuition we have developed by example in the
-previous section, and with the typing rule we devised for alternatives matching
-constructors without linear components.
-Taking into account that case expressions introduce the linear resources of the
-scrutinee in the typing environment of all alternatives, and in the usage
-environment of the case binder, we must reactively update the typing
-environments after matching on such a pattern.
+Consequently, the resources to type the scrutinee which are carried over to the
+case-alternative environments by the $Case_{WHNF}$ and $Case_{NWHNF}$ rules
+(see the latter below), must be reactively destroyed from branches where the
+pattern is unrestricted. In failing to do this, we'd allow the fully-consumed
+resources to be used again in the branch!
+% Really, in the WHNF case it is not really necessary to remove the things
+% since they must already be empty be definition.
+%
+%This definition agrees with the intuition we have developed by example in the
+%previous section, and with the typing rule we devised for alternatives matching
+%constructors without linear components.
+%
+%Taking into account that case expressions introduce the linear resources of the
+%scrutinee in the typing environment of all alternatives, and in the usage
+%environment of the case binder, we must reactively update the typing
+%environments after matching on such a pattern.
 %
 The $Alt0$ rule essentially encodes this insight, and is applicable regardless
 of the WHNF-ness of the scrutinee ($\Rightarrow$ mode), as long as
@@ -2254,10 +2268,12 @@ The rule deletes the annotated scrutinee environment $\D_s$ from
 %two select environments:
 the linear typing context (written $\D[\cdot/\D_s]$, a substitution of
 the scrutinee typing environment by the empty linear environment $\cdot$)
-and from the usage environment of the case binder $z$, written $\G[\cdot/\D_s]_z$
-to denote replacing the usage environment of the variable $z$ in $\G$, which
-is necessarily $\D_s$ (since we always annotate the judgement with the
-environment of the scrutinee), by the empty environment.
+and from the usage environment of the case binder $z$ (written $\G[\cdot/\D_s]_z$
+to similarly delete $\D_s$ from the usage environment of the $\D$-var $z$ in $\G$).
+Given that the case-binder $z$ is always annotated with $\D_s$ (essentially,
+the linear environment typing the scrutinee), this latter substitution makes
+the case-binder unrestricted in branches with unrestricted patterns.
+%-- agreeing with our observation in Section \label{sec:semantic-linearity-examples}.
 
 % \begin{itemize}
 
@@ -2273,21 +2289,21 @@ environment of the scrutinee), by the empty environment.
 
 % \end{itemize}
 %
-The rule faithfully encodes the notion that an expression matching such a
-pattern is unrestricted when evaluated to WHNF, implying that all linear
-resources have been consumed to produce it, and the result may 
-be freely discarded or duplicated.
+This rule observes that any linear resources required to type an expression
+that reduces to an unrestricted constructor application are fully consumed
+through evaluation and the resulting unrestricted expression can be freely
+discarded or duplicated (e.g. via the case binder).
 %
-Reactively deleting the resources that typed the scrutinee from the linear
-environment ensures that when we match on an unrestricted pattern there are no
-remaining linear resources to consume. Otherwise, e.g., $\ccase{K_1~x}{\{K_2 \to
-K_2,K_1~y \to K_1~y\}}$ would not be well-typed since the resource $x$ would
-be left \emph{un}-consumed in the first alternative, even though we know by
-matching on $K_1$ that it has already been consumed.
+%Reactively deleting the resources that typed the scrutinee from the linear
+%environment ensures that when we match on an unrestricted pattern there are no
+%remaining linear resources to consume. Otherwise, e.g., $\ccase{K_1~x}{\{K_2 \to
+%K_2,K_1~y \to K_1~y\}}$ would not be well-typed since the resource $x$ would
+%be left \emph{un}-consumed in the first alternative, even though we know by
+%matching on $K_1$ that it has already been consumed.
 %
-Furthermore, since the case binder in such an alternative refers to the
-unrestricted expression, the case binder too may be used unrestrictedly, which
-we allow by emptying its usage environment.
+%Furthermore, since the case binder in such an alternative refers to the
+%unrestricted expression, the case binder too may be used unrestrictedly, which
+%we allow by emptying its usage environment.
 
 %It might seem as though deleting the resources from the environment in $\textsc{Alt}_0$
 %is necessary to guarantee a resource is not used after it is consumed.
@@ -4084,8 +4100,7 @@ work to apply the ideas from this work to the surface Haskell language.
 
 \section*{Acknowledgements}
 
-We thank Arnaud Spiwack for insightful discussions and Well-Typed for funding
-this work.\todo{Do these have to be anonymized?}
+We thank Arnaud Spiwack for valuable and insightful discussions.\todo{Do these have to be anonymized?}
 
 % \begin{itemize}
 % 
