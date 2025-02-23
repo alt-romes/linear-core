@@ -1923,46 +1923,52 @@ expression captures, \emph{if} it is used.
 % exception being that the recursive bindings may be defined in terms of
 % themselves, and we may have more than one binding.
 %
-Recursive let bindings also bind expressions \emph{lazily}, so, similarly, we
+Recursive let bindings also bind expressions lazily, so, similarly, we
 introduce a $\D$-variable for each binding. Resources required to type the
 let-bindings are still available in the body of the let, to later be consumed
 via $\D$-variables, or, directly, if the let-bindings are unused.
 %
-Additionally, as seen in Section
-\ref{sec:semantic-linearity-examples:recursive-lets}, recursive uses of a
-binder in its own definition entail consuming all resources otherwise required
-to type the binder's body.
+%Additionally, as seen in Section
+%\ref{sec:semantic-linearity-examples:recursive-lets}, recursive uses of a
+%binder in its own definition entail consuming all resources otherwise required
+%to type the binder's body.
 
-As for groups of recursive let bindings, we recall that, in our
-system, all recursive let groups are strongly-connected -- all bindings in a
-recursive let group are mutually recursive in the sense that they all
-(transitively) depend on one another.
+%We assume all mutually recursive groups of bindings are strongly-connected.
+%As for groups of recursive let bindings, we recall that, in our
+%system, all recursive let groups are strongly-connected -- all bindings in a
+%recursive let group are mutually recursive in the sense that they all
+%(transitively) depend on one another.
 %
 % In light of it, (mutually) recursive uses of binders entail consuming all the
 % resources required to type all of the binders.
 %
-By definition of strongly-connected, any binder in the mutually recursive group
-may end up using any binder from the group. Accordingly, occurrences of any
-such binder must be typed conservatively, using up the sum of resources needed
-to type each of the binders,
+%By definition, any binder in such a group may end up recursively using
+%any other binder from the group and thus use up any resource occurring.
 %
-i.e., all binders in a strongly-connected group of mutually recursive let
-bindings have to be typed with the same linear resources (which are the least
-upper bound of resources needed to type the bodies of all binders, accounting
-for uses of mutually-recursive binders).
+%Accordingly, occurrences of any such binder
+%must be typed conservatively, using up the sum of resources needed to type each
+%of the binders,
+%%
+%i.e.,
+%Accordingly, all the binders in a strongly-connected group of mutually recursive let
+%bindings have to be typed with the same linear resources (which are the least
+%upper bound of resources needed to type the bodies of all binders, accounting
+%for uses of mutually-recursive binders).
 %
 % Therefore, we conclude the least upper bound of resources required to type a
 % mutually recursive group of let bindings to be the same for any such group that
 % is strongly-connected.
 
 The typing rule for recursive groups of bindings leverages both the assumption
-that all recursive let bindings are strongly connected and the observation that
-every binder in a strongly connected group of recursive bindings is typed with
-the same linear context. Consequently, all bindings of the recursive group are
-introduced as $\D$-vars with the same $\D$ environment -- using any one of the
-bindings in a recursive group entails consuming all resources required to type
-that same group, which is also why we can use the same linear resources to type
-each binder:
+that all mutually recursive groups are strongly connected and the corollary
+that every binder in such a group must be typed with the same linear context,
+as observed in \ref{sec:semantic-linearity-examples:recursive-lets}.
+Consequently, all bindings of the recursive group are introduced as $\D$-vars
+which all share the same $\D$ environment -- using any one of the bindings in a
+recursive group entails consuming all resources required to type that same
+group -- so, at most a single binder from the group can be used in the let-continuation.
+%\todo{should we say how this means at most once of the binders from the group can be used?} OK
+%, which is also why we can use the same linear resources to type each binder:
 \[
 \TypeLetRec
 \]
@@ -2001,7 +2007,7 @@ as future work.
 
 \subsection{Case Expressions\label{sec:lc-case-exps}}
 
-Case expressions \emph{drive evaluation} --
+%Case expressions \emph{drive evaluation} --
 % thus they are key to realize a type system that understands linearity in the presence of lazy evaluation.
 %
 %However, the evaluation of case expressions is considerably nuanced,
@@ -2009,16 +2015,17 @@ Case expressions \emph{drive evaluation} --
 %In lazy let bindings, computations  can be a case
 %expression can effectively consume resources rather than just 
 %
-a case expression \emph{evaluates its scrutinee} to Weak Head Normal
-Form (WHNF)~\cite{10.5555/1096899}, and \emph{then} selects the case
-alternative corresponding to the pattern matching the WHNF of the
-scrutinee\footnote{In our calculus, the alternatives are assumed to be
+A case expressions drive evaluation by evaluating their scrutinee to Weak Head
+Normal Form (WHNF)~\cite{10.5555/1096899}. Then, the case
+alternative whose pattern matches the result of evaluating the
+scrutinee is taken\footnote{In our calculus, the alternatives are assumed to be
   exhaustive, i.e. there always exists at least one pattern which
   matches the scrutinee in its WHNF, so we're guaranteed to have an
-  expression to progress evaluation.}. An expression in WHNF can either be %\begin{itemize}
+  expression to progress evaluation.}.
+An expression in WHNF can either be %\begin{itemize}
 % \item
-a $\lambda$-abstraction $\lambda x.~e$ 
-or a datatype constructor application $K~\ov{e}$.
+a $\lambda$-abstraction $(\lambda x.~e)$ 
+or a datatype constructor application $(K~\ov{e})$.
 %\end{itemize}
 In both cases, the sub-expressions $e$ or $\ov{e}$ occurring in the lambda body
 or as constructor arguments need not be evaluated for the lambda or constructor
@@ -2027,7 +2034,7 @@ application to be in WHNF. % (if otherwise all sub-expressions
 % (that is why it is called \emph{weak} head normal form).
 %
 Accordingly, these sub-expressions might still depend on linear resources to be
-well-typed (these resources will be consumed when the expressions are evaluated).
+well-typed (such resources will only be consumed when the sub-expressions themselves are evaluated).
 
 As will be made clear in this section, we need to devise a specialized typing
 for scrutinees that distinguishes between terms
