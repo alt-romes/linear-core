@@ -1792,13 +1792,14 @@ environment} to denote that consuming these $\D$-variables equates to consuming 
 resources in the annotated usage environment $\D$ (which is essentially a
 multiset of linear resources).
 %
-$\Delta$-bound variables are introduced by several constructs as (recursive)
-let binders, case binders, and case pattern variables.
+$\Delta$-bound variables are introduced in the unrestricted environment by
+several constructs such as (recursive) let binders, case binders, and case
+pattern variables.
 %
 For example, the let-binder $u$ in the following program is annotated with a
-usage environment $\{x{:}_1\s,y{:}_1\s\}$, the resources that are used in its body. Thus, in
-the expression $e$, consuming $u$ will equate to consuming the linear resources
-$x$ and $y$:
+usage environment $\{x{:}_1\s,y{:}_1\s\}$, the resources that are used in its
+body. Thus, in the expression $e$, consuming $u$ will equate to consuming the
+linear resources $x$ and $y$:
 % , as per the insights developed in
 % Section~\ref{sec:semantic-linearity-examples},
 \[
@@ -1809,7 +1810,9 @@ is mutually exclusive with directly using the resources it is annotated with --
 using the $\Delta$-bound variable consumes all linear resources listed in its
 usage environment, meaning they are no longer available for direct usage.
 Dually, using the linear resources directly means they are no longer available
-to consume through the usage environment of the $\Delta$-bound variable.
+to consume through the usage environment of the $\Delta$-bound variable. The
+$\Delta$-bound variable can be left unused since it is unrestricted, regardless
+of the variables it is annotated with.
 
 % Finally, we note that usage environments bear a strong resemblance to the linear
 % typing environments in the main typing judgement,
@@ -1860,11 +1863,9 @@ The rule reads that an occurrence of a $\Delta$-bound variable is well-typed if
 the linear environment is made up exactly of the resources in the usage environment of
 that variable.
 %
-$\D$-variables are unrestricted 
-since they can be discarded and duplicated, despite multiple
-occurrences of the same $\Delta$-variable not being
-well-typed as, ultimately, it would imply non-linear usage of linear
-resources.
+$\D$-vars are unrestricted and can be discarded and duplicated, despite
+multiple occurrences of the same $\Delta$-var in an expression not possibly being well-typed
+since that would imply non-linear usage of linear resources.
 % multiple occurrences of the same
 % $\D$-variable imply non-linear usage of resources that must be used linearly.
 
