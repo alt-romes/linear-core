@@ -1665,9 +1665,8 @@ case expressions, and alternatives (in its purpose to type semantic linearity).
 % sufficient to add a rule for application of variable multiplicity functions?}
 %
 %
-The core rules of the calculus for, multiplicity and term,
-abstraction and application are similar to that of $\lambda^q_\to$ and
-mostly standard. 
+The core rules of the calculus for abstraction and application are similar to
+that of $\lambda^q_\to$ and mostly standard. 
 We note that we handle multiplicity polymorphism differently from
 Linear Haskell in ignoring the multiplicity semiring and, instead,
 conservatively treating all multiplicity polymorphic functions as linear.
@@ -1679,25 +1678,21 @@ Figure~\ref{fig:linear-core-other-judgements}.
 \TypingRules
 \TypingRulesOther
 
-We start with the main typing judgement.
-As is common for linear type
-systems, we use two typing environments, an \emph{unrestricted} $\G$ and
-a \emph{linear} $\D$ environment.
-Thus, the main judgement is written $\G;\D \vdash e :
-\s$,
-denoting that expression $e$ has type $\s$ under
-the unrestricted environment $\G$ and linear environment $\D$.
-
+%We start with the main typing judgement.
+%As is common for linear type systems, we use two typing environments, an
+%unrestricted $\G$ and a linear $\D$ environment.
+The main judgement is written $\G;\D \vdash e : \s$ to denote that expression
+$e$ has type $\s$ under the unrestricted environment $\G$ and linear
+environment $\D$.
 %
-Variables in $\G$ can be freely discarded (\emph{weakened}) and
-duplicated (\emph{contracted}), while resources in $\D$ must be used
-exactly once (hence can't be discarded nor duplicated). Despite not
-having explicit weakening and contraction rules in our system, they
-are available as admissible rules for $\G$ (but not for $\D$), since,
-equivalently \cite{91621fae-5e53-3497-8291-32b2fab5a743}, resources
-from $\G$ are duplicated for sub-derivations and may unrestrictedly
-exist in the variable rules.
-% TODO: Likely rewrite that
+%
+Variables in $\G$ can be freely discarded (\emph{weakened}) and duplicated
+(\emph{contracted}), while resources in $\D$ must be used exactly once. Despite
+not having explicit weakening and contraction rules in our system, they are
+available as admissible rules for $\G$ (but not for $\D$), since, equivalently
+\cite{91621fae-5e53-3497-8291-32b2fab5a743}, resources from $\G$ are duplicated
+for sub-derivations and may unrestrictedly exist in the variable rules.
+% TODO: Likely rewrite that?
 %
 
 Occurrences of unrestricted variables from $\G$ are well-typed as long as the linear
@@ -1724,7 +1719,7 @@ Unrestricted functions are introduced via the function type ($\s \to_\pi \vp$) w
 \omega$, and the $\lambda$-bound variable is introduced in $\G$ (rules
 $\lambda I_1$ and $\Lambda I$). Function application is standard, with
 linear function application splitting the linear context in two
-disjoint parts, one used to type the argument and the other for the
+disjoint parts, one used to type the argument and the other the
 function.
 Arguments of unrestricted functions must also be unrestricted, i.e. no
 linear variables can be used to type them. 
@@ -1759,17 +1754,16 @@ simpler design.
 % exists in ghc?, even then couldn't we do semiring scaling without variables?
 % Also, dislike sentence}
 
-Multiplicity abstractions ($\Lambda p.~e$) introduce a multiplicity variable
-$p$ (in the unrestricted context), and construct expressions of type
-$\forall p.~\s$, i.e. a type universally quantified over a multiplicity
-variable $p$. Again, conservatively, in the body of the abstraction, function
-types annotated with a $p$ variable and datatype fields with multiplicity $p$
-are typed as thought they are linear functions and linear fields, because $p$
-can be instantiated at both $\omega$ and $1$.
-\[
-\TypeMultLamIntro \quad \TypeMultLamElim
-\]
-A multiplicity application instantiates a multiplicity-polymorphic type
+Multiplicity abstractions ($\Lambda I$) introduce a multiplicity variable $p$,
+and construct expressions of type $\forall p.~\s$, i.e. a type universally
+quantified over a multiplicity variable $p$. Again, conservatively, in the body
+of the abstraction, function types annotated with a $p$ variable and datatype
+fields with multiplicity $p$ are typed as thought they are linear functions and
+linear fields, because $p$ can be instantiated at both $\omega$ and $1$.
+%\[
+%%\TypeMultLamIntro \quad \TypeMultLamElim
+%\]
+A multiplicity application ($\Lambda E$) instantiates a multiplicity-polymorphic type
 $\forall p.~\s$ at a particular (argument) multiplicity $\pi$, resulting in an
 expression of type $\s$ where occurrences of $p$ are substituted by $\pi$, i.e.
 $\s[\pi/p]$.
