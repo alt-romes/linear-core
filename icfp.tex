@@ -1472,8 +1472,9 @@ Linear Core makes precise the various insights discussed in the
 previous section in a linear type system that we prove is sound and guarantees
 linear resource usage at runtime via a standard soundness argument on a
 call-by-need big-step operational semantics that becomes stuck when linear
-variables in the runtime heap are used more than once.
-\todo{O que digo aqui sobre a semantica launchbury style?}
+variables in the runtime heap are used more than once. We show this
+semantics to be bisimilar to a Launchbury-style~\cite{10.1145/158511.158618} natural semantics.
+%\todo{O que digo aqui sobre a semantica launchbury style?}
 Crucially,
 Linear Core typing accepts all the semantically linear examples
 (highlighted with \colorbox{notyet}{\notyetcolorname})
@@ -4153,9 +4154,9 @@ of linear typing by being more flexible in understanding linearity for lazy
 languages. In this sense, it is an avenue of future
 work to apply the ideas from this work to the surface Haskell language.
 
-\section*{Acknowledgements}
+% \section*{Acknowledgements}
 
-We thank Arnaud Spiwack for valuable and insightful discussions.\todo{Do these have to be anonymized?}
+% We thank Arnaud Spiwack for valuable and insightful discussions.\todo{Do these have to be anonymized?}
 
 % \begin{itemize}
 % 
