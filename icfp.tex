@@ -2769,9 +2769,9 @@ linearity preserving).
     \rightarrow_\pi \tau,\Sigma }\\[1.5em]
     \infer[]
     {\Gamma;\Delta \vdash  (\Theta \mid e) \Downarrow (\Theta' \mid
-    \lambda y:_\pi \sigma . e') : \sigma \rightarrow_\pi \tau , x:\sigma, \Sigma
+    \lambda y:_1 \sigma . e') : \sigma \rightarrow_1 \tau , x:\sigma, \Sigma
     \quad
-    \Gamma ; \Delta \vdash (\Theta' , y:_{\pi} \sigma = x \mid e') \Downarrow (\Theta''
+    \Gamma ; \Delta \vdash (\Theta' , y:_{1} \sigma = x \mid e') \Downarrow (\Theta''
     \mid v) : \tau , \Sigma  }
     {\Gamma ; \Delta\vdash (\Theta \mid  e~x ) \Downarrow (\Theta''
     \mid v) : \tau , \Sigma }\\[1.5em]
@@ -4525,7 +4525,7 @@ $e :_\pi \tau$ or $x :_\Delta \tau$ which are expressions in which variables in 
     {\Gamma ; \Delta\vdash (\Theta \mid  e~x ) \Downarrow (\Theta''
     \mid v) : \tau , \Sigma }\\[1.5em]
        \infer[]
-    {\Gamma ; \Delta  \vdash (\Theta \mid e)
+    {\Gamma ; \Delta  \vdash (\Theta,  \mid e)
     \Downarrow (\Theta' \mid v) : \sigma , \Sigma}
     {\Gamma ; \Delta \vdash (\Theta , x:_{\Delta'} \sigma = e \mid x)
       \Downarrow (\Theta' , x:_{\Delta''} \sigma = v \mid v) : \sigma, \Sigma}
@@ -4574,16 +4574,16 @@ $e :_\pi \tau$ or $x :_\Delta \tau$ which are expressions in which variables in 
     \ccase{e}{z{:}_{\Delta'}T~\{\dots , \_\to
     e'}\}) \Downarrow (\Theta'' \mid v) : \tau}
     \\[1.5em]
-    % \infer[]
-    % {% (\Gamma, \overline{x_i:_\omega \sigma_i = e_i}) : e_1 \Downarrow \Theta_1
-    % % : v_1 \dots  (\Gamma, \overline{x_i:_\omega \sigma_i = e_i}) : e_n
-    % % \Downarrow \Theta_n : v_n \quad
-    % (\Gamma ; \Delta \vdash (\Theta, \overline{x_i:_\omega \sigma_i =
-    % e_i} \mid e' )\Downarrow (\Theta'
-    % \mid v) : \tau
-    % }
-    % {\Gamma ;\Delta \vdash (\Theta \mid \lletrec{\overline{x_i{:}_{\Delta}\sigma_i = e_i}}{e'})
-    % \Downarrow (\Theta' \mid v) : \tau}
+    \infer[]
+    {% (\Gamma, \overline{x_i:_\omega \sigma_i = e_i}) : e_1 \Downarrow \Theta_1
+    % : v_1 \dots  (\Gamma, \overline{x_i:_\omega \sigma_i = e_i}) : e_n
+    % \Downarrow \Theta_n : v_n \quad
+    (\Gamma ; \Delta \vdash (\Theta, \overline{x_i:_\Delta \sigma_i =
+    e_i} \mid e' )\Downarrow (\Theta'
+    \mid v) : \tau
+    }
+    {\Gamma ;\Delta \vdash (\Theta \mid \lletrec{\overline{x_i{:}_{\Delta}\sigma_i = e_i}}{e'})
+    \Downarrow (\Theta' \mid v) : \tau}
 
    \end{array}
  \]
@@ -4666,12 +4666,15 @@ derivation.
 
 We now relate our two operational semantics through a bisimulation,
 allowing us to transfer type safety of the instrumented semantics to
-the lazy big-step semantics.
+the lazy big-step semantics. The relation essentially allows the
+execution environment to treat some unrestricted bindings
+of the natural semantics as linear.
 
 \begin{definition}[Bisimulation]
 We define the relation $\gamma(\Theta : e)(\G ; \D \vdash \Theta' \mid
 e' : \tau,\Sigma)$ between a well-typed state and an ordinary state of
-the lazy big-step semantics if $e = e'$ and $\Theta' \leq \Theta\uparrow^\omega$
+the lazy big-step semantics if $e = e'$ and $\Theta'{\uparrow^\omega}
+\leq \Theta$
 \end{definition}
 
 \begin{lemma}~\label{lem:naturaltoinstr}
@@ -4719,7 +4722,7 @@ By induction on the given operational semantics rules.
 
   \begin{theorem}[Type Preservation]
 For any well-typed $[\Theta \mid e]$, if $\Theta : e \Downarrow
-\Theta' : e'$ or $\Theta : e \Downarrow^* \Theta' e'$ then we have
+\Theta' : e'$ or $\Theta : e \Downarrow^* \Theta' : e'$ then we have
 that $[\Theta \mid e']$ is well-typed.
 \end{theorem}
 \begin{proof}
