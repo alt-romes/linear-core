@@ -1,0 +1,31 @@
+
+\T | case x of _ -> x
+
+
+G; D, x |- case x of _ -> x
+
+; x |- x
+G; D, [x] |- x
+
+
+\G; \D |- (x = e | x)
+
+Subcaso x não ocorre em e
+
+\G, x\D; \D |- e : \s
+
+\G; \D |- let x = e in e : \s
+
+\G; \D |- let x = e in e : \s
+
+
+Subcaso x ocorre em e
+
+\G; \D |- let rec x = e in x
+==>
+\G; \D |- let rec x = e in e
+
+\G, x\D; \D |- e : \s
+\G, x\D; \D |- e : \s
+\G; \D |- let rec x:\D = e in e'
+
