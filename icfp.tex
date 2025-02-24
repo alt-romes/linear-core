@@ -206,10 +206,10 @@ syntactic linearity but that aim to preserve the program's semantics.
 We present Linear Core, the first type system that understands semantic
 linearity in the presence of non-strict evaluation, suitable for the Core
 intermediate language of the Glasgow Haskell Compiler. We prove Linear Core
-guarantees linear resource usage via a type safety and bisimilarity argument and prove
-multiple optimising transformations preserve linearity in Linear Core while
-failing to do so in Core. We have implemented Linear Core as a compiler
-plugin to validate the system against linearity-heavy libraries, including
+is sound and guarantees linear resource usage and prove multiple optimising
+transformations preserve linearity in Linear Core while failing to do so in
+Core. We have implemented Linear Core as a compiler plugin to validate the
+system against linearity-heavy libraries, including
 \texttt{linear-base}.%^, in the heart of the compiler.
 \end{abstract}
 
@@ -1358,47 +1358,6 @@ programs that either use the resources from the scrutinee directly, or the case
 binder in that alternative, can be seen as linear. If the scrutinee is not in
 WHNF, we \emph{must} use the case binder, as it's the only way to linearly
 consume the result of evaluating the scrutinee.
-
-Finally, we discuss the special case of scrutinizing a
-single variable $x$, e.g.:
-$
-\lambda x.~\ccase{x}{\_ \to x}
-$. 
-It might seem as though this function is linear:
-%begin{itemize}
-% \item
-if the argument instantiating $x$ is in WHNF, then scrutinizing it is a no-op, and returning $x$
-just returns the resource intact;
-% \item
-if the argument instantiating $x$ is not in WHNF, then scrutinizing it evaluates it to WHNF, and returning
-$x$ returns the result of evaluating $x$ that still had to be consumed exactly
-once.
-%\end{itemize}
-However, in practice, this program's linearity can only be determined by
-further analysis on the non-strict evaluation strategy. If linear
-function applications are $\beta$-reduced \emph{call-by-name}
-(often desirable, as linear functions are known to use their argument exactly
-once)
-% and thus call-by-name reduction will definitely not duplicate computation
-while the example function is considered linear, then such an application might
-duplicate linear resources during evaluation. For instance:
-\[
-\begin{array}{l}
-(\lambda x.~\ccase{x}{\_ \to x})~(free~x)
-\Longrightarrow_{CBN}
-\ccase{free~x}{\_ \to free~x}
-\end{array}
-\]
-On the other hand, if linear function applications are reduced
-\emph{call-by-need}, the above example would instead be semantically linear
-because the result of freeing $x$ would be bound to some $y$ first.
-%
-The system we present in the next section does accept this function
-scrutinizing a variable as linear, as our operational semantics are
-call-by-need.
-This interaction between evaluation and linearity is considered specifically in the
-reverse binder swap transformation discussed in
-Section~\ref{sec:optimisations-preserve-types-meta}.\todo{Figure out precisely reverse binder swap proof and reevaluate}
 
 % \parawith{Summary}
 % In summary, case expressions evaluate their scrutinees to WHNF,
@@ -2626,13 +2585,17 @@ resources in $\D$.
 \section{Metatheory of Linear Core\label{sec:main:metatheory}}
 
 We begin by presenting the operational semantics of $\lambda^\pi_\D$,
-consisting of two lazy big-step semantics in the
-style of Launchbury~\cite{10.1145/158511.158618}, one of which is
-instrumented with linearity information, producing stuck states when
-linearity is violated. We then show the
-type safety  of $\lambda^\pi_\D$ via the standard progress  and type
-preservation results (Section~\ref{sec:typesafe}), which in our setting entails that programs
-preserve linearity. Finally, we show that multiple optimising
+consisting of a lazy natural semantics in the
+style of Launchbury~\cite{10.1145/158511.158618}.
+This semantics conveys the expected behavior of an implementation of
+lazy evaluation and is agnostic to any linearity) information.
+Thus, such a semantics is ill-suited for meta-reasoning about
+linearity and so we develop an \emph{instrumented} semantics that is
+enriched with sufficient information to allow us to establish type
+safety, showing that linearity is preserved. We show that the natural
+and instrumented semantics are bisimilar for well-typed terms and so
+derive type safety in the natural semantics
+(Section~\ref{sec:typesafe}). Finally, we show that multiple optimising
 transformations such as those performed by GHC on (Linear) Core are
 type preserving
 (Section~\ref{sec:optimisations-preserve-types-meta}), and thus
@@ -2640,21 +2603,22 @@ linearity preserving.
 
 \subsection{Operational Semantics}
 
-The first semantics, presented in Figure~\ref{fig:opsem}, captures
-standard lazy evaluation but ignores linearity information. The second
-semantics is significantly instrumented with type information and is thus
-\emph{linearity aware}, resulting in a stuck state when a linear
-variable is used more than once. The former is a more direct model of
-an implementation of lazy evaluation, however it is not so convenient
-to reason about formally. The latter semantics is augmented with the additional
-information necessary to strengthen the induction hypothesis to make our
-type safety proofs go through.
+The Launchbury-style natural semantics, presented in Figure~\ref{fig:opsem}, captures
+standard lazy evaluation while ignoring linearity information.
+% The second
+% semantics is significantly instrumented with type information and is thus
+% \emph{linearity aware}, resulting in a stuck state when a linear
+% variable is used more than once. The former is a more direct model of
+% an implementation of lazy evaluation, however it is not so convenient
+% to reason about formally. The latter semantics is augmented with the additional
+% information necessary to strengthen the induction hypothesis to make our
+% type safety proofs go through.
+% %
+% We show that for well-typed terms, the two semantics coincide. 
 %
-We show that for well-typed terms, the two semantics coincide. 
-
-Both semantics are
-equipped with an environment which assigns values to variables and is
-mutated in order to express lazy evaluation. Terms are explicit about
+%Both semantics are
+The natural semantics is equipped with an environment at assigns values to variables and is
+mutated in order to express evaluation. Terms are explicit about
 their sharing (in the sense of shared reductions in lazy evaluation),
 and so we perform a translation step that makes all sharing explicit
 through let-binders (see Appendix~\ref{app:opsem}).
@@ -2719,34 +2683,62 @@ let-binding of variables $\ov{x_i}$.
     \Downarrow \Theta' : v}
     \end{array}
 \]}
-    \caption{Operational Semantics of $\lambda^\pi_\D$\label{fig:opsem}}
+    \caption{Natural Semantics of $\lambda^\pi_\D$\label{fig:opsem}}
   \end{figure}
 
-  The lazy big-step operational semantics is defined via the relation
+  The natural semantics is defined via the relation
 $\Theta : e \Downarrow \Theta' : v$ where $e$ is an expression, $v$ a
 value, $\Theta$ and $\Theta'$ are environments with bindings of the
 form $x:_\omega\sigma = e$ which assigns the expression $e$ to the
-variable $x$ of the given type.
+variable $x$ of the given type. The rules are standard, augmenting the
+runtime environment with let-bound expressions which are evaluated
+(only once) if the let-bound variable is forced.
 
+
+% The second
+% semantics is significantly instrumented with type information and is thus
+% \emph{linearity aware}, resulting in a stuck state when a linear
+% variable is used more than once. The former is a more direct model of
+% an implementation of lazy evaluation, however it is not so convenient
+% to reason about formally. The latter semantics is augmented with the additional
+% information necessary to strengthen the induction hypothesis to make our
+% type safety proofs go through.
+% %
+% We show that for well-typed terms, the two semantics coincide. 
+
+While the natural semantics is a mostly direct model of an implementation
+of lazy evaluation, it is inconvenient for formal reasoning about
+well-typed linear terms.
+%
 We follow an approach
 similar to that of \cite{cite:linearhaskell}, defining a
-linearity-aware operational semantics in which linear variables are
+an \emph{instrumented} operational semantics in which linear variables are
 erased from 
-the runtime environment, ensuring that any term violating linearity
+the runtime environment once they are forced, ensuring that any term violating linearity
 will result in a stuck state. The semantics is also type-aware and
-carries with it sufficient data to reconstruct typing derivations (for
-the purposes of proving type safety). The semantics is defined by
-the judgment $\Gamma ; \Delta \vdash (\Theta \mid e) \Downarrow (\Theta'
-\mid v) : \sigma , \Sigma$ where $\Gamma$ and $\Delta$ are typing judgments
+carries with it sufficient data to reconstruct typing derivations for
+the purposes of showing type safety.
+
+The semantics is presented in
+Figure~\ref{fig:linopsem}, defining the judgment $\Gamma ; \Delta \vdash (\Theta \mid e) \Downarrow (\Theta'
+\mid v) : \sigma , \Sigma$ where $\Gamma$ and $\Delta$ are typing
+contexts for expressions in $\Sigma$
 ($\Gamma$ tracks unrestricted and $\Delta$-bound variables, $\Delta$ tracks linear
 assumptions);
 $\Theta$ and $\Theta'$ are runtime environments, consisting of bindings of the form
 $x :_\pi \sigma = e$; $e$ is the expression being evaluated and $v$
 its resulting value, both of type $\sigma$; $\Sigma$ is a list of assignments of the form
 $e :_\pi \tau$ or $x :_\Delta \tau$ which are expressions in which
-bindings in $\Theta$ are used. This additional data is needed to
-inductively show that the evaluation state is well-typed (and
-linearity preserving).
+bindings in $\Theta$ may also be used. This additional data is needed to
+inductively show that the overall evaluation state is well-typed (and
+linearity preserving). The rules mostly mirror those of the natural
+semantics, with the exception of the linear variable rule which erases
+the binding from the execution environment. Both semantics define
+evaluation relations of the form $a \Downarrow b$, where $a$ and $b$
+are evaluation states. We also rely on a notion
+of partial derivations and partial evaluation (see
+Appendix~\ref{app:opsem}), written $a\Downarrow^* b$ which allows us
+to reason about progress.
 
 \begin{figure}
 \[
@@ -2785,7 +2777,7 @@ linearity preserving).
     \mid v) : \tau , \Sigma }\\[1.5em]
      
        \infer[]
-    {\Gamma ; \Delta  \vdash (\Theta \mid e)
+    {\Gamma ; \Delta  \vdash (\Theta  , x:_{\Delta'} \sigma = e\mid e)
     \Downarrow (\Theta' \mid v) : \sigma , \Sigma}
     {\Gamma ; \Delta \vdash (\Theta , x:_{\Delta'} \sigma = e \mid x)
       \Downarrow (\Theta' , x:_{\Delta''} \sigma = v \mid v) : \sigma, \Sigma}
@@ -2834,34 +2826,31 @@ linearity preserving).
     \ccase{e}{z{:}_{\Delta'}T~\{\dots , \_\to
     e'}\}) \Downarrow (\Theta'' \mid v) : \tau}
     \\[1.5em]
-    % \infer[]
-    % {% (\Gamma, \overline{x_i:_\omega \sigma_i = e_i}) : e_1 \Downarrow \Theta_1
-    % % : v_1 \dots  (\Gamma, \overline{x_i:_\omega \sigma_i = e_i}) : e_n
-    % % \Downarrow \Theta_n : v_n \quad
-    % (\Gamma ; \Delta \vdash (\Theta, \overline{x_i:_\omega \sigma_i =
-    % e_i} \mid e' )\Downarrow (\Theta'
-    % \mid v) : \tau
-    % }
-    % {\Gamma ;\Delta \vdash (\Theta \mid \lletrec{\overline{x_i{:}_{\Delta}\sigma_i = e_i}}{e'})
-    % \Downarrow (\Theta' \mid v) : \tau}
+    \infer[]
+    {% (\Gamma, \overline{x_i:_\omega \sigma_i = e_i}) : e_1 \Downarrow \Theta_1
+    % : v_1 \dots  (\Gamma, \overline{x_i:_\omega \sigma_i = e_i}) : e_n
+    % \Downarrow \Theta_n : v_n \quad
+    \Gamma ; \Delta \vdash (\Theta, \overline{x_i:_\omega \sigma_i =
+    e_i} \mid e' )\Downarrow (\Theta'
+    \mid v) : \tau
+    }
+    {\Gamma ;\Delta \vdash (\Theta \mid \lletrec{\overline{x_i{:}_{\Delta}\sigma_i = e_i}}{e'})
+    \Downarrow (\Theta' \mid v) : \tau}
 
    \end{array}
  \]
- \caption{Linearity-aware Operational Semantics~\label{fig:linopsem}}
+ \caption{Instrumented Operational Semantics~\label{fig:linopsem}}
   
 \end{figure}
 
 \subsection{Type Safety}\label{sec:typesafe}
 
 The $\lambda^\pi_\D$ type system is sound: well-typed programs in Linear Core do not
-get \emph{stuck}. Besides type safety, we
-prove that multiple optimising transformations used in GHC preserve
-linearity in the sense of being well-typed in our system.
+get \emph{stuck} and their evaluation preserves linearity.
 %
 % Additionally, we state our assumptions that outline an isomorphism between
 % using a linear variable $\xl$ and a $\D$-variable $\xD$ that consumes existing
 % resources $\D$, for any $\D$.
-
 
 
 \renewcommand{\DeltaLinearRelationLemma}{
@@ -2973,23 +2962,36 @@ directly.
 We prove type safety of the Linear Core system via the standard type
 preservation and progress results. As is customary, we make use of multiple
 substitution lemmas, one for each kind of variable: unrestricted variables
-$\xo$, linear variables $\xl$, and $\D$-bound variables $\xD$.
+$\xo$, linear variables $\xl$, and $\D$-bound variables $\xD$. The
+development is reported in Appendices~\ref{app:proofs}
+and~\ref{app:opsem}, where type safety is established directly for the
+instrumented semantics and ported to the natural semantics via a
+bisimulation argument.
+
+  \begin{theorem}[Type Preservation]
+    For any well-typed evaluation state $a$, if $a \Downarrow
+    b$ or $a \Downarrow^* b$ then $b$ is well-typed.
+\end{theorem}
+\begin{theorem}[Progress]
+Let $a$ be a well-typed evaluation state. For any partial evaluation $a \Downarrow^* b$ 
+the evaluation can be extended.
+\end{theorem}
 
 % We start with the auxiliary results, as we will make use of them in a select part of the preservation proof.
 
-\TypePreservationTheorem
-%
-\ProgressTheorem
+% \TypePreservationTheorem
+% %
+% \ProgressTheorem
 % \noindent Type preservation states that a well-typed expression $e$ that
 % evaluates to $e'$ remains well-typed under the same context:
 %
-Type preservation
-% ($\S$~\ref{sec:proof:type-preservation})
-follows by structural induction on the reductions $e \longrightarrow
-e'$ from the operational semantics. Most cases are straightforward, appealing to one or more
-substitution lemmas (see Appendix~\ref{sec:proof:type-preservation}). The most
-interesting case is that of case expressions whose scrutinee can be further
-evaluated -- we branch on whether the scrutinee becomes in WHNF and appeal to Lemma~\ref{lem:irrev} if so.
+% Type preservation
+% % ($\S$~\ref{sec:proof:type-preservation})
+% follows by structural induction on the reductions $e \longrightarrow
+% e'$ from the operational semantics. Most cases are straightforward, appealing to one or more
+% substitution lemmas (see Appendix~\ref{sec:proof:type-preservation}). The most
+% interesting case is that of case expressions whose scrutinee can be further
+% evaluated -- we branch on whether the scrutinee becomes in WHNF and appeal to Lemma~\ref{lem:irrev} if so.
 %
 % This case guarantees that the separation of rules for treating scrutinees is
 % consistent, in the sense that a well-typed case expression with a scrutinee not
@@ -3242,6 +3244,49 @@ they are chained in the compiler pipeline to expose optimisation opportunities.
 % \input{language-v4/proofs/optimizations/BinderSwap}
 
 \paragraph{Reverse Binder Swap\label{sec:reverse-binder-swap-considered-harmful}}
+
+\todo{UPDATE}
+Finally, we discuss the special case of scrutinizing a
+single variable $x$, e.g.:
+$
+\lambda x.~\ccase{x}{\_ \to x}
+$. 
+It might seem as though this function is linear:
+%begin{itemize}
+% \item
+if the argument instantiating $x$ is in WHNF, then scrutinizing it is a no-op, and returning $x$
+just returns the resource intact;
+% \item
+if the argument instantiating $x$ is not in WHNF, then scrutinizing it evaluates it to WHNF, and returning
+$x$ returns the result of evaluating $x$ that still had to be consumed exactly
+once.
+%\end{itemize}
+However, in practice, this program's linearity can only be determined by
+further analysis on the non-strict evaluation strategy. If linear
+function applications are $\beta$-reduced \emph{call-by-name}
+(often desirable, as linear functions are known to use their argument exactly
+once)
+% and thus call-by-name reduction will definitely not duplicate computation
+while the example function is considered linear, then such an application might
+duplicate linear resources during evaluation. For instance:
+\[
+\begin{array}{l}
+(\lambda x.~\ccase{x}{\_ \to x})~(free~x)
+\Longrightarrow_{CBN}
+\ccase{free~x}{\_ \to free~x}
+\end{array}
+\]
+On the other hand, if linear function applications are reduced
+\emph{call-by-need}, the above example would instead be semantically linear
+because the result of freeing $x$ would be bound to some $y$ first.
+%
+The system we present in the next section does accept this function
+scrutinizing a variable as linear, as our operational semantics are
+call-by-need.
+This interaction between evaluation and linearity is considered specifically in the
+reverse binder swap transformation discussed in
+Section~\ref{sec:optimisations-preserve-types-meta}.\todo{Figure out precisely reverse binder swap proof and reevaluate}
+
 
 Reverse binder swap is dual to the binder swap transformation, substituting
 occurrences of the case binder $z$ by the scrutinee in the special case when
@@ -4313,11 +4358,11 @@ By Lemma~\ref{lem:undelta-app}.
 
 \subsection{Type Preservation\label{sec:proof:type-preservation}}
 
-\input{language-v4/proofs/TypePreservationTheorem}
+%\input{language-v4/proofs/TypePreservationTheorem}
 
 \subsection{Progress\label{sec:proof:progress}}
 
-\input{language-v4/proofs/ProgressTheorem}
+%\input{language-v4/proofs/ProgressTheorem}
 
 
 
@@ -4413,8 +4458,8 @@ let-binding of variables $\ov{x_i}$.
 \]
 
 The big-step operational semantics is defined via the relation
-$\Gamma : e \Downarrow \Delta : v$ where $e$ is an expression, $v$ a
-value, $\Gamma$ and $\Delta$ are environments with bindings of the
+$\Theta : e \Downarrow \Theta' : v$ where $e$ is an expression, $v$ a
+value, $\Theta$ and $\Theta'$ are environments with bindings of the
 form $x:_\omega\sigma = e$ which assigns the expression $e$ to the
 variable $x$ of the given type.
 
@@ -4422,55 +4467,55 @@ variable $x$ of the given type.
   \begin{array}{c}
     \infer[]
     {\,}
-    {\Gamma : \Lambda p.e \Downarrow \Gamma : \Lambda p.e}
+    {\Theta : \Lambda p.e \Downarrow \Theta : \Lambda p.e}
     \qquad
     \infer[]
-    {\Gamma : e\Downarrow \Delta : \Lambda p.e' \quad \Delta :
-    e'[\pi/p]\Downarrow \Theta : v}
-    {\Gamma : e~\pi\Downarrow \Theta : v }\\[1.5em]
+    {\Theta  : e\Downarrow \Theta' : \Lambda p.e' \quad \Theta' :
+    e'[\pi/p]\Downarrow \Theta'' : v}
+    {\Theta : e~\pi\Downarrow \Theta'' : v }\\[1.5em]
     \infer[]
     {\,}
-    {\Gamma : \lambda x:_\pi \sigma . e \Downarrow \Gamma : \lambda x:_\pi \sigma . e }
+    {\Theta : \lambda x:_\pi \sigma . e \Downarrow \Theta : \lambda x:_\pi \sigma . e }
     \qquad
     \infer[]
-    {\Gamma : e \Downarrow \Delta : \lambda y:_\pi \sigma . e' \quad
-    \Delta : e'[x/y] \Downarrow \Theta : v }
-    {\Gamma : e~x \Downarrow \Theta : v}\\[1.5em]
+    {\Theta : e \Downarrow \Theta' : \lambda y:_\pi \sigma . e' \quad
+    \Theta' : e'[x/y] \Downarrow \Theta'' : v }
+    {\Theta : e~x \Downarrow \Theta'' : v}\\[1.5em]
     \infer[]
-    {\Gamma : e \Downarrow \Delta : v}
-    {(\Gamma , x:_\omega \sigma = e) : x \Downarrow (\Delta,x:_\omega
+    {(\Theta , x:_\omega \sigma = e): e \Downarrow \Theta' : v}
+    {(\Theta , x:_\omega \sigma = e) : x \Downarrow (\Theta',x:_\omega
     \sigma = v) : v}
     \qquad
     \infer[]
-    {(\Gamma,x:_\omega \sigma = e) : e' \Downarrow \Theta : v}
-    {\Gamma : \llet{x{:}_{\Delta}\sigma = e}{e'}\Downarrow \Theta : v
+    {(\Theta,x:_\omega \sigma = e) : e' \Downarrow \Theta' : v}
+    {\Theta : \llet{x{:}_{\Delta}\sigma = e}{e'}\Downarrow \Theta' : v
     }\\[1.5em]
     \infer[]
     {\,}
-    {\Gamma : K~\ov{x_i} \Downarrow \Gamma : K~\ov{x_i}}
+    {\Theta : K~\ov{x_i} \Downarrow \Theta : K~\ov{x_i}}
     \qquad
     \infer[]
-    {\Gamma : e \Downarrow \Delta : K~\ov{x_i} \quad
-    \Delta : e'\ov{[x_i/y_i]}[K~\ov{x_i}/z] \Downarrow \Theta : v }
-    {\Gamma :
+    {\Theta : e \Downarrow \Theta' : K~\ov{x_i} \quad
+    \Theta' : e'\ov{[x_i/y_i]}[K~\ov{x_i}/z] \Downarrow \Theta'' : v }
+    {\Theta :
     \ccase{e}{z{:}_{\Delta'}\sigma~\{{\dots,K~\ov{y_i} \to e', {\dots}}\}}
-    \Downarrow \Theta : v}\\[1.5em]
+    \Downarrow \Theta'' : v}\\[1.5em]
     \infer[]
-    {\Gamma : e \Downarrow \Delta : K~\ov{x_i} \quad
-    \Delta : e'[K~\ov{x_i}/z] \Downarrow \Theta : v }
-    {\Gamma :
+    {\Theta : e \Downarrow \Theta' : K~\ov{x_i} \quad
+    \Theta' : e'[K~\ov{x_i}/z] \Downarrow \Theta'' : v }
+    {\Theta :
     \ccase{e}{z{:}_{\Delta'}\sigma~\{\dots , \_\to
-    e'}\} \Downarrow \Theta : v}
+    e'}\} \Downarrow \Theta'' : v}
     \qquad
     \infer[]
     {% (\Gamma, \overline{x_i:_\omega \sigma_i = e_i}) : e_1 \Downarrow \Theta_1
     % : v_1 \dots  (\Gamma, \overline{x_i:_\omega \sigma_i = e_i}) : e_n
     % \Downarrow \Theta_n : v_n \quad
-    (\Gamma, \overline{x_i:_\omega \sigma_i = e_i}) : e' \Downarrow \Theta
+    (\Theta, \overline{x_i:_\omega \sigma_i = e_i}) : e' \Downarrow \Theta'
     : v
     }
-    {\Gamma : \lletrec{\overline{x_i{:}_{\Delta}\sigma_i = e_i}}{e'}
-    \Downarrow \Theta : v}
+    {\Theta : \lletrec{\overline{x_i{:}_{\Delta}\sigma_i = e_i}}{e'}
+    \Downarrow \Theta' : v}
     \end{array}
 \]
 
@@ -4525,8 +4570,10 @@ $e :_\pi \tau$ or $x :_\Delta \tau$ which are expressions in which variables in 
     {\Gamma ; \Delta\vdash (\Theta \mid  e~x ) \Downarrow (\Theta''
     \mid v) : \tau , \Sigma }\\[1.5em]
        \infer[]
-    {\Gamma ; \Delta  \vdash (\Theta,  \mid e)
-    \Downarrow (\Theta' \mid v) : \sigma , \Sigma}
+    {\Gamma ; \Delta  \vdash (\Theta, x:_{\Delta'} \sigma = e \mid e)
+    \Downarrow (\Theta' \mid v) : \sigma , \Sigma \\
+      \D'' = \D' \setminus (\Theta \setminus \Theta')
+      }
     {\Gamma ; \Delta \vdash (\Theta , x:_{\Delta'} \sigma = e \mid x)
       \Downarrow (\Theta' , x:_{\Delta''} \sigma = v \mid v) : \sigma, \Sigma}
     \\[1.5em]
@@ -4574,16 +4621,17 @@ $e :_\pi \tau$ or $x :_\Delta \tau$ which are expressions in which variables in 
     \ccase{e}{z{:}_{\Delta'}T~\{\dots , \_\to
     e'}\}) \Downarrow (\Theta'' \mid v) : \tau}
     \\[1.5em]
-    \infer[]
-    {% (\Gamma, \overline{x_i:_\omega \sigma_i = e_i}) : e_1 \Downarrow \Theta_1
-    % : v_1 \dots  (\Gamma, \overline{x_i:_\omega \sigma_i = e_i}) : e_n
-    % \Downarrow \Theta_n : v_n \quad
-    (\Gamma ; \Delta \vdash (\Theta, \overline{x_i:_\Delta \sigma_i =
-    e_i} \mid e' )\Downarrow (\Theta'
-    \mid v) : \tau
-    }
-    {\Gamma ;\Delta \vdash (\Theta \mid \lletrec{\overline{x_i{:}_{\Delta}\sigma_i = e_i}}{e'})
-    \Downarrow (\Theta' \mid v) : \tau}
+
+     \infer[]
+     {% (\Gamma, \overline{x_i:_\omega \sigma_i = e_i}) : e_1 \Downarrow \Theta_1
+     % : v_1 \dots  (\Gamma, \overline{x_i:_\omega \sigma_i = e_i}) : e_n
+     % \Downarrow \Theta_n : v_n \quad
+     (\Gamma ; \Delta \vdash (\Theta, \overline{x_i:_\Delta' \sigma_i =
+     e_i} \mid e' )\Downarrow (\Theta'
+     \mid v) : \tau
+     }
+     {\Gamma ;\Delta \vdash (\Theta \mid \lletrec{\overline{x_i{:}_{\Delta'}\sigma_i = e_i}}{e'})
+     \Downarrow (\Theta' \mid v) : \tau}
 
    \end{array}
  \]
@@ -4664,7 +4712,7 @@ derivation.
 \end{proof}
 
 
-We now relate our two operational semantics through a bisimulation,
+We relate our two operational semantics through a bisimulation,
 allowing us to transfer type safety of the instrumented semantics to
 the lazy big-step semantics. The relation essentially allows the
 execution environment to treat some unrestricted bindings
