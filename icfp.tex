@@ -2353,12 +2353,21 @@ discarded or duplicated (e.g. via the case binder).
 
 %\end{enumerate}
 
-\subsubsection{Pattern matching on non-WHNF terms via proof irrelevant resources}
+\subsubsection{Proof irrelevant resources}
 
-Resources used to type a scrutinee that is not in WHNF \emph{must not} be used in
-the case alternatives.
+When the scrutinee is not in WHNF, it is not known statically which of the
+scrutinee resources end up being consumed during evaluation and which would
+still be available in the branch continuation.
 %
-However, evaluating the scrutinee to WHNF is not sufficient to
+Therefore, cases with non-WHNF scrutinees must by typed such that no resource
+from the scrutinee can be used directly in the branch again, or risk
+consuming the same resource twice.
+%
+However, simply evaluating the scrutinee to WHNF does not guarantee all
+resources are consumed (unless the result matches an unrestricted pattern).
+In the case where the matching pattern has some linear components
+
+is not sufficient to
 consume all resources used by the scrutinee, since sub-expressions such
 as constructor arguments will be left unevaluated and may still contain
 (``parts of'') the linear resources. To \emph{fully} consume all
@@ -2403,9 +2412,10 @@ within square brackets $[ x{:}\s]$ and lifted to contexts as $[\D]$,
 to encode linear resources that cannot be
 directly used (i.e.,~to which the $\textsc{Var}$ rule is not applicable). Proof irrelevant resources
 are linear resources in all other senses, meaning they must be used
-\emph{exactly once}. However, since proof irrelevant resources cannot be
-discarded nor used directly, they have to be consumed \emph{indirectly} --
-by $\D$-bound variables, namely, the case binder, or the linear pattern-bound variables.
+exactly once. However, since proof irrelevant resources cannot be
+discarded nor used directly, they have to be consumed \emph{indirectly} via
+$\D$-bound variables, namely, the case binder, or the linear pattern-bound
+variables.
 
 Hence, to type a case expression whose scrutinee is not in WHNF, we
 type the scrutinee with linear resources $\D$ and type the case
