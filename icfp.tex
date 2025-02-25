@@ -2128,8 +2128,8 @@ To illustrate, consider the following case expressions:
 The first function uses $x$ linearly, but the second does not.
 %
 Alternatives may also use the case binder or pattern variables, referring to, respectively,
-the whole scrutinee (and all resources used to type the scrutinee) or
-constructor arguments (and the resources to type each argument).
+the whole scrutinee and all its used resources; or
+constructor arguments and the resources used to type them.
 % Using the case binder entails using all the resources required by the scrutinee, and using a pattern
 % variable implies using the resources of the corresponding constructor argument.
 
@@ -2137,7 +2137,7 @@ There are three competing ways
 to use the resources from a scrutinee in WHNF in a case alternative: directly, via
 the case binder, or by using pattern-bound variables.
 %
-Recall how $\D$-variables can encode mutual exclusivity between alternative
+Recall how $\D$-bound variables encode mutual exclusion between alternative
 ways of consuming resources -- it follows that case binders and pattern-bound
 variables are yet another instance of $\D$-bound variables.
 %
@@ -2166,15 +2166,15 @@ used to type a $Let$ binder are still available in the continuation.
 %annotated with the disjoint set of linear resources $\ov{\D_i}$ used
 %to type the scrutinee sub-expressions,
 %and the name of the case binder $z$.
-
 %
-Despite the main idea for typing ``WHNF case expressions'' being conveyed by
-this rule, in our system it is slightly more involved, as will be seen after
+%
+Although the main idea for typing ``WHNF case expressions'' is conveyed by
+this rule, the full rule of our system is slightly more involved, as will be seen after
 discussing cases of scrutinees not in WHNF.
 
 The alternative judgement $\G;\D \vdash_{alt} \rho \to e :^z_\D \s \Rightarrow
 \vp$ is used to type case alternatives, encompassing three
-``modes'' distinguished by the kind of arrow that is used:
+``modes'' that are distinguished by the kind of arrow that is used:
 for alternatives of case expressions whose scrutinee is in WHNF
 ($\Rightarrow_\mathsf{WHNF}$), not in WHNF ($\Rightarrow_\mathsf{NWHNF}$),
 and for alternatives agnostic to the WHNF-ness of the scrutinee
@@ -2197,16 +2197,17 @@ ${:}_{\ov{\D_i}}$). Unrestricted fields of the constructor are introduced as
 unrestricted variables. We note that the typing environment $\D$ always
 contains the resources $\ov{\D_i}$ in uses of the alternative judgement.
 
-Second, the rule for alternatives that match on the wildcard pattern, be the
-original scrutinee in WHNF or not (note the use of $\Rightarrow$, which
+Second, the rule for alternatives that match on the wildcard pattern,
+regardless of the WHNF status of the scrutinee (note the use of $\Rightarrow$, which
 is applicable both under $\Rightarrow_{WHNF}$ and $\Rightarrow_{NWHNF}$):
 \[
 \TypeAltWild
 \]
 To type a wildcard alternative we simply type the expression with the main
-judgement, ignoring all annotations on the judgement. The case binder will
+judgement, ignoring all annotations. The case binder will
 have already been introduced in the environment with the appropriate usage
-environment by the relevant (WHNF or not) case expression rule.
+environment by the relevant %(WHNF or not)
+case expression rule.
 
 Lastly, consider an alternative matching on a data constructor without any
 linear components. The linear resources used to type a scrutinee matching such
@@ -2217,8 +2218,8 @@ environment.
 Consequently, the resources to type the scrutinee which are carried over to the
 case-alternative environments by the $Case_{WHNF}$ and $Case_{NWHNF}$ rules
 (see the latter below), must be reactively destroyed from branches where the
-pattern is unrestricted. In failing to do this, we'd allow the fully-consumed
-resources to be used again in the branch!
+pattern is unrestricted. In failing to do this, we would allow the fully-consumed
+resources to be used again in the branch.
 % Really, in the WHNF case it is not really necessary to remove the things
 % since they must already be empty be definition.
 %
@@ -2232,7 +2233,7 @@ resources to be used again in the branch!
 %environments after matching on such a pattern.
 %
 The $Alt0$ rule essentially encodes this insight, and is applicable regardless
-of the WHNF-ness of the scrutinee ($\Rightarrow$ mode), as long as
+of the WHNF status of the scrutinee ($\Rightarrow$ mode), as long as
 the constructor pattern has no linear fields:
 %
 \[
@@ -2335,23 +2336,24 @@ are transferred into the branch continuation, e.g. as in $\ccase{f\ x}{z\ \{K\
 a \rightarrow e\}}$ where $f = K$, but opaque.
 \begin{enumerate}
 
-    \item Consequently, cases with non-WHNF scrutinees must by typed such that no resource
-    from the scrutinee can be used directly in the branch again, or risk
+    \item Consequently, cases with non-WHNF scrutinees must be typed such that no resource
+    from the scrutinee can be used directly in the branch again, or we
+    risk
     consuming the same resource twice. In the example, $x$ must not directly occur
     in $e$ since $f$ \emph{could} have consumed it.
 
     \item On the other hand, since evaluation to WHNF does not guarantee all
-    resources do end up being consumed (unless the result matches an
-    unrestricted pattern), we must ensure any which transfer from the
-    scrutinee to the alternative are ultimately consumed. (In the example,
+    resources are consumed (unless the result matches an
+    unrestricted pattern), we must ensure that any resources that transfer from the
+    scrutinee to the alternative are ultimately consumed (in the example,
     $x$ is not consumed by evaluating the scrutinee).
 
     Considering (1), we must resort to a more uniform method of guaranteeing we
-    ``finish consuming`` the scrutinee. And there are only two ways of
+    ``finish consuming'' the scrutinee. There are only two ways of
     uniformly referring to the remaining linear resources in the newly-evaluated scrutinee:
 
         \begin{itemize}
-            \item The case binder, which refers to the whole result of evaluating the scrutinee
+            \item The case binder, which refers to the whole result of evaluating the scrutinee;
             \item The linear components of a constructor pattern, which refer to expressions that may contain linear resources.
         \end{itemize}
 
@@ -2412,7 +2414,7 @@ $\D$-bound variables, namely, the case binder, or, in mutual exclusion, the line
 variables.
 
 Hence, to type a case expression whose scrutinee is not in WHNF, we
-type the scrutinee with linear resources $\D$ and type the case
+type the scrutinee with linear resources $\D$ and the case
 alternatives by introducing the case binder with a usage environment $[\D]$,
 having the same proof irrelevant linear context $[\D]$ in the typing
 environment, and annotating the judgement with the proof irrelevant resources
@@ -2447,9 +2449,9 @@ only makes sense for the constructor pattern matching the scrutinee.
 % only applies to the matching constructor.
 % %
 Alternatives not matching the scrutinee could use resources arbitrarily as they
-will never be executed, however, we uniformly treat non-matching alternatives
+will never be executed. We uniformly treat non-matching alternatives
 as if the scrutinee were not in WHNF. Having introduced proof irrelevant
-resources, we can now present the final $Case_\textrm{WHNF}$ rule:
+resources, we can now present the full $Case_\textrm{WHNF}$ rule:
 \[
 \TypeCaseWHNF
 \]
@@ -2489,7 +2491,7 @@ environments of pattern variables in any alternative.
 % typing other constructors, which would be standalone and show up in this
 % section too?}
 %
-We introduce \emph{tagged resources} as a means to enforce all pattern-bound
+We introduce \emph{tagged resources} as a means to enforce that all pattern-bound
 variables for a scrutinee not in WHNF are either \emph{jointly} used to consume
 all resources occurring in the environment, or not at all (instead, the case
 binder may be used). Given linear resources $[\D_s]$ used to type a scrutinee,
@@ -2508,14 +2510,14 @@ introduced in $\G$, just like other $\D$-variables.
 % position of the pattern variable among all bound variables in that pattern.
 %
 Having uniquely tagged the resources in the usage environment of each pattern
-variable, we need now only to express that (1) the pattern-bound $\D$-variables can
+variable, we need only to express that (1) the pattern-bound $\D$-variables can
 be used (i.e., the tagged resources need be available in the linear
 environment in order for the $\textsc{Var}_\D$ rule to be applicable) and (2)
-if a $K$-pattern-bound $\D$-var is consumed, all remaining $K$-$\D$-vars,
+if a $K$-pattern-bound $\D$-variable is consumed, all remaining $K$-$\D$-variables,
 standing for the remaining linear components of the same pattern, must also be
 consumed.
 
-To satisfy these two properties, we introduce a $\textit{Split}$ rule that
+To satisfy these two constraints, we introduce a $\textit{Split}$ rule that
 allows a linear resource $x{:}_1\s$ to be split into $n$ resources at a given
 constructor $K$, where $n$ is the number of linear components of the
 constructor, and each resource resulting from the split is \emph{tagged} with
@@ -2525,7 +2527,7 @@ split into $\ov{\lctag{x{:}_1\s}{K_i}}^n$).
 By assigning to each pattern variable a \emph{fragment} of the scrutinee
 resources (with a tag), we require the scrutinee resources to be
 $\textsc{Split}$ in order to use pattern variables at all.  Moreover, the
-remaining tagged resources cannot be used directly, yet need still be consumed
+remaining tagged resources cannot be used directly, yet need to still be consumed
 exactly once. Thus, the choice to consume the tagged resources via the usage
 environments of the other pattern variables is forced, ensuring that no
 variable for a constructor's linear component can go unused (the tagged environments are disjoint).
