@@ -2462,9 +2462,9 @@ in which intermediate programs commonly scrutinize expressions in WHNF.
 % scrutinee in WHNF this way).
 
 As opposed to scrutinees in WHNF, where the resources used to type a scrutinee
-can be cleanly divided amongst the various sub-expressions of e.g. the
-constructor and henceforth each pattern variable, there is no direct mapping
-between the resources typing a scrutinee \emph{not in WHNF} and the usage
+can be cleanly divided amongst the various sub-expressions of a constructor
+application and, henceforth, each pattern variable, there is no direct mapping
+between the resources typing a scrutinee not in WHNF and the usage
 environments of pattern variables in any alternative.
 
 %
@@ -2482,7 +2482,7 @@ binder may be used). Given linear resources $[\D_s]$ used to type a scrutinee,
 and a pattern $K~\ov{x_\omega},\ov{y_i}$ with $i$ linear components, we assign
 a usage environment $\D_i$ to each linear pattern variable where $\D_i$ is
 obtained from the scrutinee environment \emph{tagged} with the constructor name
-and linear-variable index $\lctag{\irr{\D_s}\!}{K_i}$. $y_i{:}_{\D_i}\s$ is
+and linear-variable index $\lctag{\irr{\D_s}\!}{K_i}$. Then, $y_i{:}_{\D_i}\s$ is
 introduced in $\G$, just like other $\D$-variables.
 \[
   \begin{array}{cc}
@@ -2493,14 +2493,15 @@ introduced in $\G$, just like other $\D$-variables.
 % The tag consists of a constructor name $K$ and an index $i$ identifying the
 % position of the pattern variable among all bound variables in that pattern.
 %
-Having tagged the resources in the usage environment of each pattern variable
-differently, we need now only to express that (1) the pattern $\D$-variables
-can be used (i.e., the tagged resources need be available in the linear
+Having uniquely tagged the resources in the usage environment of each pattern
+variable, we need now only to express that (1) the pattern-bound $\D$-variables can
+be used (i.e., the tagged resources need be available in the linear
 environment in order for the $\textsc{Var}_\D$ rule to be applicable) and (2)
-if we consume one of the pattern variables with a non-empty usage environment,
-then \emph{all} pattern variables for linear components must also be consumed.
+if a $K$-pattern-bound $\D$-var is consumed, all remaining $K$-$\D$-vars,
+standing for the remaining linear components of the same pattern, must also be
+consumed.
 
-The key idea to guarantee these is to provide a $\textit{Split}$ rule that
+To satisfy these two properties, we introduce a $\textit{Split}$ rule that
 allows a linear resource $x{:}_1\s$ to be split into $n$ resources at a given
 constructor $K$, where $n$ is the number of linear components of the
 constructor, and each resource resulting from the split is \emph{tagged} with
@@ -2511,7 +2512,7 @@ By assigning to each pattern variable a \emph{fragment} of the scrutinee
 resources (with a tag), we require the scrutinee resources to be
 $\textsc{Split}$ in order to use pattern variables at all.  Moreover, the
 remaining tagged resources cannot be used directly, yet need still be consumed
-exactly once. Thus, the choice to consume the tagged resources via usage
+exactly once. Thus, the choice to consume the tagged resources via the usage
 environments of the other pattern variables is forced, ensuring that no
 variable for a constructor's linear component can go unused (the tagged environments are disjoint).
 
