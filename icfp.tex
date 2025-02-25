@@ -2315,30 +2315,50 @@ discarded or duplicated (e.g. via the case binder).
 
 \subsubsection{Proof irrelevant resources}
 
-When the scrutinee is not in WHNF, it is not known statically which of the
-scrutinee resources end up being consumed during evaluation and which would
-still be available in the branch continuation.
-%
-Therefore, cases with non-WHNF scrutinees must by typed such that no resource
-from the scrutinee can be used directly in the branch again, or risk
-consuming the same resource twice.
-%
-However, simply evaluating the scrutinee to WHNF does not guarantee all
-resources are consumed (unless the result matches an unrestricted pattern).
-In the case where the matching pattern has some linear components
+When the scrutinee is not in WHNF, it is not statically known which resources
+will have been consumed after evaluating said scrutinee, or which
+are transferred into the branch continuation, e.g. as in $\ccase{f\ x}{z\ \{K\
+a \rightarrow e\}}$ where $f = K$, but opaque.
+\begin{enumerate}
 
-is not sufficient to
-consume all resources used by the scrutinee, since sub-expressions such
-as constructor arguments will be left unevaluated and may still contain
-(``parts of'') the linear resources. To \emph{fully} consume all
-resources occurring in the scrutinee, all linear components of the
-constructor must also be fully evaluated, as witnessed by the
-$\textsc{Alt}_0$ rule above.
+    \item Consequently, cases with non-WHNF scrutinees must by typed such that no resource
+    from the scrutinee can be used directly in the branch again, or risk
+    consuming the same resource twice. In the example, $x$ must not directly occur
+    in $e$ since $f$ \emph{could} have consumed it.
+
+    \item On the other hand, since evaluation to WHNF does not guarantee all
+    resources do end up being consumed (unless the result matches an
+    unrestricted pattern), we must ensure any which transfer from the
+    scrutinee to the alternative are ultimately consumed. (In the example,
+    $x$ is not consumed by evaluating the scrutinee).
+
+    Considering (1), we must resort to a more uniform method of guaranteeing we
+    ``finish consuming`` the scrutinee. And there are only two ways of
+    uniformly referring to the remaining linear resources in the newly-evaluated scrutinee:
+
+        \begin{itemize}
+            \item The case binder, which refers to the whole result of evaluating the scrutinee
+            \item The linear components of a constructor pattern, which refer to expressions that may contain linear resources.
+        \end{itemize}
+
+%To guarantee all post-evaluation unconsumed scrutinee resources are consumed in
+%the alternative, without statically knowing
+%Statically we can't know which resources are ``transferred'', but  guarantee
 %
-In essence, to type cases scrutinizing expressions not in WHNF, we need to
-forbid the usage of the scrutinee resources while tracking that we necessarily
-``finish consuming'' them, either via the case binder, or by linearly using all
-linear pattern-bound variables introduced in the alternative.
+\end{enumerate}
+
+%is not sufficient to
+%consume all resources used by the scrutinee, since sub-expressions such
+%as constructor arguments will be left unevaluated and may still contain
+%(``parts of'') the linear resources. To \emph{fully} consume all
+%resources occurring in the scrutinee, all linear components of the
+%constructor must also be fully evaluated, as witnessed by the
+%$\textsc{Alt}_0$ rule above.
+%%
+%In essence, to type cases scrutinizing expressions not in WHNF, we need to
+%forbid the usage of the scrutinee resources while tracking that we necessarily
+%``finish consuming'' them, either via the case binder, or by linearly using all
+%linear pattern-bound variables introduced in the alternative.
 
 % We tackle this in due time, in the proof irrelevance section.
 % \begin{itemize}
@@ -2374,21 +2394,21 @@ directly used (i.e.,~to which the $\textsc{Var}$ rule is not applicable). Proof 
 are linear resources in all other senses, meaning they must be used
 exactly once. However, since proof irrelevant resources cannot be
 discarded nor used directly, they have to be consumed \emph{indirectly} via
-$\D$-bound variables, namely, the case binder, or the linear pattern-bound
+$\D$-bound variables, namely, the case binder, or, in mutual exclusion, the linear pattern-bound
 variables.
 
 Hence, to type a case expression whose scrutinee is not in WHNF, we
 type the scrutinee with linear resources $\D$ and type the case
 alternatives by introducing the case binder with a usage environment $[\D]$,
 having the same proof irrelevant linear context $[\D]$ in the typing
-environment, annotating the judgement with the proof irrelevant resources,
-and using the $\Rightarrow_{\textsf{NWHNF}}$ judgement:
+environment, and annotating the judgement with the proof irrelevant resources
+for use in the $\Rightarrow_{\textsf{NWHNF}}$ judgement:
 \[
 \TypeCaseNotWHNF
 \]
 Note how the rule is similar to the one for scrutinees in WHNF, but
-requiring the resources in the case binder, typing environment, and
-judgement annotation to be made irrelevant.
+requires the resources in the case binder, typing environment, and
+judgement annotation to be made ``irrelevant''.
 
 % In practice, we can't know which resources are consumed by evaluating a given
 % expression. The resources become in a limbo state -- they cannot be used
@@ -2415,7 +2435,7 @@ only makes sense for the constructor pattern matching the scrutinee.
 Alternatives not matching the scrutinee could use resources arbitrarily as they
 will never be executed, however, we uniformly treat non-matching alternatives
 as if the scrutinee were not in WHNF. Having introduced proof irrelevant
-resources, we can now present the correct $Case_\textrm{WHNF}$ rule:
+resources, we can now present the final $Case_\textrm{WHNF}$ rule:
 \[
 \TypeCaseWHNF
 \]
@@ -4142,7 +4162,7 @@ account for all other Core features (e.g. strict constructor fields), propagate
 new or modified data throughout the entire pipeline, and accept more
 optimisations. Despite our initiative in this direction\footnote{[Link removed
 due to
-anonymization]}%\footnote{https://gitlab.haskell.org/ghc/ghc/-/issues/23218} ,
+anonymization]} %\footnote{https://gitlab.haskell.org/ghc/ghc/-/issues/23218} ,
 we leave this as future work.
 
 \paragraph{Generalizing Linear Core to Haskell.}
