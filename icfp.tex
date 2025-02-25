@@ -3556,7 +3556,7 @@ In particular, for any given Haskell module, Core plugins run for (and receive
 as input) every intermediate program produced in the compilation process, i.e.
 from desugaring and after each optimising transformation.
 %
-This implementation further substantiates our claim that Linear Core is
+Our implementation further substantiates our claim that Linear Core is
 suitable for the intermediate language of an optimising compiler.
 %\todo[inline]{Tem de ser anonimizado, provavelmente alterando a bib
   %entry para omitir autores e o proprio link}
@@ -3586,7 +3586,7 @@ Instead of non-deterministically splitting linear resources amongst
 sub-derivations, we thread input/output linear resources through each
 derivation~\cite{DBLP:journals/tcs/CervesatoHP00}.
 %
-Pattern variables bound in a case alternative, for a scrutinee not in WHNF, are
+For a scrutinee not in WHNF, pattern variables in a case alternative are
 introduced as $\D$-variables with usage environment $\lctag{\irr{\D}}{K_i}$,
 where $\D$ are the scrutinee resources and $K_i$ the tag of that pattern
 variable. To use these pattern variables, the scrutinee resources must be first
@@ -3699,7 +3699,7 @@ these usage environments. %Further research regarding
 % of Linear Core with type equality coercions.
 
 The results of running the Linear Core GHC plugin on large 
-libraries focused around linear types are given by
+libraries focused around linear types are reported in
 Figure~\ref{fig:core-plugin-res}.
 %
 %
@@ -3786,11 +3786,11 @@ pipeline.
   \input{prototype/core-plugin-results-2}
   }
 %
-The results indicate our mostly direct implementation of Linear Core is
+The results indicate that our mostly direct implementation of Linear Core is
 successful in accepting the vast majority of the thousands of intermediate
 programs produced by GHC when compiling libraries that make extensive use of
 linear types.
-
+%
 However, Linear Core does not accept every single program produced by the
 optimisation pipeline of GHC. Our manual analysis of rejected programs revealed
 excellent results. Programs considered ill-typed by the Linear Core
