@@ -2333,10 +2333,10 @@ discarded or duplicated (e.g. via the case binder).
 When the scrutinee is not in WHNF, it is not statically known which resources
 will have been consumed after evaluating said scrutinee, or which
 are transferred into the branch continuation, e.g. as in $\ccase{f\ x}{z\ \{K\
-a \rightarrow e\}}$ where $f = K$, but opaque.
+a \rightarrow e\}}$ where $f$ is defined as $f = K$:
 \begin{enumerate}
 
-    \item Consequently, cases with non-WHNF scrutinees must be typed such that no resource
+    \item Cases with non-WHNF scrutinees must be typed such that no resource
     from the scrutinee can be used directly in the branch again, or we
     risk
     consuming the same resource twice. In the example, $x$ must not directly occur
@@ -2403,13 +2403,14 @@ a \rightarrow e\}}$ where $f = K$, but opaque.
 % result is consumed (thus their usage environment cannot be empty), but the
 % scrutinee resources cannot be used directly.
 
-We introduce \emph{proof irrelevant} resources, written as linear resources
-within square brackets $[ x{:}\s]$ and lifted to contexts as $[\D]$,
-to encode linear resources that cannot be
-directly used (i.e.,~to which the $\textsc{Var}$ rule is not applicable). Proof irrelevant resources
-are linear resources in all other senses, meaning they must be used
+To encode  linear resources that cannot be
+directly used (i.e.,~to which the $\textsc{Var}$ rule is not
+applicable) we introduce \emph{proof irrelevant} resources, written as linear resources
+within square brackets $[ x{:}\s]$ and lifted to contexts as $[\D]$.
+Proof irrelevant resources
+are linear resources in every sense, meaning they must be used
 exactly once. However, since proof irrelevant resources cannot be
-discarded nor used directly, they have to be consumed \emph{indirectly} via
+discarded or used directly, they have to be consumed \emph{indirectly} via
 $\D$-bound variables, namely, the case binder, or, in mutual exclusion, the linear pattern-bound
 variables.
 
@@ -2622,13 +2623,14 @@ resources in $\D$.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Metatheory of Linear Core\label{sec:main:metatheory}}
 
-We begin by presenting the operational semantics of $\lambda^\pi_\D$,
+We develop the metatheory of Linear Core by first 
+presenting the operational semantics of $\lambda^\pi_\D$,
 consisting of a lazy natural semantics in the
 style of Launchbury~\cite{10.1145/158511.158618}.
 This semantics conveys the expected behavior of an implementation of
-lazy evaluation and is agnostic to any linearity) information.
-Thus, such a semantics is ill-suited for meta-reasoning about
-linearity and so we develop an \emph{instrumented} semantics that is
+lazy evaluation and is agnostic to any linearity information.
+Such a semantics is ill-suited for reasoning about
+linearity and so we develop an \emph{instrumented} linearity-aware semantics that is
 enriched with sufficient information to allow us to establish type
 safety, showing that linearity is preserved. We show that the natural
 and instrumented semantics are bisimilar for well-typed terms and so
@@ -2655,7 +2657,8 @@ standard lazy evaluation while ignoring linearity information.
 % We show that for well-typed terms, the two semantics coincide. 
 %
 %Both semantics are
-The natural semantics is equipped with an environment at assigns values to variables and is
+The natural semantics is equipped with an evaluation environment that
+maps variables to expressions and is
 mutated in order to express evaluation. Terms are explicit about
 their sharing (in the sense of shared reductions in lazy evaluation),
 and so we perform a translation step that makes all sharing explicit
@@ -2683,9 +2686,9 @@ let-binding of variables $\ov{x_i}$.
     \infer[]
     {\Theta : e \Downarrow \Theta' : \lambda y:_\pi \sigma . e' \quad
     \Theta' : e'[x/y] \Downarrow \Theta'' : v }
-    {\Gamma : e~x \Downarrow \Theta'' : v}\\[1.5em]
+    {\Theta : e~x \Downarrow \Theta'' : v}\\[1.5em]
     \infer[]
-    {\Theta : e \Downarrow \Theta' : v}
+    {(\Theta,  x:_\omega \sigma = e) : e \Downarrow \Theta' : v}
     {(\Theta , x:_\omega \sigma = e) : x \Downarrow (\Theta',x:_\omega
     \sigma = v) : v}
     \qquad
@@ -2726,7 +2729,7 @@ let-binding of variables $\ov{x_i}$.
 
   The natural semantics is defined via the relation
 $\Theta : e \Downarrow \Theta' : v$ where $e$ is an expression, $v$ a
-value, $\Theta$ and $\Theta'$ are environments with bindings of the
+value, $\Theta$ and $\Theta'$ are evaluation environments with bindings of the
 form $x:_\omega\sigma = e$ which assigns the expression $e$ to the
 variable $x$ of the given type. The rules are standard, augmenting the
 runtime environment with let-bound expressions which are evaluated
@@ -2763,7 +2766,7 @@ Figure~\ref{fig:linopsem}, defining the judgment $\Gamma ; \Delta \vdash (\Theta
 contexts for expressions in $\Sigma$
 ($\Gamma$ tracks unrestricted and $\Delta$-bound variables, $\Delta$ tracks linear
 assumptions);
-$\Theta$ and $\Theta'$ are runtime environments, consisting of bindings of the form
+$\Theta$ and $\Theta'$ are evaluation environments, consisting of bindings of the form
 $x :_\pi \sigma = e$; $e$ is the expression being evaluated and $v$
 its resulting value, both of type $\sigma$; $\Sigma$ is a list of assignments of the form
 $e :_\pi \tau$ or $x :_\Delta \tau$ which are expressions in which
@@ -2775,8 +2778,8 @@ the binding from the execution environment. Both semantics define
 evaluation relations of the form $a \Downarrow b$, where $a$ and $b$
 are evaluation states. We also rely on a notion
 of partial derivations and partial evaluation (see
-Appendix~\ref{app:opsem}), written $a\Downarrow^* b$ which allows us
-to reason about progress.
+Appendix~\ref{app:opsem}), written $a\Downarrow^* b$, which allows us
+to state and reason about a progress property.
 
 \begin{figure}
 \[
@@ -2883,8 +2886,9 @@ to reason about progress.
 
 \subsection{Type Safety}\label{sec:typesafe}
 
-The $\lambda^\pi_\D$ type system is sound: well-typed programs in Linear Core do not
-get \emph{stuck} and their evaluation preserves linearity.
+Our results rely on a series of lemmas relating linear, unrestricted and
+$\Delta$-bound variables, as well as a lemma characterizing irrelevant
+resources.
 %
 % Additionally, we state our assumptions that outline an isomorphism between
 % using a linear variable $\xl$ and a $\D$-variable $\xD$ that consumes existing
@@ -2945,7 +2949,7 @@ variables with an empty usage environment are equivalent.
 
 \paragraph{Irrelevance}
 %
-As discussed, proof irrelevant resources can only be consumed
+Proof irrelevant resources can only be consumed
 indirectly, essentially encoding that the (non-WHNF) case scrutinee
 resources must be consumed through the case binder or the linear
 pattern-bound variables.
@@ -2996,7 +3000,8 @@ directly.
 % The proof is given in Section~\ref{sec:proof:irrelevance}.
 
 %\subsection{Type safety\label{sec:type-safety-meta}}
-
+% The $\lambda^\pi_\D$ type system is sound: well-typed programs in Linear Core do not
+% get \emph{stuck} and their evaluation preserves linearity.
 We prove type safety of the Linear Core system via the standard type
 preservation and progress results. As is customary, we make use of multiple
 substitution lemmas, one for each kind of variable: unrestricted variables
