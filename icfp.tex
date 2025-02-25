@@ -230,14 +230,14 @@ system against linearity-heavy libraries, including
 % deemed ``wrong'' by the type system design. This idea is captured in
 % the motto ``well-typed programs do not go wrong''.%~\cite{}.
 
-Linear type systems~\cite{cite:linear-logic,cite:barberdill} add expressiveness
-to existing type systems by enforcing that certain resources (e.g.~a
+Linear types~\cite{cite:linear-logic,cite:barberdill} increase the expressiveness
+of type systems by allowing them to enforce that certain resources (e.g.~a
 file handle) are used \emph{exactly once}.
 %
 In programming languages with a linear type system, not using certain resources
 or using them twice is flagged as a type error. For instance, linear types can
 statically enforce correct usage of file or socket descriptors, or
-that heap-allocated memory is freed exactly once (leaks and double-frees become
+that heap-allocated memory is freed exactly once (i.e.,~leaks and double-frees become
 type errors), or even guarantee deadlock freedom in channel-based communication
 protocols~\cite{10.1007/978-3-642-15375-4_16},
 % implement safe
@@ -285,9 +285,9 @@ intermediate language into which Haskell is translated by the Glasgow Haskell Co
 Core is a minimal, explicitly typed, functional language to which multiple
 Core-to-Core optimising transformations are applied during compilation.
 %
-Typechecking Core serves as a sanity check to the correction of source
-transformations, since unsound ones will likely introduce ill-typed
-expressions, making them easy to spot.
+Typechecking Core serves as a sanity check to the correction of such
+transformations, since unsound ones are likely to introduce ill-typed
+expressions. %, making them easy to spot.
 %
 % If a Core program fails to typecheck, the
 % optimising transformations are very likely to have introduced an error in the
@@ -299,11 +299,12 @@ Both Haskell and its intermediate language Core are lazily
         % -- expressions in Haskell are only evaluated when needed.
         As we make clear in this paper, \emph{non-strict evaluation interacts non-trivially with linearity}.
         Intuitively, a syntactic occurrence of a linear resource does not
-        necessarily entail consuming that resource because expressions are not
+        necessarily entail consuming that resource since expressions are not
         necessarily evaluated (i.e., if the expression is not evaluated, the
         resource is not used).
         %
-        Under eager evaluation, a syntactic occurrence of a resource always implies its use at runtime.
+        Under eager evaluation, a syntactic occurrence of a resource
+        along a given control-flow path always implies its use at runtime.
         %
         % Under eager/call-by-value evaluation, the distinction between syntactic uses of a
         % resource and the actual use of linear resources at runtime does not exist --
@@ -363,16 +364,16 @@ such as inlining and $\beta$-reduction, to produce more efficient programs.
 %
 
 Despite the advantages of a linearly typed Core, the status quo is
-that linearity is effectively ignored in Core, despite being checked
+that linearity is effectively ignored in Core, being only checked
 in the source Haskell code. The reason is that the desugaring
 and subsequent Core-to-Core optimising transformations
 eliminate and rearrange most of the syntactic constructs through
 which linearity checking is performed -- often resulting in programs
 that are syntactically very different from the original, especially
-due to the flexibility laziness provides a compiler in the
-optimisations it may perform.
-%
-Crucially, while optimisations aim to preserve the semantics of
+due to the flexibility provided by laziness wrt the
+optimisations a compiler may perform.
+
+While compiler optimisations aim to preserve the semantics of
 programs and therefore a program's linear resource consumption,
 a \emph{naive} syntactic analysis of the optimised programs (as
 performed by the current Core type checker) often fails to recognize
@@ -382,7 +383,7 @@ As a trivial example, let $x$ be a linear resource in the next two expressions,
 where the latter results from inlining $y$ without eliminating the binder. Even
 though the second expression no longer appears linear (as there are now two occurrences
 of $x$), it is indeed linear because the let-bound expression is never
-evaluated, thus $x$ is still consumed exactly once (when it is freed in the let body):
+evaluated and $x$ is still consumed exactly once (when it is freed in the let body):
 % executed, $x$ will be freed exactly once:
 %
 % , \emph{is} linear, as the let bound expression freeing $x$
@@ -427,7 +428,7 @@ contrast to \emph{syntactic} linearity in Haskell, by example
 (Section~\ref{sec:linearity-semantically}).
 
 \item We introduce Linear Core, a non-strict linear language with
-the key features from Core (except for type equality coercions), whose type system
+the key features of Core (except for type equality coercions), whose type system
 accounts for semantic linearity in the presence of laziness. To the
 best of our knowledge, this is the first type system to capture linearity
 semantically in this context
@@ -446,8 +447,8 @@ it accepts the programs resulting from transformations in libraries such as
 
 \end{itemize}
 
-\noindent Additional proofs and definitions are given in Appendices~\ref{app:proofs}
-and~\ref{app:optimisations}.
+\noindent Additional proofs and definitions are given in
+Appendices~\ref{app:proofs},~\ref{app:optimisations} and~\ref{app:opsem}.
 
 %
 % We review background concepts fundamental to our work in
@@ -518,7 +519,7 @@ consumed exactly once. Consequently, whether a program is
 well-typed under a linear type system intrinsically depends on the
 definition of consuming a resource.
 In general, consuming a resource is equated with its 
-\emph{syntactic occurrence} in the program. However, as this section
+\emph{syntactic occurrence} along a control-flow path in the program. However, as this section
 makes clear, in linear type systems for non-strict
 languages, a distinction between using
 resources \emph{syntactically} and \emph{semantically} is needed.
@@ -587,15 +588,17 @@ We argue that a linear type system for a language with non-strict evaluation
 semantics should accept the above program, unlike a linear type system for the
 same program if it were to be evaluated eagerly.
 %
-From this observation, and exploring the connection between computation and evaluation,
+Given this observation, %and exploring the connection between computation and evaluation,
 % it becomes clear that \emph{linearity} and \emph{consuming resources}, in the
 % above example and for programs in general, should be defined in function of the
 % language's evaluation strategy.
 %
-we turn our focus to linearity under \todo{either non strict simpler sentence or say focus on lazy. decide}non-strict evaluation, both since GHC Core is
-lazy and because the distinction between semantically and syntactically
-consuming a resource is only exposed under non-strict semantics.
-%
+we turn our focus to linearity under lazy evaluation since the distinction between semantically and syntactically
+consuming a resource is only exposed under non-strict semantics (and since GHC Core is
+lazy).
+%. 
+
+
 % Indeed, under \emph{call-by-value}, syntactic occurrences of a linear resource
 % directly correspond to semantically using that resource\footnote{With the minor exception
 % of trivial aliases, which don't entail any computation even in
@@ -618,9 +621,10 @@ consuming a resource is only exposed under non-strict semantics.
 
 \subsection{Semantic Linearity by Example\label{sec:semantic-linearity-examples}}
 
-This section aims to build an intuition for semantic linearity through examples
-of Core programs that can be understood as linear but are rejected by Core's
-linear type system (or, in fact, by all linear type systems we are aware of).
+This section aims to develop an intuition for semantic linearity through simple
+Core programs that can be understood as linear but are rejected by Core's
+linear type system (or, in fact, by all linear type systems we are
+aware of prior to this work).
 %
 % Needed?
 %Aligned with our motivation of typing linearity in GHC Core such
@@ -760,11 +764,12 @@ discards or duplicates linear resources.
 
 The example at the start of Section~\ref{sec:linearity-semantically}
 % (similar to towards the end of Section~\ref{sec:intro}),
-trivially showed how linearity can be more subtle in a non-strict language with
-a simple unused let binding.
+highlighted the subtlety of linearity in a non-strict language with
+a single unused let binding.
 %
-Less trivially, a let-bound expression that captures a linear variable
-could be conditionally needed at runtime, depending on the branch taken.
+%Less trivially,
+In general, a let-bound expression that captures a linear variable
+can be conditionally needed at runtime, depending on the branch taken.
 Both optimising transformations (float-out) and programmers used to
 non-strict evaluation are keen to write programs with bindings that are selectively
 used in case alternatives, such as:
@@ -788,7 +793,8 @@ let-bound \lstinline{y} in the \lstinline{False} branch.
 
 That said, a let-bound \lstinline{y} that captures a linear resource
 \lstinline{x} must still be used exactly once, regardless of whether evaluation
-inlines the let (ala call-by-name) or creates a thunk (ala call-by-need):
+inlines the let (\emph{à la} call-by-name) or creates a thunk (\emph{à
+  la} call-by-need):
 %
 % \lstinline{y} must still be used exactly once.  When \lstinline{y} is inlined
 % in the body, this is trivial to see since multiple occurrences of will be 
@@ -839,7 +845,7 @@ consumed because \incode{z} isn't evaluated in the let body, and, thus,
 for let-bound variables, the syntactic occurrence of a variable isn't enough to
 determine whether it is used. Instead, we ought to think of uses of \incode{y}
 as implying using \incode{x}, and therefore uses of \incode{z} imply using
-\incode{x}, however, if neither is used, then \incode{x} isn't used. Since
+\incode{x}, however, if neither are used, then \incode{x} isn't used. Since
 \incode{x} is effectively discarded, this example also violates linearity.
 
 % \parawith{Summary}
@@ -848,8 +854,8 @@ as implying using \incode{x}, and therefore uses of \incode{z} imply using
 In essence, an unused let binding doesn't consume any resources, and a let
 binding used exactly once consumes the resources it captures exactly once. Let
 binders that depend on linear resources must be used \emph{at most once} in
-mutual exclusion with the linear resources themselves (in a sense, let-vars are
-affine in the let-body).
+mutual exclusion with the linear resources themselves (in a sense,
+let-bound variables are affine in the let body).
 %
 %Moreover, if the let binding \incode{y} isn't used in the let body, then the
 %resources it depends on ($\ov{x}$) must still be used -- the binding $y$ is
@@ -876,7 +882,7 @@ continuation is concerned.
 %linear resources they capture.
 %
 The challenge lies in understanding linearity in the definitions of the
-recursive binders and which resources exactly are consumed when one of the
+recursive binders and determining which resources are consumed when one of the
 binders in the recursive group is used.
 %
 % The same way that, in a let body, evaluating
@@ -939,12 +945,12 @@ vacuously.
 % \end{lstlisting}
 % \end{working}
 %
-If \incode{go} doesn't terminate, we aren't able to compute (nor consume) the result
+If \incode{go} doesn't terminate, we aren't able to compute (or consume) the result
 of \incode{f4}, so we do not promise anything about \incode{x} being consumed (\incode{f4}'s
 linearity holds trivially). If it did terminate, it would consume \incode{x} exactly
 once (e.g. if \incode{go} was applied to \incode{True}).
 
-That said, the linear type system must statically reject any recursive group that could
+Naturally, a linear type system must statically reject any recursive group that could
 lead to non-linear resource usage.
 %
 % Determining the linear resources used in a recursive binding might feel
@@ -986,7 +992,7 @@ lead to non-linear resource usage.
 % binding undoubtedly entails using a linear resource more than once.
 %
 For instance, if the linear resource \incode{x} is used in one case alternative and
-recursion used more than once in the other, \incode{x} may end up being consumed
+recursion is used more than once in another, \incode{x} may end up being consumed
 more than once:
 % (thus, \incode{f5} below is ill-typed):
 %
@@ -1012,8 +1018,9 @@ f5 bool x =
 %exactly once, and use that assumption when reasoning about recursive calls such
 %that those linear resources are used exactly once.
 
-To determine whether the usage of a binding from a recursive group is linearly
-valid, we must infer the superset of resources that may end up being consumed
+To determine whether the usage of a binding from a recursive group is
+linear,
+we must infer the superset of resources that may end up being consumed
 in a single use of any of the bindings. For a strongly connected recursive
 group, this superset is the same for all bindings by definition.
 %
@@ -1030,7 +1037,7 @@ occurrences of $x_i$ in its own body are synonymous with using all resources in 
 It follows from the solution being the same for all bindings that
 at most a single variable from the recursive group can be used in the continuation.
 %
-Recursive let bindings in our system are discussed in Section~\ref{sec:recursivelets}.
+The treatment of recursive let bindings in our system is discussed in Section~\ref{sec:recursivelets}.
 
 % Lastly, we extend our single-binding running example to use two mutually recursive bindings that
 % depend a linear resource:
@@ -1069,7 +1076,7 @@ Recursive let bindings in our system are discussed in Section~\ref{sec:recursive
 % inferring it with our implementation.
 
 \paragraph{Case expressions}
-Above, we have observed more programs can be accepted as linear by delaying
+We have observed that more programs can be accepted as linear by delaying
 resource consumption in (recursive) let bindings until they are evaluated.
 On the other hand, \emph{case expressions drive evaluation} -- and, therefore,
 do consume resources.
@@ -1180,7 +1187,7 @@ f7 x y use = case (x,y) of z { (a,b) -> use x y }
 \end{notyet}
 We justify that \incode{f7} is linear by appealing to the fact that 
 the tuple being scrutinized is already in WHNF and so evaluating it will
-not consume either $x$ nor $y$. Even if the tuple was constructed with
+not consume either $x$ or $y$. Even if the tuple was constructed with
 two expressions using $x$ and $y$ respectively, no computation would happen
 since we are not using $a$ or $b$ (thereby never forcing the arguments
 of the tuple). However, if we did use $a$ in the case body, then $x$
@@ -1299,8 +1306,8 @@ also occurring in the scrutinee because this branch is never taken. In fact,
 any arbitrary resource could be used in absurd branches and be understood as
 linear (despite not being seen as such by our system).
 
-Many of these examples might seem unrealistic due to the pattern match on a
-known constructor, but we note that in between the transformations programs
+While many of these examples may seem artificial due to the pattern match on a
+known constructor, we note that in between the transformations programs
 undergo in an optimising compiler, many such programs naturally occur (e.g.,~if
 the definition of a function is inlined in the scrutinee).
 %
@@ -1345,15 +1352,17 @@ the definition of a function is inlined in the scrutinee).
 % \end{figure}
 
 As for \emph{default} case alternatives, also known as \emph{wildcards}
-(written $\_$): matching a wildcard doesn't provide new linearity information,
-unlike a pattern with linear or unrestricted components, however, the
+(written $\_$): matching a wildcard doesn't provide any linearity information,
+% unlike a pattern with linear or unrestricted components,
+%
+but the
 scrutinee is still evaluated to WHNF.
 %
 % so linearity is seen as before but without
 % fully consuming the scrutinee linear resources (in non-linear patterns) nor
 % binding new linear resources (in linear patterns).
 %
-Briefly, when matching a wildcard, if the scrutinee is already in WHNF,
+When matching a wildcard, if the scrutinee is already in WHNF,
 programs that either use the resources from the scrutinee directly, or the case
 binder in that alternative, can be seen as linear. If the scrutinee is not in
 WHNF, we \emph{must} use the case binder, as it's the only way to linearly
@@ -1462,7 +1471,7 @@ consume the result of evaluating the scrutinee.
 In this section, we develop a linear calculus $\lambda_\Delta^\pi$,
 dubbed \emph{Linear Core}, that combines the linearity-in-the-arrow
 and multiplicity polymorphism introduced by Linear
-Haskell~\cite{cite:linearhaskell} with all the key features from GHC's Core
+Haskell~\cite{cite:linearhaskell} with all the key features of GHC's Core
 language (algebraic datatypes, case expressions, and recursive lazy let bindings),
 except for equality coercions, which we discuss as future work in
 Section~\ref{sec:future-work}.
@@ -1470,10 +1479,12 @@ Section~\ref{sec:future-work}.
 
 Linear Core makes precise the various insights discussed in the
 previous section in a linear type system that we prove is sound and guarantees
-linear resource usage at runtime via a standard soundness argument on a
+linear resource usage at runtime.
+This result is obtained (see Section~\ref{sec:main:metatheory}) via a soundness argument on a
 call-by-need big-step operational semantics that becomes stuck when linear
 variables in the runtime heap are used more than once. We show this
-semantics to be bisimilar to a Launchbury-style~\cite{10.1145/158511.158618} natural semantics.
+semantics to be bisimilar to a
+Launchbury-style~\cite{10.1145/158511.158618} natural semantics. 
 %\todo{O que digo aqui sobre a semantica launchbury style?}
 Crucially,
 Linear Core typing accepts all the semantically linear examples
@@ -1500,10 +1511,10 @@ binders with \emph{usage environments} (Section~\ref{sec:usage-environments}).
 The second key idea is to have two distinct rules for case
 expressions, branching on whether the scrutinee is in Weak Head Normal
 Form or not, and using ``proof irrelevance'' to track resources that are no
-longer available but haven't yet been fully consumed
+longer available but have yet to be fully consumed
 (Section~\ref{sec:lc-case-exps}). Additionally, we introduce tags to split
 resources amongst pattern-bound variables and %^as usage environments
-encode that all linear components of a pattern must be used together.
+encode that all linear components of a pattern must be used in tandem.
 
 We present Linear Core's syntax and type system incrementally, starting with the
 judgements and base linear calculi rules (Section~\ref{sec:base-calculi}).
@@ -1628,8 +1639,9 @@ case expressions, and alternatives (in its purpose to type semantic linearity).
 The core rules of the calculus for abstraction and application are similar to
 that of $\lambda^q_\to$ and mostly standard. 
 We note that we handle multiplicity polymorphism differently from
-Linear Haskell in ignoring the multiplicity semiring and, instead,
-conservatively treating all multiplicity polymorphic functions as linear.
+Linear Haskell by ignoring the multiplicity semiring and
+conservatively treating all multiplicity polymorphic functions as
+linear, for the sake of simplicity.
 %
 The full type system is given in Figure~\ref{fig:linear-core-typing-rules},
 with auxiliary judgements given in
@@ -1705,11 +1717,12 @@ linear variables can be used to type them.
 % be unrestricted, i.e. no linear variables can be used to type them.
 % %
 %
-Typing linear and unrestricted function applications separately is less general
-than typing applications of functions of any multiplicity $\pi$ by scaling (per the multiplicity
-semiring) the multiplicities of the resources used to type the argument by $\pi$, however, our objective of typing semantic
-linearity does not benefit much from doing so and therefore we opt for a
-simpler design. 
+Typing linear and unrestricted function application separately is less
+general than typing applications of functions of any multiplicity
+$\pi$ by scaling (per the multiplicity semiring) the multiplicities of
+the resources used to type the argument by $\pi$, however, our
+objective of typing semantic linearity does not benefit much from
+doing so and therefore we opt for a simpler design.
 % \todo{We might only need multiplicities for the case-of-case definition as it
 % exists in ghc?, even then couldn't we do semiring scaling without variables?
 % Also, dislike sentence}
@@ -1718,7 +1731,7 @@ Multiplicity abstractions ($\Lambda I$) introduce a multiplicity variable $p$,
 and construct expressions of type $\forall p.~\s$, i.e. a type universally
 quantified over a multiplicity variable $p$. Again, conservatively, in the body
 of the abstraction, function types annotated with a $p$ variable and datatype
-fields with multiplicity $p$ are typed as thought they are linear functions and
+fields with multiplicity $p$ are typed as though they are linear functions and
 linear fields, because $p$ can be instantiated at both $\omega$ and $1$.
 %\[
 %%\TypeMultLamIntro \quad \TypeMultLamElim
@@ -1744,9 +1757,8 @@ in-scope  multiplicity variable in $\G$.
 
 \subsection{Usage environments\label{sec:usage-environments}}
 
-A \emph{usage environment} $\Delta$ is the means to encode the idea that lazy
-bindings do not consume the resources required by the bound expression when
-defined, but rather when the bindings themselves are consumed.
+A \emph{usage environment} $\Delta$ encodes the idea that lazy
+bindings do not consume resources upon definition, but rather when the bindings themselves are consumed.
 Specifically, we annotate so-called $\Delta$-bound variables with a \emph{usage
 environment} to denote that consuming these $\D$-variables equates to consuming the
 resources in the annotated usage environment $\D$ (which is essentially a
@@ -1757,7 +1769,7 @@ several constructs such as (recursive) let binders, case binders, and case
 pattern variables.
 %
 For example, the let-binder $u$ in the following program is annotated with a
-usage environment $\{x{:}_1\s,y{:}_1\s\}$, the resources that are used in its
+usage environment $\{x{:}_1\s,y{:}_1\s\}$ tracking the resources that are used in its
 body. Thus, in the expression $e$, consuming $u$ will equate to consuming the
 linear resources $x$ and $y$:
 % , as per the insights developed in
@@ -1819,7 +1831,7 @@ variables:
 \[
 \TypeVarDelta
 \]
-The rule reads that an occurrence of a $\Delta$-bound variable is well-typed if
+The rule states that an occurrence of a $\Delta$-bound variable is well-typed if
 the linear environment is made up exactly of the resources in the usage environment of
 that variable.
 %
@@ -1834,14 +1846,14 @@ since that would imply non-linear usage of linear resources.
 
 In Section~\ref{sec:semantic-linearity-examples}, we discussed how linear
 resources used in let-bound expressions are only consumed when the respective
-binders are evaluated in the let-continuation.
+binders are evaluated in the let body.
 %, i.e. linear resources required by let-bound expressions are consumed lazily.
 %
 Moreover, resources captured by a let-bound expression cannot be used
-simultaneously with the let-binder in the continuation, since said
+simultaneously with the let-binder in its body, since said
 resources would end up being consumed more than once and violate (semantic)
 linearity. The binder has to be used in mutual exclusion with the linear
-resources captured by the expression it binds, and either the binding or the
+resources captured by the expression it binds -- either the binding or the
 resources \emph{must} be used.
 
 % Indeed, usage environments allow us to encode mutual exclusivity between
@@ -1854,7 +1866,7 @@ $\Delta$-bound variable.
 %
 Annotating let-bound variables with a usage environment $\D$ delays the
 consumption of resources to when the variables themselves are used and
-guarantees the desired mutual exclusivity property between the binder and the resources:
+guarantees the desired mutual exclusion property between the binder and the resources:
 \[
 \TypeLet
 \]
@@ -1883,10 +1895,10 @@ expression captures, \emph{if} it is used.
 % exception being that the recursive bindings may be defined in terms of
 % themselves, and we may have more than one binding.
 %
-Recursive let bindings also bind expressions lazily, so, similarly, we
-introduce a $\D$-variable for each binding. Resources required to type the
+Recursive let bindings also bind expressions lazily and so
+introduce a $\D$-bound variable for each binding. Resources required to type the
 let-bindings are still available in the body of the let, to later be consumed
-via $\D$-variables, or, directly, if the let-bindings are unused.
+via $\D$-bound variables, or, directly, if the let-bindings are unused.
 %
 %Additionally, as seen in Section
 %\ref{sec:semantic-linearity-examples:recursive-lets}, recursive uses of a
@@ -1922,11 +1934,13 @@ via $\D$-variables, or, directly, if the let-bindings are unused.
 The typing rule for recursive groups of bindings leverages both the assumption
 that all mutually recursive groups are strongly connected and the corollary
 that every binder in such a group must be typed with the same linear context,
-as observed in \ref{sec:semantic-linearity-examples:recursive-lets}.
-Consequently, all bindings of the recursive group are introduced as $\D$-vars
-which all share the same $\D$ environment -- using any one of the bindings in a
+as observed in Section~\ref{sec:semantic-linearity-examples:recursive-lets}.
+Consequently, all bindings of the recursive group are introduced as
+$\D$-bound variables
+sharing the same usage environment -- using any one of the bindings in a
 recursive group entails consuming all resources required to type that same
-group -- so, at most a single binder from the group can be used in the let-continuation.
+group -- so, at most a single binder from the group can be used in the
+let body.
 %\todo{should we say how this means at most once of the binders from the group can be used?} OK
 %, which is also why we can use the same linear resources to type each binder:
 \[
@@ -1994,7 +2008,7 @@ application to be in WHNF. % (if otherwise all sub-expressions
 % (that is why it is called \emph{weak} head normal form).
 %
 Accordingly, these sub-expressions might still depend on linear resources to be
-well-typed (such resources will only be consumed when the sub-expressions themselves are evaluated).
+well-typed and such resources will only be consumed when the sub-expressions themselves are evaluated.
 
 As will be made clear in this section, we need to devise a specialized typing
 for scrutinees that distinguishes between terms
@@ -2019,7 +2033,7 @@ $\ov{\D_i}$ required to type each linear argument individually and return exactl
 that split of the resources; the unrestricted $e_\omega$ expressions must be
 typed on an empty linear environment. A lambda expression is typed with
 the main typing judgement and trivially ``outputs'' the whole $\D$ environment,
-as there is always only a single sub-expression in lambda abstractions (the body).
+as there is always only a single sub-expression in lambda abstractions.
 
 % Precisamos disto?
 % %
@@ -2040,7 +2054,7 @@ as there is always only a single sub-expression in lambda abstractions (the body
 % binder by the scrutinee. 
 
 We highlight that, when evaluating a case expression, computation only
-happens when a scrutinee (not in WHNF) is evaluated to
+happens when a scrutinee that is not in WHNF is evaluated to
 WHNF. Otherwise, evaluation continues in the alternative by
 substituting in the appropriate scrutinee expressions, but without
 having performed any additional computation.
@@ -2049,7 +2063,7 @@ having performed any additional computation.
 %
 In terms of linearity, resources are consumed only if evaluation happens.
 Therefore, resources used to type a scrutinee not in
-WHNF will be consumed when the case is evaluated and no longer be directly available in the case
+WHNF will be consumed when the case is evaluated and will no longer be directly available in the case
 alternatives. Conversely, when the scrutinee is already in WHNF, linear
 resources required to type the scrutinee are still directly available in the
 alternatives.
