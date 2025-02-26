@@ -4577,7 +4577,11 @@ We write $a \Downarrow^* b$ for the relation which holds when $b$ is
 the head of some partial derivation with root $a \Downarrow?$.  We
 write $a \Downarrow^* b$  the partial evaluation relation.
  
-Below, we write $\Theta {\uparrow^1}$ for the linear bindings in evaluation environment $\Theta$ and $\Theta {\uparrow^\omega}$ for all other bindings.
+Below, we write $\Theta {\uparrow^1}$ for the linear bindings in evaluation
+environment $\Theta$ and $\Theta {\uparrow^\omega}$ for all other bindings.
+$\Theta\downarrow^1_e$ refers to the expressions bound to linear variables in
+the runtime environment and $\Theta\downarrow^1_\sigma$ refers to the types of
+those expressions.
 
 
 
@@ -4587,7 +4591,7 @@ Below, we write $\Theta {\uparrow^1}$ for the linear bindings in evaluation envi
    \[
      \begin{array}{lcl}
        \left[ \cdot \mid e \right] & \triangleq & e\\
-       \left[ \Theta , x:_1\sigma = e' \mid e \right] & \triangleq  & [\Theta \mid (\lambda x_1:\sigma . e)~e']\\
+       \left[ \Theta , \xl = e' \mid e \right] & \triangleq  & [\Theta \mid (\lambda \xl . e)~e']\\
        \left[\Theta , x:_\Delta \sigma = e' \mid e \right] & \triangleq & [\Theta \mid \llet{x:_\Delta \sigma = e'}{e}]
     \end{array}
    \]
@@ -4614,7 +4618,36 @@ omit for the sake of presentation.
    Iff $\G ; \D \vdash [ \Theta \mid e] : \sigma$
      then $\G , \Theta\uparrow^{\omega} ; \D , \Theta\uparrow^1 \vdash  (e, \Theta\downarrow^1_e) : \sigma \otimes \bigotimes(\Theta\downarrow^1_\sigma)$
    \end{lemma}
-
+\begin{proof}
+By structural induction on the environment expansion definition.
+\begin{description}
+%\item[Case:] $\left[\cdot \mid e\right] \triangleq e$ Trivial
+\item[Case:] $\left[\Theta, \xl = y \mid e\right] \triangleq \left[\Theta \mid (\lambda \xl. e)~y\right]$
+\begin{tabbing}
+    (1) $\G; \D \vdash \left[ \Theta, \xl = y \mid e \right] : \phi$\\
+    (2) $\G; \D \vdash \left[ \Theta \mid (\lambda \xl. e)~y \right] : \phi$\` by def.\\
+    (3) $\G, \Theta\uparrow^\omega; \D, \Theta\uparrow^1 \vdash ((\lambda \xl. e)~y, \Theta\downarrow^1_e) : \phi \otimes \bigotimes(\Theta\downarrow^1_\sigma)$\` by i.h.\\
+    (4) $Let \D_1,\D_2,\D_3 = \D, \Theta\uparrow^1 $\\
+    (5) $\G, \Theta\uparrow^\omega; \D_3 \vdash \Theta\downarrow^1_e : \bigotimes(\Theta\downarrow^1_\sigma)$\\
+    (6) $\G, \Theta\uparrow^\omega; \D_2 \vdash y : \s$\` by inv\\
+    (7) $\G, \Theta\uparrow^\omega; \D_1 \vdash (\lambda \xl. e) : \s \to \phi $\` by inv\\
+    (8) $\G, \Theta\uparrow^\omega; \D_1, \xl \vdash e : \phi $\` by inv\\
+    (9) $\G, \Theta\uparrow^\omega; \D_1, \D_2, \xl \vdash (e, y) : \phi \otimes \sigma$\` by pair\\
+    (10) $\G, \Theta\uparrow^\omega; \D, \xl \vdash (e, y, \Theta\downarrow^1_e) : \phi \otimes \sigma \otimes \bigotimes(\Theta\downarrow^1_\sigma)$\` by pair\\
+\end{tabbing}
+\item[Case:] $\left[\Theta, \xD = e' \mid e\right] \triangleq \left[\Theta \mid \llet{\xD = e'}{e}\right]$
+\begin{tabbing}
+    (1) $\G; \D' \vdash \left[ \Theta, \xD = y \mid e \right] : \phi$\\
+    (2) $\G; \D' \vdash \left[ \Theta \mid \llet{\xD = e'}{e} \right] : \phi$\` by def.\\
+    (3) $\G, \Theta\uparrow^\omega; \D', \Theta\uparrow^1 \vdash (\llet{\xD = e'}{e}, \Theta\downarrow^1_e) : \phi \otimes \bigotimes(\Theta\downarrow^1_\sigma)$\` by i.h.\\
+    (4) $Let \D,\D_2,\D_3 = \D', \Theta\uparrow^1 $\\
+    (5) $\G, \Theta\uparrow^\omega; \D_3 \vdash \Theta\downarrow^1_e : \bigotimes(\Theta\downarrow^1_\sigma)$\\
+    (6) $\G, \Theta\uparrow^\omega; \D \vdash e' : \s$\` by inv on let\\
+    (7) $\G, \Theta\uparrow^\omega, \xD; \D,\D_2 \vdash e : \phi $\` by inv on let\\
+    (8) $\G, \Theta\uparrow^\omega, \xD; \D,\D_2,\D_3 \vdash (e, \Theta\downarrow^1_e) : \phi \otimes \bigotimes(\Theta\downarrow^1_\sigma)$\` by pair\\
+\end{tabbing}
+\end{description}
+\end{proof}
 
 
 \subsection{Bisimulation}
