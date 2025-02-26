@@ -2333,7 +2333,7 @@ discarded or duplicated (e.g. via the case binder).
 When the scrutinee is not in WHNF, it is not statically known which resources
 will have been consumed after evaluating said scrutinee, or which
 are transferred into the branch continuation, e.g. as in $\ccase{f\ x}{z\ \{K\
-a \rightarrow e\}}$ where $f$ is defined as $f = K$:
+a \rightarrow e\}}$:
 \begin{enumerate}
 
     \item Cases with non-WHNF scrutinees must be typed such that no resource
@@ -2345,8 +2345,8 @@ a \rightarrow e\}}$ where $f$ is defined as $f = K$:
     \item On the other hand, since evaluation to WHNF does not guarantee all
     resources are consumed (unless the result matches an
     unrestricted pattern), we must ensure that any resources that transfer from the
-    scrutinee to the alternative are ultimately consumed (in the example,
-    $x$ is not consumed by evaluating the scrutinee).
+    scrutinee to the alternative are ultimately consumed (in the example, $x$
+    is not consumed by evaluating the scrutinee for $f = K$).
 
     Considering (1), we must resort to a more uniform method of guaranteeing we
     ``finish consuming'' the scrutinee. There are only two ways of
@@ -2632,11 +2632,11 @@ lazy evaluation and is agnostic to any linearity information.
 Such a semantics is ill-suited for reasoning about
 linearity and so we develop an \emph{instrumented} linearity-aware semantics that is
 enriched with sufficient information to allow us to establish type
-safety, showing that linearity is preserved. We show that the natural
+safety, thus showing that linearity is preserved. We show that the natural
 and instrumented semantics are bisimilar for well-typed terms and so
 derive type safety in the natural semantics
 (Section~\ref{sec:typesafe}). Finally, we show that multiple optimising
-transformations such as those performed by GHC on (Linear) Core are
+transformations such as those performed by GHC on Linear Core are
 type preserving
 (Section~\ref{sec:optimisations-preserve-types-meta}), and thus
 linearity preserving.
@@ -2659,7 +2659,7 @@ standard lazy evaluation while ignoring linearity information.
 %Both semantics are
 The natural semantics is equipped with an evaluation environment that
 maps variables to expressions and is
-mutated in order to express evaluation. Terms are explicit about
+mutated in order to express evaluation\todo{aqui não seria sharing?}. Terms are explicit about
 their sharing (in the sense of shared reductions in lazy evaluation),
 and so we perform a translation step that makes all sharing explicit
 through let-binders (see Appendix~\ref{app:opsem}).
@@ -2729,11 +2729,11 @@ let-binding of variables $\ov{x_i}$.
 
   The natural semantics is defined via the relation
 $\Theta : e \Downarrow \Theta' : v$ where $e$ is an expression, $v$ a
-value, $\Theta$ and $\Theta'$ are evaluation environments with bindings of the
-form $x:_\omega\sigma = e$ which assigns the expression $e$ to the
-variable $x$ of the given type. The rules are standard, augmenting the
-runtime environment with let-bound expressions which are evaluated
-(only once) if the let-bound variable is forced.
+value, and $\Theta$ and $\Theta'$ are evaluation environments with bindings of
+the form $x:_\omega\sigma = e$ which assigns the expression $e$ to the variable
+$x$ of the given type $\s$. The rules are standard, augmenting the runtime
+environment with let-bound expressions which are evaluated (only once) if the
+corresponding let-bound variable is forced.
 
 
 % The second
@@ -2752,7 +2752,7 @@ of lazy evaluation, it is inconvenient for formal reasoning about
 well-typed linear terms.
 %
 We follow an approach
-similar to that of \cite{cite:linearhaskell}, defining a
+similar to that of \cite{cite:linearhaskell}, defining
 an \emph{instrumented} operational semantics in which linear variables are
 erased from 
 the runtime environment once they are forced, ensuring that any term violating linearity
@@ -2760,16 +2760,16 @@ will result in a stuck state. The semantics is also type-aware and
 carries with it sufficient data to reconstruct typing derivations for
 the purposes of showing type safety.
 
-The semantics is presented in
+The instrumented semantics is presented in
 Figure~\ref{fig:linopsem}, defining the judgment $\Gamma ; \Delta \vdash (\Theta \mid e) \Downarrow (\Theta'
 \mid v) : \sigma , \Sigma$ where $\Gamma$ and $\Delta$ are typing
 contexts for expressions in $\Sigma$
 ($\Gamma$ tracks unrestricted and $\Delta$-bound variables, $\Delta$ tracks linear
 assumptions);
 $\Theta$ and $\Theta'$ are evaluation environments, consisting of bindings of the form
-$x :_\pi \sigma = e$; $e$ is the expression being evaluated and $v$
+$x :_\pi \sigma = e$ or $x :_\Delta \sigma = e$; $e$ is the expression being evaluated and $v$
 its resulting value, both of type $\sigma$; $\Sigma$ is a list of assignments of the form
-$e :_\pi \tau$ or $x :_\Delta \tau$ which are expressions in which
+$e :_\pi \tau$ or $x :_\Delta \tau$\todo{isto não me fez sentido} which are expressions in which
 bindings in $\Theta$ may also be used. This additional data is needed to
 inductively show that the overall evaluation state is well-typed (and
 linearity preserving). The rules mostly mirror those of the natural
@@ -2779,7 +2779,7 @@ evaluation relations of the form $a \Downarrow b$, where $a$ and $b$
 are evaluation states. We also rely on a notion
 of partial derivations and partial evaluation (see
 Appendix~\ref{app:opsem}), written $a\Downarrow^* b$, which allows us
-to state and reason about a progress property.
+to state and reason about a progress property.\todo{Na semantica O omega e 1 ainda estão separados, é assim?}
 
 \begin{figure}
 \[
@@ -3288,48 +3288,47 @@ they are chained in the compiler pipeline to expose optimisation opportunities.
 
 \paragraph{Reverse Binder Swap\label{sec:reverse-binder-swap-considered-harmful}}
 
-\todo{UPDATE}
-Finally, we discuss the special case of scrutinizing a
-single variable $x$, e.g.:
-$
-\lambda x.~\ccase{x}{\_ \to x}
-$. 
-It might seem as though this function is linear:
-%begin{itemize}
-% \item
-if the argument instantiating $x$ is in WHNF, then scrutinizing it is a no-op, and returning $x$
-just returns the resource intact;
-% \item
-if the argument instantiating $x$ is not in WHNF, then scrutinizing it evaluates it to WHNF, and returning
-$x$ returns the result of evaluating $x$ that still had to be consumed exactly
-once.
-%\end{itemize}
-However, in practice, this program's linearity can only be determined by
-further analysis on the non-strict evaluation strategy. If linear
-function applications are $\beta$-reduced \emph{call-by-name}
-(often desirable, as linear functions are known to use their argument exactly
-once)
-% and thus call-by-name reduction will definitely not duplicate computation
-while the example function is considered linear, then such an application might
-duplicate linear resources during evaluation. For instance:
-\[
-\begin{array}{l}
-(\lambda x.~\ccase{x}{\_ \to x})~(free~x)
-\Longrightarrow_{CBN}
-\ccase{free~x}{\_ \to free~x}
-\end{array}
-\]
-On the other hand, if linear function applications are reduced
-\emph{call-by-need}, the above example would instead be semantically linear
-because the result of freeing $x$ would be bound to some $y$ first.
+%Finally, we discuss the special case of scrutinizing a
+%single variable $x$, e.g.:
+%$
+%\lambda x.~\ccase{x}{\_ \to x}
+%$. 
+%It might seem as though this function is linear:
+%%begin{itemize}
+%% \item
+%if the argument instantiating $x$ is in WHNF, then scrutinizing it is a no-op, and returning $x$
+%just returns the resource intact;
+%% \item
+%if the argument instantiating $x$ is not in WHNF, then scrutinizing it evaluates it to WHNF, and returning
+%$x$ returns the result of evaluating $x$ that still had to be consumed exactly
+%once.
+%%\end{itemize}
+%However, in practice, this program's linearity can only be determined by
+%further analysis on the non-strict evaluation strategy. If linear
+%function applications are $\beta$-reduced \emph{call-by-name}
+%(often desirable, as linear functions are known to use their argument exactly
+%once)
+%% and thus call-by-name reduction will definitely not duplicate computation
+%while the example function is considered linear, then such an application might
+%duplicate linear resources during evaluation. For instance:
+%\[
+%\begin{array}{l}
+%(\lambda x.~\ccase{x}{\_ \to x})~(free~x)
+%\Longrightarrow_{CBN}
+%\ccase{free~x}{\_ \to free~x}
+%\end{array}
+%\]
+%On the other hand, if linear function applications are reduced
+%\emph{call-by-need}, the above example would instead be semantically linear
+%because the result of freeing $x$ would be bound to some $y$ first.
+%%
+%The system we present in the next section does accept this function
+%scrutinizing a variable as linear, as our operational semantics are
+%call-by-need.
+%This interaction between evaluation and linearity is considered specifically in the
+%reverse binder swap transformation discussed in
+%Section~\ref{sec:optimisations-preserve-types-meta}.\todo{Figure out precisely reverse binder swap proof and reevaluate}
 %
-The system we present in the next section does accept this function
-scrutinizing a variable as linear, as our operational semantics are
-call-by-need.
-This interaction between evaluation and linearity is considered specifically in the
-reverse binder swap transformation discussed in
-Section~\ref{sec:optimisations-preserve-types-meta}.\todo{Figure out precisely reverse binder swap proof and reevaluate}
-
 
 Reverse binder swap is dual to the binder swap transformation, substituting
 occurrences of the case binder $z$ by the scrutinee in the special case when
@@ -3338,32 +3337,41 @@ the scrutinee is a variable $x$.
 % his is dual to what the binder swap transformation
 % does in hope of eliminating multiple uses of $x$ (allowing for inlining). 
 By using the scrutinee $x$ instead of the case binder, we might be able to
-float out expressions from the alternative using the case binder. For example,
-we might float an expensive computation involving $z$ out of the case
-alternative, where $z$ is now out of scope:
+float out expressions from the alternative using the case binder:
+\[
+    \ccase{x}{z~\{\rho \rightarrow e\}} \Rightarrow \ccase{x}{z~\{\rho \rightarrow e[x/z]\}}
+\]
 
-{\small\[
-\begin{array}{l}
-(\lambda x.~\lletrec{go~y = \ccase{x}{z~\{(a,b) \to \ E[expensive~z] \} }}{\dots})
-\Longrightarrow_\textrm{Reverse binder swap}\\
-(\lambda x.~\lletrec{go~y = \ccase{x}{z~\{(a,b) \to E[expensive~x] \} }}{\dots})
-\Longrightarrow_\textrm{Commuting case-let}\\
-\lambda x.~\llet{t = \mathit{expensive}~x}{(\lletrec{go~y = \ccase{x}{z~\{(a,b) \to E[t] \} }}{\dots})}\\
-\end{array}
-\]}
-
-\noindent If $go$ is compiled into a loop, we only compute
-$\mathit{expensive}~x$ once instead of in every loop iteration.
-
+%For example, we might float an expensive computation involving $z$ out of the
+%case alternative, where $z$ is now out of scope:
+%
+%{\small\[
+%\begin{array}{l}
+%(\lambda x.~\lletrec{go~y = \ccase{x}{z~\{(a,b) \to \ E[expensive~z] \} }}{\dots})
+%\Longrightarrow_\textrm{Reverse binder swap}\\
+%(\lambda x.~\lletrec{go~y = \ccase{x}{z~\{(a,b) \to E[expensive~x] \} }}{\dots})
+%\Longrightarrow_\textrm{Commuting case-let}\\
+%\lambda x.~\llet{t = \mathit{expensive}~x}{(\lletrec{go~y = \ccase{x}{z~\{(a,b) \to E[t] \} }}{\dots})}\\
+%\end{array}
+%\]}
+%
+%\noindent If $go$ is compiled into a loop, we only compute
+%$\mathit{expensive}~x$ once instead of in every loop iteration.
+%
 Even though GHC applies the reverse binder swap transformation in the
-Core-to-Core passes, \emph{this optimisation violates linearity} when considered
-as a transformation \emph{on Linear Core programs} because the result (second program
-above) is ill-typed -- the resource $x$ of the scrutinee not in WHNF is used
-again in an alternative, despite it no longer being available according to our system.
+Core-to-Core passes, this optimisation violates linearity in Linear Core
+because the transformed program is rejected -- the scrutinee $x$, a single
+variable, is not considered to be in WHNF by our system, thus occurrences of
+$x$ in any alternative are ill-typed in it. This is a conservative choice in $\lambda^\pi_\Delta$ for
+typing the subtle case where the scrutinee is a single variable:
 
-An expression in which a variable $x$ occurs both in the case scrutinee and in
-the alternatives (e.g.,~$\ccase{x}{\_ \to x}$) could be considered linear if
-considered in isolation:
+Consider $\ccase{x}{\_ \to x}$. Perhaps surprisingly, this expression can be
+considered semantically linear in a call-by-need calculus but violates
+linearity in a call-by-name one:
+%
+%An expression in which a variable $x$ occurs both in the case scrutinee and in
+%the alternatives (e.g.,~$\ccase{x}{\_ \to x}$) could be considered linear if
+%considered in isolation:
 % \[
 % \G; \xl \vdash \ccase{x}{\_ \to x} : \s
 % \]
@@ -3371,22 +3379,21 @@ considered in isolation:
 % WHNF or an unevaluated thunk.
 % \begin{itemize}
 % \item
-If $x$ refers to an unevaluated expression, then scrutinizing will force the expression
-bound by $x$ to be evaluated to WHNF. In a subsequent use of
-$x$ in the alternatives, $x$ refers to the evaluated scrutinee in WHNF, which
-must be consumed. Since $x$ is just another name (like the case binder) for the
-scrutinee in WHNF, we may use it instead of the case binder or pattern
-variables.
+Under call-by-need, if $x$ refers to an unevaluated expression, scrutinizing it forces the expression
+bound by $x$ to WHNF. In a subsequent use of
+$x$ in an alternative, $x$ refers to the already evaluated scrutinee in WHNF.
+Since $x$ is just another name (like the case binder) for the scrutinee in
+WHNF, its use is also valid in the alternatives.
 %
-On the other hand, if $x$ already refers to an expression evaluated to WHNF, then
-scrutinizing it in a case expression is a no-op, thus we may use it again (in
-mutual exclusion with the case binder and pattern variables).
+Dually, if $x$ refers to an expression already in WHNF, no evaluation takes
+place and $x$ is still just another name for the scrutinee in WHNF.
 
-However, allowing this expression to be linear makes $\lambda^\pi_\Delta$ unsound!
-Consider the function application $(\lambda x.~\ccase{x}{\_ \to x})~(use~y)$
-where $y$ is a free linear variable, and assume $\lambda x.~\ccase{x}{\_ \to x}$
-to be a linear function. According to $\lambda^\pi_\Delta$'s call-by-name
-$\beta$-reduction, we have:
+However, under call-by-name, evaluation of $x$ is not shared:
+%However, allowing this expression to be linear makes $\lambda^\pi_\Delta$ unsound!
+%Consider the function application $(\lambda x.~\ccase{x}{\_ \to x})~(use~y)$
+%where $y$ is a free linear variable, and assume $\lambda x.~\ccase{x}{\_ \to x}$
+%to be a linear function. According to $\lambda^\pi_\Delta$'s call-by-name
+%$\beta$-reduction, we have:
 \[
 \begin{array}{l}
 (\lambda x.~\ccase{x}{\_ \to x})~(use~y)
@@ -3394,11 +3401,10 @@ $\beta$-reduction, we have:
 \ccase{use~y}{\_ \to use~y}
 \end{array}
 \]
-After the reduction, $y$ is a linear variable \emph{consumed} in the scrutinee
-of the case that also occurs in the case alternative -- the resource
-$y$ is being effectively duplicated.
+After the reduction, $y$ is a linear variable consumed both in the scrutinee
+and in the case alternative -- $y$ has been duplicated!
 %
-If the application were instead reduced with call-by-need
+If the application is instead reduced call-by-need, $y$ is not duplicated:
 \[
 \begin{array}{l}
 (\lambda x.~\ccase{x}{\_ \to x})~(use~y)
@@ -3406,31 +3412,49 @@ If the application were instead reduced with call-by-need
 \llet{x = use~y}{\ccase{x}{\_ \to x}}
 \end{array}
 \]
-then the computation using $y$ would be let-bound, and $y$ would be used as a
-scrutinee variable, which preserves semantic linearity.
+%then the computation using $y$ would be let-bound, and $y$ would be used as a
+%scrutinee variable, which preserves semantic linearity.
 
-For an optimising compiler such as GHC, the reverse binder swap transformation
-violating linearity in Linear Core is relevant because optimising
-compilers do not necessarily allocate a binding/use call-by-need for
-every function application -- our result shows that failing to do so
-when calling a function such as the one above is \emph{unsound}.
+In an optimising compiler such as GHC, there is no definitive evaluation
+strategy. It is mostly up to heuristics to determine what to inline
+\emph{à la} call-by-name and what to create let-bindings for \emph{à
+la} call-by-need.
 %
-In an optimising compiler, a binding may be deemed unnecessary if the function
-argument is inferred to be used exactly once. Linearity can play a
-(non-heuristic) role in this inference, for a linear function uses its
-argument exactly once by definition.
+In this flexible evaluation setting, we highlight the reverse binder swap is
+only a linearity-preserving transformation as long as a linear variable with
+more than one occurrence is never substituted for an expression with free
+linear variables.
+%
+%This is unfortunately at odds with
+%Moreover, allowing the reverse binder swap also challenges the 
+%
+%It additionally challenges the non-heuristic property that linear variables can
+%be unconditionally inlined.......
+
+%the aggressive inlining passes blur evaluation
+%there is no definitive evaluation
+%strategy in the sense functional compilers use both when agressively inline
+%expressions \emph{à la} call-by-name.
+%call-by-need for
+%every function application -- our result shows that failing to do so
+%when calling a function such as the one above is \emph{unsound}.
+%
+%In an optimising compiler, a binding may be deemed unnecessary if the function
+%argument is inferred to be used exactly once. Linearity can play a
+%(non-heuristic) role in this inference, for a linear function uses its
+%argument exactly once by definition.
 %
 % Since the compiler may leverage this information (we
 % briefly discuss \emph{linearity-influenced optimisations} in
 % Section~\ref{sec:discussion}).
 %
-However, it is incompatible to both type expressions like $(\lambda
-x.~\ccase{x}{\_ \to x})$ as linear functions and consider
-call-by-name $\beta$-reduction of linear functions unconditionally
-safe (without risk of duplicating resources nor work).
+%However, it is incompatible to both type expressions like $(\lambda
+%x.~\ccase{x}{\_ \to x})$ as linear functions and consider
+%call-by-name $\beta$-reduction of linear functions unconditionally
+%safe (without risk of duplicating resources nor work).
 %
-Furthermore, considering such an use of $x$ to be linear also makes inlining of
-linear let bindings no longer unconditionally safe.
+%Furthermore, considering such an use of $x$ to be linear also makes inlining of
+%linear let bindings no longer unconditionally safe.
 
 % $\beta$-reduction reduces an application of a linear function using
 % call-by-name -- If we know the argument is used exactly once, a binding to
