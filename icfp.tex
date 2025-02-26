@@ -2659,7 +2659,7 @@ standard lazy evaluation while ignoring linearity information.
 %Both semantics are
 The natural semantics is equipped with an evaluation environment that
 maps variables to expressions and is
-mutated in order to express evaluation\todo{aqui não seria sharing?}. Terms are explicit about
+mutated in order to express shared evaluation. Terms are explicit about
 their sharing (in the sense of shared reductions in lazy evaluation),
 and so we perform a translation step that makes all sharing explicit
 through let-binders (see Appendix~\ref{app:opsem}).
@@ -2769,7 +2769,7 @@ assumptions);
 $\Theta$ and $\Theta'$ are evaluation environments, consisting of bindings of the form
 $x :_\pi \sigma = e$ or $x :_\Delta \sigma = e$; $e$ is the expression being evaluated and $v$
 its resulting value, both of type $\sigma$; $\Sigma$ is a list of assignments of the form
-$e :_\pi \tau$ or $x :_\Delta \tau$\todo{isto não me fez sentido} which are expressions in which
+$e : \tau$ which are expressions in which
 bindings in $\Theta$ may also be used. This additional data is needed to
 inductively show that the overall evaluation state is well-typed (and
 linearity preserving). The rules mostly mirror those of the natural
@@ -2819,9 +2819,10 @@ to state and reason about a progress property.\todo{Na semantica O omega e 1 ain
      
        \infer[]
     {\Gamma ; \Delta  \vdash (\Theta  , x:_{\Delta'} \sigma = e\mid e)
-    \Downarrow (\Theta' \mid v) : \sigma , \Sigma}
+    \Downarrow (\Theta' \mid v) : \sigma , \Sigma \and \D'' = \D' \setminus (\Theta \setminus \Theta')}
     {\Gamma ; \Delta \vdash (\Theta , x:_{\Delta'} \sigma = e \mid x)
-      \Downarrow (\Theta' , x:_{\Delta''} \sigma = v \mid v) : \sigma, \Sigma}
+      \Downarrow (\Theta' , x:_{\Delta''} \sigma = v \mid v) : \sigma,
+    \Sigma }
     \\[1.5em]
            \infer[]
     {\Gamma ;\Delta  \vdash (\Theta \mid e)
@@ -2871,11 +2872,11 @@ to state and reason about a progress property.\todo{Na semantica O omega e 1 ain
     {% (\Gamma, \overline{x_i:_\omega \sigma_i = e_i}) : e_1 \Downarrow \Theta_1
     % : v_1 \dots  (\Gamma, \overline{x_i:_\omega \sigma_i = e_i}) : e_n
     % \Downarrow \Theta_n : v_n \quad
-    \Gamma ; \Delta \vdash (\Theta, \overline{x_i:_\omega \sigma_i =
+    \Gamma ; \Delta \vdash (\Theta, \overline{x_i:_{\Delta'} \sigma_i =
     e_i} \mid e' )\Downarrow (\Theta'
     \mid v) : \tau
     }
-    {\Gamma ;\Delta \vdash (\Theta \mid \lletrec{\overline{x_i{:}_{\Delta}\sigma_i = e_i}}{e'})
+    {\Gamma ;\Delta \vdash (\Theta \mid \lletrec{\overline{x_i{:}_{\Delta'}\sigma_i = e_i}}{e'})
     \Downarrow (\Theta' \mid v) : \tau}
 
    \end{array}
@@ -3363,11 +3364,11 @@ Core-to-Core passes, this optimisation violates linearity in Linear Core
 because the transformed program is rejected -- the scrutinee $x$, a single
 variable, is not considered to be in WHNF by our system, thus occurrences of
 $x$ in any alternative are ill-typed in it. This is a conservative choice in $\lambda^\pi_\Delta$ for
-typing the subtle case where the scrutinee is a single variable:
+typing the subtle case where the scrutinee is a single variable.
 
 Consider $\ccase{x}{\_ \to x}$. Perhaps surprisingly, this expression can be
-considered semantically linear in a call-by-need calculus but violates
-linearity in a call-by-name one:
+considered semantically linear under call-by-need but violates
+linearity under call-by-name:
 %
 %An expression in which a variable $x$ occurs both in the case scrutinee and in
 %the alternatives (e.g.,~$\ccase{x}{\_ \to x}$) could be considered linear if
@@ -4327,6 +4328,356 @@ work to apply the ideas from this work to the surface Haskell language.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \appendix
 
+\section{Natural and Instrumented Operational Semantics}\label{app:opsem}
+
+We define a lazy big-step operational semantics for $\lambda_\Delta^\pi$ in the
+style of Launchbury~\cite{10.1145/158511.158618} natural semantics. The semantics is
+equipped with an environment which assigns expressions to variables and is
+mutated in order to express lazy evaluation. Terms are explicit about
+their sharing (in the sense of shared reductions in lazy evaluation),
+and so we perform a translation that makes all sharing explicit
+through let-binders. This translation is presented in Figure~\ref{fig:explicitsharing}.
+We write $\llet{\ov{x_i{:}_{\Delta_i}\sigma = e_i}}{e'}$ for the iterated
+let-binding of variables $\ov{x_i}$.
+\begin{figure}
+\[
+  \begin{array}{lclr}
+    x^* & \triangleq & x\\
+
+    (\Lambda p.~e)^* & \triangleq & \Lambda p.~(e)^*\\
+    (\lambda x:_\pi\sigma .e)^* & \triangleq & \lambda x:_\pi\sigma . (e)^*\\
+    (e~\pi)^* & \triangleq & (e)^*~\pi\\
+    (e~x)^* & \triangleq & (e)^*~x\\
+    (e~e')^* & \triangleq & \llet{x{:}_{\Delta}\sigma =
+                            (e')^*}{(e)^*~x}     \\ &&\qquad \mbox{with
+                            $\Gamma;\Delta' \vdash e :
+                            \sigma\rightarrow_\pi \varphi$} \\ &&\qquad \mbox{and
+                                       $\Gamma;\Delta \vdash e' : \sigma$}\\
+      K~\ov{e_i} & \triangleq & \llet{\ov{x_i:_{\Delta_i} \sigma_i =
+                                   (e_i)^*}}{K~\ov{x_i}} \\ &&
+                                       \qquad\mbox{with
+                                       $\ov{\Gamma;\Delta_i\vdash
+                                       e_i :
+                                       \sigma_i}$}\\                                              
+(\ccase{e}{z{:}_{\Delta}\sigma~\{\overline{\rho\to e'}\}})^* &
+                                                               \triangleq
+                                &
+                                  \ccase{(e)^*}{z{:}_{\Delta}\sigma~\{\overline{\rho\to (e')^*}\}}\\
+    (\llet{x{:}_{\Delta}\sigma = e}{e'}      )^* & \triangleq & \llet{x{:}_{\Delta}\sigma  = (e)^*}{(e')^*}    \\
+    (\lletrec{\overline{x{:}_{\Delta}\sigma = e}}{e'}  )^* & \triangleq &\lletrec{\overline{x{:}_{\Delta}\sigma = (e)^*}}{(e')^*}  
+      \end{array}
+    \]
+    \caption{Explicit Sharing Translation\label{fig:explicitsharing}}
+  \end{figure}
+
+  
+The natural semantics (Figure~\ref{fig:natsemapp}) is defined via the relation
+$\Theta : e \Downarrow \Theta' : v$ where $e$ is an expression, $v$ a
+value, $\Theta$ and $\Theta'$ are environments with bindings of the
+form $x:_\omega\sigma = e$ which assigns the expression $e$ to the
+variable $x$ of the given type.
+
+\begin{figure}
+\[
+  \begin{array}{c}
+    \infer[]
+    {\,}
+    {\Theta : \Lambda p.e \Downarrow \Theta : \Lambda p.e}
+    \qquad
+    \infer[]
+    {\Theta  : e\Downarrow \Theta' : \Lambda p.e' \quad \Theta' :
+    e'[\pi/p]\Downarrow \Theta'' : v}
+    {\Theta : e~\pi\Downarrow \Theta'' : v }\\[1.5em]
+    \infer[]
+    {\,}
+    {\Theta : \lambda x:_\pi \sigma . e \Downarrow \Theta : \lambda x:_\pi \sigma . e }
+    \qquad
+    \infer[]
+    {\Theta : e \Downarrow \Theta' : \lambda y:_\pi \sigma . e' \quad
+    \Theta' : e'[x/y] \Downarrow \Theta'' : v }
+    {\Theta : e~x \Downarrow \Theta'' : v}\\[1.5em]
+    \infer[]
+    {(\Theta , x:_\omega \sigma = e): e \Downarrow \Theta' : v}
+    {(\Theta , x:_\omega \sigma = e) : x \Downarrow (\Theta',x:_\omega
+    \sigma = v) : v}
+    \qquad
+    \infer[]
+    {(\Theta,x:_\omega \sigma = e) : e' \Downarrow \Theta' : v}
+    {\Theta : \llet{x{:}_{\Delta}\sigma = e}{e'}\Downarrow \Theta' : v
+    }\\[1.5em]
+    \infer[]
+    {\,}
+    {\Theta : K~\ov{x_i} \Downarrow \Theta : K~\ov{x_i}}
+    \qquad
+    \infer[]
+    {\Theta : e \Downarrow \Theta' : K~\ov{x_i} \quad
+    \Theta' : e'\ov{[x_i/y_i]}[K~\ov{x_i}/z] \Downarrow \Theta'' : v }
+    {\Theta :
+    \ccase{e}{z{:}_{\Delta'}\sigma~\{{\dots,K~\ov{y_i} \to e', {\dots}}\}}
+    \Downarrow \Theta'' : v}\\[1.5em]
+    \infer[]
+    {\Theta : e \Downarrow \Theta' : K~\ov{x_i} \quad
+    \Theta' : e'[K~\ov{x_i}/z] \Downarrow \Theta'' : v }
+    {\Theta :
+    \ccase{e}{z{:}_{\Delta'}\sigma~\{\dots , \_\to
+    e'}\} \Downarrow \Theta'' : v}
+    \qquad
+    \infer[]
+    {% (\Gamma, \overline{x_i:_\omega \sigma_i = e_i}) : e_1 \Downarrow \Theta_1
+    % : v_1 \dots  (\Gamma, \overline{x_i:_\omega \sigma_i = e_i}) : e_n
+    % \Downarrow \Theta_n : v_n \quad
+    (\Theta, \overline{x_i:_\omega \sigma_i = e_i}) : e' \Downarrow \Theta'
+    : v
+    }
+    {\Theta : \lletrec{\overline{x_i{:}_{\Delta}\sigma_i = e_i}}{e'}
+    \Downarrow \Theta' : v}
+    \end{array}
+  \]
+  \caption{Natural Semantics for $\lambda_\Delta^\pi$\label{fig:natsemapp}}
+\end{figure}
+
+Our instrumented, linearity-aware semantics (akin to that
+of~\cite{cite:linearhaskell})
+is defined in Figure~\ref{fig:instrsemapp}.
+In this semantics, linear variables are erased from
+the runtime environment, ensuring that any term violating linearity
+produces a stuck state. The semantics is defined by
+the judgment $\Gamma ; \Delta \vdash (\Theta \mid e) \Downarrow (\Theta'
+\mid v) : \sigma , \Sigma$ where $\Gamma$ and $\Delta$ are typing judgments
+($\Gamma$ tracks unrestricted variables, $\Delta$ tracks linear
+assumptions) for variables occurring in $\Sigma$;
+$\Theta$ and $\Theta'$ are runtime environments, consisting of bindings of the form
+$x :_\pi \sigma = e$ or $x :_\Delta \sigma = e$ ; $e$ is the expression being evaluated and $v$
+its resulting value, both of type $\sigma$; $\Sigma$ is a list of assignments of the form
+$e : \tau$, which are expressions in which variables in $\Theta$ are
+used.
+
+
+\begin{figure}
+\[
+  \begin{array}{c}
+    \infer[]
+    {\,}
+    {\Gamma;\Delta \vdash (\Theta \mid \Lambda p.e) \Downarrow (\Theta \mid
+    \Lambda p.e) : \forall p . \sigma , \Sigma }
+    \\[1.5em]
+    \infer[]
+    {\Gamma ; \Delta \vdash (\Theta \mid  e) \Downarrow (\Theta' \mid
+    \Lambda p.e') : \forall p . \sigma , \Sigma \quad \Gamma ;\Delta \vdash
+      (\Theta' \mid e'[\pi/p]) \Downarrow (\Theta'' \mid v) : \sigma[\pi/p], \Sigma}
+    {\Gamma ; \Delta \vdash (\Theta \mid e~\pi) \Downarrow (\Theta''
+      \mid v) : \sigma[\pi/p] , \Sigma  }\\[1.5em]
+    \infer[]
+    {\,}
+    {\Gamma ;\Delta \vdash (\Theta \mid \lambda x:_\pi \sigma . e)
+    \Downarrow (\Theta \mid \lambda x:_\pi\sigma .e) : \sigma
+    \rightarrow_\pi \tau,\Sigma }\\[1.5em]
+    \infer[]
+    {\Gamma;\Delta \vdash  (\Theta \mid e) \Downarrow (\Theta' \mid
+    \lambda y:_1 \sigma . e') : \sigma \rightarrow_1 \tau , x:\sigma, \Sigma
+    \quad
+    \Gamma ; \Delta \vdash (\Theta' , y:_{1} \sigma = x \mid e') \Downarrow (\Theta''
+    \mid v) : \tau , \Sigma  }
+    {\Gamma ; \Delta\vdash (\Theta \mid  e~x ) \Downarrow (\Theta''
+    \mid v) : \tau , \Sigma }\\[1.5em]
+        \infer[]
+    {\Gamma;\Delta \vdash  (\Theta \mid e) \Downarrow (\Theta' \mid
+    \lambda y:_\omega \sigma . e') : \sigma \rightarrow_\omega \tau , x:\sigma, \Sigma
+    \quad
+            \Gamma ; \Delta \vdash (\Theta' \mid e'[x/y]) \Downarrow (\Theta''
+    \mid v) : \tau , \Sigma  }
+    {\Gamma ; \Delta\vdash (\Theta \mid  e~x ) \Downarrow (\Theta''
+    \mid v) : \tau , \Sigma }\\[1.5em]
+       \infer[]
+    {\Gamma ; \Delta  \vdash (\Theta, x:_{\Delta'} \sigma = e \mid e)
+    \Downarrow (\Theta' \mid v) : \sigma , \Sigma \\
+      \D'' = \D' \setminus (\Theta \setminus \Theta')
+      }
+    {\Gamma ; \Delta \vdash (\Theta , x:_{\Delta'} \sigma = e \mid x)
+      \Downarrow (\Theta' , x:_{\Delta''} \sigma = v \mid v) : \sigma, \Sigma}
+    \\[1.5em]
+           \infer[]
+    {\Gamma ;\Delta  \vdash (\Theta \mid e)
+    \Downarrow (\Theta' \mid v) : \sigma,\Sigma}
+    {\Gamma ; \Delta \vdash (\Theta , x:_1 \sigma = e \mid x)
+    \Downarrow (\Theta' \mid v) : \sigma,\Sigma}
+    \\[1.5em]
+    
+    \infer[]
+    {\Gamma ;\Delta \vdash (\Theta,x:_{\Delta'} \sigma = e \mid e')
+    \Downarrow (\Theta' \mid v) : \tau,\Sigma}
+    {\Gamma ; \Delta \vdash (\Theta \mid \llet{x{:}_{\Delta'}\sigma =
+    e}{e'})\Downarrow (\Theta' \mid v) : \tau , \Sigma
+    }\\[1.5em]
+    
+    \infer[]
+    {\,}
+    {\Gamma ; \Delta \vdash (\Theta \mid K~\ov{x_i}) \Downarrow
+    (\Theta \mid K~\ov{x_i}) : T , \Sigma}
+    \\[1.5em]
+    
+    \infer[]
+    { K : \ov{ \sigma_i
+    \rightarrow_\omega \sigma_j \lolli} T
+    \\
+    \Gamma, \ov{y_i :_\omega \sigma_i} ;\Delta , \ov{y_j :_1 \sigma_j} \vdash (\Theta \mid e) \Downarrow (\Theta' \mid
+      K~\ov{x_i}) : T , e' : \tau ,\Sigma \\
+    \Gamma ;\Delta \vdash (\Theta' \mid e'\ov{[x_i/y_{i,j}]}[K~\ov{x_i}/z]
+    ) \Downarrow (\Theta'' \mid v) :\tau , \Sigma }
+    {\Gamma ;\Delta \vdash (\Theta \mid
+    \ccase{e}{z{:}_{\Delta'}T~\{{\dots,K~\ov{y_{i,j}} \to e', {\dots} }\}})
+    \Downarrow (\Theta'' \mid  v) : \tau , \Sigma}\\[1.5em]
+
+    
+    \infer[]
+    {K : \ov{ \sigma_i
+    \rightarrow_\omega \sigma_j \lolli} T\\
+    \Gamma ; \Delta, z{:}_1\s \vdash (\Theta \mid e) \Downarrow (\Theta' \mid
+    K~\ov{x_i}) : T , e', \Sigma \quad
+    \Gamma ;\Delta \vdash (\Theta' \mid  e'[K~\ov{x_i}/z])
+    \Downarrow (\Theta'' \mid v) : \tau,\Sigma }
+    {\Gamma ; \Delta \vdash (\Theta \mid 
+    \ccase{e}{z{:}_{\Delta'}T~\{\dots , \_\to
+    e'}\}) \Downarrow (\Theta'' \mid v) : \tau}
+    \\[1.5em]
+
+     \infer[]
+     {% (\Gamma, \overline{x_i:_\omega \sigma_i = e_i}) : e_1 \Downarrow \Theta_1
+     % : v_1 \dots  (\Gamma, \overline{x_i:_\omega \sigma_i = e_i}) : e_n
+     % \Downarrow \Theta_n : v_n \quad
+     (\Gamma ; \Delta \vdash (\Theta, \overline{x_i:_{\Delta'} \sigma_i =
+     e_i} \mid e' )\Downarrow (\Theta'
+     \mid v) : \tau
+     }
+     {\Gamma ;\Delta \vdash (\Theta \mid \lletrec{\overline{x_i{:}_{\Delta'}\sigma_i = e_i}}{e'})
+     \Downarrow (\Theta' \mid v) : \tau}
+
+   \end{array}
+ \]
+ \caption{Instrumented Semantics for $\lambda_\Delta^\pi$\label{fig:instrsemapp}}
+ \end{figure}
+
+ Following~\cite{Gunter1993APA,cite:linearhaskell}, we also consider
+ partial derivations of our semantics in order to be able to state a
+ progress result. Given our set of rules defining judgments of the
+ form $a \Downarrow b$ with ordered premises, we define a total
+ derivation of $a \Downarrow b$ as a tree in the standard way. A
+ partial derivation $a \Downarrow?$ is either a root labelled with $a
+ \Downarrow?$ or an application of a rule matching $a$ on the left of
+ the evaluation arrow, where exactly one of the premises $a'
+ \Downarrow?$ has a partial  derivation, all the premises to the left
+ of $a' \Downarrow?$ have a total derivation, and the premises to the
+ right of $a'\Downarrow?$ are not known yet.
+ %
+
+ By construction, in a partial derivation, there is only one premise
+ $b\Downarrow?$ with no sub-derivation. We call $b$ the head of such a
+ partial derivation.
+We write $a \Downarrow^* b$ for the relation which holds when $b$ is
+the head of some partial derivation with root $a \Downarrow?$.  We
+write $a \Downarrow^* b$  the partial evaluation relation.
+ 
+Below, we write $\Theta {\uparrow^1}$ for the linear bindings in evaluation environment $\Theta$ and $\Theta {\uparrow^\omega}$ for all other bindings.
+
+
+
+ 
+ \begin{definition}[Environment Expansion]
+   We rely on an expansion of a runtime environment $\Theta$ for the evaluation of a term $e$ into a (typed) term, written $[\Theta \mid e]$, defined inductively as follows:
+   \[
+     \begin{array}{lcl}
+       \left[ \cdot \mid e \right] & \triangleq & e\\
+       \left[ \Theta , x:_1\sigma = e' \mid e \right] & \triangleq  & [\Theta \mid (\lambda x_1:\sigma . e)~e']\\
+       \left[\Theta , x:_\Delta \sigma = e' \mid e \right] & \triangleq & [\Theta \mid \llet{x:_\Delta \sigma = e'}{e}]
+    \end{array}
+   \]
+ \end{definition}
+
+
+We note that for the treatment of recursive let groups, environment
+expansion needs to happen for the entire group of let-bound
+variables. This is easily achieved by extending the runtime
+environment with information about recursive let groupings, which we
+omit for the sake of presentation.
+ 
+ \begin{definition}[Well-typed State]
+   We write $\G;\D \vdash \Theta \mid e : \tau,\Sigma$ to denote the following typing judgment:
+
+   \[
+\G ; \D \vdash [ \Theta \mid (e,\mathit{terms}(\Sigma))] : \tau \otimes \bigotimes(\Sigma)
+   \]
+   where $\mathit{terms}(e_1 : \sigma_1 , \dots , e_n : \sigma_n)$ stands for the tuple $(e_1 ,( \dots , (e_n , ())))$ and
+   $\bigotimes(e_1 : \sigma_1 , \dots , e_n : \sigma_n)$ for $\sigma_1 \otimes ( \dots (\sigma_n \otimes ()))$.
+ \end{definition}
+
+ \begin{lemma}
+   Iff $\G ; \D \vdash [ \Theta \mid e] : \sigma$
+     then $\G , \Theta\uparrow^{\omega} ; \D , \Theta\uparrow^1 \vdash  (e, \Theta\downarrow^1_e) : \sigma \otimes \bigotimes(\Theta\downarrow^1_\sigma)$
+   \end{lemma}
+
+
+
+\subsection{Bisimulation}
+
+
+We relate our two operational semantics through a bisimulation,
+allowing us to transfer type safety of the instrumented semantics to
+the lazy big-step semantics. The relation essentially allows the
+execution environment to treat some unrestricted bindings
+of the natural semantics as linear.
+
+\begin{definition}[Bisimulation]
+We define the relation $\gamma(\Theta : e)(\G ; \D \vdash \Theta' \mid
+e' : \tau,\Sigma)$ between a well-typed state and an ordinary state of
+the lazy big-step semantics if $e = e'$ and $\Theta'{\uparrow^\omega}
+\leq \Theta$.
+\end{definition}
+
+\begin{lemma}~\label{lem:naturaltoinstr}
+  \begin{itemize}
+    \item For all $\gamma(\Theta : e)(\G ; \D \vdash \Theta' \mid
+e : \tau,\Sigma)$ such that $\Theta : e \Downarrow \Theta'' : v$
+there exists a well-typed state $\G ; \D \vdash (\Theta''' \mid v) :
+\tau,\Sigma$ such that $\G ; \D \vdash (\Theta' \mid e) \Downarrow
+(\Theta''' \mid v) : \tau,\Sigma$ and $\gamma(\Theta'' : v)(\G ; \D
+\vdash \Theta''' \mid v : \tau,\Sigma)$
+\item For all $\gamma(\Theta : e)(\G ; \D \vdash \Theta' \mid
+e : \tau,\Sigma)$ such that $\Theta : e \Downarrow^* \Theta'' : v$
+there exists a well-typed state $\G ; \D \vdash (\Theta''' \mid v) :
+\tau,\Sigma$ such that $\G ; \D \vdash (\Theta' \mid e) \Downarrow^*
+(\Theta''' \mid v) : \tau,\Sigma$ and $\gamma(\Theta'' : v)(\G ; \D
+\vdash \Theta''' \mid v : \tau,\Sigma)$
+\end{itemize}
+\end{lemma}
+\begin{proof}
+By induction on the given operational semantics rules.
+  \end{proof}
+
+\begin{lemma}~\label{lem:instrtonatural}
+  \begin{itemize}
+\item  For all $\gamma(\Theta : e)(\G ; \D \vdash \Theta' \mid
+e : \tau,\Sigma)$ such that $\G ; \D \vdash (\Theta' \mid e) \Downarrow
+(\Theta'' \mid v) : \tau,\Sigma$, there exists a state $\Theta''' : v$
+such that $\Theta : e \Downarrow \Theta''' : v$ and
+$\gamma(\Theta''' : v)(\G ; \D \vdash (\Theta'' \mid v) :
+\tau,\Sigma)$
+\item For all $\gamma(\Theta : e)(\G ; \D \vdash \Theta' \mid
+e : \tau,\Sigma)$ such that $\G ; \D \vdash (\Theta' \mid e) \Downarrow^*
+(\Theta'' \mid v) : \tau,\Sigma$, there exists a state $\Theta''' : v$
+such that $\Theta : e \Downarrow^* \Theta''' : v$ and
+$\gamma(\Theta''' : v)(\G ; \D \vdash (\Theta'' \mid v) :
+\tau,\Sigma)$
+   \end{itemize}
+ \end{lemma}
+\begin{proof}
+By induction on the given operational semantics rules.
+  \end{proof}
+
+
+  
+
+
+
 \section{Type Safety Proofs}\label{app:proofs}
 
 In the following we write $\Mapsto$ to stand for
@@ -4427,14 +4778,53 @@ By Lemma~\ref{lem:undelta-app}.
 
 \subsection{Type Preservation\label{sec:proof:type-preservation}}
 
-%\input{language-v4/proofs/TypePreservationTheorem}
+% \input{language-v4/proofs/TypePreservationTheorem}
+\begin{theorem}[Type Preservation]\label{thm:typepres}
+  Let $\G ; \D \vdash (\Theta \mid e) \Downarrow (\Theta' \mid v) :
+  \tau , \Sigma$ or $\G ; \D \vdash (\Theta \mid e) \Downarrow^* (\Theta' \mid v) :
+  \tau , \Sigma$.
+  If $\G ; \D \vdash \Theta \mid e : \tau , \Sigma$ then $\G ; \D \vdash \Theta' \mid v : \tau , \Sigma$
+  
+\end{theorem}
+
+We also derive type preservation for the lazy natural semantics.
+
+  \begin{theorem}[Type Preservation]
+For any well-typed $[\Theta \mid e]$, if $\Theta : e \Downarrow
+\Theta' : e'$ or $\Theta : e \Downarrow^* \Theta' : e'$ then we have
+that $[\Theta \mid e']$ is well-typed.
+\end{theorem}
+\begin{proof}
+By Lemma~\ref{lem:naturaltoinstr} and Theorem~\ref{thm:typepres}.
+\end{proof}
 
 \subsection{Progress\label{sec:proof:progress}}
 
 %\input{language-v4/proofs/ProgressTheorem}
 
+\begin{theorem}[Progress]\label{thm:prog}
+Let $\G ; \D \vdash \Theta \mid e : \tau,\Sigma$. Any partial derivation $\G; \D \vdash (\Theta \mid e)
+\Downarrow?,\Sigma$ can be extended. 
+\end{theorem}
 
+\begin{proof}
+ Essentially all cases are standard. The only potential issue is the
+ (linear) variable rule.
+It suffices to show that whenever a variable is evaluated it is
+present in the evaluation environment. This situation is impossible
+since the state
+$\G ; \D \vdash \Theta \mid x : \tau , \Sigma$ where $x$ is absent
+from $\Theta$ is not well-typed and so cannot be the head of a partial
+derivation. 
+\end{proof}
 
+\begin{theorem}[Progress]
+For any partial derivation of $\Theta : e \Downarrow?$, for $[\Theta |
+e]$ well-typed, the derivation can be extended.
+\end{theorem}
+\begin{proof}
+Follows from Lemma~\ref{lem:instrtonatural} and Theorem~\ref{thm:prog}.
+ \end{proof}
 
 
 \section{Optimisations preserve linearity}\label{app:optimisations}
@@ -4487,372 +4877,7 @@ usage environment is empty because $x$ is unrestricted).
 \input{language-v4/proofs/optimizations/BinderSwap}
 
 
-\section{Instrumented Operational Semantics}\label{app:opsem}
 
-In this section we develop a lazy big-step operational semantics for $\lambda_\Delta^\pi$ in the
-style of Launchbury~\cite{10.1145/158511.158618}. The semantics is
-equipped with an environment which assigns values to variables and is
-mutated in order to express lazy evaluation. Terms are explicit about
-their sharing (in the sense of shared reductions in lazy evaluation),
-and so we perform a translation step that makes all sharing explicit
-through let-binders.
-Below we write $\llet{\ov{x_i{:}_{\Delta_i}\sigma = e_i}}{e'}$ for the iterated
-let-binding of variables $\ov{x_i}$.
-\[
-  \begin{array}{lclr}
-    x^* & \triangleq & x\\
-
-    (\Lambda p.~e)^* & \triangleq & \Lambda p.~(e)^*\\
-    (\lambda x:_\pi\sigma .e)^* & \triangleq & \lambda x:_\pi\sigma . (e)^*\\
-    (e~\pi)^* & \triangleq & (e)^*~\pi\\
-    (e~x)^* & \triangleq & (e)^*~x\\
-    (e~e')^* & \triangleq & \llet{x{:}_{\Delta}\sigma =
-                            (e')^*}{(e)^*~x}     \\ &&\qquad \mbox{with
-                            $\Gamma;\Delta' \vdash e :
-                            \sigma\rightarrow_\pi \varphi$} \\ &&\qquad \mbox{and
-                                       $\Gamma;\Delta \vdash e' : \sigma$}\\
-      K~\ov{e_i} & \triangleq & \llet{\ov{x_i:_{\Delta_i} \sigma_i =
-                                   (e_i)^*}}{K~\ov{x_i}} \\ &&
-                                       \qquad\mbox{with
-                                       $\ov{\Gamma;\Delta_i\vdash
-                                       e_i :
-                                       \sigma_i}$}\\                                              
-(\ccase{e}{z{:}_{\Delta}\sigma~\{\overline{\rho\to e'}\}})^* &
-                                                               \triangleq
-                                &
-                                  \ccase{(e)^*}{z{:}_{\Delta}\sigma~\{\overline{\rho\to (e')^*}\}}\\
-    (\llet{x{:}_{\Delta}\sigma = e}{e'}      )^* & \triangleq & \llet{x{:}_{\Delta}\sigma  = (e)^*}{(e')^*}    \\
-    (\lletrec{\overline{x{:}_{\Delta}\sigma = e}}{e'}  )^* & \triangleq &\lletrec{\overline{x{:}_{\Delta}\sigma = (e)^*}}{(e')^*}  
-      \end{array}
-\]
-
-The big-step operational semantics is defined via the relation
-$\Theta : e \Downarrow \Theta' : v$ where $e$ is an expression, $v$ a
-value, $\Theta$ and $\Theta'$ are environments with bindings of the
-form $x:_\omega\sigma = e$ which assigns the expression $e$ to the
-variable $x$ of the given type.
-
-\[
-  \begin{array}{c}
-    \infer[]
-    {\,}
-    {\Theta : \Lambda p.e \Downarrow \Theta : \Lambda p.e}
-    \qquad
-    \infer[]
-    {\Theta  : e\Downarrow \Theta' : \Lambda p.e' \quad \Theta' :
-    e'[\pi/p]\Downarrow \Theta'' : v}
-    {\Theta : e~\pi\Downarrow \Theta'' : v }\\[1.5em]
-    \infer[]
-    {\,}
-    {\Theta : \lambda x:_\pi \sigma . e \Downarrow \Theta : \lambda x:_\pi \sigma . e }
-    \qquad
-    \infer[]
-    {\Theta : e \Downarrow \Theta' : \lambda y:_\pi \sigma . e' \quad
-    \Theta' : e'[x/y] \Downarrow \Theta'' : v }
-    {\Theta : e~x \Downarrow \Theta'' : v}\\[1.5em]
-    \infer[]
-    {(\Theta , x:_\omega \sigma = e): e \Downarrow \Theta' : v}
-    {(\Theta , x:_\omega \sigma = e) : x \Downarrow (\Theta',x:_\omega
-    \sigma = v) : v}
-    \qquad
-    \infer[]
-    {(\Theta,x:_\omega \sigma = e) : e' \Downarrow \Theta' : v}
-    {\Theta : \llet{x{:}_{\Delta}\sigma = e}{e'}\Downarrow \Theta' : v
-    }\\[1.5em]
-    \infer[]
-    {\,}
-    {\Theta : K~\ov{x_i} \Downarrow \Theta : K~\ov{x_i}}
-    \qquad
-    \infer[]
-    {\Theta : e \Downarrow \Theta' : K~\ov{x_i} \quad
-    \Theta' : e'\ov{[x_i/y_i]}[K~\ov{x_i}/z] \Downarrow \Theta'' : v }
-    {\Theta :
-    \ccase{e}{z{:}_{\Delta'}\sigma~\{{\dots,K~\ov{y_i} \to e', {\dots}}\}}
-    \Downarrow \Theta'' : v}\\[1.5em]
-    \infer[]
-    {\Theta : e \Downarrow \Theta' : K~\ov{x_i} \quad
-    \Theta' : e'[K~\ov{x_i}/z] \Downarrow \Theta'' : v }
-    {\Theta :
-    \ccase{e}{z{:}_{\Delta'}\sigma~\{\dots , \_\to
-    e'}\} \Downarrow \Theta'' : v}
-    \qquad
-    \infer[]
-    {% (\Gamma, \overline{x_i:_\omega \sigma_i = e_i}) : e_1 \Downarrow \Theta_1
-    % : v_1 \dots  (\Gamma, \overline{x_i:_\omega \sigma_i = e_i}) : e_n
-    % \Downarrow \Theta_n : v_n \quad
-    (\Theta, \overline{x_i:_\omega \sigma_i = e_i}) : e' \Downarrow \Theta'
-    : v
-    }
-    {\Theta : \lletrec{\overline{x_i{:}_{\Delta}\sigma_i = e_i}}{e'}
-    \Downarrow \Theta' : v}
-    \end{array}
-\]
-
-
-
-We follow an approach
-similar to that of \cite{cite:linearhaskell}, defining a linearity
-aware operational semantics in which linear variables are erased from
-the runtime environment, ensuring that any term violating linearity
-will result in a stuck state. The semantics is type-aware, defined by
-the judgment $\Gamma ; \Delta \vdash (\Theta \mid e) \Downarrow (\Theta'
-\mid v) : \sigma , \Sigma$ where $\Gamma$ and $\Delta$ are typing judgments
-($\Gamma$ tracks unrestricted variables, $\Delta$ tracks linear
-assumptions);
-$\Theta$ and $\Theta'$ are runtime environments, consisting of bindings of the form
-$x :_\pi \sigma = e$; $e$ is the expression being evaluated and $v$
-its resulting value, both of type $\sigma$; $\Sigma$ is a list of assignments of the form
-$e :_\pi \tau$ or $x :_\Delta \tau$ which are expressions in which variables in $\Theta$ are used.
-
-\[
-  \begin{array}{c}
-    \infer[]
-    {\,}
-    {\Gamma;\Delta \vdash (\Theta \mid \Lambda p.e) \Downarrow (\Theta \mid
-    \Lambda p.e) : \forall p . \sigma , \Sigma }
-    \\[1.5em]
-    \infer[]
-    {\Gamma ; \Delta \vdash (\Theta \mid  e) \Downarrow (\Theta' \mid
-    \Lambda p.e') : \forall p . \sigma , \Sigma \quad \Gamma ;\Delta \vdash
-      (\Theta' \mid e'[\pi/p]) \Downarrow (\Theta'' \mid v) : \sigma[\pi/p], \Sigma}
-    {\Gamma ; \Delta \vdash (\Theta \mid e~\pi) \Downarrow (\Theta''
-      \mid v) : \sigma[\pi/p] , \Sigma  }\\[1.5em]
-    \infer[]
-    {\,}
-    {\Gamma ;\Delta \vdash (\Theta \mid \lambda x:_\pi \sigma . e)
-    \Downarrow (\Theta \mid \lambda x:_\pi\sigma .e) : \sigma
-    \rightarrow_\pi \tau,\Sigma }\\[1.5em]
-    \infer[]
-    {\Gamma;\Delta \vdash  (\Theta \mid e) \Downarrow (\Theta' \mid
-    \lambda y:_1 \sigma . e') : \sigma \rightarrow_1 \tau , x:\sigma, \Sigma
-    \quad
-    \Gamma ; \Delta \vdash (\Theta' , y:_{1} \sigma = x \mid e') \Downarrow (\Theta''
-    \mid v) : \tau , \Sigma  }
-    {\Gamma ; \Delta\vdash (\Theta \mid  e~x ) \Downarrow (\Theta''
-    \mid v) : \tau , \Sigma }\\[1.5em]
-        \infer[]
-    {\Gamma;\Delta \vdash  (\Theta \mid e) \Downarrow (\Theta' \mid
-    \lambda y:_\omega \sigma . e') : \sigma \rightarrow_\omega \tau , x:\sigma, \Sigma
-    \quad
-            \Gamma ; \Delta \vdash (\Theta' \mid e'[x/y]) \Downarrow (\Theta''
-    \mid v) : \tau , \Sigma  }
-    {\Gamma ; \Delta\vdash (\Theta \mid  e~x ) \Downarrow (\Theta''
-    \mid v) : \tau , \Sigma }\\[1.5em]
-       \infer[]
-    {\Gamma ; \Delta  \vdash (\Theta, x:_{\Delta'} \sigma = e \mid e)
-    \Downarrow (\Theta' \mid v) : \sigma , \Sigma \\
-      \D'' = \D' \setminus (\Theta \setminus \Theta')
-      }
-    {\Gamma ; \Delta \vdash (\Theta , x:_{\Delta'} \sigma = e \mid x)
-      \Downarrow (\Theta' , x:_{\Delta''} \sigma = v \mid v) : \sigma, \Sigma}
-    \\[1.5em]
-           \infer[]
-    {\Gamma ;\Delta  \vdash (\Theta \mid e)
-    \Downarrow (\Theta' \mid v) : \sigma,\Sigma}
-    {\Gamma ; \Delta \vdash (\Theta , x:_1 \sigma = e \mid x)
-    \Downarrow (\Theta' \mid v) : \sigma,\Sigma}
-    \\[1.5em]
-    
-    \infer[]
-    {\Gamma ;\Delta \vdash (\Theta,x:_{\Delta'} \sigma = e \mid e')
-    \Downarrow (\Theta' \mid v) : \tau,\Sigma}
-    {\Gamma ; \Delta \vdash (\Theta \mid \llet{x{:}_{\Delta'}\sigma =
-    e}{e'})\Downarrow (\Theta' \mid v) : \tau , \Sigma
-    }\\[1.5em]
-    
-    \infer[]
-    {\,}
-    {\Gamma ; \Delta \vdash (\Theta \mid K~\ov{x_i}) \Downarrow
-    (\Theta \mid K~\ov{x_i}) : T , \Sigma}
-    \\[1.5em]
-    
-    \infer[]
-    { K : \ov{ \sigma_i
-    \rightarrow_\omega \sigma_j \lolli} T
-    \\
-    \Gamma, \ov{y_i :_\omega \sigma_i} ;\Delta , \ov{y_j :_1 \sigma_j} \vdash (\Theta \mid e) \Downarrow (\Theta' \mid
-      K~\ov{x_i}) : T , e' : \tau ,\Sigma \\
-    \Gamma ;\Delta \vdash (\Theta' \mid e'\ov{[x_i/y_{i,j}]}[K~\ov{x_i}/z]
-    ) \Downarrow (\Theta'' \mid v) :\tau , \Sigma }
-    {\Gamma ;\Delta \vdash (\Theta \mid
-    \ccase{e}{z{:}_{\Delta'}T~\{{\dots,K~\ov{y_{i,j}} \to e', {\dots} }\}})
-    \Downarrow (\Theta'' \mid  v) : \tau , \Sigma}\\[1.5em]
-
-    
-    \infer[]
-    {K : \ov{ \sigma_i
-    \rightarrow_\omega \sigma_j \lolli} T\\
-    \Gamma ; \Delta, z{:}_1\s \vdash (\Theta \mid e) \Downarrow (\Theta' \mid
-    K~\ov{x_i}) : T , e', \Sigma \quad
-    \Gamma ;\Delta \vdash (\Theta' \mid  e'[K~\ov{x_i}/z])
-    \Downarrow (\Theta'' \mid v) : \tau,\Sigma }
-    {\Gamma ; \Delta \vdash (\Theta \mid 
-    \ccase{e}{z{:}_{\Delta'}T~\{\dots , \_\to
-    e'}\}) \Downarrow (\Theta'' \mid v) : \tau}
-    \\[1.5em]
-
-     \infer[]
-     {% (\Gamma, \overline{x_i:_\omega \sigma_i = e_i}) : e_1 \Downarrow \Theta_1
-     % : v_1 \dots  (\Gamma, \overline{x_i:_\omega \sigma_i = e_i}) : e_n
-     % \Downarrow \Theta_n : v_n \quad
-     (\Gamma ; \Delta \vdash (\Theta, \overline{x_i:_\Delta' \sigma_i =
-     e_i} \mid e' )\Downarrow (\Theta'
-     \mid v) : \tau
-     }
-     {\Gamma ;\Delta \vdash (\Theta \mid \lletrec{\overline{x_i{:}_{\Delta'}\sigma_i = e_i}}{e'})
-     \Downarrow (\Theta' \mid v) : \tau}
-
-   \end{array}
- \]
-
- Following~\cite{Gunter1993APA,cite:linearhaskell}, we also consider
- partial derivations of our semantics in order to be able to state a
- progress result. Given our set of rules defining judgments of the
- form $a \Downarrow b$ with ordered premises, we define a total
- derivation of $a \Downarrow b$ as a tree in the standard way. A
- partial derivation $a \Downarrow?$ is either a root labelled with $a
- \Downarrow?$ or an application of a rule matching $a$ on the left of
- the evaluation arrow, where exactly one of the premises $a'
- \Downarrow?$ has a partial  derivation, all the premises to the left
- of $a' \Downarrow?$ have a total derivation, and the premises to the
- right of $a'\Downarrow?$ are not known yet.
- %
-
- By construction, in a partial derivation, there is only one premise
- $b\Downarrow?$ with no sub-derivation. We call $b$ the head of such a
- partial derivation.
-We write $a \Downarrow^* b$ for the relation which holds when $b$ is
-the head of some partial derivation with root $a \Downarrow?$.  We
-write $a \Downarrow^* b$  the partial evaluation relation.
- 
- We write $\Theta {\uparrow^1}$ for the linear bindings in evaluation environment $\Theta$ and $\Theta {\uparrow^\omega}$ for all other bindings.
-
-
-
- 
- \begin{definition}[Environment Expansion]
-   We rely on an expansion of a runtime environment $\Theta$ for the evaluation of a term $e$ into a (typed) term, written $[\Theta \mid e]$, defined inductively as follows:
-   \[
-     \begin{array}{lcl}
-       \left[ \cdot \mid e \right] & \triangleq & e\\
-       \left[ \Theta , x:_1\sigma = e' \mid e \right] & \triangleq  & [\Theta \mid (\lambda x_1:\sigma . e)~e']\\
-       \left[\Theta , x:_\Delta \sigma = e' \mid e \right] & \triangleq & [\Theta \mid \llet{x:_\Delta \sigma = e'}{e}]
-    \end{array}
-   \]
- \end{definition}
- 
- \begin{definition}[Well-typed State]
-   We write $\G;\D \vdash \Theta \mid e : \tau,\Sigma$ to denote the following typing judgment:
-
-   \[
-\G ; \D \vdash [ \Theta \mid (e,\mathit{terms}(\Sigma))] : \tau \otimes \bigotimes(\Sigma)
-   \]
-   where $\mathit{terms}(e_1 : \sigma_1 , \dots , e_n : \sigma_n)$ stands for the tuple $(e_1 ,( \dots , (e_n , ())))$ and
-   $\bigotimes(e_1 : \sigma_1 , \dots , e_n : \sigma_n)$ for $\sigma_1 \otimes ( \dots (\sigma_n \otimes ()))$.
- \end{definition}
-
- \begin{lemma}
-   Iff $\G ; \D \vdash [ \Theta \mid e] : \sigma$
-     then $\G , \Theta\uparrow^{\omega} ; \D , \Theta\uparrow^1 \vdash  (e, \Theta\downarrow^1_e) : \sigma \otimes \bigotimes(\Theta\downarrow^1_\sigma)$
-   \end{lemma}
-
-\begin{theorem}[Type Preservation]\label{thm:typepres}
-  Let $\G ; \D \vdash (\Theta \mid e) \Downarrow (\Theta' \mid v) :
-  \tau , \Sigma$ or $\G ; \D \vdash (\Theta \mid e) \Downarrow^* (\Theta' \mid v) :
-  \tau , \Sigma$.
-  If $\G ; \D \vdash \Theta \mid e : \tau , \Sigma$ then $\G ; \D \vdash \Theta' \mid v : \tau , \Sigma$
-  
-\end{theorem}
-
-\begin{theorem}[Progress]\label{thm:prog}
-Let $\G ; \D \vdash \Theta \mid e : \tau,\Sigma$. Any partial derivation $\G; \D \vdash (\Theta \mid e)
-\Downarrow?,\Sigma$ can be extended. 
-\end{theorem}
-
-\begin{proof}
- Essentially all cases are standard. The only potential issue is the
- (linear) variable rule.
-It suffices to show that whenever a variable is evaluated it is
-present in the evaluation environment. This situation is impossible
-since the state
-$\G ; \D \vdash \Theta \mid x : \tau , \Sigma$ where $x$ is absent
-from $\Theta$ is not well-typed and so cannot be the head of a partial
-derivation. 
-\end{proof}
-
-
-We relate our two operational semantics through a bisimulation,
-allowing us to transfer type safety of the instrumented semantics to
-the lazy big-step semantics. The relation essentially allows the
-execution environment to treat some unrestricted bindings
-of the natural semantics as linear.
-
-\begin{definition}[Bisimulation]
-We define the relation $\gamma(\Theta : e)(\G ; \D \vdash \Theta' \mid
-e' : \tau,\Sigma)$ between a well-typed state and an ordinary state of
-the lazy big-step semantics if $e = e'$ and $\Theta'{\uparrow^\omega}
-\leq \Theta$
-\end{definition}
-
-\begin{lemma}~\label{lem:naturaltoinstr}
-  \begin{itemize}
-    \item For all $\gamma(\Theta : e)(\G ; \D \vdash \Theta' \mid
-e : \tau,\Sigma)$ such that $\Theta : e \Downarrow \Theta'' : v$
-there exists a well-typed state $\G ; \D \vdash (\Theta''' \mid v) :
-\tau,\Sigma$ such that $\G ; \D \vdash (\Theta' \mid e) \Downarrow
-(\Theta''' \mid v) : \tau,\Sigma$ and $\gamma(\Theta'' : v)(\G ; \D
-\vdash \Theta''' \mid v : \tau,\Sigma)$
-\item For all $\gamma(\Theta : e)(\G ; \D \vdash \Theta' \mid
-e : \tau,\Sigma)$ such that $\Theta : e \Downarrow^* \Theta'' : v$
-there exists a well-typed state $\G ; \D \vdash (\Theta''' \mid v) :
-\tau,\Sigma$ such that $\G ; \D \vdash (\Theta' \mid e) \Downarrow^*
-(\Theta''' \mid v) : \tau,\Sigma$ and $\gamma(\Theta'' : v)(\G ; \D
-\vdash \Theta''' \mid v : \tau,\Sigma)$
-\end{itemize}
-\end{lemma}
-\begin{proof}
-By induction on the given operational semantics rules.
-  \end{proof}
-
-\begin{lemma}~\label{lem:instrtonatural}
-  \begin{itemize}
-\item  For all $\gamma(\Theta : e)(\G ; \D \vdash \Theta' \mid
-e : \tau,\Sigma)$ such that $\G ; \D \vdash (\Theta' \mid e) \Downarrow
-(\Theta'' \mid v) : \tau,\Sigma$, there exists a state $\Theta''' : v$
-such that $\Theta : e \Downarrow \Theta''' : v$ and
-$\gamma(\Theta''' : v)(\G ; \D \vdash (\Theta'' \mid v) :
-\tau,\Sigma)$
-\item For all $\gamma(\Theta : e)(\G ; \D \vdash \Theta' \mid
-e : \tau,\Sigma)$ such that $\G ; \D \vdash (\Theta' \mid e) \Downarrow^*
-(\Theta'' \mid v) : \tau,\Sigma$, there exists a state $\Theta''' : v$
-such that $\Theta : e \Downarrow^* \Theta''' : v$ and
-$\gamma(\Theta''' : v)(\G ; \D \vdash (\Theta'' \mid v) :
-\tau,\Sigma)$
-   \end{itemize}
- \end{lemma}
-\begin{proof}
-By induction on the given operational semantics rules.
-  \end{proof}
-
-
-  We now derive type safety for the lazy natural semantics.
-
-  \begin{theorem}[Type Preservation]
-For any well-typed $[\Theta \mid e]$, if $\Theta : e \Downarrow
-\Theta' : e'$ or $\Theta : e \Downarrow^* \Theta' : e'$ then we have
-that $[\Theta \mid e']$ is well-typed.
-\end{theorem}
-\begin{proof}
-By Lemma~\ref{lem:naturaltoinstr} and Theorem~\ref{thm:typepres}.
-\end{proof}
-
-\begin{theorem}[Progress]
-For any partial derivation of $\Theta : e \Downarrow?$, for $[\Theta |
-e]$ well-typed, the derivation can be extended.
-\end{theorem}
-\begin{proof}
-Follows from Lemma~\ref{lem:instrtonatural} and Theorem~\ref{thm:prog}.
- \end{proof}
 
 % G ; D |- (Theta | e x) \Downarrow (Theta'' | v) : tau, Sigma
 
