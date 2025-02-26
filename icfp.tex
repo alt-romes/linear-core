@@ -4000,7 +4000,7 @@ language(s), which presents its own challenges.
 %
 However, the implementation of Linear Haskell in GHC does modify and extend Core
 with linearity/multiplicity annotations. Core's type system is unable to type
-\emph{semantic} linearity of programs in the sense elaborated in our work,
+semantic linearity of programs in the sense elaborated in our work,
 which results in Core rejecting most linear programs resulting from optimising
 transformations that leverage the non-strict semantics of Core.
 %
@@ -4011,7 +4011,7 @@ optimisations GHC.
 Linear Core can also be seen as a system that validates the programs written in
 Linear Haskell and are compiled by GHC, by guaranteeing (through typing) that
 linear resources are still used exactly once throughout the optimising
-transformations.
+transformations.\todo{add part about operational semantics and proof being similar to them}
 
 \paragraph{Linear Mini-Core\label{sec:linear-mini-core}}
 
@@ -4027,9 +4027,9 @@ We draw from Linear Mini-Core the rule for non-recursive let expressions and
 how let-bound variables are annotated with a usage environment. However, our
 work further explores the interaction of laziness with linearity in depth, and
 diverges significantly in rules for typing other constructs, notably, case expressions and
-case alternatives. Furthermore, unlike Mini-Core, we prove type safety of our
-system and that multiple optimising transformations, when applied to Linear
-Core programs, preserve linearity as understood by the system.
+case alternatives. Furthermore, unlike Mini-Core, we prove Linear Core is type
+safe, guarantees linear resource usage, and that multiple optimising
+transformations, when applied to Linear Core programs, preserve linearity.
 
 % \subsection{OutsideIn(X)\label{related-work-gadts}}
 % 
