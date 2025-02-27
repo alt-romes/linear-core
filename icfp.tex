@@ -123,17 +123,17 @@
 \subtitle{Type-checking Linearity in GHC Core}
 
 \author{Rodrigo Mesquita}
-\affiliation{
-  \department{Departamento de Inform\'{a}tica}
-  \institution{FCT-NOVA, Universidade Nova de Lisboa}
+%\affiliation{
+  %\department{Departamento de Inform\'{a}tica}
+  %\institution{FCT-NOVA, Universidade Nova de Lisboa}
   %\city{City}
-  \country{Portugal}}
+  %\country{Portugal}}
 \affiliation{
    \institution{Well-Typed LLP}
   %\city{City}
   %\country{Something}
  }
- \email{xxx@yyy.com}
+ \email{rodrigo@well-typed.com}
 \author{Bernardo Toninho}
 \orcid{0000-0002-0746-7514}
 \affiliation{
@@ -2848,7 +2848,7 @@ to state and reason about a progress property.
     { K : \ov{ \sigma_i
     \rightarrow_\omega \sigma_j \lolli} T
     \\
-    \Gamma, \ov{y_i :_\omega \sigma_i} ;\Delta , \ov{y_j :_1 \sigma_j} \vdash (\Theta \mid e) \Downarrow (\Theta' \mid
+    \Gamma, z{:}_{\ov{y_j}}T, \ov{y_i :_\omega \sigma_i} ;\Delta , \ov{y_j :_1 \sigma_j} \vdash (\Theta \mid e) \Downarrow (\Theta' \mid
       K~\ov{x_i}) : T , e' : \tau ,\Sigma \\
     \Gamma ;\Delta \vdash (\Theta' \mid e'\ov{[x_i/y_{i,j}]}[K~\ov{x_i}/z]
     ) \Downarrow (\Theta'' \mid v) :\tau , \Sigma }
@@ -4523,7 +4523,7 @@ used.
     { K : \ov{ \sigma_i
     \rightarrow_\omega \sigma_j \lolli} T
     \\
-    \Gamma, \ov{y_i :_\omega \sigma_i} ;\Delta , \ov{y_j :_1 \sigma_j} \vdash (\Theta \mid e) \Downarrow (\Theta' \mid
+    \Gamma, z{:}_{\ov{y_j}}T, \ov{y_i :_\omega \sigma_i} ;\Delta , \ov{y_j :_1 \sigma_j} \vdash (\Theta \mid e) \Downarrow (\Theta' \mid
       K~\ov{x_i}) : T , e' : \tau ,\Sigma \\
     \Gamma ;\Delta \vdash (\Theta' \mid e'\ov{[x_i/y_{i,j}]}[K~\ov{x_i}/z]
     ) \Downarrow (\Theta'' \mid v) :\tau , \Sigma }
@@ -4580,7 +4580,11 @@ We write $a \Downarrow^* b$ for the relation which holds when $b$ is
 the head of some partial derivation with root $a \Downarrow?$.  We
 write $a \Downarrow^* b$  the partial evaluation relation.
  
-Below, we write $\Theta {\uparrow^1}$ for the linear bindings in evaluation environment $\Theta$ and $\Theta {\uparrow^\omega}$ for all other bindings.
+Below, we write $\Theta {\uparrow^1}$ for the linear bindings in evaluation
+environment $\Theta$ and $\Theta {\uparrow^\omega}$ for all other bindings.
+$\Theta\downarrow^1_e$ refers to the expressions bound to linear variables in
+the runtime environment and $\Theta\downarrow^1_\sigma$ refers to the types of
+those expressions.
 
 
 
@@ -4590,7 +4594,7 @@ Below, we write $\Theta {\uparrow^1}$ for the linear bindings in evaluation envi
    \[
      \begin{array}{lcl}
        \left[ \cdot \mid e \right] & \triangleq & e\\
-       \left[ \Theta , x:_1\sigma = e' \mid e \right] & \triangleq  & [\Theta \mid (\lambda x_1:\sigma . e)~e']\\
+       \left[ \Theta , \xl = e' \mid e \right] & \triangleq  & [\Theta \mid (\lambda \xl . e)~e']\\
        \left[\Theta , x:_\Delta \sigma = e' \mid e \right] & \triangleq & [\Theta \mid \llet{x:_\Delta \sigma = e'}{e}]
     \end{array}
    \]
@@ -4613,11 +4617,40 @@ omit for the sake of presentation.
    $\bigotimes(e_1 : \sigma_1 , \dots , e_n : \sigma_n)$ for $\sigma_1 \otimes ( \dots (\sigma_n \otimes ()))$.
  \end{definition}
 
- \begin{lemma}
+ \begin{lemma}~\label{lem:unwrapenv}
    Iff $\G ; \D \vdash [ \Theta \mid e] : \sigma$
      then $\G , \Theta\uparrow^{\omega} ; \D , \Theta\uparrow^1 \vdash  (e, \Theta\downarrow^1_e) : \sigma \otimes \bigotimes(\Theta\downarrow^1_\sigma)$
    \end{lemma}
-
+\begin{proof}
+By structural induction on the environment expansion definition.
+\begin{description}
+%\item[Case:] $\left[\cdot \mid e\right] \triangleq e$ Trivial
+\item[Case:] $\left[\Theta, \xl = y \mid e\right] \triangleq \left[\Theta \mid (\lambda \xl. e)~y\right]$
+\begin{tabbing}
+    (1) $\G; \D \vdash \left[ \Theta, \xl = y \mid e \right] : \phi$\\
+    (2) $\G; \D \vdash \left[ \Theta \mid (\lambda \xl. e)~y \right] : \phi$\` by def.\\
+    (3) $\G, \Theta\uparrow^\omega; \D, \Theta\uparrow^1 \vdash ((\lambda \xl. e)~y, \Theta\downarrow^1_e) : \phi \otimes \bigotimes(\Theta\downarrow^1_\sigma)$\` by i.h.\\
+    (4) $Let~\D_1,\D_2,\D_3 = \D, \Theta\uparrow^1 $\\
+    (5) $\G, \Theta\uparrow^\omega; \D_3 \vdash \Theta\downarrow^1_e : \bigotimes(\Theta\downarrow^1_\sigma)$\\
+    (6) $\G, \Theta\uparrow^\omega; \D_2 \vdash y : \s$\` by inv\\
+    (7) $\G, \Theta\uparrow^\omega; \D_1 \vdash (\lambda \xl. e) : \s \to \phi $\` by inv\\
+    (8) $\G, \Theta\uparrow^\omega; \D_1, \xl \vdash e : \phi $\` by inv\\
+    (9) $\G, \Theta\uparrow^\omega; \D_1, \D_2, \xl \vdash (e, y) : \phi \otimes \sigma$\` by pair\\
+    (10) $\G, \Theta\uparrow^\omega; \D, \xl \vdash (e, y, \Theta\downarrow^1_e) : \phi \otimes \sigma \otimes \bigotimes(\Theta\downarrow^1_\sigma)$\` by pair\\
+\end{tabbing}
+\item[Case:] $\left[\Theta, \xD = e' \mid e\right] \triangleq \left[\Theta \mid \llet{\xD = e'}{e}\right]$
+\begin{tabbing}
+    (1) $\G; \D' \vdash \left[ \Theta, \xD = y \mid e \right] : \phi$\\
+    (2) $\G; \D' \vdash \left[ \Theta \mid \llet{\xD = e'}{e} \right] : \phi$\` by def.\\
+    (3) $\G, \Theta\uparrow^\omega; \D', \Theta\uparrow^1 \vdash (\llet{\xD = e'}{e}, \Theta\downarrow^1_e) : \phi \otimes \bigotimes(\Theta\downarrow^1_\sigma)$\` by i.h.\\
+    (4) $Let~\D,\D_2,\D_3 = \D', \Theta\uparrow^1 $\\
+    (5) $\G, \Theta\uparrow^\omega; \D_3 \vdash \Theta\downarrow^1_e : \bigotimes(\Theta\downarrow^1_\sigma)$\\
+    (6) $\G, \Theta\uparrow^\omega; \D \vdash e' : \s$\` by inv on let\\
+    (7) $\G, \Theta\uparrow^\omega, \xD; \D,\D_2 \vdash e : \phi $\` by inv on let\\
+    (8) $\G, \Theta\uparrow^\omega, \xD; \D,\D_2,\D_3 \vdash (e, \Theta\downarrow^1_e) : \phi \otimes \bigotimes(\Theta\downarrow^1_\sigma)$\` by pair\\
+\end{tabbing}
+\end{description}
+\end{proof}
 
 
 \subsection{Bisimulation}
@@ -4789,6 +4822,133 @@ By Lemma~\ref{lem:undelta-app}.
   If $\G ; \D \vdash \Theta \mid e : \tau , \Sigma$ then $\G ; \D \vdash \Theta' \mid v : \tau , \Sigma$
   
 \end{theorem}
+
+\begin{proof}
+By structural induction on the instrumented operational semantics reductions.
+\begin{description}
+    \item[Case:] $\Gamma; \Delta \vdash (\Theta, \xl = y \mid x) \Downarrow (\Theta' \mid v) : \s, \Sigma$
+\begin{tabbing}
+    (1) $\G; \D \vdash \Theta, \xl = y \mid x : \s, \Sigma$\\
+    (2) $\G, \Theta{\uparrow}^\omega; \D, \Theta{\uparrow}^1, \xl \vdash (x, y, \Theta{\downarrow}^1_e, \Sigma) : \s \otimes \s \bigotimes(\Theta{\downarrow^1_e}) \bigotimes(\Sigma)$\`by \ref{lem:unwrapenv}\\
+    (3) $Let~\G';\D_1,\D_2,\D_3 = \G, \Theta{\uparrow}^\omega; \D, \Theta{\uparrow}^1$\` s.t. $(\D_2,\D_3)$ types $(\Theta{\downarrow}^1_e,\Sigma)$\\
+    (4) $\G'; \xl \vdash x : \s$\\
+    (5) $\G'; \D_1 \vdash y : \s$\\
+    (6) $\G'; \D_1, \D_2, \D_3 \vdash (y, \Theta{\downarrow}^1_e, \Sigma) : \s \bigotimes(\Theta{\downarrow^1_e}) \bigotimes(\Sigma)$
+    (7) $\G; \D \vdash \Theta \mid y : \s, \Sigma$\`by reconstructing\\
+    (8) $\G; \D \vdash \Theta' \mid v : \s, \Sigma$\` by induction hypothesis\\
+\end{tabbing}
+    \item[Case:] $\Gamma; \Delta \vdash (\Theta, x{:}_{\D'}\s = e \mid x) \Downarrow (\Theta', x{:}_{\D_a}\s = v \mid v) : \s, \Sigma$
+\begin{tabbing}
+    (1) $\Gamma; \Delta \vdash (\Theta, x{:}_{\D'}\s = e \mid x) : \s, \Sigma$\\
+    (2) $\G, \Theta{\uparrow}^\omega; \D, \Theta{\uparrow}^1 \vdash \llet{x{:}_{\D'} = e}{(x, \Theta{\downarrow}^1_e, \Sigma)} : \s \bigotimes(\Theta{\downarrow}^1_\s) \bigotimes(\Sigma)$\`by \ref{lem:unwrapenv}\\
+    (3) $Let~\D',\D'' = \D,\Theta{\uparrow}^1$\\
+    (4) $\G, \Theta{\uparrow}^\omega; \D' \vdash e : \s$\`by inv on let (2)\\
+    (5) $\G, \Theta{\uparrow}^\omega; \D', \D'' \vdash (x, \Theta{\downarrow}^1_e, \Sigma) : \s \bigotimes(\Theta{\downarrow}^1_\s) \bigotimes(\Sigma)$\`by inv on let (2)\\
+    (6) $\G, \Theta{\uparrow}^\omega; \D' \vdash x : \s$\\
+    (7) $\G, \Theta{\uparrow}^\omega; \D'' \vdash (\Theta{\downarrow}^1_e, \Sigma) : \bigotimes(\Theta{\downarrow}^1_\s) \bigotimes(\Sigma)$\\
+    (8) $\G, \Theta{\uparrow}^\omega; \D', \D'' \vdash (e, \Theta{\downarrow}^1_e, \Sigma) : \tau \bigotimes(\Theta{\downarrow}^1_\s) \bigotimes(\Sigma)$\` by pair (4,7)\\
+    (9) $\G; \D \vdash \Theta \mid e : \tau,\Sigma$\` by reconstructing\\
+    (10) $\G; \D \vdash \Theta \mid v : \tau,\Sigma$\` by induction hypothesis\\
+    (11) $Let~\G';\D_a,\D_b = \G, \Theta'{\uparrow}^\omega, \D, \Theta'{\uparrow}^1$\\
+    (11a) $\G'; \D_a \vdash v : \s$
+    (11b) $\G'; \D_b \vdash (\Theta'{\downarrow}^1_e, \Sigma) : \bigotimes(\Theta'{\downarrow}^1_\s) \bigotimes(\Sigma)$\\
+    (12) $\G'; \D_a \vdash \llet{x{:}_{\D_a}\s = v}{v} : \s$\`by let (11a,11a)\\
+    (13) $\G; \D \vdash \Theta' \mid \llet{x{:}_{\D_a}\s = v}{v} : \s, \Sigma$\`by reconstructing\\
+    (14) $\G; \D \vdash \Theta', x{:}_{\D_a}\s = v \mid v : \s, \Sigma$\`by env. expansion\\
+\end{tabbing}
+Note: It's slightly more elaborate to accommodate recursion. The runtime
+environment bindings must be tagged with the recursive group such that the
+environment expansion can decide whether to unwrap to a letrec group or
+not. Unlike the case proved here, when the $\D$-binding belongs to a let group,
+the whole group is unwrapped and we can invert the assumption to get an
+$e$ typed with the $x$s from the group.\\
+\item[Case:] $\Gamma; \Delta \vdash (\Theta \mid \ccase{e}{z{:}_{\Delta'}\s~\{K~\ov{y_i}\to e'}\}) \Downarrow (\Theta'' \mid v) : \tau$
+\begin{tabbing}
+    (1) $\Gamma; \Delta \vdash \Theta \mid \ccase{e}{z{:}_{\Delta_a}\s~\{K~\ov{y_i}\to e'}\} : \tau, \Sigma$\\
+    (2) $\G, \Theta{\uparrow}^\omega; \D, \Theta{\uparrow}^1 \vdash (\ccase{e}{z{:}_{\Delta_a}\s~\{K~\ov{y_i}\to e'}\}, \Theta{\downarrow}^1_e, \Sigma) : \tau \otimes \bigotimes(\Theta{\downarrow}^1_\sigma) \otimes \bigotimes(\Sigma)$\`by \ref{lem:unwrapenv}\\
+    (3) $Let~\G' = \G, \Theta\uparrow^\omega; \D_a,\D_b,\D_2,\D_3 = \D,\Theta\uparrow^1$\`s.t. $(\D_2,\D_3)$ types $(\Theta\downarrow^1_e, \Sigma)$\\
+    (4) $\G'; \D_a, \D_b \vdash \ccase{e}{z{:}_{\D_a}\s\{K~\ov{y_i}\to e'\}} : \tau$\\
+    Subcase $e$ is in WHNF (thus $= K~\ov{x_i}$)\\
+    (5) $\G'; \D_a \Vdash K~\ov{x_i} : \s \gtrdot \ov{\D_i}$\` by subcase\\
+    (6) $\G', z{:}_{\D_a}\s; \D_a, \D_b \vdash_{alt} K~\ov{y_i} \to e' :^z_{\D_i} \s \Rightarrow \tau$\` by inv\\
+    Subsubcase $\vdash_{alt}$ $Alt_{WHNF}$\\
+    (7) $\G', z{:}_{\D_a}\s, \ov{y_i{:}_\omega\s_i}, \ov{y_j{:}_{\Delta_j}\s_j}; \D_a, \D_b \vdash e' : \tau$\` by inv\\
+    (8) $\Theta' = \Theta$\` in this subcase because $(\Theta \mid K~\ov{x_i})\Downarrow(\Theta \mid K~\ov{x_i})$\\
+    (9) $\G'; \ov{\D_i} \vdash K~\ov{x_i} : \s$\` by inv (5)\\
+    (10) $\ov{\G'; \cdot \vdash x_i : \s_i}$\` by inv (9) for unrestricted $x$s\\
+    (11) $\ov{\G'; \D_j \vdash x_j : \s_j}$\` by inv (9) for linear fields $x$s\\
+    (12) $\G', z{:}_{\D_a}\s; \D_a, \D_b \vdash e'\ov{[x_{i,j}/y_{i,j}] : \tau}$\` by $\D$-subst and $\omega$-subst lemmas (7,10,11)\\
+    (13) $\G'; \D_a, \D_b \vdash e'\ov{[x_{i,j}/y_{i,j}]}[K~\ov{x_{i,j}}/z] : \tau$\` by $\D$-subst lemma and $\ov{\D_i} = \D_a$ (9,12)\\
+    (14) $\G; \D \vdash \Theta \mid e'\ov{[x_{i,j}/y_{i,j}]}[K~\ov{x_{i,j}}/z] : \tau, \Sigma$\` by reconstructing\\
+    (15) $\G; \D \vdash \Theta'' \mid v : \tau, \Sigma$\` by induction hypothesis\\
+    Subsubcase $\vdash_{alt}$ $Alt_{0}$\\
+    (7) $(\G', z{:}_{\D_a}\s)[\cdot/\D_a]_z, \ov{y_i{:}_\omega\sigma_i}; (\D_a, \D_b)[\cdot / \D_a] \vdash e' : \tau$\` by inv subcase\\
+    (8) $\G', z{:}_{\cdot}, \ov{y_i{:}_\omega\sigma_i}; \D_b \vdash e' : \tau$\` by $z$ cannot occur in $\G'$\\
+    (9) Since $\G';\D_a \Vdash K~\ov{x_i}$, in this subcase $\D_a = \cdot$\\
+    (10) $\G', \z{:}_\cdot\sigma, \ov{y{:}_\omega\sigma}; \D_b \vdash e' : \tau$\` by (9)\\
+    (11) $\G', \z{:}_\cdot\sigma; \D_b \vdash e'\ov{[x_i/y_i]} : \tau$\` by $\omega$-subst (10)\\
+    (12) $\G'; \D_b \vdash e'\ov{[x_i/y_i]}[K~\ov{x_i}/z] : \tau$\` by $\D$-subst\\
+    (13) $\G; \D \vdash \Theta \mid e'\ov{[x_i/y_i]}[K~\ov{x_i}/z] : \tau, \Sigma$\` by reconstructing\\
+    (14) $\G; \D \vdash \Theta'' \mid v : \tau, \Sigma$\`by induction hypothesis\\
+    Subcase $e$ is not in WHNF\\
+    (5) $\G'; \D_a \vdash e : \s$\` by inv on case\\
+    (6) $\G', z{:}_{\irr{\D_a}}\s; \irr{\D_a}, \D_b \vdash_{alt} K~\ov{y_{i,j}} \to e' :^z_{\irr{\D_a}} \s $\` by inv on case\\
+    Subsubcase $\vdash_{alt}$ $Alt_{NWHNF}$\\
+    (7) $\G', z{:}_{\irr{\D_a}}\s, \ov{y_i{:}_\omega\s_i}, \ov{y_j{:}_{\Delta_j}\s_j}; \irr{\D_a}, \D_b \vdash e' : \tau$\` for \ov{\D_j = \lctag{\irr{\D_a}}{K_j}}, by inv.\\
+    (8) $\G', z{:}_{\ov{y_j{:}_1\s_j}}\s, \ov{y_i{:}_\omega\s_i}; \ov{y_j{:}_1\s_j}, \D_b \vdash e' : \tau$\` by $\D$-bound to linear\\
+    (9) $\G', z{:}_{\ov{y_j{:}_1\s_j}}\s, \ov{y_i{:}_\omega\s_i}; \D_a, \D_b, \ov{y_j{:}_1\s_j} \vdash (e, e') : \sigma \otimes \tau$\` by pair (5,8)\\
+    (10) $\G, z{:}_{\ov{y_j{:}_1\s_j}}\s, \ov{y_i{:}_\omega\s_i}; \D, \ov{y_j{:}_1\s_j} \vdash \Theta \mid e : \s, e':\tau, \Sigma$\`by reconstructing\\
+    (11) $\G, z{:}_{\ov{y_j{:}_1\s_j}}\s, \ov{y_i{:}_\omega\s_i}; \D, \ov{y_j{:}_1\s_j} \vdash \Theta' \mid K~\ov{x_i} : \s, e':\tau, \Sigma$\`by induction hypothesis\\
+    (12) $\G, \Theta'{\uparrow}^\omega, \ov{y_i{:}_\omega\s_i}; \D, \ov{y_j{:}_1\s_j}, \Theta'{\uparrow}^1 \vdash (K~\ov{x_{i,j}}, \Theta'{\downarrow}^1_e, e', \Sigma) : \s \bigotimes(\Theta'\downarrow^1_\sigma) \otimes \tau \bigotimes(\Sigma)$\`by \ref{lem:unwrapenv}\\
+    (13) $Let~\G''=\G,\Theta'{\uparrow}^\omega~and~\D_c\D_d\D_4\D_5=\D,\Theta'{\uparrow}^1$\` where $(\D_4, \D_5)$ types $(\Theta'{\downarrow^1_e}, \Sigma)$\\
+    (13a) $\G''; \D_c \vdash K~\ov{x_{i,j}} : \s$\\
+    (13b) $\G'', z{:}_{\ov{y_j{:}_1\s_j}}\s, \ov{y_i{:}_\omega\s_i}; \D_d, \ov{y_j{:}_1\s_j} \vdash e' : \tau$\\
+    (14) $\ov{\G''; \cdot \vdash x_i : \s_i}$\\
+    (15) $\ov{\G''; \D_j \vdash x_j : \s_j}$\` for $\ov{D_j}=\D_c$, by inv\\
+    (16) $\G'', z{:}_{\D_c}\s; \D_c, \D_d \vdash e'\ov{[x_{i,j}/y_{i,j}]} : \tau$\`by $1$-substs and $\omega$-substs lemmas\\
+    (17) $\G''; \D_c, \D_d \vdash e'\ov{[x_{i,j}/y_{i,j}]}[K~\ov{x_{i,j}}/z] : \tau$\`by $\D$-subst lemma (13a,16)\\
+    (18) $\G; \D \vdash \Theta' \mid e'\ov{[x_{i,j}/y_{i,j}]}[K~\ov{x_{i,j}}/z] : \tau, \Sigma$\`by reconstructing\\
+    (19) $\G; \D \vdash \Theta'' \mid v : \tau, \Sigma$\`by induction hypothesis\\
+    Subsubcase $\vdash_{alt}$ $Alt_0$\\
+    (7) $\G', z{:}_\cdot\s, \ov{y_i{:}_\omega\s_i}; \D_b \vdash e' : \tau$\` by inv\\
+    (8) $\G', z{:}_\cdot\s, \ov{y_i{:}_\omega\s_i}; \D_a, \D_b \vdash (e, e') : \sigma \otimes \tau$\` by pair (5,7)\\
+    (9) $\G, z{:}_\cdot\s, \ov{y_i{:}_\omega\s_i}; \D \vdash \Theta \mid e : \sigma, e' : \tau, \Sigma$\` by reconstructing\\
+    (10) $\G, z{:}_\cdot\s, \ov{y_i{:}_\omega\s_i}; \D \vdash \Theta \mid e : \sigma, e' : \tau, \Sigma$\` by reconstructing\\
+    (11) $\G, z{:}_\cdot\s, \ov{y_i{:}_\omega\s_i}; \D \vdash \Theta' \mid K~\ov{x_i} : \sigma, e' : \tau, \Sigma$\` by induction hypothesis\\
+    (12) $Let~\G'' = \G,\Theta'{\uparrow}^\omega~and~\D_d,\D_4,\D_5 = \D, \Theta'{\uparrow}^1$\` where $(\D_4, \D_5)$ types $(\Theta'{\downarrow^1_e}, \Sigma)$\\
+    (12a) $\G''; \cdot \vdash K~\ov{x_i} : \s$\`since $K$ has no linear fields in this subcase\\
+    (12b) $\G'', z{:}_{\cdot}\s, \ov{y_i{:}_\omega\s_i}; \D_d \vdash e' : \tau$\\
+    (13) $\ov{\G''; \cdot \vdash x_{i} : \s_i}$\`by inv (12a)\\
+    (14) $\G'', z{:}_{\cdot}\s; \D_d \vdash e'\ov{[x_i/y_i]} : \tau$\` by $\omega$-subst lemma\\
+    (15) $\G''; \D_d \vdash e'\ov{[x_i/y_i]}[K~\ov{x_i}/z] : \tau$\` by $\D$-subst lemma\\
+    (16) $\G; \D \vdash \Theta' \mid e'\ov{[x_i/y_i]}[K~\ov{x_i}/z] : \tau, \Sigma$\` by reconstructing\\
+    (17) $\G; \D \vdash \Theta'' \mid v : \tau, \Sigma$\` by induction hypothesis\\
+\end{tabbing}
+\item[Case:] $\Gamma; \Delta \vdash (\Theta \mid \ccase{e}{z{:}_{\Delta'}\s~\{\_ \to e'}\}) \Downarrow (\Theta'' \mid v) : \tau$
+\begin{tabbing}
+    (1) $\Gamma; \Delta \vdash \Theta \mid \ccase{e}{z{:}_{\Delta_a}\s~\{\_ \to e'}\} : \tau, \Sigma$\\
+    (2) $\G, \Theta{\uparrow}^\omega; \D, \Theta{\uparrow}^1 \vdash (\ccase{e}{z{:}_{\Delta_a}\s~\{\_ \to e'}\}, \Theta{\downarrow}^1_e, \Sigma) : \tau \otimes \bigotimes(\Theta{\downarrow}^1_\sigma) \otimes \bigotimes(\Sigma)$\`by \ref{lem:unwrapenv}\\
+    (3) $Let~\G' = \G, \Theta\uparrow^\omega; \D_a,\D_b,\D_2,\D_3 = \D,\Theta\uparrow^1$\`s.t. $(\D_2,\D_3)$ types $(\Theta\downarrow^1_e, \Sigma)$\\
+    (4) $\G'; \D_a, \D_b \vdash \ccase{e}{z{:}_{\D_a}\s\{\_ \to e'\}} : \tau$\\
+    (5) $\G'; \D_a \vdash e : \sigma$\\
+    Subcase $e$ is in WHNF\\
+    (-) Similar to the same subcase in the case-with-pattern-vars reduction,\\
+        except only $Alt_{\_}$ is relevant which is far simpler\\
+    Subcase $e$ is not in WHNF\\
+    (6) $\G', z{:}_{\irr{\D_a}}\s; \irr{\D_a}, \D_b \vdash e' : \tau$\\
+    (7) $\G'; \D_b, z{:}_1\s \vdash e' : \tau$\` by $\D$-bound to linear\\
+    (8) $\G'; \D_a, \D_b, z{:}_1\s \vdash (e, e') : \sigma \otimes \tau$\` by pair\\
+    (9) $\G; \D, z{:}_1\s \vdash \Theta \mid e : \sigma, e' : \tau, \Sigma$\` by reconstructing\\
+    (10) $\G; \D, z{:}_1\s \vdash \Theta' \mid K~\ov{x_i} : \sigma, e' : \tau, \Sigma$\` by induction hypothesis\\
+    (11) $Let~\G';\D_c,\D_d,\D_4,\D_5 = \G, \Theta'{\uparrow}^\omega; \Delta, \Theta'{\uparrow}^1$\`s.t. $(\D_4,\D_5)$ types $(\Theta'{\downarrow}^1_e, \Sigma)$\\
+    (12) $\G';\D_c \vdash K~\ov{x_i} : \s$\\
+    (13) $\G';\D_d,z{:}_1\s \vdash e' : \tau$\\
+    (14) $\G';\D_c, \D_d \vdash e'[K~\ov{x_i}/z] : \tau$\` by $1$-subst lemma\\
+    (15) $\G;\D \vdash \Theta' \mid e'[K~\ov{x_i}/z] : \tau, \Sigma$\` by reconstructing\\
+    (16) $\G;\D \vdash \Theta'' \mid v : \tau, \Sigma$\` by induction hypothesis\\
+\end{tabbing}
+\end{description}
+\end{proof}
 
 We also derive type preservation for the lazy natural semantics.
 
