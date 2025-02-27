@@ -4614,7 +4614,7 @@ omit for the sake of presentation.
    $\bigotimes(e_1 : \sigma_1 , \dots , e_n : \sigma_n)$ for $\sigma_1 \otimes ( \dots (\sigma_n \otimes ()))$.
  \end{definition}
 
- \begin{lemma}
+ \begin{lemma}~\label{lem:unwrapenv}
    Iff $\G ; \D \vdash [ \Theta \mid e] : \sigma$
      then $\G , \Theta\uparrow^{\omega} ; \D , \Theta\uparrow^1 \vdash  (e, \Theta\downarrow^1_e) : \sigma \otimes \bigotimes(\Theta\downarrow^1_\sigma)$
    \end{lemma}
@@ -4627,7 +4627,7 @@ By structural induction on the environment expansion definition.
     (1) $\G; \D \vdash \left[ \Theta, \xl = y \mid e \right] : \phi$\\
     (2) $\G; \D \vdash \left[ \Theta \mid (\lambda \xl. e)~y \right] : \phi$\` by def.\\
     (3) $\G, \Theta\uparrow^\omega; \D, \Theta\uparrow^1 \vdash ((\lambda \xl. e)~y, \Theta\downarrow^1_e) : \phi \otimes \bigotimes(\Theta\downarrow^1_\sigma)$\` by i.h.\\
-    (4) $Let \D_1,\D_2,\D_3 = \D, \Theta\uparrow^1 $\\
+    (4) $Let~\D_1,\D_2,\D_3 = \D, \Theta\uparrow^1 $\\
     (5) $\G, \Theta\uparrow^\omega; \D_3 \vdash \Theta\downarrow^1_e : \bigotimes(\Theta\downarrow^1_\sigma)$\\
     (6) $\G, \Theta\uparrow^\omega; \D_2 \vdash y : \s$\` by inv\\
     (7) $\G, \Theta\uparrow^\omega; \D_1 \vdash (\lambda \xl. e) : \s \to \phi $\` by inv\\
@@ -4640,7 +4640,7 @@ By structural induction on the environment expansion definition.
     (1) $\G; \D' \vdash \left[ \Theta, \xD = y \mid e \right] : \phi$\\
     (2) $\G; \D' \vdash \left[ \Theta \mid \llet{\xD = e'}{e} \right] : \phi$\` by def.\\
     (3) $\G, \Theta\uparrow^\omega; \D', \Theta\uparrow^1 \vdash (\llet{\xD = e'}{e}, \Theta\downarrow^1_e) : \phi \otimes \bigotimes(\Theta\downarrow^1_\sigma)$\` by i.h.\\
-    (4) $Let \D,\D_2,\D_3 = \D', \Theta\uparrow^1 $\\
+    (4) $Let~\D,\D_2,\D_3 = \D', \Theta\uparrow^1 $\\
     (5) $\G, \Theta\uparrow^\omega; \D_3 \vdash \Theta\downarrow^1_e : \bigotimes(\Theta\downarrow^1_\sigma)$\\
     (6) $\G, \Theta\uparrow^\omega; \D \vdash e' : \s$\` by inv on let\\
     (7) $\G, \Theta\uparrow^\omega, \xD; \D,\D_2 \vdash e : \phi $\` by inv on let\\
@@ -4819,6 +4819,44 @@ By Lemma~\ref{lem:undelta-app}.
   If $\G ; \D \vdash \Theta \mid e : \tau , \Sigma$ then $\G ; \D \vdash \Theta' \mid v : \tau , \Sigma$
   
 \end{theorem}
+
+\begin{proof}
+By structural induction on the instrumented operational semantics reductions.
+\begin{description}
+    \item[Case:] $\Gamma; \Delta \vdash (\Theta \mid \ccase{e}{z{:}_{\Delta'}\s~\{K~\ov{y_i}\to e'}\}) \Downarrow (\Theta'' \mid v) : \tau$
+\begin{tabbing}
+    (1) $\Gamma; \Delta \vdash \Theta \mid \ccase{e}{z{:}_{\Delta_a}\s~\{K~\ov{y_i}\to e'}\} : \tau, \Sigma$\\
+    (2) $\G, \Theta\uparrow^\omega; \D, \Theta\uparrow^1 \vdash (\ccase{e}{z{:}_{\Delta_a}\s~\{K~\ov{y_i}\to e'}\}, \Theta\downarrow^1_e, \Sigma) : \tau \otimes \bigotimes(\Theta\downarrow^1_\sigma) \otimes \bigotimes(\Sigma)$\`by \ref{lem:unwrapenv}\\
+    (3) $Let~\G' = \G, \Theta\uparrow^\omega; \D_a,\D_b,\D_2,\D_3 = \D,\Theta\uparrow^1$\`s.t. $(\D_2,\D_3)$ types $(\Theta\downarrow^1_e, \Sigma)$\\
+    (4) $\G'; \D_a, \D_b \vdash \ccase{e}{z{:}_{\D_a}\s\{K~\ov{y_i}\to e'\}} : \tau$\\
+    Subcase $e$ is in WHNF (thus $= K~\ov{x_i}$)\\
+    (5) $\G'; \D_a \Vdash K~\ov{x_i} : \s \gtrdot \ov{\D_i}$\` by subcase\\
+    (6) $\G', z{:}_{\D_a}\s; \D_a, \D_b \vdash_{alt} K~\ov{y_i} \to e' :^z_{\D_i} \s \Rightarrow \tau$\` by inv\\
+    Subsubcase $\vdash_{alt}$ $Alt_{NWHNF}$\\
+    (7) $\G', z{:}_{\D_a}\s, \ov{y_i{:}_\omega\s_i}, \ov{y_j{:}_{\Delta_j}\s_j}; \D_a, \D_b \vdash e' : \tau$\` by inv\\
+    (8) $\Theta' = \Theta$\` in this subcase because $(\Theta \mid K~\ov{x_i})\Downarrow(\Theta \mid K~\ov{x_i})$\\
+    (9) $\G'; \ov{\D_i} \vdash K~\ov{x_i} : \s$\` by inv (5)\\
+    (10) $\ov{\G'; \cdot \vdash x_i : \s_i}$\` by inv (9) for unrestricted $x$s\\
+    (11) $\ov{\G'; \D_j \vdash x_j : \s_j}$\` by inv (9) for linear fields $x$s\\
+    (12) $\G', z{:}_{\D_a}\s; \D_a, \D_b \vdash e'\ov{[x_{i,j}/y_{i,j}] : \tau}$\` by $\D$-subst and $\omega$-subst lemmas (7,10,11)\\
+    (13) $\G'; \D_a, \D_b \vdash e'\ov{[x_{i,j}/y_{i,j}]}[K~\ov{x_{i,j}}/z] : \tau$\` by $\D$-subst lemma and $\ov{\D_i} = \D_a$ (9,12)\\
+    (14) $\G; \D \vdash \Theta \mid e'\ov{[x_{i,j}/y_{i,j}]}[K~\ov{x_{i,j}}/z] : \tau, \Sigma$\` by reconstructing\\
+    (15) $\G; \D \vdash \Theta'' \mid v : \tau, \Sigma$\` by induction hypothesis\\
+    Subsubcase $\vdash_{alt}$ $Alt_{0}$\\
+    (7) $(\G', z{:}_{\D_a}\s)[\cdot/\D_a]_z, \ov{y_i{:}_\omega\sigma_i}; (\D_a, \D_b)[\cdot / \D_a] \vdash e' : \tau$\` by inv subcase\\
+    (8) $\G', z{:}_{\cdot}, \ov{y_i{:}_\omega\sigma_i}; \D_b \vdash e' : \tau$\` by $z$ cannot occur in $\G'$\\
+    (9) Since $\G';\D_a \Vdash K~\ov{x_i}$, in this subcase $\D_a = \cdot$\\
+    (10) $\G', \z{:}_\cdot\sigma, \ov{y{:}_\omega\sigma}; \D_b \vdash e' : \tau$\` by (9)\\
+    (11) $\G', \z{:}_\cdot\sigma; \D_b \vdash e'\ov{[x_i/y_i]} : \tau$\` by $\omega$-subst (10)\\
+    (12) $\G'; \D_b \vdash e'\ov{[x_i/y_i]}[K~\ov{x_i}/z] : \tau$\` by $\D$-subst\\
+    (13) $\G; \D \vdash \Theta \mid e'\ov{[x_i/y_i]}[K~\ov{x_i}/z] : \tau, \Sigma$\` by reconstructing\\
+    (14) $\G; \D \vdash \Theta'' \mid v : \tau, \Sigma$\`by induction hypothesis\\
+    Subcase $e$ is not in WHNF\\
+    (5) $\G'; \D_a \vdash e : \s$\` by inv on case\\
+    (6) $\G', z{:}_{\irr{\D_a}}\s; \irr{\D_a}, \D_b \vdash_{alt} K~\ov{y_i} \to e' :^z_{\irr{\D_a}} \s $\` by inv on case\\
+\end{tabbing}
+\end{description}
+\end{proof}
 
 We also derive type preservation for the lazy natural semantics.
 
