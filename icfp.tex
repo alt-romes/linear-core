@@ -4823,6 +4823,42 @@ By Lemma~\ref{lem:undelta-app}.
 \begin{proof}
 By structural induction on the instrumented operational semantics reductions.
 \begin{description}
+    \item[Case:] $\Gamma; \Delta \vdash (\Theta, \xl = y \mid x) \Downarrow (\Theta' \mid v) : \s, \Sigma$
+\begin{tabbing}
+    (1) $\G; \D \vdash \Theta, \xl = y \mid x : \s, \Sigma$\\
+    (2) $\G, \Theta{\uparrow}^\omega; \D, \Theta{\uparrow}^1, \xl \vdash (x, y, \Theta{\downarrow}^1_e, \Sigma) : \s \otimes \s \bigotimes(\Theta{\downarrow^1_e}) \bigotimes(\Sigma)$\`by \ref{lem:unwrapenv}\\
+    (3) $Let~\G';\D_1,\D_2,\D_3 = \G, \Theta{\uparrow}^\omega; \D, \Theta{\uparrow}^1$\` s.t. $(\D_2,\D_3)$ types $(\Theta{\downarrow}^1_e,\Sigma)$\\
+    (4) $\G'; \xl \vdash x : \s$\\
+    (5) $\G'; \D_1 \vdash y : \s$\\
+    (6) $\G'; \D_1, \D_2, \D_3 \vdash (y, \Theta{\downarrow}^1_e, \Sigma) : \s \bigotimes(\Theta{\downarrow^1_e}) \bigotimes(\Sigma)$
+    (7) $\G; \D \vdash \Theta \mid y : \s, \Sigma$\`by reconstructing\\
+    (8) $\G; \D \vdash \Theta' \mid v : \s, \Sigma$\` by induction hypothesis\\
+\end{tabbing}
+    \item[Case:] $\Gamma; \Delta \vdash (\Theta, x{:}_{\D'}\s = e \mid x) \Downarrow (\Theta', x{:}_{\D_a}\s = v \mid v) : \s, \Sigma$
+\begin{tabbing}
+    (1) $\Gamma; \Delta \vdash (\Theta, x{:}_{\D'}\s = e \mid x) : \s, \Sigma$\\
+    (2) $\G, \Theta{\uparrow}^\omega; \D, \Theta{\uparrow}^1 \vdash \llet{x{:}_{\D'} = e}{(x, \Theta{\downarrow}^1_e, \Sigma)} : \s \bigotimes(\Theta{\downarrow}^1_\s) \bigotimes(\Sigma)$\`by \ref{lem:unwrapenv}\\
+    (3) $Let~\D',\D'' = \D,\Theta{\uparrow}^1$\\
+    (4) $\G, \Theta{\uparrow}^\omega; \D' \vdash e : \s$\`by inv on let (2)\\
+    (5) $\G, \Theta{\uparrow}^\omega; \D', \D'' \vdash (x, \Theta{\downarrow}^1_e, \Sigma) : \s \bigotimes(\Theta{\downarrow}^1_\s) \bigotimes(\Sigma)$\`by inv on let (2)\\
+    (6) $\G, \Theta{\uparrow}^\omega; \D' \vdash x : \s$\\
+    (7) $\G, \Theta{\uparrow}^\omega; \D'' \vdash (\Theta{\downarrow}^1_e, \Sigma) : \bigotimes(\Theta{\downarrow}^1_\s) \bigotimes(\Sigma)$\\
+    (8) $\G, \Theta{\uparrow}^\omega; \D', \D'' \vdash (e, \Theta{\downarrow}^1_e, \Sigma) : \tau \bigotimes(\Theta{\downarrow}^1_\s) \bigotimes(\Sigma)$\` by pair (4,7)\\
+    (9) $\G; \D \vdash \Theta \mid e : \tau,\Sigma$\` by reconstructing\\
+    (10) $\G; \D \vdash \Theta \mid v : \tau,\Sigma$\` by induction hypothesis\\
+    (11) $Let~\G';\D_a,\D_b = \G, \Theta'{\uparrow}^\omega, \D, \Theta'{\uparrow}^1$\\
+    (11a) $\G'; \D_a \vdash v : \s$
+    (11b) $\G'; \D_b \vdash (\Theta'{\downarrow}^1_e, \Sigma) : \bigotimes(\Theta'{\downarrow}^1_\s) \bigotimes(\Sigma)$\\
+    (12) $\G'; \D_a \vdash \llet{x{:}_{\D_a}\s = v}{v} : \s$\`by let (11a,11a)\\
+    (13) $\G; \D \vdash \Theta' \mid \llet{x{:}_{\D_a}\s = v}{v} : \s, \Sigma$\`by reconstructing\\
+    (14) $\G; \D \vdash \Theta', x{:}_{\D_a}\s = v \mid v : \s, \Sigma$\`by env. expansion\\
+\end{tabbing}
+Note: It's slightly more elaborate to accommodate recursion. The runtime
+environment bindings must be tagged with the recursive group such that the
+environment expansion can decide whether to unwrap to a letrec group or
+not. Unlike the case proved here, when the $\D$-binding belongs to a let group,
+the whole group is unwrapped and we can invert the assumption to get an
+$e$ typed with the $x$s from the group.\\
 \item[Case:] $\Gamma; \Delta \vdash (\Theta \mid \ccase{e}{z{:}_{\Delta'}\s~\{K~\ov{y_i}\to e'}\}) \Downarrow (\Theta'' \mid v) : \tau$
 \begin{tabbing}
     (1) $\Gamma; \Delta \vdash \Theta \mid \ccase{e}{z{:}_{\Delta_a}\s~\{K~\ov{y_i}\to e'}\} : \tau, \Sigma$\\
