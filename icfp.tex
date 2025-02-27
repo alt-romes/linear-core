@@ -206,7 +206,7 @@ syntactic linearity but that aim to preserve the program's semantics.
 We present Linear Core, the first type system that understands semantic
 linearity in the presence of non-strict evaluation, suitable for the Core
 intermediate language of the Glasgow Haskell Compiler. We prove Linear Core
-is sound and guarantees linear resource usage and prove multiple optimising
+is sound and guarantees linear resource usage, and prove multiple optimising
 transformations preserve linearity in Linear Core while failing to do so in
 Core. We have implemented Linear Core as a compiler plugin to validate the
 system against linearity-heavy libraries, including
@@ -299,11 +299,11 @@ Both Haskell and its intermediate language Core are lazily
         % -- expressions in Haskell are only evaluated when needed.
         As we make clear in this paper, \emph{non-strict evaluation interacts non-trivially with linearity}.
         Intuitively, a syntactic occurrence of a linear resource does not
-        necessarily entail consuming that resource since expressions are not
-        necessarily evaluated (i.e., if the expression is not evaluated, the
+        necessarily entail consuming that resource because expressions are not
+        necessarily evaluated (if the expression is not evaluated, the
         resource is not used).
         %
-        Under eager evaluation, a syntactic occurrence of a resource
+        In contrast, under eager evaluation, a syntactic occurrence of a resource
         along a given control-flow path always implies its use at runtime.
         %
         % Under eager/call-by-value evaluation, the distinction between syntactic uses of a
