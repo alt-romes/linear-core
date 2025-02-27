@@ -4823,7 +4823,7 @@ By Lemma~\ref{lem:undelta-app}.
 \begin{proof}
 By structural induction on the instrumented operational semantics reductions.
 \begin{description}
-    \item[Case:] $\Gamma; \Delta \vdash (\Theta \mid \ccase{e}{z{:}_{\Delta'}\s~\{K~\ov{y_i}\to e'}\}) \Downarrow (\Theta'' \mid v) : \tau$
+\item[Case:] $\Gamma; \Delta \vdash (\Theta \mid \ccase{e}{z{:}_{\Delta'}\s~\{K~\ov{y_i}\to e'}\}) \Downarrow (\Theta'' \mid v) : \tau$
 \begin{tabbing}
     (1) $\Gamma; \Delta \vdash \Theta \mid \ccase{e}{z{:}_{\Delta_a}\s~\{K~\ov{y_i}\to e'}\} : \tau, \Sigma$\\
     (2) $\G, \Theta{\uparrow}^\omega; \D, \Theta{\uparrow}^1 \vdash (\ccase{e}{z{:}_{\Delta_a}\s~\{K~\ov{y_i}\to e'}\}, \Theta{\downarrow}^1_e, \Sigma) : \tau \otimes \bigotimes(\Theta{\downarrow}^1_\sigma) \otimes \bigotimes(\Sigma)$\`by \ref{lem:unwrapenv}\\
@@ -4884,6 +4884,29 @@ By structural induction on the instrumented operational semantics reductions.
     (15) $\G''; \D_d \vdash e'\ov{[x_i/y_i]}[K~\ov{x_i}/z] : \tau$\` by $\D$-subst lemma\\
     (16) $\G; \D \vdash \Theta' \mid e'\ov{[x_i/y_i]}[K~\ov{x_i}/z] : \tau, \Sigma$\` by reconstructing\\
     (17) $\G; \D \vdash \Theta'' \mid v : \tau, \Sigma$\` by induction hypothesis\\
+\end{tabbing}
+\item[Case:] $\Gamma; \Delta \vdash (\Theta \mid \ccase{e}{z{:}_{\Delta'}\s~\{\_ \to e'}\}) \Downarrow (\Theta'' \mid v) : \tau$
+\begin{tabbing}
+    (1) $\Gamma; \Delta \vdash \Theta \mid \ccase{e}{z{:}_{\Delta_a}\s~\{\_ \to e'}\} : \tau, \Sigma$\\
+    (2) $\G, \Theta{\uparrow}^\omega; \D, \Theta{\uparrow}^1 \vdash (\ccase{e}{z{:}_{\Delta_a}\s~\{\_ \to e'}\}, \Theta{\downarrow}^1_e, \Sigma) : \tau \otimes \bigotimes(\Theta{\downarrow}^1_\sigma) \otimes \bigotimes(\Sigma)$\`by \ref{lem:unwrapenv}\\
+    (3) $Let~\G' = \G, \Theta\uparrow^\omega; \D_a,\D_b,\D_2,\D_3 = \D,\Theta\uparrow^1$\`s.t. $(\D_2,\D_3)$ types $(\Theta\downarrow^1_e, \Sigma)$\\
+    (4) $\G'; \D_a, \D_b \vdash \ccase{e}{z{:}_{\D_a}\s\{\_ \to e'\}} : \tau$\\
+    (5) $\G'; \D_a \vdash e : \sigma$\\
+    Subcase $e$ is in WHNF\\
+    (-) Similar to the same subcase in the case-with-pattern-vars reduction,\\
+        except only $Alt_{\_}$ is relevant which is far simpler\\
+    Subcase $e$ is not in WHNF\\
+    (6) $\G', z{:}_{\irr{\D_a}}\s; \irr{\D_a}, \D_b \vdash e' : \tau$\\
+    (7) $\G'; \D_b, z{:}_1\s \vdash e' : \tau$\` by $\D$-bound to linear\\
+    (8) $\G'; \D_a, \D_b, z{:}_1\s \vdash (e, e') : \sigma \otimes \tau$\` by pair\\
+    (9) $\G; \D, z{:}_1\s \vdash \Theta \mid e : \sigma, e' : \tau, \Sigma$\` by reconstructing\\
+    (10) $\G; \D, z{:}_1\s \vdash \Theta' \mid K~\ov{x_i} : \sigma, e' : \tau, \Sigma$\` by induction hypothesis\\
+    (11) $Let~\G';\D_c,\D_d,\D_4,\D_5 = \G, \Theta'{\uparrow}^\omega; \Delta, \Theta'{\uparrow}^1$\`s.t. $(\D_4,\D_5)$ types $(\Theta'{\downarrow}^1_e, \Sigma)$\\
+    (12) $\G';\D_c \vdash K~\ov{x_i} : \s$\\
+    (13) $\G';\D_d,z{:}_1\s \vdash e' : \tau$\\
+    (14) $\G';\D_c, \D_d \vdash e'[K~\ov{x_i}/z] : \tau$\` by $1$-subst lemma\\
+    (15) $\G;\D \vdash \Theta' \mid e'[K~\ov{x_i}/z] : \tau, \Sigma$\` by reconstructing\\
+    (16) $\G;\D \vdash \Theta'' \mid v : \tau, \Sigma$\` by induction hypothesis\\
 \end{tabbing}
 \end{description}
 \end{proof}
