@@ -22,7 +22,7 @@ is not obvious whether such a lemma is possible to prove for $\D$-variables
 substitute $e$ for $x$ the resources $\D'$ are no longer consumed).
 
 \begin{proof}
-By structural induction on the given derivation.
+By structural induction on the given derivation. We omit many trivial cases.
 
 Statement (1):
 \begin{description}
@@ -38,17 +38,17 @@ Statement (1):
     (7) $\G; \D, \D' \vdash (\Lambda p.~e)[e'/x] : \forall p.~\vp$ \` by (5,6)\\
 \end{tabbing}
 
-\item[Case:] $\Lambda E$
-\begin{tabbing}
-    (1) $\G,\xD; \D,\D' \vdash e~\pi : \vp$\\
-    (2) $\G; \D \vdash e' : \s$\\
-    (3) $\G,\xD; \D, \D' \vdash e : \forall p.~\vp$ \` by inversion on $\Lambda E$\\
-    (4) $\G \vdash_{mult} \pi$ \` by inversion on $\Lambda E$\\
-    (5) $\G; \D, \D' \vdash e[e'/x] : \forall p.~\vp$ \` by i.h.(1) (2,3)\\
-    (6) $\G; \D, \D' \vdash e[e'/x]~\pi : \vp$ by $\Lambda E$\\
-    (7) $(e~\pi)[e'/x] = (e[e'/x]~\pi)$ \` by def. of subst.\\
-    (6) $\G; \D, \D' \vdash (e~\pi)[e'/x] : \vp$ by (5,6)\\
-\end{tabbing}
+% \item[Case:] $\Lambda E$
+% \begin{tabbing}
+%     (1) $\G,\xD; \D,\D' \vdash e~\pi : \vp$\\
+%     (2) $\G; \D \vdash e' : \s$\\
+%     (3) $\G,\xD; \D, \D' \vdash e : \forall p.~\vp$ \` by inversion on $\Lambda E$\\
+%     (4) $\G \vdash_{mult} \pi$ \` by inversion on $\Lambda E$\\
+%     (5) $\G; \D, \D' \vdash e[e'/x] : \forall p.~\vp$ \` by i.h.(1) (2,3)\\
+%     (6) $\G; \D, \D' \vdash e[e'/x]~\pi : \vp$ by $\Lambda E$\\
+%     (7) $(e~\pi)[e'/x] = (e[e'/x]~\pi)$ \` by def. of subst.\\
+%     (6) $\G; \D, \D' \vdash (e~\pi)[e'/x] : \vp$ by (5,6)\\
+% \end{tabbing}
 
 \item[Case:] $\lambda I_1$
 \begin{tabbing}
@@ -61,16 +61,16 @@ Statement (1):
     (7) $\G; \D, \D' \vdash \lambda (\y[1][\s'].~e)[e'/x] : \s' \to_1 \vp$ \` by (4,5)\\
 \end{tabbing}
 
-\item[Case:] $\lambda I_\omega$
-\begin{tabbing}
-    (1) $\G, \xD; \D, \D' \vdash \lambda \y[\omega][\s'].~e : \s' \to_\omega \vp$\\
-    (2) $\G; \D \vdash e' : \s$\\
-    (3) $\G, \xD, \y[\omega][\s']; \D, \D' \vdash e : \vp$ \` by inversion on $\lambda I$\\
-    (4) $\G, \y[\omega][\s']; \D, \D' \vdash e[e'/x] : \vp$ \` by i.h.(1) (2,3)\\
-    (5) $\G; \D, \D' \vdash \lambda \y[\omega][\s'].~e[e'/x] : \s' \to_\omega \vp$ \` by $\lambda I$\\
-    (6) $(\lambda \y[\omega][\s'].~e[e'/x]) = (\lambda \y[\omega][\s'].~e)[e'/x]$ \` by def. of subst.\\
-    (7) $\G; \D, \D' \vdash \lambda (\y[\omega][\s'].~e)[e'/x] : \s' \to_\omega \vp$ \` by (4,5)\\
-\end{tabbing}
+% \item[Case:] $\lambda I_\omega$
+% \begin{tabbing}
+%     (1) $\G, \xD; \D, \D' \vdash \lambda \y[\omega][\s'].~e : \s' \to_\omega \vp$\\
+%     (2) $\G; \D \vdash e' : \s$\\
+%     (3) $\G, \xD, \y[\omega][\s']; \D, \D' \vdash e : \vp$ \` by inversion on $\lambda I$\\
+%     (4) $\G, \y[\omega][\s']; \D, \D' \vdash e[e'/x] : \vp$ \` by i.h.(1) (2,3)\\
+%     (5) $\G; \D, \D' \vdash \lambda \y[\omega][\s'].~e[e'/x] : \s' \to_\omega \vp$ \` by $\lambda I$\\
+%     (6) $(\lambda \y[\omega][\s'].~e[e'/x]) = (\lambda \y[\omega][\s'].~e)[e'/x]$ \` by def. of subst.\\
+%     (7) $\G; \D, \D' \vdash \lambda (\y[\omega][\s'].~e)[e'/x] : \s' \to_\omega \vp$ \` by (4,5)\\
+% \end{tabbing}
 
 % I don't think this is still relevant, because the context of the Δ subst. is now exactly the
 % same and the thing being substituted, and in the Var omega case, the Δ context must be empty (meaning the substitute must also have Δ=empty).
@@ -115,10 +115,10 @@ Statement (1):
     (4) $\G'; \D \vdash e' : \s$\` by (2)\\
 \end{tabbing}
 
-\item[Case:] $Split$
-\begin{tabbing}
-    Trivial induction
-\end{tabbing}
+% \item[Case:] $Split$
+% \begin{tabbing}
+%     Trivial induction
+% \end{tabbing}
 
 \item[Case:] $\lambda E_{1,p}$
 \begin{tabbing}
@@ -280,24 +280,24 @@ Statement (1):
 
 Statement (2):
 \begin{description}
-\item[Case:] $AltN_{WHNF}$ (trivial induction)
-\begin{tabbing}
-  (1) $\G; \D \vdash e' : \s$\\
-  (2) $\G,\xD; \D,\D' \vdash_{alt} \konstructor~\to e \prescript{\dag}{}{:^z_{\ov{\D_i}^n}} \s' \Mapsto \vp$\\
-  (3) $\G,\xD,\ov{\xo},\ov{y_i{:}_{\D_i}\s_i}; \D, \D' \vdash e : \vp$\` by inv.\\
-  (4) $\G,\ov{\xo},\ov{y_i{:}_{\D_i}\s_i}; \D, \D' \vdash e[e'/x] : \vp$\` by i.h.(1)\\
-  (5) $\G; \D,\D' \vdash_{alt} \konstructor~\to e[e'/x] \prescript{\dag}{}{:^z_{\ov{\D_i}^n}} \s' \Mapsto \vp$\` by $AltN$\\
-\end{tabbing}
+% \item[Case:] $AltN_{WHNF}$ (trivial induction)
+% \begin{tabbing}
+%   (1) $\G; \D \vdash e' : \s$\\
+%   (2) $\G,\xD; \D,\D' \vdash_{alt} \konstructor~\to e \prescript{\dag}{}{:^z_{\ov{\D_i}^n}} \s' \Mapsto \vp$\\
+%   (3) $\G,\xD,\ov{\xo},\ov{y_i{:}_{\D_i}\s_i}; \D, \D' \vdash e : \vp$\` by inv.\\
+%   (4) $\G,\ov{\xo},\ov{y_i{:}_{\D_i}\s_i}; \D, \D' \vdash e[e'/x] : \vp$\` by i.h.(1)\\
+%   (5) $\G; \D,\D' \vdash_{alt} \konstructor~\to e[e'/x] \prescript{\dag}{}{:^z_{\ov{\D_i}^n}} \s' \Mapsto \vp$\` by $AltN$\\
+% \end{tabbing}
 
-\item[Case:] $AltN_{Not WHNF}$ (trivial induction)
-\begin{tabbing}
-  (1) $\G; \D \vdash e' : \s$\\
-  (2) $\G,\xD; \D,\D' \vdash_{alt} \konstructor~\to e \prescript{\ddag}{}{:^z_{\D_s}} \s' \Rrightarrow \vp$\\
-  (3) $\ov{\D_i} = \ov{\lctag{\D_s}{K_j}}$\`by inv.\\
-  (4) $\G,\xD,\ov{\xo},\ov{y_i{:}_{\D_i}\s_i}; \D, \D' \vdash e : \vp$\` by inv.\\
-  (5) $\G,\ov{\xo},\ov{y_i{:}_{\D_i}\s_i}; \D, \D' \vdash e[e'/x] : \vp$\` by i.h.(1)\\
-  (6) $\G; \D,\D' \vdash_{alt} \konstructor~\to e[e'/x] \prescript{\ddag}{}{:^z_{\D_s}} \s' \Rrightarrow \vp$\` by $AltN$\\
-\end{tabbing}
+% \item[Case:] $AltN_{Not WHNF}$ (trivial induction)
+% \begin{tabbing}
+%   (1) $\G; \D \vdash e' : \s$\\
+%   (2) $\G,\xD; \D,\D' \vdash_{alt} \konstructor~\to e \prescript{\ddag}{}{:^z_{\D_s}} \s' \Rrightarrow \vp$\\
+%   (3) $\ov{\D_i} = \ov{\lctag{\D_s}{K_j}}$\`by inv.\\
+%   (4) $\G,\xD,\ov{\xo},\ov{y_i{:}_{\D_i}\s_i}; \D, \D' \vdash e : \vp$\` by inv.\\
+%   (5) $\G,\ov{\xo},\ov{y_i{:}_{\D_i}\s_i}; \D, \D' \vdash e[e'/x] : \vp$\` by i.h.(1)\\
+%   (6) $\G; \D,\D' \vdash_{alt} \konstructor~\to e[e'/x] \prescript{\ddag}{}{:^z_{\D_s}} \s' \Rrightarrow \vp$\` by $AltN$\\
+% \end{tabbing}
 
 \item[Case:] $Alt0$
 \begin{tabbing}
@@ -332,14 +332,14 @@ Statement (2):
     to contain some of part of $\D$ and $\D$ to refer to the other part only.
 \end{tabbing}
 
-\item[Case:] $Alt_\_$ (trivial induction)
-\begin{tabbing}
-    (1) $\G;\D \vdash e' : \s$\\
-    (2) $\G,\xD; \D,\D' \vdash_{alt} \_~\to e :^z_{\D_s} \s' \Rightarrow \vp$\\
-    (3) $\G,\xD; \D,\D' \vdash e : \vp$\` by inv.\\
-    (4) $\G; \D, \D' \vdash e[e'/x]] : \vp$\` by i.h.(1)\\
-    (5) $\G; \D,\D' \vdash_{alt} \_~\to e[e'/x] :^z_{\D_s} \s' \Rightarrow \vp$\` by $Alt_\_$\\
-\end{tabbing}
+% \item[Case:] $Alt_\_$ (trivial induction)
+% \begin{tabbing}
+%     (1) $\G;\D \vdash e' : \s$\\
+%     (2) $\G,\xD; \D,\D' \vdash_{alt} \_~\to e :^z_{\D_s} \s' \Rightarrow \vp$\\
+%     (3) $\G,\xD; \D,\D' \vdash e : \vp$\` by inv.\\
+%     (4) $\G; \D, \D' \vdash e[e'/x]] : \vp$\` by i.h.(1)\\
+%     (5) $\G; \D,\D' \vdash_{alt} \_~\to e[e'/x] :^z_{\D_s} \s' \Rightarrow \vp$\` by $Alt_\_$\\
+% \end{tabbing}
 \end{description}
 
 \end{proof}

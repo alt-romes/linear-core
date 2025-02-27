@@ -2779,7 +2779,7 @@ evaluation relations of the form $a \Downarrow b$, where $a$ and $b$
 are evaluation states. We also rely on a notion
 of partial derivations and partial evaluation (see
 Appendix~\ref{app:opsem}), written $a\Downarrow^* b$, which allows us
-to state and reason about a progress property.\todo{Na semantica O omega e 1 ainda estão separados, é assim?}
+to state and reason about a progress property.
 
 \begin{figure}
 \[
@@ -3832,8 +3832,8 @@ implementation include:
         used by optimizing compilers.
 
     \item Programs rejected due to the lack of ``linearity coercions'' in
-        $\lambda^\pi_\Delta$. So-called \emph{multiplicity coercions} extending
-        Linear Core could make these programs be understood as linear
+        $\lambda^\pi_\Delta$. Extending Linear Core with \emph{multiplicity coercions} 
+        could make these programs be understood as linear
         (discussed in Section~\ref{sec:future-work}).
 
     \item Programs which actually violate linearity, in that the term
@@ -4007,12 +4007,15 @@ transformations that leverage the non-strict semantics of Core.
 %
 Our work overcomes the limitations of Core's linear type system derived from
 Linear Haskell by understanding linearity semantically in the presence of
-laziness, and by proving linearity-preserving multiple Core-to-Core
-optimisations GHC.
+laziness, and by showing that multiple Core-to-Core
+optimisations employed by GHC are linearity preserving, using a
+linearity-aware semantics that is essentially identical to that of~\cite{cite:linearhaskell}.
 Linear Core can also be seen as a system that validates the programs written in
 Linear Haskell and are compiled by GHC, by guaranteeing (through typing) that
 linear resources are still used exactly once throughout the optimising
-transformations.\todo{add part about operational semantics and proof being similar to them}
+transformations.
+
+
 
 \paragraph{Linear Mini-Core\label{sec:linear-mini-core}}
 

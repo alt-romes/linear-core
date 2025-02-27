@@ -27,7 +27,7 @@ the alternative environment.
 % (2) $\judg[][][]{}{}$\\
 
 \begin{proof}
-By structural induction on the given derivation.
+By structural induction on the given derivation. We omit most trivial cases.
 
 Statement (1):
 
@@ -44,16 +44,16 @@ Statement (1):
   (7) $(\Lambda p.~e)[e'/x] = (\Lambda p.~e[e'/x])$ \` by def. of substitution\\
 \end{tabbing}
 
-\item[Case:] $\Lambda E$
-\begin{tabbing}
-  (1) $\G; \D, x{:}_1\sigma \vdash e~\pi: \varphi[\pi/p]$\\
-  (2) $\G; \D' \vdash e' : \sigma$\\
-  (3) $\G; \D, \xl \vdash e : \forall p.~\varphi$ \` by inversion on $\Lambda E$\\
-  (4) $\G \vdash_{mult} \pi$ \` by inversion on $\Lambda E$\\
-  (5) $\G[\D'/x]; \D,\D' \vdash e[e'/x] : \forall p.~\varphi$ \` by i.h.(1) by (2,3)\\
-  (6) $\G[\D'/x]; \D,\D' \vdash e[e'/x]~\pi : \varphi[\pi/p]$ \` by $\Lambda E$ (4,5)\\
-  (7) $(e~\pi)[e'/x] = e[e'/x] \pi$ \` by def. of substitution\\
-\end{tabbing}
+% \item[Case:] $\Lambda E$
+% \begin{tabbing}
+%   (1) $\G; \D, x{:}_1\sigma \vdash e~\pi: \varphi[\pi/p]$\\
+%   (2) $\G; \D' \vdash e' : \sigma$\\
+%   (3) $\G; \D, \xl \vdash e : \forall p.~\varphi$ \` by inversion on $\Lambda E$\\
+%   (4) $\G \vdash_{mult} \pi$ \` by inversion on $\Lambda E$\\
+%   (5) $\G[\D'/x]; \D,\D' \vdash e[e'/x] : \forall p.~\varphi$ \` by i.h.(1) by (2,3)\\
+%   (6) $\G[\D'/x]; \D,\D' \vdash e[e'/x]~\pi : \varphi[\pi/p]$ \` by $\Lambda E$ (4,5)\\
+%   (7) $(e~\pi)[e'/x] = e[e'/x] \pi$ \` by def. of substitution\\
+% \end{tabbing}
 
 \item[Case:] $\lambda I_1$
 \begin{tabbing}
@@ -65,15 +65,15 @@ Statement (1):
   (6) $(\lambda y{:}_1\sigma'.~e)[e'/x] = (\lambda y{:}_1\sigma'.~e[e'/x])$ \` by def. of substitution\\
 \end{tabbing}
 
-\item[Case:] $\lambda I_\omega$
-\begin{tabbing}
-  (1) $\G; \D, \xl \vdash \lambda y{:}_\omega\sigma'.~e : \sigma' \to_\omega \varphi$\\
-  (2) $\G; \D' \vdash e' : \sigma$\\
-  (3) $\G, y{:}_\omega\sigma'; \D, \xl \vdash e : \varphi$ \` by inversion on $\lambda I$\\
-  (4) $\G[\D'/x], y{:}_\omega\sigma'; \D, \D' \vdash e[e'/x] : \varphi$ \` by i.h.(1) by (2,3)\\
-  (5) $\G[\D'/x]; \D,\D' \vdash \lambda y{:}_\omega\sigma'.~e[e'/x] : \sigma' \to_1 \varphi$ \` by $\lambda I$ (4)\\
-  (6) $(\lambda y{:}_\omega\sigma'.~e)[e'/x] = (\lambda y{:}_\omega\sigma'.~e[e'/x])$ \` by def. of substitution\\
-\end{tabbing}
+% \item[Case:] $\lambda I_\omega$
+% \begin{tabbing}
+%   (1) $\G; \D, \xl \vdash \lambda y{:}_\omega\sigma'.~e : \sigma' \to_\omega \varphi$\\
+%   (2) $\G; \D' \vdash e' : \sigma$\\
+%   (3) $\G, y{:}_\omega\sigma'; \D, \xl \vdash e : \varphi$ \` by inversion on $\lambda I$\\
+%   (4) $\G[\D'/x], y{:}_\omega\sigma'; \D, \D' \vdash e[e'/x] : \varphi$ \` by i.h.(1) by (2,3)\\
+%   (5) $\G[\D'/x]; \D,\D' \vdash \lambda y{:}_\omega\sigma'.~e[e'/x] : \sigma' \to_1 \varphi$ \` by $\lambda I$ (4)\\
+%   (6) $(\lambda y{:}_\omega\sigma'.~e)[e'/x] = (\lambda y{:}_\omega\sigma'.~e[e'/x])$ \` by def. of substitution\\
+% \end{tabbing}
 
 \item[Case:] $Var_1$
 \begin{tabbing}
@@ -96,10 +96,10 @@ Statement (1):
   (4) $\G[\D'/x],y{:}_{\Delta,\D'}\varphi; \D,\D'; \vdash y : \varphi$ \` by $Var_\Delta$\\
 \end{tabbing}
 
-\item[Case:] $Split$
-\begin{tabbing}
-    Trivial induction
-\end{tabbing}
+% \item[Case:] $Split$
+% \begin{tabbing}
+%     Trivial induction
+% \end{tabbing}
 
 \item[Case:] $\lambda E_1$
 \begin{tabbing}
@@ -329,14 +329,14 @@ Statement (2):
     (7) $\judg[\subst{\G}{\D'}{x}][\D,\D']{K~\ov{\xo}~\to e[e'/x]}{\s' \Rightarrow \vp}[alt][\subst{\D_s}{\D'}{x}][z]$\\
 \end{tabbing}
 
-\item[Case:] $Alt\_$ (trivial induction)
-\begin{tabbing}
-    (1) $\judg[\G][\D']{e'}{\s}$\\
-    (2) $\judg[\G][\D,\xl]{\_~\to e}{\s' \Rightarrow \vp}[alt][\D_s][z]$\\
-    (3) $\judg[\G][\D,\xl]{e}{\vp}$\\
-    (4) $\judg[\subst{\G}{\D'}{x}][\D,\D']{e[e'/x]}{\vp}$\\
-    (5) $\judg[\subst{\G}{\D'}{x}][\D,\D']{\_~\to e[e'/x]}{\s' \Rightarrow \vp}[alt][\D_s,\D'][z]$\\
-\end{tabbing}
+% \item[Case:] $Alt\_$ (trivial induction)
+% \begin{tabbing}
+%     (1) $\judg[\G][\D']{e'}{\s}$\\
+%     (2) $\judg[\G][\D,\xl]{\_~\to e}{\s' \Rightarrow \vp}[alt][\D_s][z]$\\
+%     (3) $\judg[\G][\D,\xl]{e}{\vp}$\\
+%     (4) $\judg[\subst{\G}{\D'}{x}][\D,\D']{e[e'/x]}{\vp}$\\
+%     (5) $\judg[\subst{\G}{\D'}{x}][\D,\D']{\_~\to e[e'/x]}{\s' \Rightarrow \vp}[alt][\D_s,\D'][z]$\\
+% \end{tabbing}
 
 \end{description}
 
