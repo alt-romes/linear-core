@@ -1,7 +1,6 @@
 DOCNAME=report
 
-all: $(DOCNAME).pdf icfp.pdf popl.pdf
-popl: popl.pdf
+all: $(DOCNAME).pdf icfp.pdf
 icfp: icfp.pdf
 
 .PHONY: clean final icfp
@@ -19,9 +18,6 @@ $(DOCNAME).pdf: $(DOCNAME).tex $(DEPS)
 # DOCUMENT FOR ICFP PAPER
 icfp.pdf: icfp.tex $(DEPS)
 	pdflatex icfp.tex
-
-popl.pdf: popl.tex $(DEPS)
-	pdflatex popl.tex
 
 final: $(DOCNAME).tex $(DEPS)
 	pdflatex $(DOCNAME).tex

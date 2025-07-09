@@ -1,6 +1,7 @@
 We thank the reviewers for their feedback. We will implement the following changes:
 
-- Add more references to Section 2; clarify the static and dynamic semantics of the relevant constructs; emphasize linear variables more explicitly.
+- Add more references to Section 2; clarify the static and dynamic semantics of
+  the relevant constructs; emphasize linear variables more explicitly.
 - Clarify fundamental motivation for case rules.
 - Expand related work to include other linear/non-linear type systems and System FC.
 - Correct typos and issues mentioned.

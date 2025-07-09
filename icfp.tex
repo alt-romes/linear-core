@@ -282,7 +282,7 @@ However, linearity in Haskell stands out from linearity in other
 languages because linear types permeate Haskell down to (its) Core, the
 intermediate language into which Haskell is translated by the Glasgow Haskell Compiler (GHC).
 %
-Core is a minimal, explicitly typed, functional language to which multiple
+Core is a minimal, explicitly typed, lazy functional language to which multiple
 Core-to-Core optimising transformations are applied during compilation.
 %
 Typechecking Core serves as a sanity check to the correction of such
@@ -297,7 +297,8 @@ expressions. %, making them easy to spot.
 Both Haskell and its intermediate language Core are lazily
         evaluated.
         % -- expressions in Haskell are only evaluated when needed.
-        As we make clear in this paper, \emph{non-strict evaluation interacts non-trivially with linearity}.
+        As we make clear in this paper, non-strict evaluation interacts non-trivially with linearity.
+        We give a precise definition of what it 
         Intuitively, a syntactic occurrence of a linear resource does not
         necessarily entail consuming that resource because expressions are not
         necessarily evaluated (if the expression is not evaluated, the
