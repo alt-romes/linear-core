@@ -294,18 +294,18 @@ expressions. %, making them easy to spot.
 % resulting program.
 %
 
-Both Haskell and its intermediate language Core are lazily
-        evaluated.
-        % -- expressions in Haskell are only evaluated when needed.
-        As we make clear in this paper, non-strict evaluation interacts non-trivially with linearity.
-        We give a precise definition of what it 
-        Intuitively, a syntactic occurrence of a linear resource does not
-        necessarily entail consuming that resource because expressions are not
-        necessarily evaluated (if the expression is not evaluated, the
-        resource is not used).
-        %
-        In contrast, under eager evaluation, a syntactic occurrence of a resource
-        along a given control-flow path always implies its use at runtime.
+% Both Haskell and its intermediate language Core are lazily
+%         evaluated.
+%         % -- expressions in Haskell are only evaluated when needed.
+%         As we make clear in this paper, non-strict evaluation interacts non-trivially with linearity.
+%         We give a precise definition of what it 
+%         Intuitively, a syntactic occurrence of a linear resource does not
+%         necessarily entail consuming that resource because expressions are not
+%         necessarily evaluated (if the expression is not evaluated, the
+%         resource is not used).
+%         %
+%         In contrast, under eager evaluation, a syntactic occurrence of a resource
+%         along a given control-flow path always implies its use at runtime.
         %
         % Under eager/call-by-value evaluation, the distinction between syntactic uses of a
         % resource and the actual use of linear resources at runtime does not exist --
@@ -409,10 +409,13 @@ of Core and, thus, a whole class of programs that are linear under the lens of
 non-strict evaluation are rejected by Core's current linear type system.
 %
 In this work, we address this limitation by exploring how syntactic linearity
-breaks down in the presence of non-strictness and designing a type system which,
-derived from our observations, accepts the vast majority of valid non-strict
-programs and optimising transformations previously rejected by traditional
-linear typing disciplines. Additionally, we show our system
+breaks down in the presence of non-strictness and designing a linear type
+system which accepts the vast majority of programs and optimising
+transformations that, while correct under non-strict evaluation, are rejected
+by traditional linear typing disciplines.
+%
+%
+Additionally, we show our system
 %
 % and its implications on validating and influencing optimising transformations
 % by designing a type system which analyses how syntactic linearity breaks down
@@ -427,13 +430,16 @@ Our contributions are as follows:
 \item We introduce the concept of \emph{semantic} linearity, in
 contrast to \emph{syntactic} linearity in Haskell, by example
 (Section~\ref{sec:linearity-semantically}).
+%
+A precise definition of \emph{semantic} linearity is given by our instrumented
+operational semantics, under which a program using a linear resource
+non-linearly gets stuck (Section~\ref{sec:main:metatheory}).
 
 \item We introduce Linear Core, a non-strict linear language with
 the key features of Core (except for type equality coercions), whose type system
 accounts for semantic linearity in the presence of laziness. To the
 best of our knowledge, this is the first type system to capture linearity
-semantically in this context
-(Section~\ref{sec:main:linear-core}).
+semantically in this context (Section~\ref{sec:main:linear-core}).
 
 \item We prove our type system is sound, guarantees linear resource usage, and
     prove that multiple optimising transformations, which are rejected in Core,

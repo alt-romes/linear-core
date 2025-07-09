@@ -34,7 +34,8 @@ syntactic occurrence of a variable may be ignored at runtime because of
 non-strict evaluation. We will also make clearer our written intuition for
 semantic linearity:
 - Linear variables are only consumed when evaluated
-- But evaluating an arbitrary expression only consumes exactly once the linear resources that aren’t captured in the result.
+- But evaluating an arbitrary expression only consumes exactly once the linear
+  resources that aren’t captured in the result.
 
 >  [...] treatment of case expressions [...] ad-hoc.
 
