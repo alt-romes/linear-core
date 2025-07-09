@@ -1,0 +1,265 @@
+ICFP 2025 Paper #44 Reviews and Comments
+===========================================================================
+Paper #44 Semantic Linearity in a Lazy Optimising Compiler
+
+
+Review #44A
+===========================================================================
+
+Overall merit
+-------------
+C. Weak paper, though I will not fight strongly against it
+
+Reviewer expertise
+------------------
+3. Knowledgeable
+
+Reviewer confidence
+-------------------
+3. High
+
+Paper summary
+-------------
+This paper presents Linear Core, a linear type system for the Core IR used by GHC.
+The problem it addresses is that most linear type systems follow a syntactic approach, which may not be suitable for Haskell's lazy evaluation model. Furthermore, Core programs undergo optimization, producing new Core programs that may break linearity.
+Current Core type systems either ignore linearity or fail to capture the semantic notion of linearity required for lazy semantics. Linear Core can accept many programs that are semantically linear and can validate Core-to-Core optimizations performed by GHC.
+The type system is formally presented in a core language that includes functions, multiplicity abstractions, let and letrec bindings, and data constructors eliminated through case analysis. The type system introduces the concept of Δ-variables, which allow resources to be consumed indirectly. It also defines specialized rules for case analysis, distinguishing between cases where the scrutinee expression is in weak head normal form and cases where it is not. Both cases require special handling when it is unclear whether the scrutinee expression will consume linear variables.
+To address this, the paper introduces proof-irrelevant resources, which, like regular linear resources, must be consumed exactly once. However, they are only consumed indirectly through Δ-variables.
+The metatheory of Linear Core establishes progress and preservation, along with other lemmas related to linearity, ensuring that well-typed Core programs do not use linear resources more than once. To achieve this, a runtime semantics is presented that results in a stuck state if a resource is used more than once.
+The paper also illustrates several Core-to-Core optimizations performed by GHC that preserve typing under Linear Core.
+Finally, Linear Core is evaluated using three libraries, where more than 99% of the programs are accepted. The remaining programs are ill-typed either due to ambiguity caused by GHC heuristics or because they genuinely violate linearity after compilation to Core.
+
+Comments for authors
+--------------------
+## Strengths
+
+- The paper tackles a well-motivated and interesting problem.
+- It is well-written
+- As far as I know, this is the first attempt to formalize a type system that checks a semantic notion of linearity.
+
+## Issues
+
+- The paper is well-motivated and does a good job of achieving its main objective: developing a linear type system that accepts several Core-to-Core optimizations performed by GHC.
+  My main concern is that the notion of semantic linearity may feel somewhat oversold.
+  The paper claims to capture a semantic notion of linearity, but it seems to be based on Linear Haskell’s definition of what it means to consume a resource. Quoting from p.2:
+  "a syntactic occurrence of a linear resouce does not necessarily entail consuming that resource because expressions are not necessarily evaluated (if the expression is not evaluated, the resouce is not used)."
+  One issue with this concept is that it does not seem to apply to functions.
+  Functions that use linear variables in their body pay for using them upon declaration rather than upon application.
+  For instance, according to Var_1, using a variable is equivalent to just mentioning it.
+  Therefore a program such as `(λx:1σ.x) f`, is well-typed despite never actually using the function argument. Similary, program `let y = (λz. x) in y` does not actually consume linear resource `x`.
+  Nevertheless, I believe the paper has the potential to extend similar ideas from laziness to functions as well.
+
+- The treatment of case expressions based on whether the scrutinee is in WHNF or not seems very ad hoc—especially the introduction of tagged variables, which are not even part of Linear Core's syntax.
+
+- The runtime semantics in Figure 7 appear to be affine, not linear, as they do not ensure the consumption of linear variables.
+  This would not be an issue if Theorem 4.5 guaranteed that b can be well-typed under an empty linear environment. However, the statement is ambiguous, and I could not find the appendix for clarification.
+
+- The validation of optimizing transformations is done on programs annotated with linear environments. However, there is no formal guarantee that this holds in general.
+
+## Question for authors:
+
+- Is Linear Core a conservative extension of well-typed Core's existing linear type system?
+- L773: 'and the case alternatives by introducing the case binder with a usage environment [Δ]' why not introduce z as a linear variable?
+
+# Other feedback
+
+L130: 'light green' I'm not sure if the color palette is color-blind friendly. If not, I recommend to use a color-blind palette as suggested by https://squera.github.io/misc/colours-1.pdf
+
+L210: 'If f u doesn't terminate, it is never consumed, thus the claim holds vacuously' What about a divergent function that tries to free the same resource in each iteration?
+
+L228-231: 'Intuitively, this inference amounts to finding a set of linear resources (Δ) that satisfies the set of equations derived from the bindings $x_i$ in the group such that occurrences of $x_i$ in its own body are synonymous with using all resources in Δ exactly once' I couldn't follow this sentence.
+
+L290: 'but we must still use either the case binder $z$ or the linear pattern variables $a$, $b$.' if this is the case then why isn't the type ... \lolipop (c,d)?
+
+L407: '$z:\Delta\sigma$' Missing Gamma
+
+L430: '(rules $\lambda I_1$ and $\Lambda I$).' weird to have these two rules in this context.
+
+L520: '$(x, y)$' there are no pairs in the formalization.
+
+L556: '$Γ; Δ ⊢ e : \sigma$' If $e'$ doesn't mention $x$ then, semantically, $e$ could eveny be ill-typed, right?
+
+- L607: Up to this point one may wonder, why to output a linear environment if it's always going to be $\Delta$, the input environment? ($\overline{\Delta_j} = \Delta$). This is understood much later when you present the ALTN(NOT)WHNF rules.
+
+L665: '⇒NWHNF' this should be WHNF
+
+L752: '$e$ matches $\rho_j$' If you know what alternative is going to match, why not just ignore the other cases?
+
+L810: 'we can first Split [𝑥:1𝜎] into [𝑥:1𝜎]#𝐾1, [𝑥:1𝜎]#𝐾2'. Please provide a type derivation for such example. It is not clear for me where and how SPLIT is actually used.
+
+L811: '𝑆𝑝𝑙𝑖𝑡' font
+
+
+
+Review #44B
+===========================================================================
+
+Overall merit
+-------------
+B. OK paper, but I will not champion it
+
+Reviewer expertise
+------------------
+3. Knowledgeable
+
+Reviewer confidence
+-------------------
+2. Medium
+
+Paper summary
+-------------
+This paper focuses on building a type system which makes linear types compatible with a lazy evaluation strategy. This asks for a refined point of view on linearity, focused on operational linearity instead of pure syntactical linearity. Indeed, variables which are linear syntactically (appearing exactly once in a head position) might very well not be used at all in a lazy evaluation and therefore not be linear. This optimization is designed for compilers and implemented as a linear version of the Core language implemented in the Glasgow Haskell Compiler.
+
+The paper develops several examples of how the compiler desugaring process in Haskell breaks down linearity, develops solutions to these, and implements them into Linear Core. They prove the soundness of their type system and implement Linear Core as a GHC plugin.
+
+Section 2 is a general introduction to program linearity, and develops examples where the distinction between syntactical linearity, semantical linearity (not detected by Core) and non-linearity can be made. These concerns let binding and case expressions. For let bindings, sometimes recursive, resource usage should be quantified only when the program is evaluated. For case patterns, the fact that the scrutiny is in WHNF or not is decisive in quantifying resources. Section 3 builds on these ideas to develop Linear Core. The authors prove that previously rejected semantically linear programs are now accepted and that internal optimization respects linearity. The language incorporates multiplicities in the syntax of terms, and linear contexts (called usage environments). Let are bound by linear contexts, providing a way to delay evaluation. In the recursive case, usage environments are inferred through an external algorithm. Section 4 details a big-step semantics for Linear Core, shows type safety and proves that various optimising transformations preserve linear usage. Section 5 details the implementation of Linear Core, noting that it is not optimal wrt performance. Proofs are provided in the appendix.
+
+Comments for authors
+--------------------
+### Evaluation
+
+The paper is well-motivated and the introduction is clear, even for the non-specialist. The examples are convincing and well-chosen. This seems to be a complete piece of work, introducing original ideas as to the characterization of linearity in a lazy evaluation, thanks to the use of usage environments in the syntax of let bindings, and a typing of case applications restricted to head normal forms. The implementation in GHC completes the work. As such, I do support the acceptance of the paper.
+
+
+### remarks
+
+- questions: are you only concerned with affine type which might not be linear?
+- Section 2: you should maybe give more references here.
+- Section 3: it would be nice to see the Core type system to be able to compare, even a simplified version of it.
+- Is the usage of linear contexts annotating let constructions a new idea?
+- The related work section might be more complete. What's new in Linear Core and what's borrowed from other linear type systems? Am I right to say that the typing rules for let bindings and case patterns are new?
+
+### minor remarks
+- l41: you could specify "linear haskell" instead of "haskell"
+- l. 193: weird sentencing. Typo?
+- l.246: the inexperienced reader could use an overview of the semantics of "case __ of ___" here.
+
+
+
+Review #44C
+===========================================================================
+
+Overall merit
+-------------
+C. Weak paper, though I will not fight strongly against it
+
+Reviewer expertise
+------------------
+4. Expert
+
+Reviewer confidence
+-------------------
+3. High
+
+Paper summary
+-------------
+The paper presents a mixed linear-structural type system for a
+functional language (Linear Core). The intent is that well-typed programs
+use linearly-typed objects exactly once under lazy evaluation.
+
+The design is more permissive than standard linear type systems. This
+is motivated by the goal of typing programs that are the result of a
+compilation from Linear Haskell as well as programs that result from
+compiler optimizations.
+
+A key concept is “delta variables”, variables in the structural
+context that are linked to a set of variables from the linear context,
+so that a use of a delta variable corresponds to the use of the linked
+linear context.
+
+Apart from the type system, the paper contains an operational
+semantics based on Lunchbury's natural semantics, a type safety result
+that is similar to that of Linear Haskell, and the description of an
+implementation as a GHC Core plugin.
+
+Comments for authors
+--------------------
+Pros
+
++ Delta variables are an interesting concept that seems well suited for
+  achieving the goals of the paper
+
++ Implementation in a complex and widely-used compiler
+
++ The technical content is clearly presented
+
+Cons
+
+- Positioning of the work wrt. related work needs to be improved
+
+- Progress proof is only sketched
+
+- Rules feel ad-hoc
+
+- Introduction is confusing
+
+Discussion
+
+I didn't check the details but the results seem
+plausible, and I believe they are correct. The main theorems come with detailed proofs. An exception is the progress result which is only sketched. The motivation is on the weaker side
+and didn't entirely convince me of the benefits of having a linear
+type system in Core. I think the strongest part of the work is the
+implementation in GHC.
+
+Overall, I'm on the fence about this paper because of two main
+reasons: (1) The positioning and presentation of the work in the
+introduction and overview is confusing and needs improvement. (2) The
+presented type system seems a bit ad-hoc and overly targeted to the
+implementation.
+
+Details
+
+- You write that "linear types ... enforce that resources are used
+  exactly once" where use refers to use at runtime. This is not
+  entirely correct. Linear type systems are type systems that don't
+  enjoy the structural properties contraction and weakening. No
+  dynamic semantics is needed. One application of linear type systems
+  is to ensure that objects are used exactly once at runtime. However,
+  this is not the case in general. (Think of "bang" in linear logic or
+  divergence that prevents communication along a channel in
+  session-typed programs.)
+
+- "Non-strict evaluation interacts non-trivially with linearity." I
+  believe that this is not true in general. You probably think of a
+  setting in which you combine a linear and a structural context. If
+  all variables are treated linearly (and we don't care about the
+  order of effects) then it shouldn't make a difference if we pick
+  eager, call-by-name, or lazy evaluation.
+
+  You mention that there has been a lot of work on combining linear
+  and structural components in type systems. However, you do not
+  discuss this work and position your type system within this
+  space. It only became clear that you have structural components in
+  Section 3.
+
+- The examples in Section 2 are confusing because it is not clear
+  which variables are linear. For example, in line 118, x is probably
+  structural? But it's common to require that structural variables
+  cannot depend on linear ones etc. After reading Section 3, I
+  understand what's going on but it should be discussed here already.
+
+- It was not clear to what extent the ideas in the work are specific
+  to lazy evaluation. At a high-level, you can implement lazy
+  evaluation in a language like OCaml. So a linear type system for a
+  strict language with side effects is sufficient for understanding
+  lazy evaluation.
+
+  More concretely, instead of let y = e in ... you could have
+  something like let y = fn _ -> e in ... in a strict language and the
+  same concerns emerge.
+
+- The rules for delta-variables seem restrictive. The variable
+  x_\Delta appears in the unrestricted context but is basically affine
+  because you can use it at most once. I was instead expecting a more
+  relaxed version that reflects lazy evaluation by allowing multiple
+  uses in some situations.
+
+- "Under eager evaluation a syntactic occurrence of a resource along a
+  given path always implies its use at runtime."
+
+  Not if you have non-termination. 
+
+- L 34: I was confused by the syntax. What is the word "in" doing there?
+
+- L 81: Isn't inlining for functions? What is this optimization?
+

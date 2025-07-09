@@ -1,0 +1,350 @@
+Review #6A
+===========================================================================
+
+Overall merit
+-------------
+D. Reject
+
+Reviewer Expertise
+------------------
+X. I am an expert in this area
+
+Reviewer Confidence
+-------------------
+4. High: I am very sure of my assessment
+
+Paper summary
+-------------
+This paper describes a technique for tracking aliasing during
+linearity checking for the core language in the GHC compiler. With
+this alias tracking, a use of a let-bound variable `x` counts
+identically as the use of all the free variables in the definition of
+`x`. The treatment extends to recursive lets and some case-bound
+variables. This alias tracking allows more -- but not all -- of the
+transformations in GHC's optimizer to continue to respect
+linearity. It is all implemented in a GHC plugin.
+
+Assessment of the paper
+-----------------------
+Linearity is a tricky thing. As the authors note, it is stated as a
+syntactic property; as such, it is brittle with respect to the kinds
+of transformations an optimizer performs (similarly for surface-level
+refactoring tools, though that's out of scope for this paper). This
+paper addresses this problem by adding nuance to way occurrences are
+tracked, essentially allowing the linearity analysis to "look through"
+certain definitions to find the usages underneath. This indeed allows
+more transformations to be acceptable and allows for us to have
+greater assurance that linearity annotations in Haskell code are
+respected, even after optimization.
+
+I believe the authors claims that the work in this paper delivers on
+the goal of allowing checking for more transformations (though I have
+some doubts around case statements and recursive lets, as I detail
+below). However, my chief complaint with this work is that the
+presentation in the paper goes much further than this claim -- and if
+the paper's offered contributions more accurately (in my opinion)
+stated what is delivered, the contribution would be too small to form
+an ICFP paper.
+
+The key claim I worry about is that the authors have presented a
+*semantic* understanding of linearity. I do not see this. Instead, I
+see a system of alias tracking, allowing the old syntactic
+understanding of linearity to be stable under let-binding (whether by
+an actual `let` or indirectly through a `case`). Furthermore, I am
+disappointed that the key proof is progress + preservation. In this
+line of work, type safety is not (to me) all that interesting a
+property. Indeed, you could prove it more easily by showing that this
+calculus is a subset of a standard presentation of the simply typed
+λ-calculus (with inductive data types + let rec), and then appealing
+to the type safety of the STLC. (Yes, preservation of this calculus
+implies a little bit more -- that reducts obey the linearity
+conditions -- a point I'll return to.)
+
+The lack I see is that there is no description of what linearity
+really means. That is, if we are to discuss semantic linearity, I
+would want a property that describes the runtime behavior of a
+program, ignorant of its syntactic encoding. For example, we could
+imagine having a property where, if a pointer to a memory cell `c` is
+passed linearly to a function and the function is fully evaluated,
+then there remains exactly the same number of pointers to `c` as there
+were before the call. Or maybe if a thunk `t` is passed linearly, then
+`t` is evaluated only once. Or maybe if an IO action `a` is passed
+linearly, its side effects can be observed exactly once. Not sure
+what's best -- but I think we need something in this space to be able
+to claim a semantic understanding of linearity.
+
+Put another way: how can I verify that the calculus presented in this
+paper says anything at all about linearity? A simpler presentation
+(without alias-tracking) makes it clear that a linear variable is used
+exactly once (though I'd still love for that to be connected to a
+semantic property). This presentation is not as simple -- it allows
+multiple occurrences of a linearly bound variable (if, say, all but
+one occurrence is in the definition of let-bound variables that are
+unused). So is it a linear type system or not? The authors are silent
+on this issue, which is why type preservation is, to me, uninteresting
+here.
+
+One subtlety this paper attempts to address is *laziness*. Laziness is
+indeed a thorny part of linearity. In particular, the original Linear
+Haskell paper describes how linearity might be used to enable
+referentially transparent update-in-place. But this trick depends on
+knowing what has been evaluated and when -- hard in a lazy
+language. Sadly, this hard aspect of the interaction between laziness
+and linearity goes unaddressed in this paper. Instead, my sense is
+that this paper is focused more on purity than laziness. That is,
+suppose we had a strict language, where let-binders' right-hand sides
+are always evaluated before binding. This strict hypothetical language
+is still pure, though. I claim that the approach taken in this paper
+would work just as well as it does in a lazy setting (modulo, perhaps,
+the worry about WHNF in case scrutinees). The key observation here is
+that, in a pure language, laziness is actually unobservable in output
+values. Because this paper does not talk about side effects at all, I
+don't see how laziness is interesting in this context. Put another
+way: the paper uses `free x` as an example of an operation we don't
+wish to repeat. But what *is* this operation? Haskell is a pure
+language. But is `free` side-effectful? Even if it is, GHC's
+call-by-need compilation strategy would seem to save us... so I'm
+stumped here.
+
+Taking this all into account, what I see in this paper is a fairly
+straightforward aliasing system that allows for a higher confidence
+when performing optimizing transformations. This is fine. But it's not
+proved correct (that is, there is no proof that the aliasing system
+respects even syntactic linearity, which could be done with a
+translation from this calculus back to a non-aliasing linear calculus,
+say) and is not particularly surprising (except around the WHNF stuff
+-- more later). This aliasing system on its own *is* a contribution to
+the literature, but I'm not sure how novel it is, and I do not think
+this alone rises to the level we expect for an ICFP paper.
+
+I should note that the paper is well written -- the English flows well
+and is straightforward to understand.
+
+Questions for authors’ response
+-------------------------------
+My big question, which should take priority over all the other
+quibbles here, is: What does it mean to consume a value exactly once?
+A syntactic answer doesn't quite cut it, given the thrust of this
+paper. So is there a meaning of linearity that can be observed in a
+running program? Then, is there a way to relate that definition to the
+work done in this paper?
+
+Comments for authors
+--------------------
+Line 50: What about Idris's QTT intermediate language?
+
+Line 70: I was hoping there would be more detail on "effectively
+ignored". What does this mean in practice?
+
+Line 158: I'm actually familiar with float-out, but not all of your
+readers will be. It would be helpful to define this.
+
+Second half of page 4: This is where the lack of a semantic definition
+of consumption starts to bite -- and it did not resolve, in my view.
+
+Line 329: I never understood the part of the paper that focuses on
+WHNF in scrutinees. I think the problem for me is that, as expanded
+above, I think I don't buy the core argument that this paper is about
+laziness -- and so WHNF-ness seems irrelevant. Maybe the goal of this
+analysis is only to increase the alias tracking so that a `case K x of
+...` can track aliasing of `x`? That seems likely. It would be helpful
+to state this more directly.
+
+Line 360: `case` is actually lazy in Haskell. Patterns might force the
+scrutinee, but `case`, on its own (e.g. with a lazy pattern) will
+not. `case` is strict in Core, though.
+
+Line 425: The calculus studied in this paper is call-by-name. So, in
+retrospect, it seems any discussion of call-by-need (as regarding
+Haskell) is a little off-subject.
+
+Line 456: I think there's a missing $\Gamma$ in the last alternative
+of the definition of $\Gamma$.
+
+Line 468: This definition of values is surprising. It treats
+multiplicity abstraction as a value, even though Haskell does not do
+this. Furthermore, it seems to require that the arguments to a
+constructor are values, even though they need not be values in a lazy
+language.
+
+Line 480 or so: What about function scrutinees? GHC Core actually uses
+these to force functions.
+
+Line 572: It seems to me that this system does not really support
+multiplicity polymorphism. Yes it can abstract over multiplicities,
+but it can't use the abstract variables meaningfully, as far as I can
+see.
+
+Line 649: It seems that there is an assumption of extra dependency
+analysis for breaking down mutually recursive lets into strongly
+connected components. I did not see a discussion of this.
+
+Line 664: This let-rec is pretty restrictive, requiring every
+right-hand side to mention precisely one bound variable in the
+let-rec, or all of the captured linear variables (each exactly
+once). Is such a restrictive let-rec useful? That is, can you actually
+program with this construct?
+
+Line 670: The paper describes an analysis for determining the set of
+variables captured in a let-rec... but it seems like a straightforward
+syntactic check would work. I must be missing something, but I don't
+know what.
+
+Section 3.6.1: I only skimmed this section, through to the end of
+Section 3.
+
+Line 947: What does "validated" mean here? Zooming out, discussion of
+these optimizations seems interesting. What were the challenges here?
+How did these particular optimizations drive the design in this paper?
+It would be great to understand this part more.
+
+Figure 8: What is the takeaway here. Should we be impressed by the
+high percentages? Dismayed that the number is not 100%?
+
+Line 1074: This sounds interesting. Is GHC producing programs that
+violate linearity?
+
+
+* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+
+
+Review #6B
+===========================================================================
+
+Overall merit
+-------------
+C. Weak paper, though I will not fight strongly against it
+
+Reviewer Expertise
+------------------
+Y. I am knowledgeable in this area, but not an expert
+
+Reviewer Confidence
+-------------------
+3. Good: I am reasonably sure of my assessment
+
+Paper summary
+-------------
+At the moment, the GHC Haskell compiler desugars *Linear Haskell* (an extension of Haskell with linear types) into the *Haskell Core* language, whose type system does not account for linearity. That means, optimisations applied to Haskell Core may by mistake produce code that violates linearity without the typechecker for Haskell Core catching such mistakes. This paper proposes a *Linear Core* calculus as a replacement for Haskell Core to address this problem. To this end, Linear Core has to capture a semantic notion of linearity rather than a syntactic notion, because in a lazy language such as Haskell, a resource may syntactically appear several times while only being used once.
+
+The paper aims to demonstrate the validity of Linear Core's design by (1) proving progress and preservation; (2) proving that several optimisation passes preserve well-typing in Linear Core; (3) implementing a prototype as a GHC plugin to test the design of Linear Core against a larger code base.
+
+Assessment of the paper
+-----------------------
+### Strengths
+- meta-theoretical results: progress & preservation; type preservation of optimisations
+- prototype implementation as a GHC plugin
+- empirical evaluation on a large code base
+### Weaknesses
+- the semantics of the presented calculus does not match Haskell Core's semantics
+- some programs don't type check, even though they are 'semantically linear' and occur in realistic code
+- meta-theoretical results do not show that linearity is enforced soundly
+- type system seems ad-hoc without a semantical grounding
+
+This paper attacks an important and technically challenging problem in the implementation of linear types in GHC. A central principle of GHC is that the type system of the surface language is not more expressive than that of its intermediate language Haskell Core. This principle has arguably been broken with the introduction of linear types and this paper promises to repair the situation by extending the expressiveness of Core's type system with a suitable notion of linearity. The paper carefully explains why such a notion of linearity has to be semantic in nature and illustrates this semantic notion of linearity with a number of examples.
+However, as presented in the paper the design of Linear Core falls short of some of the promises made by the paper (namely soundness & laziness) and is not suitable as a replacement for the current version of Core (because Linear Core is not lazy but call-by-name). Moreover, the design itself does not seem to be grounded by the semantics of the language, but is instead argued for with examples. None of these flaws are fatal, but the paper would need to be revised to properly acknowledge these shortcomings and characterise the results appropriately.
+
+### Soundness
+
+The paper claims that it has proved soundness of the type system. But that is not true. The type system *aims* to make guarantees about resource usage: variables with multiplicity 1 are used exactly once. None of the proved metatheoretical properties (progres, preservation, type preservation of optimisation) show that well-typed programs use linear variables exactly once in the operational semantics. Indeed Haskell Core satisfies the same metatheoretical properties and does not enforce linearity. For the chosen proof technique to imply soundness, the operational semantics would have to get stuck whenever linearity is violated. But as it stands, the term $(\lambda x :_1 int . x + x) 1$ happily evaluates to 2 despite violating linearity.
+The type system of Linear Core is quite complicated. It is not obvious (to me at least) that the type system captures the (never crisply defined) notion of semantic linearity. As an aside: The original Linear Haskell paper also only proves progress and preservation, but does not claim that this amounts to soundness.
+### Laziness
+
+The paper promises a lazy calculus. It's even in the title. And it better be lazy if Linear Core is to be used for GHC. But Linear Core is not lazy, it is a call-by-name calculus. The call-by-name nature is explicitly acknowledged once the paper gets to the operational semantics. The paper tries to argue that it is ok to use call-by-name, since linear functions can safely be implemented as call-by-name in a call-by-need calculus. But: (A) this should rather be proved as a theorem rather than assumed, (B) the calculus still has non-linear functions to which this justification does not apply, and (C) the discussion in section 4.2 shows that even if we restrict ourselves to linear functions we run into problems. Concretely, regarding (C), the practical evaluation showed that Linear Haskell rejects real-world programs that are safe precisely because of this mismatch of the semantics.
+
+### Semantic grounding
+
+I found section 2 rather frustrating to read. The concept of semantic linearity is introduced rather vaguely. There is no crisp definition of it, just a sequence of examples, each with a handwaving explanation of why this program should or should not be semantically linear. Even just a tentative definition could help me to convince myself that the authors are not just making it up as they go along.
+
+Comments for authors
+--------------------
+- l. 62 f. "an occurrence of a variable in the program always entails consuming it.": Well, except in the presence of conditionals.
+- l. 85 f. "Core’s linear type system": I thought Core does not currently have linearity. At least that is the impression I got from reading the intro so far.
+- section 2. Before going over all these examples, it would be nice to give a (tentative) definition of 'use', i.e. what does it mean for a resource to be used. Also the notation (eg. -> vs -* ) should be introduced.
+- section 2.1: You conflate let binding and let-bound variables all over the place.
+- "let-binding" and "let binding" are used.
+- "let bound variables are affine in the let body." Well not really, right? It might have to be used exactly once depending on the context.
+- "iff it is consumed exactly once, then" -> "it is consumed exactly once iff"
+- l. 255 f. "if a linear function application ( f u) is consumed exactly once, then the argument (u) is consumed exactly once.": This definition should come earlier in the section.
+- l. 288 ff.: This reasoning seems all very informal and fuzzy. Can't we have some concrete definitions and work with them?
+- l. 330: Why has the tuple type linear components? In general, the paper assumes that the reader already knows Linear Haskell to some extent.
+- l. 414: The description of the syntax says that the cases form a set, which implies they are not ordered. So which one do we pick in the operational semantics if there is an overlap?
+- "Note that a linear resource is used many times when a constructor with an unrestricted field is applied to it, ..." But that is not specific to constructors, right? The same applies to functions.
+- "The core rules of the calculus for, multiplicity and term, abstraction" It took me 5 tries to parse this sentence. - l. 456: Is "$\Gamma,$" missing in front of $z$?
+- l. 488 f.: Why the distinction, given that you have multiplicity annotations?
+- Fig. 5: So where is the rule λIp for multiplicity variables?
+- Fig. 5. Split rule. Is there a typo in this rule (the change from $\phi$ to $\sigma$ looks odd). Also the notation "#K" wasn't introduced in the syntax.
+- l. 577 - 579.: Where do I see this in the typing rules? - l. 670: Why least upper bound? My naive understanding is that each $e_i$ must either use all of $\Delta$ directly or indirectly (by using some $x_j$). After all, each $e_i$ is typed with the same $\Delta$. Where is my mistake? An example might clear this up.
+
+
+* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+
+
+Review #6C
+===========================================================================
+
+Overall merit
+-------------
+B. OK paper, but I will not champion it
+
+Reviewer Expertise
+------------------
+Y. I am knowledgeable in this area, but not an expert
+
+Reviewer Confidence
+-------------------
+3. Good: I am reasonably sure of my assessment
+
+Paper summary
+-------------
+This paper presents "Linear Core", a type system used to check linearity of
+the (internal) Core language of GHC. It is formalized and proven sound and
+complete, and fully implemented as GHC compiler plugin. The main novelty is
+that linear core checks for so-called "semantic" linearity since various
+Core transformations produce programs that are semantically still linear but
+may contain multiple occurrences of a linear resource.
+
+Assessment of the paper
+-----------------------
+This is an excellent presentation and Section 2 gives a nice overview of the challenges of linearity in a lazy setting.  The work is well-motivated and starts
+with explaining the challenges and concept of semantic linearity. This is followed
+by a full formalization and proof of soundness and progress. The implementation
+is discussed and evaluated against large linearly typed Haskell libraries
+(including linear-base).
+- Even though the formalization makes the type system very precise where we
+can clearly understand which programs can be accepted, the system is also
+quite complicated and not particularly elegant. The rules feel a bit ad-hoc and  motivated more by example than by semantics. Moreover, it seems (maybe  I missed it?) that there is no "linear soundness" result. The proofs show
+that the system is sound in the sense of an evaluation not getting stuck,
+but there is no statement that the presented rules actually ensure that
+an evaluation never uses a linear resource in a non-linear way.   Question: Can you confirm this is the case? (or if I missed it). If so, would it
+be difficult to show this?
+
+- Furthermore, I am not sure if the distinction beween "syntactical" and "semantic"
+linearity is really valid. In section 2 it is implied that "syntactic" linearity means a
+linear resource can only occur once syntactically but that is not the case in most
+systems (like occurences in distinct branches or under lambdas etc.) This notion
+extends naturally to call-by-need or laziness which I think is done here and called
+"semantic" linearity. However, since neither is defined precisely here I feel the paper
+uses these terms incorrectly. (in particular, all linear systems are semantic in my opinion
+and should come with a proof that execution "consumes" linear resources linearly).
+Question: Can you define the distinction between syntactic and semantic linearity
+precisely?
+
+minor concerns:
+
+- Section 5: It would be nice to include the line count of the GHC plugin
+to give an indication of how much effort it is to produce a linear core checker.
+Question: How many lines is the plugin?
+
+- Section 5, line 1074: it is great you found a program that discarded a
+resource -- catching this is the whole reason for this work. I was surprised
+to not see an explanation of the program and a discussion on the cause
+of the error; and similarly for the fusion transformation. I hope both
+can be discussed in more detail for the final version.
+
+- character spacing in math mode is off throughout the paper for identifiers.
+(e.g. Use `\textit{Var}` instead of `Var`
+
+Questions for authors’ response
+-------------------------------
+See above.
