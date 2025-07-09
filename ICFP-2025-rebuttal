@@ -1,0 +1,130 @@
+We thank the reviewers for their feedback. We will implement the following changes:
+
+- Add more references to Section 2; clarify the static and dynamic semantics of the relevant constructs; emphasize linear variables more explicitly.
+- Clarify fundamental motivation for case rules.
+- Expand related work to include other linear/non-linear type systems and System FC.
+- Correct typos and issues mentioned.
+
+We respond to each reviewer’s main points within the limit and then all points.
+
+# Review A
+
+> a semantic notion of linearity [...] does not seem to apply to functions.
+
+Ultimately, our notion of semantic linearity is given by our instrumented
+operational semantics, where a linear variable is consumed from the runtime
+environment only when first used.
+
+In it, functions that capture linear resources do *not* pay for them on
+declaration because captured resources are not consumed from the runtime
+environment. Only when functions are applied can the captured linear resources
+be consumed.
+
+Our type safety result guarantees evaluation consumes linear resources exactly
+once and preserves the well-typedness of a state. If the initial well-typed
+state is not closed (as in the reviewer’s examples), the resulting state may
+capture said resources as long as it remains well-typed. If these results were
+part of a closed linear program, they’d have to be applied to be well typed –
+if such a closed program terminates, all linear variables will be consumed
+exactly once.
+
+We will clarify the remark in p.2 to appeal only to an intuition that a
+syntactic occurrence of a variable may be ignored at runtime because of
+non-strict evaluation. We will also make clearer our written intuition for
+semantic linearity:
+- Linear variables are only consumed when evaluated
+- But evaluating an arbitrary expression only consumes exactly once the linear resources that aren’t captured in the result.
+
+>  [...] treatment of case expressions [...] ad-hoc.
+
+Branching on the WHNF-ness of the scrutinee in a case expression is a novel
+idea which, despite seeming ad-hoc, comes from the understanding of “evaluation
+driving resource consumption” we present.
+
+Linear Core’s rules in general try to delay typing resource consumption as much
+as possible to the point where evaluation happens. Since evaluation happens
+precisely when scrutinizing an expression that is not in WHNF (but not one
+already in WHNF), our system types the two cases differently. Note that it is
+critical to distinguish the two cases to type the many programs scrutinizing a
+known constructor produced by an optimizing compiler.
+
+Proof irrelevant resources and tagged resources serve to support the non-WHNF
+case when evaluation happens generically.
+- The former are minimal in the sense they are treated just like normal
+  resources, but with the constraint that no variable will instantiate an
+  irrelevant resource.
+- The latter are inspired by existing systems in the literature like fractional
+  permissions in separation logic [Boyland, J. (2003)].
+
+We will motivate more prominently the case rules we present when first
+introducing them, and introduce supporting references.
+
+> The validation of optimizing transformations is done on programs annotated with linear environments.
+
+The optimizations are annotated with arbitrary usage environments, only
+requiring the overall term to be well-typed. Usage environments can be inferred
+(as done in our implementation) with a naive algorithm.
+
+> Is Linear Core a conservative extension
+
+We are confident this is the case by Lemma 4.1 and our experimental results.
+
+> z as a linear variable?
+
+If the case binder were linear we would be forced to use it instead of having a
+choice between it and the pattern variables, ruling out any program using
+pattern variables.
+
+# Review C
+
+> "Non-strict evaluation interacts non-trivially with linearity." [...] only became clear that you have structural components in Section 3 [...] examples in Section 2 [...] not clear which variables are linear.
+
+This is true in our setting of Haskell/GHC Core, where effects are present
+(non-termination), not all variables are treated linearly and evaluation order
+does matter. We believed the use of Haskell and the fact that types in Section
+2 combined linear and unrestricted functions to be sufficient evidence of our
+mixed system. For let-bound variables, they are effectively linear although the
+discussion aims to flesh out the meaning of linearity for such variables under
+non-strict semantics. The example in L118 wouldn’t typecheck in a naive linear
+system, despite not violating linear resource usage under non-strict semantics.
+
+> ideas [...] specific to lazy evaluation.
+
+The encoding provided by the reviewer is call-by-name (evaluation is not shared
+across uses) and requires a higher-order store. This feature is absent from our
+language, where the only effect is non-termination, and is much more powerful
+than the thunking and forcing mechanisms of lazy evaluation. It is not obvious
+how studying the problem in such a setting would provide more meaningful
+insights.
+
+> L 81: Isn't inlining for functions? What is this optimization?
+
+For lazy languages such as Haskell, the compiler can perform much more
+aggressive inlining optimizations beyond function inlining. GHC can inline
+let-bound expressions such as in L81.
+
+# Review B
+
+> Section 2 [...] Section 3 [...] typing rules for let bindings and case patterns are new?
+
+Core’s non-linear type system is a variant of System FC [Sulzmann et al. 2007].
+The sketched linearity-aware system for Core [5] is a direct adaptation of the
+linear lambda calculus (mentioning usage environments in lets). The treatment
+of case patterns, recursive let bindings and the metatheory is novel.
+
+--------------------------------------------------------------------------------
+
+
+
+(omitting types, annotations and case binder)
+
+       Γ, a_{[Δ]#K_1}, b; [Δ]#K_1 |- a          Γ, a, b_{[Δ]#K_2}; [Δ]#K_2 |- b
+       ------------------------------------------------------------------------
+         Γ, a_{[Δ]#K_1}, b_{[Δ]#K_2}; [Δ]#K_1, [Δ]#K_2 |- K a b
+         ------------------------------------------------------ (SPLIT)
+               Γ, a_{[Δ]#K_1}, b_{[Δ]#K_2}; [Δ] |- K a b
+               -----------------------------------------
+Γ; Δ |- e          Γ; [Δ] |-_alt K a b -> K a b
+-----------------------------------------------
+Γ; Δ |- case e of K a b -> K a b
+
