@@ -2531,6 +2531,8 @@ remaining tagged resources cannot be used directly, yet need to still be consume
 exactly once. Thus, the choice to consume the tagged resources via the usage
 environments of the other pattern variables is forced, ensuring that no
 variable for a constructor's linear component can go unused (the tagged environments are disjoint).
+%
+Tagged resources are inspired by fractional permissions in separation logic~\cite{10.5555/1760267.1760273}.
 
 For instance, in the term $\lambda x.~\ccase{f~x}{z~\{K~a~b\to
   (a,b)\}}$, where $x$ is a linear variable, the case alternative is
