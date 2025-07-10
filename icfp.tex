@@ -2010,19 +2010,26 @@ or a datatype constructor application $(K~\ov{e})$.
 %\end{itemize}
 In both cases, the sub-expressions $e$ or $\ov{e}$ occurring in the lambda body
 or as constructor arguments need not be evaluated for the lambda or constructor
-application to be in WHNF. % (if otherwise all sub-expressions
+application to be in WHNF % (if otherwise all sub-expressions
 % were fully evaluated the whole expression would also be in \emph{normal form}).
 % (that is why it is called \emph{weak} head normal form).
 %
-Accordingly, these sub-expressions might still depend on linear resources to be
-well-typed and such resources will only be consumed when the sub-expressions themselves are evaluated.
+(and they may capture linear resources).
 
-As will be made clear in this section, we need to devise a specialized typing
-for scrutinees that distinguishes between terms
-in WHNF and terms that are not in WHNF.
-Following the discussion on expressions in WHNF, we present a
-typing judgement $\G;\D \Vdash e : \s \gtrdot \ov{\D_i}$, and a rule for each
-of the forms given above:
+A key detail is that when the scrutinee is already in WHNF, evaluation continues
+in the alternative simply by substituting the pattern variables by the
+scrutinee sub-expressions. No resource from the scrutinee can be consumed since
+no computation happens at all.
+% (the scrutinee was already in weak head normal form).
+%In short, no computation happens if the scrutinee is already in WHNF.
+%
+% In light of this, our type system will need to distinguish between terms in WHNF and terms
+% that are not in WHNF.
+%
+% TODO While it may seem ad-hoc to type an expression differently
+%
+We introduce a typing judgement $\G;\D \Vdash e : \s \gtrdot \ov{\D_i}$ to
+extract additional information from the static structure of terms in WHNF:
 \[
     \TypeWHNFCons
 \qquad
@@ -2060,21 +2067,6 @@ as there is always only a single sub-expression in lambda abstractions.
 % pattern, resuming evaluation on the alternative body only substituting the case
 % binder by the scrutinee. 
 
-We highlight that, when evaluating a case expression, computation only
-happens when a scrutinee that is not in WHNF is evaluated to
-WHNF. Otherwise, evaluation continues in the alternative by
-substituting in the appropriate scrutinee expressions, but without
-having performed any additional computation.
-% (the scrutinee was already in weak head normal form).
-%In short, no computation happens if the scrutinee is already in WHNF.
-%
-In terms of linearity, resources are consumed only if evaluation happens.
-Therefore, resources used to type a scrutinee not in
-WHNF will be consumed when the case is evaluated and will no longer be directly available in the case
-alternatives. Conversely, when the scrutinee is already in WHNF, linear
-resources required to type the scrutinee are still directly available in the
-alternatives.
-%
 %%%%???
 %%%%The linear resources used to type an expression in WHNF are exactly those which
 %%%%occur to the right of $\gtrdot$ in the WHNF judgement shown above

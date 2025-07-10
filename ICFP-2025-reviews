@@ -67,7 +67,11 @@ L130: 'light green' I'm not sure if the color palette is color-blind friendly. I
 
 L210: 'If f u doesn't terminate, it is never consumed, thus the claim holds vacuously' What about a divergent function that tries to free the same resource in each iteration?
 
-L228-231: 'Intuitively, this inference amounts to finding a set of linear resources (Δ) that satisfies the set of equations derived from the bindings $x_i$ in the group such that occurrences of $x_i$ in its own body are synonymous with using all resources in Δ exactly once' I couldn't follow this sentence.
+L228-231: 'Intuitively, this inference amounts to finding a set of linear
+resources (Δ) that satisfies the set of equations derived from the bindings
+$x_i$ in the group such that occurrences of $x_i$ in its own body are
+synonymous with using all resources in Δ exactly once' I couldn't follow this
+sentence.
 
 L290: 'but we must still use either the case binder $z$ or the linear pattern variables $a$, $b$.' if this is the case then why isn't the type ... \lolipop (c,d)?
 
