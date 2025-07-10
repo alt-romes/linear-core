@@ -1025,24 +1025,24 @@ f5 bool x =
 %exactly once, and use that assumption when reasoning about recursive calls such
 %that those linear resources are used exactly once.
 
-To determine whether the usage of a binding from a recursive group is
-linear,
-we must infer the superset of resources that may end up being consumed
-in a single use of any of the bindings. For a strongly connected recursive
-group, this superset is the same for all bindings by definition.
+To determine whether the usage of a binding from a recursive group is linear,
+we must infer the superset of resources that may end up being consumed in a
+single use of any of the bindings. For a strongly connected recursive group,
+this superset is the same for all bindings by definition.
 %
-Intuitively, this inference amounts to finding a set of linear resources
-($\Delta$) that satisfies the set of equations derived from the bindings
-$\ov{x_i}$ in the group such that
-%\begin{enumerate}
-occurrences of $x_i$ in its own body are synonymous with using all resources in $\Delta$ exactly once.
+% Intuitively, this inference amounts to finding the linear resources
+% ($\Delta$) which satisfy set of equations derived from the bindings
+% $\ov{x_i}$ in the group such that
+% %\begin{enumerate}
+% occurrences of $x_i$ in its own body are synonymous with using all resources in $\Delta$ exactly once.
 %(2) and if the binding $x$ is fully evaluated, then all resources in $\Delta$ are consumed exactly once.
 %\end{enumerate}
 %Finding a solution to this equation is akin to finding a (principle) type for a
 %recursive binding such that occurrences of itself in its definition are also well-typed.
 %
-It follows from the solution being the same for all bindings that
-at most a single variable from the recursive group can be used in the continuation.
+It follows from the inferred resources used being the same for all bindings
+that at most a single variable from the recursive group can be used in the
+continuation.
 %
 The treatment of recursive let bindings in our system is discussed in Section~\ref{sec:recursivelets}.
 
