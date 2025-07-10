@@ -2173,7 +2173,7 @@ discussing cases of scrutinees not in WHNF.
 
 The alternative judgement $\G;\D \vdash_{alt} \rho \to e :^z_\D \s \Rightarrow
 \vp$ is used to type case alternatives, encompassing three
-``modes'' that are distinguished by the kind of arrow that is used:
+modes that are distinguished by the kind of arrow that is used:
 for alternatives of case expressions whose scrutinee is in WHNF
 ($\Rightarrow_\mathsf{WHNF}$), not in WHNF ($\Rightarrow_\mathsf{NWHNF}$),
 and for alternatives agnostic to the WHNF-ness of the scrutinee
@@ -2183,7 +2183,7 @@ and for alternatives agnostic to the WHNF-ness of the scrutinee
 % judgement, t
 
 First, an alternative whose pattern is a constructor with $n > 0$ linear components
-under the $\Rightarrow_{\mathsf{NWHNF}}$ mode is typed as:
+under the $\Rightarrow_{\mathsf{WHNF}}$ mode is typed as:
 \[
 \TypeAltNWHNF
 \]
@@ -2517,7 +2517,7 @@ if a $K$-pattern-bound $\D$-variable is consumed, all remaining $K$-$\D$-variabl
 standing for the remaining linear components of the same pattern, must also be
 consumed.
 
-To satisfy these two constraints, we introduce a $\textit{Split}$ rule that
+To satisfy these two constraints, we introduce a $\textsc{Split}$ rule that
 allows a linear resource $x{:}_1\s$ to be split into $n$ resources at a given
 constructor $K$, where $n$ is the number of linear components of the
 constructor, and each resource resulting from the split is \emph{tagged} with
@@ -2550,7 +2550,7 @@ $\textsc{Split}$ $[x{:}_1\s]$ into $\lctag{[x{:}_1\s]}{K_1}, \lctag{[x{:}_1\s]}{
 % $\D$-var to be consumed, and, consequently, the remaining fragments
 % have to be consumed through the other linear pattern-bound variables.
 %
-noting that $Split$ can be applied both to relevant and proof irrelevant linear
+noting that $\textsc{Split}$ can be applied both to relevant and proof irrelevant linear
 resources in $\D$.
 
 % Using tags for fragments instead of fractions (e.g. $\D_s*i/n$) is necessary
@@ -3616,10 +3616,10 @@ For a scrutinee not in WHNF, pattern variables in a case alternative are
 introduced as $\D$-variables with usage environment $\lctag{\irr{\D}}{K_i}$,
 where $\D$ are the scrutinee resources and $K_i$ the tag of that pattern
 variable. To use these pattern variables, the scrutinee resources must be first
-$Split$ into fragments. Instead of guessing which resources need to be split,
+$\textsc{Split}$ into fragments. Instead of guessing which resources need to be split,
 the implementation consumes tagged fragments of a resource \emph{as needed},
 i.e., only when consuming a resource whose usage environment has a resource
-tagged $K_j$ do we $Split$ that resource on $K$ and consume the $K_j$ fragment.
+tagged $K_j$ do we $\textsc{Split}$ that resource on $K$ and consume the $K_j$ fragment.
 %
 Finally, our implementation must infer the usage environments of binders in
 a recursive let group before using them to typecheck the let body. We use a

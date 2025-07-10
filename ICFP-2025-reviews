@@ -83,7 +83,10 @@ L520: '$(x, y)$' there are no pairs in the formalization.
 
 L556: '$Γ; Δ ⊢ e : \sigma$' If $e'$ doesn't mention $x$ then, semantically, $e$ could eveny be ill-typed, right?
 
-- L607: Up to this point one may wonder, why to output a linear environment if it's always going to be $\Delta$, the input environment? ($\overline{\Delta_j} = \Delta$). This is understood much later when you present the ALTN(NOT)WHNF rules.
+- L607: Up to this point one may wonder, why to output a linear environment if
+  it's always going to be $\Delta$, the input environment?
+  ($\overline{\Delta_j} = \Delta$). This is understood much later when you
+  present the ALTN(NOT)WHNF rules.
 
 L665: '⇒NWHNF' this should be WHNF
 
