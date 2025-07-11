@@ -19,6 +19,15 @@
 \usepackage{todonotes}
 \usepackage[justification=centering]{subfig}
 
+
+%% Bibliography style
+\bibliographystyle{ACM-Reference-Format}
+%% Citation style
+%% Note: author/year citations are required for papers published as an
+%% issue of PACMPL.
+\citestyle{acmauthoryear}   %% For author/year citations
+
+
 %\newtheorem{theorem}{Theorem}
 %\newtheorem{proposition}[theorem]{Proposition}
 % \newtheorem{lemma}[theorem]{Lemma}%[theorem]
@@ -185,7 +194,7 @@
 \begin{document}
 
 \begin{abstract}
-Linear type systems guarantee linear resources are used exactly once.
+Linear type systems can be used to guarantee (linear) resources are used exactly once.
 Traditionally, using a resource is synonymous with its \emph{syntactic}
 occurrence in the program, however, under the lens of non-strict evaluation,
 linearity can be further understood \emph{semantically}, where a
@@ -231,8 +240,9 @@ system against linearity-heavy libraries, including
 % the motto ``well-typed programs do not go wrong''.%~\cite{}.
 
 Linear types~\cite{cite:linear-logic,cite:barberdill} increase the expressiveness
-of type systems by allowing them to enforce that certain resources (e.g.~a
-file handle) are used \emph{exactly once}.
+of type systems by allowing them to enforce desirable usage patterns
+for certain resources (e.g.~a
+file handle). Typically, linear types can be used to enforce resources are used \emph{exactly once}.
 %
 In programming languages with a linear type system, not using certain resources
 or using them twice is flagged as a type error. For instance, linear types can
@@ -253,7 +263,7 @@ system where $p$ is deemed a linear resource created by the call to
 % We know this to be the dreaded double-free error which will crash the program at runtime.
 % \centering
 \begin{code}
-let p = malloc(4); in free(p); free(p);
+let p = malloc(4) in free(p); free(p);
 \end{code}
 
 Despite their promise and extensive presence in research
@@ -262,7 +272,7 @@ an effective design combining linear and non-linear typing is both
 challenging and necessary to bring the advantages of linear typing to
 mainstream languages.
 %
-Consequently, few general purpose programming languages have linear
+Consequently, few general purpose programming languages have linear or substructural
 type systems. Among them are Idris~2~\cite{brady:LIPIcs.ECOOP.2021.9},
 % a linearly and dependently typed language based on Quantitative Type Theory,
 Rust~\cite{10.1145/2692956.2663188}, a language whose
@@ -278,12 +288,15 @@ Haskell~\cite{cite:linearhaskell}, a pure, functional, and
 % linear types. 
 %
 
-However, linearity in Haskell stands out from linearity in other
+Linearity in Haskell stands out from linearity in other
 languages because linear types permeate Haskell down to (its) Core, the
 intermediate language into which Haskell is translated by the Glasgow Haskell Compiler (GHC).
 %
-Core is a minimal, explicitly typed, lazy functional language to which multiple
-Core-to-Core optimising transformations are applied during compilation.
+Core is a minimal, explicitly typed, lazy functional language with
+both linear and unrestricted types, to which multiple
+Core-to-Core optimising transformations are applied during
+compilation. Notably Core does not have a (higher-order or otherwise)
+store.
 %
 Typechecking Core serves as a sanity check to the correction of such
 transformations, since unsound ones are likely to introduce ill-typed
@@ -317,7 +330,7 @@ expressions. %, making them easy to spot.
         % our knowledge, it is the
         % only language featuring both laziness and linearity.
 
-Just as Core's type system provides a degree of validation to the
+Just as Core's type system \cite{10.1145/1190315.1190324} provides a degree of validation to the
 translation from Haskell (dubbed \emph{desugaring}) and the subsequent
 optimising transformations, a linearly typed Core would guarantee that
 linear resource usage in the source language is not violated by desugaring
@@ -364,7 +377,7 @@ such as inlining and $\beta$-reduction, to produce more efficient programs.
 % so in Core?
 %
 
-Despite the advantages of a linearly typed Core, the status quo is
+Despite the advantages of adding linear types to Core, the status quo is
 that linearity is effectively ignored in Core, being only checked
 in the source Haskell code. The reason is that the desugaring
 and subsequent Core-to-Core optimising transformations
@@ -375,16 +388,17 @@ due to the flexibility provided by laziness wrt the
 optimisations a compiler may perform.
 
 While compiler optimisations aim to preserve the semantics of
-programs and therefore a program's linear resource consumption,
+programs and therefore a program's resource consumption,
 a \emph{naive} syntactic analysis of the optimised programs (as
 performed by the current Core type checker) often fails to recognize
 the program as linear.
 %
 As a trivial example, let $x$ be a linear resource in the next two expressions,
-where the latter results from inlining $y$ without eliminating the binder. Even
+where the latter results from inlining $y$ without eliminating the
+binder (a common optimising transformation in GHC). Even
 though the second expression no longer appears linear (as there are now two occurrences
 of $x$), it is indeed linear because the let-bound expression is never
-evaluated and $x$ is still consumed exactly once (when it is freed in the let body):
+evaluated under \emph{lazy evaluation} and $x$ is still consumed exactly once (when it is freed in the let body):
 % executed, $x$ will be freed exactly once:
 %
 % , \emph{is} linear, as the let bound expression freeing $x$
@@ -404,13 +418,13 @@ evaluated and $x$ is still consumed exactly once (when it is freed in the let bo
 % \end{boxedminipage}
 
 The Core optimising transformations expose a fundamental limitation of Core's
-linear type system: it does not account for the non-strict evaluation model
+type system: it does not account for the non-strict evaluation model
 of Core and, thus, a whole class of programs that are linear under the lens of
 non-strict evaluation are rejected by Core's current linear type system.
 %
 In this work, we address this limitation by exploring how syntactic linearity
-breaks down in the presence of non-strictness and designing a linear type
-system which accepts the vast majority of programs and optimising
+breaks down in the presence of non-strictness and design a linear type
+system for Core which accepts the vast majority of programs and optimising
 transformations that, while correct under non-strict evaluation, are rejected
 by traditional linear typing disciplines.
 %
@@ -521,9 +535,9 @@ Appendices~\ref{app:proofs},~\ref{app:optimisations} and~\ref{app:opsem}.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Linearity, Semantically\label{sec:linearity-semantically}}
 
-A linear type system statically guarantees that linear resources are
+A linear type system typically guarantees that linear resources are
 consumed exactly once. Consequently, whether a program is
-well-typed under a linear type system intrinsically depends on the
+well-typed under this lens intrinsically depends on the
 definition of consuming a resource.
 In general, consuming a resource is equated with its 
 \emph{syntactic occurrence} along a control-flow path in the program. However, as this section
@@ -531,11 +545,13 @@ makes clear, in linear type systems for non-strict
 languages, a distinction between using
 resources \emph{syntactically} and \emph{semantically} is needed.
 %
-For instance, in the following Haskell-like program, there are two syntactic
+For instance, in the following Haskell-like program defining a linear
+function \lstinline{f} (i.e., a function that should use its argument
+exactly once), there are two syntactic
 occurrences of \lstinline{handle}: one is in a let-bound computation that
 closes this handle, the other is returned. If the program is evaluated lazily,
 the handle will not be closed because the computation that closes the handle is
-never evaluated (\lstinline{x} goes unused).
+never evaluated (the non-linear \lstinline{x} goes unused).
 %
 \begin{lstlisting}
 f : Handle *' $\lolli$ '* Handle
@@ -593,7 +609,8 @@ will not consume that resource.
 %
 We argue that a linear type system for a language with non-strict evaluation
 semantics should accept the above program, unlike a linear type system for the
-same program if it were to be evaluated eagerly.
+same program if it were to be evaluated eagerly, where the let-bound
+expression would always be evaluated.
 %
 Given this observation, %and exploring the connection between computation and evaluation,
 % it becomes clear that \emph{linearity} and \emph{consuming resources}, in the
@@ -779,7 +796,8 @@ In general, a let-bound expression that captures a linear variable
 can be conditionally needed at runtime, depending on the branch taken.
 Both optimising transformations (float-out) and programmers used to
 non-strict evaluation are keen to write programs with bindings that are selectively
-used in case alternatives, such as:
+used in case alternatives, such as (we write $\lolli$ for linear
+functions and \lstinline{->} for non-linear functions):
 %
 \begin{notyet}
 \begin{lstlisting}
@@ -795,8 +813,8 @@ This example returns \lstinline{x} in one branch and the let-bound
 \lstinline{y} in the other. Semantically, as opposed to syntactically, this
 program is linear % (i.e. linear resources are used exactly once)
 because the linear resource \lstinline{x} is used exactly once regardless of which branch is
-taken: either directly in the \lstinline{True} branch, or \emph{via} the
-let-bound \lstinline{y} in the \lstinline{False} branch.
+taken: either directly in the \lstinline{True} branch, or \emph{via}
+the use of the let-bound \lstinline{y} in the \lstinline{False} branch.
 
 That said, a let-bound \lstinline{y} that captures a linear resource
 \lstinline{x} must still be used exactly once, regardless of whether evaluation
@@ -1475,13 +1493,13 @@ consume the result of evaluating the scrutinee.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{A Type System for Semantic Linearity in Core\label{sec:main:linear-core}}
 
-In this section, we develop a linear calculus $\lambda_\Delta^\pi$,
+In this section, we develop a pure linear calculus $\lambda_\Delta^\pi$,
 dubbed \emph{Linear Core}, that combines the linearity-in-the-arrow
 and multiplicity polymorphism introduced by Linear
 Haskell~\cite{cite:linearhaskell} with all the key features of GHC's Core
 language (algebraic datatypes, case expressions, and recursive lazy let bindings),
 except for equality coercions, which we discuss as future work in
-Section~\ref{sec:future-work}.
+Section~\ref{sec:future-work}. 
 %
 
 Linear Core makes precise the various insights discussed in the
@@ -3013,10 +3031,19 @@ and~\ref{app:opsem}, where type safety is established directly for the
 instrumented semantics and ported to the natural semantics via a
 bisimulation argument.
 
+Note that since the operational semantics gets stuck if a linear
+variable is used more than once, progress ensures that linear
+functions consume their arguments at most once if their result is
+consumed exactly once. Type preservation ensures that evaluation of a
+closed term returns an evaluation environment with no linear variables.
+
   \begin{theorem}[Type Preservation]
     For any well-typed evaluation state $a$, if $a \Downarrow
     b$ or $a \Downarrow^* b$ then $b$ is well-typed.
-\end{theorem}
+  \end{theorem}
+
+  
+  
 \begin{theorem}[Progress]
 Let $a$ be a well-typed evaluation state. For any partial evaluation $a \Downarrow^* b$ 
 the evaluation can be extended.
@@ -4016,6 +4043,25 @@ Linear Haskell and are compiled by GHC, by guaranteeing (through typing) that
 linear resources are still used exactly once throughout the optimising
 transformations.
 
+\paragraph{Linearity-aware Semantics}
+Several other works explore linearity aware semantics,
+dating back to \cite{Chirimar_Gunter_Riecke_1996} and
+\cite{TURNER1999231}.
+The former uses a computational interpretation of linear logic to give
+an account of reference counting. The latter present a heap-based
+operational interpretation of linear logic and explore memory usage
+properties under call-by-name and call-by-need, showing both satisfy
+different properties under this lens. Their semantics is similar to
+ours, but does not account for pattern matching.
+More recently, \cite{DBLP:journals/pacmpl/ChoudhuryEEW21} and
+\cite{cite:linearhaskell} both make use of usage-aware
+semantics. Choudhury et al. do so in the context of graded dependent
+type theory, using the usage-aware heap-based operational semantics to
+show correct accounting of resource usage in their setting, as we do
+in ours, but they do not model
+call-by-need. \citet{cite:linearhaskell} provide a similar semantics
+to ours, but present only a naive linear typing system that does not
+leverage non-strict evaluation.
 
 
 \paragraph{Linear Mini-Core\label{sec:linear-mini-core}}
@@ -4324,7 +4370,8 @@ work to apply the ideas from this work to the surface Haskell language.
 % }}}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\bibliographystyle{ACM-Reference-Format}
+
+
 \bibliography{references}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
