@@ -4053,13 +4053,15 @@ operational interpretation of linear logic and explore memory usage
 properties under call-by-name and call-by-need, showing both satisfy
 different properties under this lens. Their semantics is similar to
 ours, but does not account for pattern matching.
-More recently, \cite{DBLP:journals/pacmpl/ChoudhuryEEW21} and
-\cite{cite:linearhaskell} both make use of usage-aware
-semantics. Choudhury et al. do so in the context of graded dependent
+More recently, \cite{DBLP:journals/pacmpl/ChoudhuryEEW21,DBLP:conf/esop/MarshallVO22} and
+\cite{cite:linearhaskell} all make use of usage-aware
+semantics. \citet{DBLP:journals/pacmpl/ChoudhuryEEW21} do so in the context of graded dependent
 type theory, using the usage-aware heap-based operational semantics to
 show correct accounting of resource usage in their setting, as we do
 in ours, but they do not model
-call-by-need. \citet{cite:linearhaskell} provide a similar semantics
+call-by-need, only call-by-name. The work of \cite{DBLP:conf/esop/MarshallVO22} is
+applies the ideas of \cite{DBLP:journals/pacmpl/ChoudhuryEEW21}
+to a non-graded (also call-by-name) setting. \citet{cite:linearhaskell} provide a similar semantics
 to ours, but present only a naive linear typing system that does not
 leverage non-strict evaluation.
 
