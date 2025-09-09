@@ -16,15 +16,17 @@ Following the Chair's instructions, our reply is in three parts:
 
 ## 2. Change List
 
-## 3. Detailed Response
-
 We will address all of the points raised by the reviewers:
 
-
+- Revise introductory examples to more adequately flesh out the relevant points.
 - Fix all minor corrections and presentation issues raised by the reviewers (mainly **Reviewer A**).
 
-The above work, which is all minor, is readily feasible before the 2nd round
+The above work is readily feasible before the 2nd round
 revision deadline (23rd Oct).
+
+## 3. Detailed Response
+
+
 
 
 
