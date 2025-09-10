@@ -14,25 +14,104 @@ Following the Chair's instructions, our reply is in three parts:
 
 ## 1. Overview
 
+### (a) Design tradeoffs viz. adapting transformation passes and simplifying Linear Core
+
+The Linear Haskell implementation in GHC originally tried to adapt the transformation passes to potentially simplify the design of a linearity-aware Core. Unfortunately, conforming the transformations to linearity often meant being more restrictive, which in turn regressed the runtime performance of programs significantly. A few years later, all the linearity-related special cases in transformations ended up being removed. 
+
+From the GHC issue database (https://gitlab.haskell.org/ghc/ghc/-/issues/22123):
+> Note [Linting Linearity]:
+> [...]
+> Historical note: In the original linear-types implementation, we had tried to
+> make every optimisation pass produce code that passes -dlinear-core-lint. It
+> had proved very difficult. We kept finding corner case after corner
+> case. Furthermore, to attempt to achieve that goal we ended up restricting
+> transformations when -dlinear-core-lint couldn't typecheck the result.
+> 
+> In the future, we may be able to lint the linearity of the output of
+> Core-to-Core passes (#19165). But this shouldn't be done at the expense of
+> producing efficient code. Therefore we lay the following principle.
+> 
+> PRINCIPLE: The type system bends to the optimisation, not the other way around.
+
+Our work adheres to these design principles, at the cost of a more complex Linear Core.
+We will reference this in our revision.
+
+### (b) Semantic notion of linearity
+
+### (c) Linearity in the presence of exceptions
+
+
+
 ## 2. Change List
 
 We will address all of the points raised by the reviewers:
 
-- Revise introductory examples to more adequately flesh out the relevant points.
-- Fix all minor corrections and presentation issues raised by the reviewers (mainly **Reviewer A**).
+- Revise introductory examples to more adequately flesh out the relevant points (**Reviewer A**).
+- Address all minor corrections and presentation issues raised by the reviewers (mainly **Reviewer A**).
 
-The above work is readily feasible before the 2nd round
-revision deadline (23rd Oct).
+The above work is readily feasible before the 2nd round revision deadline (23rd Oct).
 
 ## 3. Detailed Response
 
 
+### Reviewer A
 
+> Step back and explain the design tradeoffs. Could you have done some more work to adapt the transformation passes and simplify the design of Linear Core?
 
+See **Overview (a)**.
 
+> The statement of contributions should be rewritten, and the abstract adapted. See below, but in short, you are not defining a semantic notion of linearity. 
 
+We will adjust both the contributions and the abstract accordingly. See **Overview (b)** and **Change list**.
 
+> Introductory examples should be chosen better.
 
+We will revise the introductory examples to more meaningfully use variables in their control-flow branches, as stated
+in the **Change list**.
+
+> Please don't omit relative pronouns.
+
+These fall under the minor corrections and presentation issues mentioned in the **Change list**.
+
+> “conservatively treating all multiplicity polymorphic functions as linear,”: Is this really "conservative"? 
+
+[TODO]
+
+> “Γ, 𝑥:Δ 𝜎; Δ ⊢ 𝑥 : 𝜎”: I'm guessing that the two occurrences of Δ refer to different things. Clarify or repair.
+
+Our goal with this notation is to note that the usage environment associated with variable `x` is Δ, which consists of all
+unused linear variables up to that point. We will clarify this in our revision, potentially using a different symbol.
+
+> Fig 4. “CaseWHNF”: this rule is unparseable for me. 
+
+[TODO] Add explanation.
+We will fix the type-setting issue (**Change list**).
+
+> Fig 4. The Last judgement has 6 or 7 argument and I don't know how many fixed parts.
+
+We will fix the type-setting issue (**Change list**).
+
+> Inference of usage environments for recursive lets.
+
+[TODO]
+
+> Perhaps there should be a discussion of whether doing "case" on a WHNF expression is useful at all. I guess this is motivated by practical considerations, please spell them out at this point.
+
+Case-ing on a WHNF arises frequently due to the optimizing transformations. We will further emphasize this at this point in the paper, noting that this discussion is present in L. [TODO].
+
+> - “we must branch on weak head normal formed-ness to accurately type expression”: -> accurate typing of case expressions depends on whether the scrutinee is in WHNF.
+
+See **Change list**.
+
+> Clarify Γ[Δ/x], and Γ[𝑥/[Δ]]
+> “𝑥: [Δ]”: At this point I realize that I don't understand the difference between Δ and [Δ]. Did I miss something? If so a back-reference to the explanation would help.
+
+[TODO] Spell out what it means.
+The introduction of the bracket notation is given in L.[TODO]. We will revise accordingly to make this more upfront.
+
+> “Proof irrelevant”: I was already confused by this term earlier (what are proofs here? does this mean simply unused?) But the repeated use of "proof" in this paragraph makes me very confused.
+
+Proof irrelevant variables cannot be used. The terminology is borrowed from proof theory (cite [TODO]), but we understand this might be confusing and does not line up exactly with the proof theoretic construction. We will revise this terminology to simply "irrelevant" and clarify its meaning. 
 
 ---
 # RevA "Points"
