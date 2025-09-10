@@ -19,9 +19,12 @@ Following the Chair's instructions, our reply is in three parts:
 > **Reviewer A**: Step back and explain the design tradeoffs. Could you have done some more work to adapt the transformation passes and simplify the design of Linear Core?
 > **Reviewer C**: Do you have any sense of what the improvement would be if compared against a baseline syntactic linear type system for Core, i.e. Bernardy, et al. but for Core?
 
+[Dar uns toques -- requer nao aplicar as transformacoes / produzir resultados muito ineficientes(?) e muito irregular
+ com muitos casos especiais ]
+
 The Linear Haskell implementation in GHC originally tried to adapt the transformation passes to potentially simplify the design of a linearity-aware Core. Unfortunately, conforming the transformations to a simple syntactic linearity often meant being more restrictive, which in turn regressed the runtime performance of programs significantly. A few years later, all the linearity-related special cases in transformations ended up being removed. 
 
-From the GHC issue database (https://gitlab.haskell.org/ghc/ghc/-/issues/22123), noting that linting linearity is the internal terminology for checking for linearity:
+From the GHC source code and issues (e.g. https://gitlab.haskell.org/ghc/ghc/-/issues/22123), noting that linting linearity is the internal terminology for checking for linearity:
 > Note [Linting Linearity]:
 > [...]
 > Historical note: In the original linear-types implementation, we had tried to
@@ -41,20 +44,25 @@ We will reference this in our revision.
 
 ### (b) Key ideas of Linear Core 
 
-> **Reviewer B**: What are the key ideas that make your core language work? Are there new ideas involved, or is it a combination of existing ideas? 
+> **Reviewer B**: What are the key ideas that make your core language work? Are there new ideas involved, or is it a combination of existing ideas?
+
+[TODO - Reiterar, apontando para o paper, dizer que se vai melhorar]
 
 ### (c) Semantic notion of linearity
 
 > **Reviewer A**: you are not defining a semantic notion of linearity. Rather, you're designing a typing discipline which fits the lazy semantics of linearity.
 
-We concur that we are not defining a (new) notion of semantic linearity. Indeed, our definition is a sharpened version adapted/refined/imported of that of Linear Haskell and our work establishes a new syntactic definition of linearity that is more
-precise wrt the semantic notion. We thank the reviewer for this perspective and we plan to rewrite our positioning accordingly.
+We concur that we are not defining a (new) notion of semantic linearity. Indeed, our definition is a sharpened version adapted/refined/imported of that of Linear Haskell and our work establishes a new syntactic definition of linearity that is more precise wrt the semantic notion. We thank the reviewer for this perspective and we plan to rewrite our positioning accordingly.
 
 ### (d) Linearity in the presence of exceptions
 
+> **Reviewer A**: One of the main criticism of Linear Haskell is that it does not preserve linearity in the presence of exceptions.
 
-[TODO]. Make this more upfront in the introduction.
+[TODO]
 
+1) Library-level treatment of exceptions that preserve linearity. Indeed LH does nothing about it.
+2) There is no explicit representation of exceptions in Core.
+3) Transformation preserve exceptions(?) -- IMO this is is unfixable without major rework of the exception system. 
 
 
 ## 2. Change List
@@ -104,8 +112,8 @@ These fall under the minor corrections and presentation issues mentioned in the 
 
 > “Γ, 𝑥:Δ 𝜎; Δ ⊢ 𝑥 : 𝜎”: I'm guessing that the two occurrences of Δ refer to different things. Clarify or repair.
 
-Our goal with this notation is to note that the usage environment associated with variable `x` is Δ, which consists of all
-unused linear variables up to that point. We will clarify this in our revision, potentially using a different symbol.
+Our goal with this notation is to assert that the usage environment associated with variable `x` is Δ, which consists exactly of all ambient linear variables which are tracked by context Δ. The two Δ are indeed the same.
+We will clarify this in our revision.
 
 > Fig 4. “CaseWHNF”: this rule is unparseable for me. 
 
@@ -118,7 +126,7 @@ We will fix the type-setting issue (**Change list**).
 
 > Inference of usage environments for recursive lets.
 
-[TODO]
+[TODO -- Responder que sim. Clarificar a quest'ao do Delta que o reviewer nao percebeu]
 
 > Perhaps there should be a discussion of whether doing "case" on a WHNF expression is useful at all. I guess this is motivated by practical considerations, please spell them out at this point.
 
@@ -131,7 +139,7 @@ See **Change list**.
 > Clarify Γ[Δ/x], and Γ[𝑥/[Δ]]
 > “𝑥: [Δ]”: At this point I realize that I don't understand the difference between Δ and [Δ]. Did I miss something? If so a back-reference to the explanation would help.
 
-[TODO] Spell out what it means.
+[TODO Rodrigo] Spell out what it means.
 The introduction of the bracket notation is given in L.[TODO]. We will revise accordingly to make this more upfront.
 
 > “Proof irrelevant”: I was already confused by this term earlier (what are proofs here? does this mean simply unused?) But the repeated use of "proof" in this paragraph makes me very confused.
@@ -161,13 +169,13 @@ We will move this content into supplementary materials.
 
 See **Change list**.
 
-> 330, Explain the rationale for the choice of superscript and subscript on the linear calculus dubber LinearCore.
+> 330, Explain the rationale for the choice of superscript and subscript on the linear calculus dubbed LinearCore.
 
-[TODO]
+[TODO] Inspirado pelo LH
 
 > 345, The phrase "can be readily applied to other non-strict languages" is rather a moot point, because in practical terms the only such language is Haskell. I'd suggest rephrasing along the lines of my first comment about line 107.
 
-We agree this is a better positioning of the work and will revise accordingly.
+We agree this is a better positioning of the work (thanks!) and will revise accordingly.
 
 > 927, Explain why "gets struck" is an appropriate way to deal with a bad use of a linear variable, e.g. that this is a standard semantic way of dealing with badly-formed terms, such as trying to add two values that are not numbers.
 
@@ -177,18 +185,19 @@ Will revise accordingly.
 
 > The result is incremental.
 
+[TODO opens up...] 
+
 > The paper doesn't address coercions (which seems like table stakes for a Core type system), nor bring the laziness-aware features back to the surface level of Linear Haskell.
 > What does the GHC plugin do on coercion terms if they are not supported in the theory? Do coercions not come up in Linear Haskell programs?
 
-[TODO]
+[TODO Rodrigo] Referenciar related work.
 
 > The evaluation is fairly light. (Perhaps there just are a large number of Linear Haskell programs to draw from?)
 > Are there other significant Linear Haskell programs beyond the three libraries evaluated in the paper?
 
+Escolhemos as maiores/mais interessantes/real world. Nem todas sao pure haskell ou grandes o suficientes (JVM blabla)
 There are several codebases that depend on `linear-base` and therefore rely on linear types. 
-If the reviewers find it appropriate, we can expand our evaluation to include some of these codebases as well.
-We opted for `linear-base` over its dependencies since... [TODO].
-
+[TODO].
 
 > The result has fairly narrow applicability: IRs for lazy linearly typed languages.
 
@@ -199,11 +208,8 @@ seen to apply to linear extensions of such languages. We plan to reposition our 
 
 > Do you have any sense of what the improvement would be if compared against a baseline syntactic linear type system for Core, i.e. Bernardy, et al. but for Core?
 
-[TODO] 
-
-A baseline syntactic linear type system for Core would essentially reject virtually all optimizations.
+A baseline syntactic linear type system for Core would essentially reject too many reasonable programs.
 See **Overview (a)**.
-
 
 > The citation for Bernardy et al. 2017 should probably be to the POPL'18 version of the paper rather than the arXiv preprint.
 
