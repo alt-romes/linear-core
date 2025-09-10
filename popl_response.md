@@ -14,11 +14,14 @@ Following the Chair's instructions, our reply is in three parts:
 
 ## 1. Overview
 
-### (a) Design tradeoffs viz. adapting transformation passes and simplifying Linear Core
+### (a) Design tradeoffs viz. adapting transformation passes and simplifying Linear Core / comparing against a baseline syntactic linear type system for Core.
 
-The Linear Haskell implementation in GHC originally tried to adapt the transformation passes to potentially simplify the design of a linearity-aware Core. Unfortunately, conforming the transformations to linearity often meant being more restrictive, which in turn regressed the runtime performance of programs significantly. A few years later, all the linearity-related special cases in transformations ended up being removed. 
+> **Reviewer A**: Step back and explain the design tradeoffs. Could you have done some more work to adapt the transformation passes and simplify the design of Linear Core?
+> **Reviewer C**: Do you have any sense of what the improvement would be if compared against a baseline syntactic linear type system for Core, i.e. Bernardy, et al. but for Core?
 
-From the GHC issue database (https://gitlab.haskell.org/ghc/ghc/-/issues/22123):
+The Linear Haskell implementation in GHC originally tried to adapt the transformation passes to potentially simplify the design of a linearity-aware Core. Unfortunately, conforming the transformations to a simple syntactic linearity often meant being more restrictive, which in turn regressed the runtime performance of programs significantly. A few years later, all the linearity-related special cases in transformations ended up being removed. 
+
+From the GHC issue database (https://gitlab.haskell.org/ghc/ghc/-/issues/22123), noting that linting linearity is the internal terminology for checking for linearity:
 > Note [Linting Linearity]:
 > [...]
 > Historical note: In the original linear-types implementation, we had tried to
@@ -36,10 +39,21 @@ From the GHC issue database (https://gitlab.haskell.org/ghc/ghc/-/issues/22123):
 Our work adheres to these design principles, at the cost of a more complex Linear Core.
 We will reference this in our revision.
 
-### (b) Semantic notion of linearity
+### (b) Key ideas of Linear Core 
+
+> **Reviewer B**: What are the key ideas that make your core language work? Are there new ideas involved, or is it a combination of existing ideas? 
+
+### (c) Semantic notion of linearity
+
+> **Reviewer A**: you are not defining a semantic notion of linearity. Rather, you're designing a typing discipline which fits the lazy semantics of linearity.
+
+We concur that we are not defining a (new) notion of semantic linearity. Indeed, our definition is a sharpened version adapted/refined/imported of that of Linear Haskell and our work establishes a new syntactic definition of linearity that is more
+precise wrt the semantic notion. We thank the reviewer for this perspective and we plan to rewrite our positioning accordingly.
 
 ### (c) Linearity in the presence of exceptions
 
+
+[TODO]. Make this more upfront in the introduction.
 
 
 ## 2. Change List
@@ -47,7 +61,14 @@ We will reference this in our revision.
 We will address all of the points raised by the reviewers:
 
 - Revise introductory examples to more adequately flesh out the relevant points (**Reviewer A**).
-- Address all minor corrections and presentation issues raised by the reviewers (mainly **Reviewer A**).
+- Revise the paper title and abstract, emphasizing the more general contributions (**Reviewer B**):
+    [Tentative titles: Checking Semantic Linearity in a Non-strict Optimising Compiler / 
+                       Checking Linearity in Non-strict Languages /
+                       Checking Semantic Linearity in a Non-strict Optimising Compiler]
+- Rewrite introduction to more clearly flesh out key ideas, contributions, target audience and relationship
+  with semantic linearity (**Reviewer A, B, C**).
+- Expand evaluation with more codebases that rely on Linear Haskell (**Reviewer C**).
+- Address all minor corrections and presentation issues raised by the reviewers, including further clarifying the treatment of pattern matching (**Reviewer A, B and C**).
 
 The above work is readily feasible before the 2nd round revision deadline (23rd Oct).
 
@@ -62,7 +83,7 @@ See **Overview (a)**.
 
 > The statement of contributions should be rewritten, and the abstract adapted. See below, but in short, you are not defining a semantic notion of linearity. 
 
-We will adjust both the contributions and the abstract accordingly. See **Overview (b)** and **Change list**.
+We will adjust both the contributions and the abstract accordingly. See **Overview (c)** and **Change list**.
 
 > Introductory examples should be chosen better.
 
@@ -112,6 +133,78 @@ The introduction of the bracket notation is given in L.[TODO]. We will revise ac
 > “Proof irrelevant”: I was already confused by this term earlier (what are proofs here? does this mean simply unused?) But the repeated use of "proof" in this paragraph makes me very confused.
 
 Proof irrelevant variables cannot be used. The terminology is borrowed from proof theory (cite [TODO]), but we understand this might be confusing and does not line up exactly with the proof theoretic construction. We will revise this terminology to simply "irrelevant" and clarify its meaning. 
+
+### Reviewer B
+
+> What are the key ideas that make your core language work?
+
+See **Overview (b)**.
+
+> 1, The title needs further work. The present version seems to be trying to say that the approach is both general (the main title) and specific (the subtitle), but doesn't read well. I'd suggest going for a simpler and more direct title that doesn't try to cover two bases at the same time.
+> 6, The first paragraph of the abstract is a bit verbose and could be compressed quite a bit. After doing so it probably makes sense to make the abstract a single paragraph.
+
+This issue was also raised by Reviewer A. We will address this in our revision (see **Change list**).
+
+> 107, Explain who the paper is targeted at, e.g. what kind of knowledge and experience is required. It is also important to clarify here that while Haskell is the focus of the paper, the ideas can potentially be applied to any language with non-strict features, even if the language itself is strict.
+
+We will clarify the generality of our approach in terms of non-strict language features (see **Change list**).
+
+> 107, The paper contains an appendix with 28 pages of material, whereas the call for papers states that each paper should have no more than 25 pages of text, excluding bibliography. Any additional material should be included as supplementary material separate from the main paper, rather than as an appendix.
+
+We will move this content into supplementary materials. 
+
+> 115, There are a lot of parenthetical remarks in the paper, which are quite distracting. It would be beneficial to try and minimise the use of this feature.
+
+See **Change list**.
+
+> 330, Explain the rationale for the choice of superscript and subscript on the linear calculus dubber LinearCore.
+
+[TODO]
+
+> 345, The phrase "can be readily applied to other non-strict languages" is rather a moot point, because in practical terms the only such language is Haskell. I'd suggest rephrasing along the lines of my first comment about line 107.
+
+We agree this is a better positioning of the work and will revise accordingly.
+
+> 927, Explain why "gets struck" is an appropriate way to deal with a bad use of a linear variable, e.g. that this is a standard semantic way of dealing with badly-formed terms, such as trying to add two values that are not numbers.
+
+Will revise accordingly.
+
+### Reviewer C
+
+> The result is incremental.
+
+> The paper doesn't address coercions (which seems like table stakes for a Core type system), nor bring the laziness-aware features back to the surface level of Linear Haskell.
+> What does the GHC plugin do on coercion terms if they are not supported in the theory? Do coercions not come up in Linear Haskell programs?
+
+[TODO]
+
+> The evaluation is fairly light. (Perhaps there just are a large number of Linear Haskell programs to draw from?)
+> Are there other significant Linear Haskell programs beyond the three libraries evaluated in the paper?
+
+There are several codebases that depend on `linear-base` and therefore rely on linear types. 
+If the reviewers find it appropriate, we can expand our evaluation to include some of these codebases as well.
+We opted for `linear-base` over its dependencies since... [TODO].
+
+
+> The result has fairly narrow applicability: IRs for lazy linearly typed languages.
+
+As pointed out in **Review B**, our work applies beyond IRs for lazy linear languages. Conceptually these issues arise in 
+any languages that feature non-strict features (e.g. streams, lazy evaluation via libraries, etc.) and so our work can be
+seen to apply to linear extensions of such languages. We plan to reposition our motivations accordingly.
+
+
+> Do you have any sense of what the improvement would be if compared against a baseline syntactic linear type system for Core, i.e. Bernardy, et al. but for Core?
+
+[TODO] 
+
+A baseline syntactic linear type system for Core would essentially reject virtually all optimizations.
+See **Overview (a)**.
+
+
+> The citation for Bernardy et al. 2017 should probably be to the POPL'18 version of the paper rather than the arXiv preprint.
+
+We will cite both in our revision, given that the linearity-aware operational semantics can only be found in the long-form version.
+
 
 ---
 # RevA "Points"
@@ -180,6 +273,7 @@ Page 22
 # Rev B Points
 
 - What are the key ideas that make your core language work?
+
 
 - 1, The title needs further work. The present version seems to be trying to say that the approach is both general (the main title) and specific (the subtitle), but doesn't read well. I'd suggest going for a simpler and more direct title that doesn't try to cover two bases at the same time.
 
@@ -359,7 +453,7 @@ Page 24
 
 “Linear Core in the Glasgow Haskell Compiler.”: Likewise, this could be elided.
 
-# Review B
+## Review B
 
 Overall merit
 
@@ -409,7 +503,7 @@ Specific questions to be addressed in the author response
 
 Are there new ideas involved, or is it a combination of existing ideas? Either is fine, but it's important for the key ideas to explicitly identified and discussed in the paper, rather than just presenting the core language and showing that it works.
 
-# Review C
+## Review C
 
 Overall merit
 
