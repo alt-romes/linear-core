@@ -50,10 +50,11 @@ We will reference this in our revision.
 We concur that we are not defining a (new) notion of semantic linearity. Indeed, our definition is a sharpened version adapted/refined/imported of that of Linear Haskell and our work establishes a new syntactic definition of linearity that is more
 precise wrt the semantic notion. We thank the reviewer for this perspective and we plan to rewrite our positioning accordingly.
 
-### (c) Linearity in the presence of exceptions
+### (d) Linearity in the presence of exceptions
 
 
 [TODO]. Make this more upfront in the introduction.
+
 
 
 ## 2. Change List
@@ -65,12 +66,15 @@ We will address all of the points raised by the reviewers:
     [Tentative titles: Checking Semantic Linearity in a Non-strict Optimising Compiler / 
                        Checking Linearity in Non-strict Languages /
                        Checking Semantic Linearity in a Non-strict Optimising Compiler]
-- Rewrite introduction to more clearly flesh out key ideas, contributions, target audience and relationship
+- Revise introduction to more clearly flesh out key ideas, contributions, target audience and relationship
   with semantic linearity (**Reviewer A, B, C**).
 - Expand evaluation with more codebases that rely on Linear Haskell (**Reviewer C**).
-- Address all minor corrections and presentation issues raised by the reviewers, including further clarifying the treatment of pattern matching (**Reviewer A, B and C**).
+- Address all minor corrections and presentation issues raised by the reviewers, expanding explanations
+as requested (**Reviewer A, B and C**).
 
 The above work is readily feasible before the 2nd round revision deadline (23rd Oct).
+
+
 
 ## 3. Detailed Response
 
