@@ -52,7 +52,13 @@ The key ideas that make Linear Core work are:
 2. Distinct treatment of case scrutinees in WHNF (Section 3.6.1)
 3. Proof irrelevant resources (Section 3.6.2)
 
-(1) allows us to track 
+(1) Encodes the idea that lazy bindings do not consume resources upon definition,
+but rather when the bound variables themselves are consumed. Consuming a variable with usage environment Delta equates to consuming the variables in Delta.
+(2) Case expressions in WHNF may capture ambient linear resources, but these resources can be safely used in branches since the case will not further evaluate its scrutinee. On the other hand, a case on a non-WHNF expression must be treated more conservatively. 
+(3) [TODO Rodrigo]
+
+The usage environment idea was present in the unpublished Linear MiniCore draft (J. Bernardy et al. 2020).
+Points (2) and (3) above are specific to our work, although irrelevant resources have analogues in other works (e.g. values with multiplicity 0 in Quantitative Type Theory, proof irrelevance in modal type theory).
 
 ### (c) Semantic notion of linearity
 
@@ -64,11 +70,11 @@ We concur that we are not defining a (new) notion of semantic linearity. Indeed,
 
 > **Reviewer A**: *One of the main criticism of Linear Haskell is that it does not preserve linearity in the presence of exceptions.*
 
-[TODO]
+The reviewer is correct in that Linear Haskell has no special treatment of exceptions. This is also the case in GHC Core, where exceptions have no special status in Core code and so there is no natural way
+of dealing of the interaction between exceptions and linearity in Core itself without a major overhaul of the exception mechanisms of the language.
+Our work simply preserves the exceptional behaviour of the source and we will clarify this in our revision.
+We note that a working solution to this issue is present in the `linear-base` library, where... [TODO]
 
-1) Library-level treatment of exceptions that preserve linearity. Indeed LH does nothing about it.
-2) There is no explicit representation of exceptions in Core.
-3) Transformation preserve exceptions(?) -- IMO this is is unfixable without major rework of the exception system. 
 
 
 ## 2. Change List
