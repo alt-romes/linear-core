@@ -58,7 +58,7 @@ but rather when the bound variables themselves are consumed. Consuming a variabl
 (3) [TODO Rodrigo]
 
 The usage environment idea was present in the unpublished Linear MiniCore draft (J. Bernardy et al. 2020).
-Points (2) and (3) above are specific to our work, although irrelevant resources have analogues in other works (e.g. values with multiplicity 0 in Quantitative Type Theory, proof irrelevance in modal type theory).
+Points (2) and (3) above are specific to our work, although irrelevant resources have some similarities with other works (e.g. values with 0 multiplicity in Quantitative Type Theory, proof irrelevance in modal type theory).
 
 ### (c) Semantic notion of linearity
 
@@ -136,7 +136,6 @@ as if Δ is terminal in the grammar. We will rephrase as usage-bound variables a
 
 > Fig 4. “CaseWHNF”: this rule is unparseable for me. 
 
-[TODO] Add explanation.
 We will fix the type-setting issue (**Change list**).
 
 > Fig 4. The Last judgement has 6 or 7 argument and I don't know how many fixed parts.
@@ -144,12 +143,13 @@ We will fix the type-setting issue (**Change list**).
 We will fix the type-setting issue (**Change list**).
 
 > Inference of usage environments for recursive lets.
+> Do you simply mean that if one writes the annotations then it suffices to check them?
 
-[TODO -- Responder que sim. Clarificar a quest'ao do Delta que o reviewer nao percebeu]
+We acknowledge the chosen phrasing was a bit barroque. Yes the annotations needs only be checked. See the response regarding the use of Delta above, clarifying that the use of Delta is not a terminal symbol but rather an actual context of variables.
 
 > Perhaps there should be a discussion of whether doing "case" on a WHNF expression is useful at all. I guess this is motivated by practical considerations, please spell them out at this point.
 
-Case-ing on a WHNF arises frequently due to the optimizing transformations. We will further emphasize this at this point in the paper, noting that this discussion is present in L. [TODO].
+Case-ing on a WHNF arises frequently due to the chaining of optimizing transformations. We will further emphasize this at this point in the paper (we briefly mention this in L319).
 
 > - “we must branch on weak head normal formed-ness to accurately type expression”: -> accurate typing of case expressions depends on whether the scrutinee is in WHNF.
 
@@ -163,7 +163,9 @@ The introduction of the bracket notation is given in L.[TODO]. We will revise ac
 
 > “Proof irrelevant”: I was already confused by this term earlier (what are proofs here? does this mean simply unused?) But the repeated use of "proof" in this paragraph makes me very confused.
 
-Proof irrelevant variables cannot be used. The terminology is borrowed from proof theory (cite [TODO]), but we understand this might be confusing and does not line up exactly with the proof theoretic construction. We will revise this terminology to simply "irrelevant" and clarify its meaning. 
+Proof irrelevant variables cannot be used. The terminology is borrowed from proof theory (e.g. (Pfenning '01)), but we understand this might be confusing and does not line up exactly with the proof theoretic construction. We will revise this terminology to simply "irrelevant" and clarify its meaning. 
+
+Frank Pfenning. Intensionality, Extensionality, and Proof Irrelevance in Modal Type Theory. LICS 2001.
 
 ### Reviewer B
 
@@ -188,9 +190,14 @@ We will move this content into supplementary materials.
 
 See **Change list**.
 
+> 137, Why are two different colours (yellow and orange) used for programs that are semantically linear but not linear in Core?
+
+This was unclear in our prose. Yellow means accepted by our work, orange means not accepted by our work. We will
+clarify.
+
 > 330, Explain the rationale for the choice of superscript and subscript on the linear calculus dubbed LinearCore.
 
-[TODO] Inspirado pelo LH
+The formalism that forms the basis for Linear Haskell is dubbed $\lambda^Q_\rightarrow$, due to having multiplicities (p,q) and linearity information in the arrow type. We identified Linear Core in an analogous way, with $\pi$ for the multlipicity meta-variable and $\Delta$ due to the usage environment technique. We will clarify this in the text.
 
 > 345, The phrase "can be readily applied to other non-strict languages" is rather a moot point, because in practical terms the only such language is Haskell. I'd suggest rephrasing along the lines of my first comment about line 107.
 
@@ -200,11 +207,16 @@ We agree this is a better positioning of the work (thanks!) and will revise acco
 
 Will revise accordingly.
 
+> 1079, Clean should also be included in related work, as it has a non-strict semantics, and uses uniqueness types to ensure that resources are used at most once.
+
+Thank you for the reference. We will include it in our revision.
+
 ### Reviewer C
 
 > The result is incremental.
 
-[TODO opens up...] 
+Our work opens up new avenues of research: in a more applied sense, enabling linearity-aware Core-to-Core transformations; in a more conceptual sense, the study of linearity-aware intermediate representations for non-strict language features.
+As stated in **Overview (a)**, our work provides a conceptual framework and prototype implementation that addresses a long standing problem in the (internals of the) implementation of Linear Haskell.
 
 > The paper doesn't address coercions (which seems like table stakes for a Core type system), nor bring the laziness-aware features back to the surface level of Linear Haskell.
 > What does the GHC plugin do on coercion terms if they are not supported in the theory? Do coercions not come up in Linear Haskell programs?
@@ -214,9 +226,8 @@ Will revise accordingly.
 > The evaluation is fairly light. (Perhaps there just are a large number of Linear Haskell programs to draw from?)
 > Are there other significant Linear Haskell programs beyond the three libraries evaluated in the paper?
 
-Escolhemos as maiores/mais interessantes/real world. Nem todas sao pure haskell ou grandes o suficientes (JVM blabla)
-There are several codebases that depend on `linear-base` and therefore rely on linear types. 
-[TODO].
+
+We chose the codebases in question due to a combination of size and real-world utility (e.g. `linear-base` is used by effectively most Linear Haskell programs). While other codebases that use Linear Haskell exist, they are often not pure Haskell codebases (e.g. the `inline-java`, `jni` and `jvm` projects), which difficults the ability to pass them through our tool or are too small to provide meaningful information.
 
 > The result has fairly narrow applicability: IRs for lazy linearly typed languages.
 
