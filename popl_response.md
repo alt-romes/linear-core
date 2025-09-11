@@ -223,19 +223,16 @@ As stated in **Overview (a)**, our work provides a conceptual framework and prot
 > the theory? Do coercions not come up in Linear Haskell programs?
 
 Equality coercions in Core exist to support advanced type-level features
-(e.g. type families, GADTs) which are mostly orthogonal to linearity. So
-we do not model them at this stage to illustrate the essence of our system
-without the added complexity of coercions. As discussed in Section 6.1 (L.1141),
-there are plausible interactions between GADTs and linearity through so-called
-multiplicity coercions, which we leave for future study. While we expect
-that our system can scale to such a setting, we felt that the study of coercions
-under the lens of semantic linearity is itself a whole topic of study in its own
-right.
+(e.g. type families, GADTs) which are mostly orthogonal to the mismatch between
+"naive" syntactic and semantic linearity. So we do not model them at this stage to 
+illustrate the essence of our system without the added complexity of coercions. 
+As discussed in Section 6.1 (L.1141), there are plausible interactions between 
+GADTs and linearity through so-called multiplicity coercions. We expect
+that our system can scale to such a setting, but we believe that the formalization
+of such coercions is an independent topic of study.
 
-Our prototype implementation is mainly concerned with checking linearity
-according to our theory (tracking usage environments and variables). Casts and
-coercions are essentially ignored, and our plugin will reject programs which
-depend on coercions to be accepted as linear.
+In our prototype implementation casts and coercions are essentially ignored. 
+Our plugin will reject programs which depend on coercions to be accepted as linear.
 
 
 
@@ -243,13 +240,12 @@ depend on coercions to be accepted as linear.
 > Are there other significant Linear Haskell programs beyond the three libraries evaluated in the paper?
 
 
-We chose the codebases in question due to a combination of size and real-world utility (e.g. `linear-base` is used by effectively most Linear Haskell programs). While other codebases that use Linear Haskell exist, they are often not pure Haskell codebases (e.g. the `inline-java`, `jni` and `jvm` projects), which difficults the ability to pass them through our tool or are too small to provide meaningful information.
+We chose the codebases in question due to a combination of size and real-world utility (e.g. `linear-base` is used by effectively most Linear Haskell programs). While other codebases that use Linear Haskell exist, they are often not pure Haskell codebases (e.g. the `inline-java`, `jni` and `jvm` projects), which makes it challenging to pass them through our tool or are too small to provide meaningful information.
 
 > The result has fairly narrow applicability: IRs for lazy linearly typed languages.
 
-As pointed out in **Review B**, our work applies beyond IRs for lazy linear languages. Conceptually these issues arise in 
-any languages that feature non-strict features (e.g. streams, lazy evaluation via libraries, etc.) and so our work can be
-seen to apply to linear extensions of such languages. We plan to reposition our motivations accordingly.
+As pointed out in **Review B**, our work applies beyond IRs for lazy linear languages (i.e. Core and Haskell). 
+Conceptually these issues arise in any languages that feature non-strict features (e.g. streams, lazy evaluation via libraries, etc.) and so our work can be seen to apply to linear extensions of such languages. We plan to reposition our motivations accordingly.
 
 
 > Do you have any sense of what the improvement would be if compared against a baseline syntactic linear type system for Core, i.e. Bernardy, et al. but for Core?
