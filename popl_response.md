@@ -41,7 +41,7 @@ A brief report on this can be found in the GHC source code and issues (e.g. http
 > PRINCIPLE: The type system bends to the optimisation, not the other way around.
 
 Our work adheres to these design principles, at the cost of a more complex Linear Core.
-We will reference this in our revision to make the tradeoffs clear.
+We will reference this principle in our revision to make the tradeoffs clear.
 
 ### (b) Key ideas of Linear Core 
 
@@ -85,7 +85,12 @@ We will address all of the points raised by the reviewers:
 - Revise the paper title and abstract, emphasizing the more general contributions (**Reviewer B**):
     [Tentative titles: Checking Semantic Linearity in a Non-strict Optimising Compiler / 
                        Checking Linearity in Non-strict Languages /
-                       Checking Semantic Linearity in a Non-strict Optimising Compiler]
+                       Checking Semantic Linearity in a Non-strict Optimising Compiler
+
+                       Surviving Linearity 
+                       Lazy Linearity 
+
+                       ]
 - Revise introduction to more clearly flesh out key ideas, contributions, target audience and relationship
   with semantic linearity (**Reviewer A, B, C**).
 - Expand evaluation with more codebases that rely on Linear Haskell (**Reviewer C**).
@@ -158,7 +163,13 @@ See **Change list**.
 > Clarify Γ[Δ/x], and Γ[𝑥/[Δ]]
 > “𝑥: [Δ]”: At this point I realize that I don't understand the difference between Δ and [Δ]. Did I miss something? If so a back-reference to the explanation would help.
 
-[TODO Rodrigo] Spell out what it means.
+We use Γ[Δ/x] to denote a substitution of x by Δ in occurrences in the usage
+environments of variables in Γ. Example: (y:_{a,b})[{c,d}/a] ==> y:_{c,d,b}.
+
+Accordingly, Γ[𝑥/[Δ]] substitutes occurrences of the whole environment of
+irrelevant variables ([Δ]) for x in the usage environments of variables in Γ.
+Example: (y_{[a],[b],c}[[{a,b}]/x]) ==> y_{x,c}.
+
 The introduction of the bracket notation is given in Section 3.6.2, L721. We will revise accordingly to make this more upfront.
 
 > “Proof irrelevant”: I was already confused by this term earlier (what are proofs here? does this mean simply unused?) But the repeated use of "proof" in this paragraph makes me very confused.
@@ -199,6 +210,8 @@ clarify.
 
 The formalism that forms the basis for Linear Haskell is dubbed $\lambda^Q_\rightarrow$, due to having multiplicities (p,q) and linearity information in the arrow type. We identified Linear Core in an analogous way, with $\pi$ for the multlipicity meta-variable and $\Delta$ due to the usage environment technique. We will clarify this in the text.
 
+Suponho que podemos mencionar em escrito o que significa. Não é nada de por aí alem mas o π é de multiplicities (a la LH) e o Δ é dos usage environments...
+
 > 345, The phrase "can be readily applied to other non-strict languages" is rather a moot point, because in practical terms the only such language is Haskell. I'd suggest rephrasing along the lines of my first comment about line 107.
 
 We agree this is a better positioning of the work (thanks!) and will revise accordingly.
@@ -218,10 +231,20 @@ Thank you for the reference. We will include it in our revision.
 Our work opens up new avenues of research: in a more applied sense, enabling linearity-aware Core-to-Core transformations; in a more conceptual sense, the study of linearity-aware intermediate representations for non-strict language features.
 As stated in **Overview (a)**, our work provides a conceptual framework and prototype implementation that addresses a long standing problem in the (internals of the) implementation of Linear Haskell.
 
-> The paper doesn't address coercions (which seems like table stakes for a Core type system), nor bring the laziness-aware features back to the surface level of Linear Haskell.
-> What does the GHC plugin do on coercion terms if they are not supported in the theory? Do coercions not come up in Linear Haskell programs?
+> The paper doesn't address coercions (which seems like table stakes for a Core
+> type system), nor bring the laziness-aware features back to the surface level
+> of Linear Haskell.
+> What does the GHC plugin do on coercion terms if they are not supported in
+> the theory? Do coercions not come up in Linear Haskell programs?
 
-[TODO Rodrigo] Referenciar related work.
+Our prototype implementation is mainly concerned with checking linearity
+according to our theory (tracking usage environments and variables). Casts and
+coercions are essentially ignored, and our plugin will reject programs which
+depend on coercions to be accepted as linear.
+
+Multiplicity coercions are introduced as future work (L.1141). The type-heavy
+nature of that work falls out of the scope of this paper which is more
+concerned with [TODO como dizer de forma menos ma?] linearity tracking.
 
 > The evaluation is fairly light. (Perhaps there just are a large number of Linear Haskell programs to draw from?)
 > Are there other significant Linear Haskell programs beyond the three libraries evaluated in the paper?
@@ -503,30 +526,58 @@ Reviewer expertise
 Y. Knowledgeable
 Paper summary
 
-This paper presents a typed core language for Haskell that takes account of semantic linearity in the presense of laziness. The type system is proved sound and to ensure linearity, and its utility is demonstrated in practice using various optimising transformations and real-world library code.
+This paper presents a typed core language for Haskell that takes account of
+semantic linearity in the presense of laziness. The type system is proved sound
+and to ensure linearity, and its utility is demonstrated in practice using
+various optimising transformations and real-world library code.
 Comments for authors
 
 General comments:
 
-Linear types are a tantalisingly appealing idea, but have proved notoriously challenging in practice. This paper makes a impressive new contribution in the context of Haskell, by developing the theory and practice of a linear core language that takes account of the additional, significant complexities that arise from the use of non-strict evaluation.
+Linear types are a tantalisingly appealing idea, but have proved notoriously
+challenging in practice. This paper makes a impressive new contribution in the
+context of Haskell, by developing the theory and practice of a linear core
+language that takes account of the additional, significant complexities that
+arise from the use of non-strict evaluation.
 
-While the paper uses Haskell, many modern languages include non-strict features, and the use of resource types such as linear types is becoming increasingly popular, so this work also has the potential to be more widely applicable.
+While the paper uses Haskell, many modern languages include non-strict
+features, and the use of resource types such as linear types is becoming
+increasingly popular, so this work also has the potential to be more widely
+applicable.
 
-Overall, this is an excellent piece of work that makes a significant contribution to both the theory and practice of linear type systems, and merits being published in POPL.
+Overall, this is an excellent piece of work that makes a significant
+contribution to both the theory and practice of linear type systems, and merits
+being published in POPL.
 
 Specific comments:
 
-1, The title needs further work. The present version seems to be trying to say that the approach is both general (the main title) and specific (the subtitle), but doesn't read well. I'd suggest going for a simpler and more direct title that doesn't try to cover two bases at the same time.
+1, The title needs further work. The present version seems to be trying to say
+that the approach is both general (the main title) and specific (the subtitle),
+but doesn't read well. I'd suggest going for a simpler and more direct title
+that doesn't try to cover two bases at the same time.
 
-6, The first paragraph of the abstract is a bit verbose and could be compressed quite a bit. After doing so it probably makes sense to make the abstract a single paragraph.
+6, The first paragraph of the abstract is a bit verbose and could be compressed
+quite a bit. After doing so it probably makes sense to make the abstract a
+single paragraph.
 
-107, Explain who the paper is targeted at, e.g. what kind of knowledge and experience is required. It is also important to clarify here that while Haskell is the focus of the paper, the ideas can potentially be applied to any language with non-strict features, even if the language itself is strict.
+107, Explain who the paper is targeted at, e.g. what kind of knowledge and
+experience is required. It is also important to clarify here that while Haskell
+is the focus of the paper, the ideas can potentially be applied to any language
+with non-strict features, even if the language itself is strict.
 
-107, The paper contains an appendix with 28 pages of material, whereas the call for papers states that each paper should have no more than 25 pages of text, excluding bibliography. Any additional material should be included as supplementary material separate from the main paper, rather than as an appendix.
+107, The paper contains an appendix with 28 pages of material, whereas the call
+for papers states that each paper should have no more than 25 pages of text,
+excluding bibliography. Any additional material should be included as
+supplementary material separate from the main paper, rather than as an
+appendix.
 
-115, There are a lot of parenthetical remarks in the paper, which are quite distracting. It would be beneficial to try and minimise the use of this feature.
+115, There are a lot of parenthetical remarks in the paper, which are quite
+distracting. It would be beneficial to try and minimise the use of this
+feature.
 
-132, I very much appreciate starting off with a series of examples to illustrate the problems this paper addresses. Spending four pages on this is quite a lot, but the examples illustrate different points and are very helpful.
+132, I very much appreciate starting off with a series of examples to
+illustrate the problems this paper addresses. Spending four pages on this is
+quite a lot, but the examples illustrate different points and are very helpful.
 
 137, Why are two different colours (yellow and orange) used for programs that are semantically linear but not linear in Core?
 
@@ -576,7 +627,14 @@ Weaknesses:
 
     The result has fairly narrow applicability: IRs for lazy linearly typed languages.
 
-Overall, I don't have any technical issues with the paper. I think the ideas for making the type system understand linearity semantically in the presence of laziness are good. The evaluation provides evidence that the approach works and was able to both confirm and refute linearity preservation of GHC, while having very few cases of conservatively rejecting linear programs. My main concern is on the significance, which seems limited.
+Overall, I don't have any technical issues with the paper. I think the ideas
+for making the type system understand linearity semantically in the presence of
+laziness are good. The evaluation provides evidence that the approach works and
+was able to both confirm and refute linearity preservation of GHC, while having
+very few cases of conservatively rejecting linear programs. My main concern is
+on the significance, which seems limited.
+
+[ TODO ]: My main concern is on the significance, which seems limited; refer to Reviewer A and B's points on significance
 
 Small:
 
