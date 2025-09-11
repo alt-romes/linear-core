@@ -50,21 +50,21 @@ We will reference this principle in our revision to make the tradeoffs clear.
 The key ideas that make Linear Core work are:
 1. Usage environments (Section 3.3)
 2. Distinct treatment of case scrutinees in WHNF (Section 3.6.1)
-3. Proof irrelevant resources (Section 3.6.2)
+3. Proof irrelevant and tagged resources (Section 3.6.2 and 3.6.3)
 
 (1) Encodes the idea that lazy bindings do not consume resources upon definition,
 but rather when the bound variables themselves are consumed. Consuming a variable with usage environment Delta equates to consuming the variables in Delta.
 (2) Case expressions in WHNF may capture ambient linear resources, but these resources can be safely used in branches since the case will not further evaluate its scrutinee. On the other hand, a case on a non-WHNF expression must be treated more conservatively. 
-(3) [TODO Rodrigo]
+(3) Irrelevant resources make existing bindings unusable while forcing the use of others. Namely, non-whnf scrutinee binders can no longer be used in the alternative, while the pattern variables or the case binder must necessarily be used. Tagged resources follow the observation that some variables must be used jointly or not at all.
 
-The usage environment idea was present in the unpublished Linear MiniCore draft (J. Bernardy et al. 2020).
-Points (2) and (3) above are specific to our work, although irrelevant resources have some similarities with other works (e.g. values with 0 multiplicity in Quantitative Type Theory, proof irrelevance in modal type theory).
+The usage environment idea was present in the unpublished Linear MiniCore draft (J. Bernardy et al. 2020), but was sketched for non-recursive lets only.
+Points (2) and (3) above are specific to our work, although irrelevant resources have some similarities with other works (e.g. values with 0 multiplicity in Quantitative Type Theory, proof irrelevance in modal type theory), as do tagged resources (i.e. fractional permissions in separation logic).
 
 ### (c) Semantic notion of linearity
 
 > **Reviewer A**: *you are not defining a semantic notion of linearity. Rather, you're designing a typing discipline which fits the lazy semantics of linearity.*
 
-We concur that we are not defining a (new) notion of semantic linearity. Indeed, our definition is a essentially that of Linear Haskell and our work establishes a new syntactic definition of linearity that is more precise wrt the semantic notion. We thank the reviewer for this perspective and we plan to rewrite our positioning accordingly.
+We concur that we are not defining a (new) notion of semantic linearity. Indeed, our definition is essentially that of Linear Haskell and our work establishes a new syntactic definition of linearity that is more precise wrt the semantic notion. We thank the reviewer for this perspective and we plan to rewrite our positioning accordingly.
 
 ### (d) Linearity in the presence of exceptions
 
@@ -73,8 +73,7 @@ We concur that we are not defining a (new) notion of semantic linearity. Indeed,
 The reviewer is correct in that Linear Haskell has no special treatment of exceptions. This is also the case in GHC Core, where exceptions have no special status in Core code and so there is no natural way
 of dealing of the interaction between exceptions and linearity in Core itself without a major overhaul of the exception mechanisms of the language.
 Our work simply preserves the exceptional behaviour of the source and we will clarify this in our revision.
-We note that a working solution to this issue is present in the `linear-base` library, where... [TODO Rodrigo]
-
+We note that `linear-base` has library-level abstraction that guarantees all accquired resources are released upon an exception. We refer to https://www.tweag.io/blog/2020-02-19-linear-type-exception/ for further details.
 
 
 ## 2. Change List
@@ -83,23 +82,18 @@ We will address all of the points raised by the reviewers:
 
 - Revise introductory examples to more adequately flesh out the relevant points (**Reviewer A**).
 - Revise the paper title and abstract, emphasizing the more general contributions (**Reviewer B**):
-    [Tentative titles: Checking Semantic Linearity in a Non-strict Optimising Compiler / 
-                       Checking Linearity in Non-strict Languages /
-                       Checking Semantic Linearity in a Non-strict Optimising Compiler
-
-                       Surviving Linearity 
-                       Lazy Linearity 
-
+    [Tentative titles: Checking Semantic Linearity in a Non-strict Optimising Compiler
+                       Checking Linearity in a Lazy Optimising Compiler
+                       Lazy Linearity for the Glasgow Haskell Compiler
+                       Lazy Linearity for the GHC Optimiser
+                       Lazy Linearity for an Optimising Compiler
                        ]
 - Revise introduction to more clearly flesh out key ideas, contributions, target audience and relationship
   with semantic linearity (**Reviewer A, B, C**).
-- Expand evaluation with more codebases that rely on Linear Haskell (**Reviewer C**).
 - Address all minor corrections and presentation issues raised by the reviewers, expanding explanations
 as requested (**Reviewer A, B and C**).
 
 The above work is readily feasible before the 2nd round revision deadline (23rd Oct).
-
-
 
 ## 3. Detailed Response
 
@@ -267,6 +261,13 @@ See **Overview (a)**.
 > The citation for Bernardy et al. 2017 should probably be to the POPL'18 version of the paper rather than the arXiv preprint.
 
 We will cite both in our revision, given that the linearity-aware operational semantics can only be found in the long-form version.
+
+
+--------------------------------------------------------------------------------
+todo:
+
+> My main concern is on the significance, which seems limited;
+[ TODO ]: refer to Reviewer A and B's points on significance
 
 
 ---
@@ -633,8 +634,6 @@ laziness are good. The evaluation provides evidence that the approach works and
 was able to both confirm and refute linearity preservation of GHC, while having
 very few cases of conservatively rejecting linear programs. My main concern is
 on the significance, which seems limited.
-
-[ TODO ]: My main concern is on the significance, which seems limited; refer to Reviewer A and B's points on significance
 
 Small:
 
