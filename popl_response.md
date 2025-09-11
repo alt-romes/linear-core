@@ -73,7 +73,7 @@ We concur that we are not defining a (new) notion of semantic linearity. Indeed,
 The reviewer is correct in that Linear Haskell has no special treatment of exceptions. This is also the case in GHC Core, where exceptions have no special status in Core code and so there is no natural way
 of dealing of the interaction between exceptions and linearity in Core itself without a major overhaul of the exception mechanisms of the language.
 Our work simply preserves the exceptional behaviour of the source and we will clarify this in our revision.
-We note that a working solution to this issue is present in the `linear-base` library, where... [TODO]
+We note that a working solution to this issue is present in the `linear-base` library, where... [TODO Rodrigo]
 
 
 
