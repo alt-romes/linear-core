@@ -204,8 +204,6 @@ clarify.
 
 The formalism that forms the basis for Linear Haskell is dubbed $\lambda^Q_\rightarrow$, due to having multiplicities (p,q) and linearity information in the arrow type. We identified Linear Core in an analogous way, with $\pi$ for the multlipicity meta-variable and $\Delta$ due to the usage environment technique. We will clarify this in the text.
 
-Suponho que podemos mencionar em escrito o que significa. Não é nada de por aí alem mas o π é de multiplicities (a la LH) e o Δ é dos usage environments...
-
 > 345, The phrase "can be readily applied to other non-strict languages" is rather a moot point, because in practical terms the only such language is Haskell. I'd suggest rephrasing along the lines of my first comment about line 107.
 
 We agree this is a better positioning of the work (thanks!) and will revise accordingly.
@@ -261,14 +259,6 @@ See **Overview (a)**.
 > The citation for Bernardy et al. 2017 should probably be to the POPL'18 version of the paper rather than the arXiv preprint.
 
 We will cite both in our revision, given that the linearity-aware operational semantics can only be found in the long-form version.
-
-
---------------------------------------------------------------------------------
-todo:
-
-> My main concern is on the significance, which seems limited;
-[ TODO ]: refer to Reviewer A and B's points on significance
-
 
 ---
 # RevA "Points"
