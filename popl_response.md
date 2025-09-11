@@ -8,7 +8,7 @@ Following the Chair's instructions, our reply is in three parts:
 
 1. Overview -- summary of key points
 2. Change List -- our proposed revisions
-3. Detailed Response -- explicit answers to each reviewer's questions
+3. Detailed Response -- answers to each reviewer's questions
 
 ---
 
@@ -50,15 +50,13 @@ We will reference this principle in our revision to make the tradeoffs clear.
 The key ideas that make Linear Core work are:
 1. Usage environments (Section 3.3)
 2. Distinct treatment of case scrutinees in WHNF (Section 3.6.1)
-3. Proof irrelevant and tagged resources (Section 3.6.2 and 3.6.3)
+3. Proof irrelevant and tagged resources (Sections 3.6.2 and 3.6.3)
 
-(1) Encodes the idea that lazy bindings do not consume resources upon definition,
-but rather when the bound variables themselves are consumed. Consuming a variable with usage environment Delta equates to consuming the variables in Delta.
+(1) Encodes the idea that lazy bindings do not consume resources upon definition, but rather when the bound variables themselves are consumed. Consuming a variable with usage environment Delta equates to consuming the variables in Delta.
 (2) Case expressions in WHNF may capture ambient linear resources, but these resources can be safely used in branches since the case will not further evaluate its scrutinee. On the other hand, a case on a non-WHNF expression must be treated more conservatively. 
-(3) Irrelevant resources make existing bindings unusable while forcing the use of others. Namely, non-whnf scrutinee binders can no longer be used in the alternative, while the pattern variables or the case binder must necessarily be used. Tagged resources follow the observation that some variables must be used jointly or not at all.
+(3) Irrelevant resources make existing bindings unusable while forcing the use of others. Namely, linear resources occurring in non-WHNF case scrutinees can no longer be used in the alternative, while the pattern variables or the case binder must necessarily be used. Tagged resources follow the observation that some variables must be used jointly or not at all.
 
-The usage environment idea was present in the unpublished Linear MiniCore draft (J. Bernardy et al. 2020), but was sketched for non-recursive lets only.
-Points (2) and (3) above are specific to our work, although irrelevant resources have some similarities with other works (e.g. values with 0 multiplicity in Quantitative Type Theory, proof irrelevance in modal type theory), as do tagged resources (i.e. fractional permissions in separation logic).
+The usage environment idea was present in the unpublished Linear MiniCore draft (J. Bernardy et al. 2020), but was sketched for non-recursive lets only (as reported in Section 6). Points (2) and (3) above are specific to our work, although irrelevant resources have some similarities with other works (e.g. values with 0 multiplicity (Brady 2021), or proof irrelevance in type theory), as do tagged resources (i.e. fractional permissions in separation logic (Boyland 2003)). Our discussion of these similarities is mentioned throughout the paper. We will revise the related work section accordingly to refer to these works in a more cohesive form.
 
 ### (c) Semantic notion of linearity
 
@@ -73,7 +71,7 @@ We concur that we are not defining a (new) notion of semantic linearity. Indeed,
 The reviewer is correct in that Linear Haskell has no special treatment of exceptions. This is also the case in GHC Core, where exceptions have no special status in Core code and so there is no natural way
 of dealing of the interaction between exceptions and linearity in Core itself without a major overhaul of the exception mechanisms of the language.
 Our work simply preserves the exceptional behaviour of the source and we will clarify this in our revision.
-We note that `linear-base` has library-level abstraction that guarantees all accquired resources are released upon an exception. We refer to https://www.tweag.io/blog/2020-02-19-linear-type-exception/ for further details.
+We note that `linear-base` has library-level abstractions that guarantee all accquired resources are released upon an exception. We refer to https://www.tweag.io/blog/2020-02-19-linear-type-exception/ for further details.
 
 
 ## 2. Change List
@@ -81,17 +79,13 @@ We note that `linear-base` has library-level abstraction that guarantees all acc
 We will address all of the points raised by the reviewers:
 
 - Revise introductory examples to more adequately flesh out the relevant points (**Reviewer A**).
-- Revise the paper title and abstract, emphasizing the more general contributions (**Reviewer B**):
-    [Tentative titles: Checking Semantic Linearity in a Non-strict Optimising Compiler
-                       Checking Linearity in a Lazy Optimising Compiler
-                       Lazy Linearity for the Glasgow Haskell Compiler
-                       Lazy Linearity for the GHC Optimiser
-                       Lazy Linearity for an Optimising Compiler
-                       ]
+- Revise the paper title and abstract, emphasizing the more general contributions (**Reviewer B**).
+  We plan to change the title along the lines of "Semantic Linearity in a Lazy Optimising Compiler", 
+  removing the subtitle.
 - Revise introduction to more clearly flesh out key ideas, contributions, target audience and relationship
-  with semantic linearity (**Reviewer A, B, C**).
+  with semantic linearity (**Reviewers A, B, C**).
 - Address all minor corrections and presentation issues raised by the reviewers, expanding explanations
-as requested (**Reviewer A, B and C**).
+as requested (**Reviewers A, B and C**).
 
 The above work is readily feasible before the 2nd round revision deadline (23rd Oct).
 
@@ -130,8 +124,7 @@ We will implement this correction in our revision.
 
 > “Γ, 𝑥:Δ 𝜎; Δ ⊢ 𝑥 : 𝜎”: I'm guessing that the two occurrences of Δ refer to different things. Clarify or repair.
 
-Our goal with this notation is to assert that the usage environment associated with variable `x` is Δ, which consists exactly of all ambient linear variables which are tracked by context Δ. The two Δ are indeed the same. We understand that dubbing them Δ-bound variables adds confusion since it makes it seem 
-as if Δ is terminal in the grammar. We will rephrase as usage-bound variables and clarify this in our revision.
+Our goal with this notation is to assert that the usage environment associated with variable `x` is Δ, which consists exactly of all ambient linear variables which are tracked by context Δ. The two Δ are indeed the same. We understand that dubbing them Δ-bound variables adds confusion since it makes it seem as if Δ is terminal in the grammar. We will rephrase as usage-bound variables and clarify this in our revision.
 
 > Fig 4. “CaseWHNF”: this rule is unparseable for me. 
 
@@ -168,7 +161,7 @@ The introduction of the bracket notation is given in Section 3.6.2, L721. We wil
 
 > “Proof irrelevant”: I was already confused by this term earlier (what are proofs here? does this mean simply unused?) But the repeated use of "proof" in this paragraph makes me very confused.
 
-Proof irrelevant variables cannot be used. The terminology is borrowed from proof theory (e.g. (Pfenning '01)), but we understand this might be confusing and does not line up exactly with the proof theoretic construction. We will revise this terminology to simply "irrelevant" and clarify its meaning. 
+Proof irrelevant variables cannot be used. The terminology is borrowed from type theory (e.g. (Pfenning '01)), but we understand this might be confusing and does not line up exactly with the type theoretic constructions. We will revise this terminology to simply "irrelevant" and clarify its meaning. 
 
 Frank Pfenning. Intensionality, Extensionality, and Proof Irrelevance in Modal Type Theory. LICS 2001.
 
@@ -229,14 +222,22 @@ As stated in **Overview (a)**, our work provides a conceptual framework and prot
 > What does the GHC plugin do on coercion terms if they are not supported in
 > the theory? Do coercions not come up in Linear Haskell programs?
 
+Equality coercions in Core exist to support advanced type-level features
+(e.g. type families, GADTs) which are mostly orthogonal to linearity. So
+we do not model them at this stage to illustrate the essence of our system
+without the added complexity of coercions. As discussed in Section 6.1 (L.1141),
+there are plausible interactions between GADTs and linearity through so-called
+multiplicity coercions, which we leave for future study. While we expect
+that our system can scale to such a setting, we felt that the study of coercions
+under the lens of semantic linearity is itself a whole topic of study in its own
+right.
+
 Our prototype implementation is mainly concerned with checking linearity
 according to our theory (tracking usage environments and variables). Casts and
 coercions are essentially ignored, and our plugin will reject programs which
 depend on coercions to be accepted as linear.
 
-Multiplicity coercions are introduced as future work (L.1141). The type-heavy
-nature of that work falls out of the scope of this paper which is more
-concerned with [TODO como dizer de forma menos ma?] linearity tracking.
+
 
 > The evaluation is fairly light. (Perhaps there just are a large number of Linear Haskell programs to draw from?)
 > Are there other significant Linear Haskell programs beyond the three libraries evaluated in the paper?
