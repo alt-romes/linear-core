@@ -136,7 +136,7 @@ as if Δ is terminal in the grammar. We will rephrase as usage-bound variables a
 
 > Fig 4. “CaseWHNF”: this rule is unparseable for me. 
 
-We will fix the type-setting issue (**Change list**).
+The typesetting of the rule is unfortunate. The premises in the topline state, in order, that e is in WHNF; e is of type $\sigma$ with ocurring linear variables $\overline{\Delta_i}$ and that e matches with branch $\rho_j$. The two bottom premises appeal to the pattern judgment for WHNF scrutinees for pattern $\rho_j$ (where the $\overline{\Delta_i}$ may be consumed through the case-binder or outright) and the NWHNF pattern judgment for the remaining branches (where the $\overline{\Delta_i}$ may only be consumed via the case-binder). We will expand the explanation at the end of Section 3.6.2 and we will fix the type-setting issue (**Change list**).
 
 > Fig 4. The Last judgement has 6 or 7 argument and I don't know how many fixed parts.
 
@@ -149,7 +149,7 @@ We acknowledge the chosen phrasing was a bit barroque. Yes the annotations needs
 
 > Perhaps there should be a discussion of whether doing "case" on a WHNF expression is useful at all. I guess this is motivated by practical considerations, please spell them out at this point.
 
-Case-ing on a WHNF arises frequently due to the chaining of optimizing transformations. We will further emphasize this at this point in the paper (we briefly mention this in L319).
+Case-ing on a WHNF arises frequently due to the chaining of optimizing transformations. We will further emphasize this at this point in the paper (we briefly mention this in L319 and L751).
 
 > - “we must branch on weak head normal formed-ness to accurately type expression”: -> accurate typing of case expressions depends on whether the scrutinee is in WHNF.
 
@@ -159,7 +159,7 @@ See **Change list**.
 > “𝑥: [Δ]”: At this point I realize that I don't understand the difference between Δ and [Δ]. Did I miss something? If so a back-reference to the explanation would help.
 
 [TODO Rodrigo] Spell out what it means.
-The introduction of the bracket notation is given in L.[TODO]. We will revise accordingly to make this more upfront.
+The introduction of the bracket notation is given in Section 3.6.2, L721. We will revise accordingly to make this more upfront.
 
 > “Proof irrelevant”: I was already confused by this term earlier (what are proofs here? does this mean simply unused?) But the repeated use of "proof" in this paragraph makes me very confused.
 
