@@ -10,7 +10,7 @@ maintainer:         rodrigo.m.mesquita@gmail.com
 -- copyright:
 category:           Language
 build-type:         Simple
-extra-doc-files:    CHANGELOG.md
+extra-doc-files:    CHANGELOG.md, README.md
 -- extra-source-files:
 tested-with:        GHC == 9.6.1
 
@@ -24,7 +24,7 @@ common common
                    containers >= 0.6 && < 0.8,
                    mtl >= 2.2 && < 3,
                    text >= 2.0 && < 2.2,
-                   ghc >= 9.4,
+                   ghc >= 9.6 && < 9.12,
                    -- Outdated, we moved to translation approach
                    -- We used recursion-schemes with the standalone language (modules also commented below)
                    -- However, for the plugin we need a patched version of GHC
@@ -56,7 +56,7 @@ library
 test-suite linear-core-test
   import: common
   build-depends: linear-core-prototype, tasty < 1.5, tasty-hunit < 0.11
-  ghc-options: -dno-typeable-binds -fplugin=Linear.Core.Plugin
+  ghc-options: -fplugin=Linear.Core.Plugin
   type: exitcode-stdio-1.0
   -- other-modules: Translate.Test
   hs-source-dirs: test
