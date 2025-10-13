@@ -1684,8 +1684,8 @@ Figure~\ref{fig:linear-core-other-judgements}.
 %We start with the main typing judgement.
 %As is common for linear type systems, we use two typing environments, an
 %unrestricted $\G$ and a linear $\D$ environment.
-The main judgement is written $\G;\D \vdash e : \s$ to denote that expression
-$e$ has type $\s$ under the unrestricted environment $\G$ and linear
+The main judgement is written $\G;\D \vdash e : \tau$ to denote that expression
+$e$ has type $\tau$ under the unrestricted environment $\G$ and linear
 environment $\D$.
 %
 %
@@ -1861,7 +1861,7 @@ Similarly, (3) also follows from (1), because if the linear resources aren't
 consumed \ROUNDTWO{by a use of $u$}, they must be consumed in 
 some other derivation (or otherwise the \ROUNDTWO{overall} expression is ill-typed).
 %
-These observations all lead to the typing rule for $\Delta$-bound
+These observations lead to the typing rule for $\Delta$-bound
 variables:
 
 \vspace{-0.5cm}
@@ -1872,9 +1872,10 @@ The rule states that an occurrence of a $\Delta$-bound variable is well-typed if
 the linear environment is made up exactly of the resources in the usage environment of
 that variable.
 %
-$\D$-vars are unrestricted and can be discarded and duplicated, despite
-multiple occurrences of the same $\Delta$-var in an expression not possibly being well-typed
-since that would imply non-linear usage of linear resources.
+\ROUNDTWO{$\Delta$-bound variables} are unrestricted and can be discarded and duplicated, despite
+multiple occurrences of the \ROUNDTWO{variable} in an expression not
+being well-typed
+\ROUNDTWO{due to} non-linear usage of linear resources.
 % multiple occurrences of the same
 % $\D$-variable imply non-linear usage of resources that must be used linearly.
 
