@@ -27,7 +27,7 @@
 \renewcommand{\splitjudg}[2]{\judg[\Gamma][\Delta,\Delta']{#1}{#2}}
 
 % Variables
-\renewcommandx{\var}[3][1=x, 2=1, 3=\sigma]{\ensuremath{#1{:}_{#2}#3}}
+\renewcommandx{\var}[3][1=x, 2=1, 3=\tau]{\ensuremath{#1{:}_{#2}#3}}
 \renewcommand{\x}{\var[x]}
 \renewcommand{\y}{\var[y]}
 \renewcommand{\z}{\var[z]}
@@ -37,7 +37,7 @@
 \renewcommand{\xpi}{\x[\pi]}
 \renewcommand{\xD}{\var[x][\Delta][\sigma]}
 % Tagged x
-\renewcommand{\xt}[1]{\x[1][\s]\##1}
+\renewcommand{\xt}[1]{\x[1][\tau]\##1}
 % x with required arguments, for places where nested [] don't work well
 \renewcommand{\xr}[2]{\x[#1][#2]}
 

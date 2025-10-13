@@ -2,44 +2,51 @@
 \newcommand{\TypeVarOmega}{
     \infer*[right=(Var$_\omega$)]
     {\,}
-    {\judg[\G,\xo][\cdot]{x}{\s}}
+    {\judg[\G,\xo][\cdot]{x}{\tau}}
 }
 
 \newcommand{\TypeLinearVar}{
     \infer*[right=(Var$_1$)]
     {\,}
-    {\judg[\G][\xl]{x}{\s}}
+    {\judg[\G][\xl]{x}{\tau}}
 }
 
 \newcommand{\TypeVarDelta}{
     \infer*[right=(Var$_{\D}$)]
-    {\,}
-    {\judg[\G,\xD][\D]{x}{\s}}
-}
+    { \ROUNDTWO{\Delta = \Delta'} }
+    {\judg[\G,\xD][\ROUNDTWO{\D'}]{x}{\tau}}
+  }
+
+  \newcommand{\TypeVarP}
+  {
+     \ROUNDTWO{\infer*[right=(Var$_{p}$)]
+    { \rho \in \G }
+    {\judg[\G][x:_\rho \tau ]{x}{\tau}}}
+  }
 
 % TODO: split tagged stuff and proof irrelevant stuff
 \newcommand{\TypeVarSplit}{
   \infer[(Split)]
-    {\judg[\G][\D,\x]{e}{\vp} \and \hasargs{K}{n}}
+    {\judg[\G][\D,x:_1\tau]{e}{\tau} \and \hasargs{K}{n}}
     {\judg[\G][\D,\ov{\xt{K_i}}^n]{e}{\s}}
 }
 
 \newcommand{\TypeMultLamIntro}{
     \infer*[right=($\Lambda I$)]
-    {\judg[\G,p]{e}{\s} \and p\notin\Gamma}
-    {\judg{\Lambda p.~e}{\forall p.~\s}}
+    {\judg[\G,p]{e}{\tau} \and p\notin\Gamma}
+    {\judg{\Lambda p.~e}{\forall p.~\tau}}
 }
 
 \newcommand{\TypeMultLamElim}{
     \infer*[right=($\Lambda E$)]
-    {\judg{e}{\forall p.~\s} \and \Gamma\vdash_{mult}\pi}
-    {\judg{e~\pi}{\s[\pi/p]}}
+    {\judg{e}{\forall p.~\tau} \and \Gamma\vdash_{mult}\pi}
+    {\judg{e~\pi}{\tau[\pi/p]}}
 }
 
 \newcommand{\TypeLamIntroL}{
     \infer*[right=($\lambda I_1$)]
-    {\judg[\G][\D,\xl]{e}{\vp} \and x\notin\Delta}
-    {\judg{\lambda \xl.~e}{\s\to_{1}\vp}}
+    {\judg[\G][\D,\xl]{e}{\s} \and x\notin\Delta}
+    {\judg{\lambda \xl.~e}{\tau\to_{1}\s}}
 }
 
 \newcommand{\TypeLamIntroW}{
@@ -50,8 +57,8 @@
 
 \newcommand{\TypeLamElimL}{
     \infer*[right=($\lambda E_1$)]
-    {\judg[\G][\D]{e}{\s\to_{1}\vp} \and \judg[\G][\D']{e'}{\s}}
-    {\splitjudg{e~e'}{\vp}}
+    {\judg[\G][\D]{e}{\tau\to_{1}\s} \and \judg[\G][\D']{e'}{\tau}}
+    {\splitjudg{e~e'}{\s}}
 }
 
 \newcommand{\TypeLamElimW}{
@@ -59,57 +66,62 @@
 % Any \delta occurring in e' must have an empty usage environment and can be
 % used unrestrictedly, so it could perhaps make more sense to move the variable from \delta to \Gamma
     \infer*[right=($\lambda E_\omega$)]
-    {\judg{e}{\s\to_{\omega}\vp} \and \judg[\G][\cdot]{e'}{\s}}
-    {\judg{e~e'}{\vp}}
+    {\judg{e}{\tau\to_{\omega}\s} \and \judg[\G][\cdot]{e'}{\tau}}
+    {\judg{e~e'}{\s}}
 }
 
 \newcommand{\TypeLet}{
      \infer*[right=(Let)]
     %\infer[(Let)]
-    {\judg[\G][\D]{e}{\s} \\ \judg[\G,\xr{\D}{\s}][\D,\D']{e'}{\vp}}
-    {\judg[\G][\D,\D']{\llet{\x[\D] = e}{e'}}{\vp}}
+    {\judg[\G][\D]{e}{\tau} \\ \judg[\G,\xr{\D}{\tau}][\D,\D']{e'}{\s}}
+    {\judg[\G][\D,\D']{\llet{\x[\D] = e}{e'}}{\s}}
 }
 
 
 \newcommand{\TypeLetRec}{
      \infer*[right=(LetRec)]
   %\infer[(LetRec)]
-    {\ov{\judg[\G,\ov{x_i{:}_{\D}\s_i}][\D]{e_i}{\s}} \\ \judg[\G,\ov{x_i{:}_{\D}\s_i}][\D,\D']{e'}{\vp}}
-    {\judg[\G][\D,\D']{\lletrec{\ov{\var[x_i][\D][\s_i] = e_i}}{e'}}{\vp}}
+    {\ov{\judg[\G,\ov{x_i{:}_{\D}\tau_i}][\D]{e_i}{\s}} \\ \judg[\G,\ov{x_i{:}_{\D}\tau_i}][\D,\D']{e'}{\s}}
+    {\judg[\G][\D,\D']{\lletrec{\ov{\var[x_i][\D][\tau_i] = e_i}}{e'}}{\s}}
   }
 
   \newcommand{\TypeConstr}{
     \infer*[right=(Constr)]
-    {\ov{\G;\cdot\vdash e_\omega : \sigma_i} \and \ov{\G ; \D_j \vdash
-          e_j : \sigma_j} \and \ov{\D_j} = \D \and K : \ov{ \sigma_i
-          \rightarrow_\omega \sigma_j \lolli} \vp }
-    {\judg[\G][\D]{K~\ov{e_\omega}\ov{e_i} }{\vp}}
+    {\ov{\G;\cdot\vdash e_\omega : \tau_i} \and \ov{\G ; \D_j \vdash
+          e_j : \tau_j} \and \ov{\D_j} = \D \and K : \ov{ \tau_i
+          \rightarrow_\omega \tau_j \lolli} \s }
+    {\judg[\G][\D]{K~\ov{e_\omega}\ov{e_i} }{\s}}
     }
 
 \newcommand{\TypeCaseWHNFIntermediate}{
     \mprset{flushleft}
     \infer[(Case$_\textrm{WHNF}$)]
-    {\textrm{e is in \emph{WHNF}} \\ \G;\D \Vdash e:\s \gtrdot \ov{\D_i}
-    \\ \ov{\G,\var[z][\ov{\D_i}];\ov{\D_i},\D' \vdash_{alt} \rho\to e' :^z_{\ov{\D_i}} \s \Rightarrow \vp}}
-    {\judg[\G][\D,\D']{\ccase{e}{\var[z][\ov{\D_i}]~\{\ov{\rho \to e'}\}}}{\vp}}
+    {\textrm{e is in \emph{WHNF}} \\ \G;\D \Vdash e:\tau \gtrdot \ov{\D_i}
+    \\ \ov{\G,\var[z][\ov{\D_i}];\ov{\D_i},\D' \vdash_{alt} \rho\to e' :^z_{\ov{\D_i}} \tau \Rightarrow \s}}
+    {\judg[\G][\D,\D']{\ccase{e}{\var[z][\ov{\D_i}]~\{\ov{\rho \to e'}\}}}{\s}}
 }
 
 \newcommand{\TypeCaseWHNF}{
     \infer[(Case$_\textrm{WHNF}$)]
-    {\textrm{e is in \emph{WHNF}} \and \G;\D \Vdash e:\s \gtrdot \ov{\D_i} \and e~\textsf{matches}~\rho_j
-    \\ \G,\var[z][\ov{\D_i}];\ov{\D_i},\D' \vdash_{alt} \rho_j \to e' :^z_{\ov{\D_i}} \s \Rightarrow_\mathsf{WHNF} \vp
-    \\ \ov{\judg[\G,z{:}_{\irr{\D}}\s][\irr{\D},\D']{\rho\to e'}{\s \Rightarrow_\mathsf{NWHNF} \vp}[alt][\irr{\D}][z]}
+    {\textrm{e is in \emph{WHNF}} \and e~\textsf{matches}~\rho_j
+    \and \ov{\judg[\G,z{:}_{\irr{\D}}\tau][\irr{\D},\D']{\rho\to e'}{\tau
+        \Rightarrow_\mathsf{NWHNF} \s}[alt][\irr{\D}][z]}\\
+    \G;\D \Vdash e:\tau \gtrdot \ov{\D_i} \and
+    \G,\var[z][\ov{\D_i}];\ov{\D_i},\D' \vdash_{alt} \rho_j \to e'
+    :^z_{\ov{\D_i}} \tau \Rightarrow_\mathsf{WHNF} \s
     }
-    {\judg[\G][\D,\D']{\ccase{e}{\var[z][\ov{\D_i}]~\{\ov{\rho \to e'}\}}}{\vp}}
+    {\judg[\G][\D,\D']{\ccase{e}{\var[z][\ov{\D_i}]~\{\ov{\rho \to e'}\}}}{\s}}
 }
 
 \newcommand{\TypeCaseNotWHNFIncorrect}{
     \mprset{flushleft}
     \infer[(CaseNotWHNF)]
     {\textrm{e is definitely not in \emph{WHNF}} \\
-    \judg{e}{\s}
-    \\ \ov{\judg[\subst{\G}{\irr{\D}}{\D},z{:}_{\irr{\D}}\s][\irr{\D},\D']{\rho\to e'}{\s \Longrightarrow \vp}[alt][\irr{\D}][z]}}
-    {\splitjudg{\ccase{e}{\z[\irr{\D}]~\{\ov{\rho \to e'}\}}}{\vp}}
+    \judg{e}{\tau}
+    \\
+    \ov{\judg[\subst{\G}{\irr{\D}}{\D},z{:}_{\irr{\D}}\tau][\irr{\D},\D']{\rho\to
+        e'}{\tau \Longrightarrow \s}[alt][\irr{\D}][z]}}
+    {\splitjudg{\ccase{e}{\z[\irr{\D}]~\{\ov{\rho \to e'}\}}}{\s}}
     % TODO: Add that [d1] entails moving all delta usages to [delta] usages in all vars i d1
 }
 
@@ -117,10 +129,10 @@
     \mprset{flushleft}
     \infer[(Case$_\textrm{Not WHNF}$)]
     {\textrm{e is not in \emph{WHNF}} \\
-    \judg{e}{\s}
-    \\ \ov{\judg[\G,z{:}_{\irr{\D}}\s][\irr{\D},\D']{\rho\to e'}{\s \Rightarrow_\mathsf{NWHNF} \vp}[alt][\irr{\D}][z]}
+    \judg{e}{\tau}
+    \\ \ov{\judg[\G,z{:}_{\irr{\D}}\tau][\irr{\D},\D']{\rho\to e'}{\s \Rightarrow_\mathsf{NWHNF} \s}[alt][\irr{\D}][z]}
     }
-    {\splitjudg{\ccase{e}{\z[\irr{\D}]~\{\ov{\rho \to e'}\}}}{\vp}}
+    {\splitjudg{\ccase{e}{\z[\irr{\D}]~\{\ov{\rho \to e'}\}}}{\s}}
     % TODO: Add that [d1] entails moving all delta usages to [delta] usages in all vars i d1
 }
 
@@ -143,67 +155,67 @@
 \newcommand{\TypeAltNIncorrect}{
     \mprset{flushleft}
     \infer[(AltN)]
-    { \judg[\G,\ov{\xo},\ov{y_i{:}_{\lctag{\D_s}{K_i}}\s_i}^n][\D]{e}{\vp}
+    { \judg[\G,\ov{\xo},\ov{y_i{:}_{\lctag{\D_s}{K_i}}\tau_i}^n][\D]{e}{\s}
     \\ n > 0
-    \\ K:\ov{\s_i \to_\pi} \s \in \G
+    \\ K:\ov{\tau_i \to_\pi} \tau \in \G
     }
-    {\judg{K~\ov{\xo},\ov{y_i{:}_1\s_i}^n\to e}{\s \Longrightarrow \vp}[alt][\D_s][z]}
+    {\judg{K~\ov{\xo},\ov{y_i{:}_1\tau_i}^n\to e}{\tau \Longrightarrow \s}[alt][\D_s][z]}
 }
 
 \newcommand{\TypeAltNSecondIncorrect}{
     \mprset{flushleft}
     \infer[(AltN)]
-    { \judg[\G,\ov{\xo},\ov{y_i{:}_{\D_i}\s_i}][\D]{e}{\vp}
+    { \judg[\G,\ov{\xo},\ov{y_i{:}_{\D_i}\tau_i}][\D]{e}{\s}
     \\ \ov{\D_i} = \ov{\lctag{\D_s}{K_i}}^n\\ \ov{\D_i \neq \cdot}
     \\ n > 0
-    \\ K:\ov{\s_i \to_\pi} \s \in \G
+    \\ K:\ov{\tau_i \to_\pi} \tau \in \G
     }
-    {\judg{K~\ov{\xo},\ov{y_i{:}_1\s_i}^n\to e}{\s \Longrightarrow \vp}[alt][\D_s][z]}
+    {\judg{K~\ov{\xo},\ov{y_i{:}_1\tau_i}^n\to e}{\tau \Longrightarrow \s}[alt][\D_s][z]}
 }
 
 \newcommand{\TypeAltNNotWHNF}{
     \mprset{flushleft}
     \infer[(AltN$_{\textrm{Not WHNF}}$)]
-    { \judg[\G,\ov{\xo},\ov{y_i{:}_{\D_i}\s_i}][\D]{e}{\vp}
+    { \judg[\G,\ov{\xo},\ov{y_i{:}_{\D_i}\tau_i}][\D]{e}{\s}
     \\ \ov{\D_i} = \ov{\lctag{\D_s}{K_i}}^n
     % \\ n > 0
     % \\ K:\ov{\s \to_\pi} \s \in \G
     }
-    {\judg{K~\ov{\xo},\ov{y_i{:}_1\s_i}^n\to e}{\s \Rightarrow_\mathsf{NWHNF} \vp}[alt][\D_s][z]}
+    {\judg{K~\ov{\xo},\ov{y_i{:}_1\tau_i}^n\to e}{\tau \Rightarrow_\mathsf{NWHNF} \s}[alt][\D_s][z]}
 }
 
 \newcommand{\TypeAltNWHNF}{
     \mprset{flushleft}
     \infer[(AltN$_{\textrm{WHNF}}$)]
-    { \judg[\G,\ov{\xo},\ov{y_i{:}_{\D_i}\s_i}^n][\D]{e}{\vp}
+    { \judg[\G,\ov{\xo},\ov{y_i{:}_{\D_i}\tau_i}^n][\D]{e}{\s}
     % \\ n > 0
     % \\ K:\of{\s \to_\pi} \s \in \G
     }
-    {\judg{K~\ov{\xo},\ov{y_i{:}_1\s_i}^n\to e}{\s \Rightarrow_\mathsf{WHNF} \vp}[alt][\ov{\D_i}^n][z]}
+    {\judg{K~\ov{\xo},\ov{y_i{:}_1\tau_i}^n\to e}{\tau \Rightarrow_\mathsf{WHNF} \s}[alt][\ov{\D_i}^n][z]}
 }
 
 \newcommand{\TypeAltZero}{
     \mprset{flushleft}
     \infer[(Alt0)]
-    { \judg[\subst{\G}{\cdot}{\D_s}_z,\ov{\xo}][\subst{\D}{\cdot}{\D_s}]{e}{\vp}
+    { \judg[\subst{\G}{\cdot}{\D_s}_z,\ov{\xo}][\subst{\D}{\cdot}{\D_s}]{e}{\s}
     % \\ K:\ov{\s_i \to_\omega} \s \in \G
     }
-    {\judg{K~\ov{\xo}\to e}{\s \Rightarrow \vp}[alt][\D_s][z]}
+    {\judg{K~\ov{\xo}\to e}{\tau \Rightarrow \s}[alt][\D_s][z]}
 }
 
 \newcommand{\TypeAltWild}{
     \mprset{flushleft}
     \infer[(Alt\_)]
-    { \judg{e}{\vp} }
-    {\judg{\_ \to e}{\s \Rightarrow \vp}[alt][\D_s][z]}
+    { \judg{e}{\s} }
+    {\judg{\_ \to e}{\tau \Rightarrow \s}[alt][\D_s][z]}
 }
 
 \newcommand{\TypeWHNFCons}{
     \infer[($\textrm{WHNF}_K$)]
-    { \ov{\G; \cdot \vdash e_\omega : \s_i} \\ \ov{\G; \D_j \vdash e_j
-        : \s_j} \\ \ov{\D_j} = \D \\ K : \ov{\s_i \rightarrow_\omega
-        \s_j \lolli} \vp}
-    { \G; \D \Vdash K~\ov{e_\omega}\ov{e_j} : \vp \gtrdot \ov{\D_j} }
+    { \ov{\G; \cdot \vdash e_\omega : \tau_i} \\ \ov{\G; \D_j \vdash e_j
+        : \tau_j} \\ \ov{\D_j} = \D \\ K : \ov{\tau_i \rightarrow_\omega
+        \tau_j \lolli} \s}
+    { \G; \D \Vdash K~\ov{e_\omega}\ov{e_j} : \s \gtrdot \ov{\D_j} }
 }
 
 \newcommand{\TypeWHNFLam}{
@@ -232,7 +244,7 @@
 \small
 \[
 \begin{array}{c}
-    \judgment{\judg{e}{\s}}
+    \judgment{\judg{e}{\tau}}
 \\[0.4cm]
     \TypeMultLamIntro
 \qquad
@@ -243,9 +255,11 @@
     \TypeLamIntroW
 \\
     \TypeVarDelta
-\qquad
+  \qquad
     \TypeVarSplit
-\\
+  \\
+    \TypeVarP
+  \qquad
     \TypeVarOmega
 \qquad
     \TypeLamElimL

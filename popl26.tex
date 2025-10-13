@@ -134,8 +134,9 @@
 \input{language-v4/TypingRules}
 \input{language-v4/TheoremsAndLemmas}
 
-\title{Semantic Linearity in a Lazy Optimising Compiler}
-\subtitle{Type-checking Linearity in GHC Core}
+%\title{Semantic linearity in a lazy optimizing compiler]
+\title{Effectively Checking Semantic Linearity in a Lazy Functional Language}
+%\subtitle{Type-checking Linearity in GHC Core}
 
 \author{Rodrigo Mesquita}
 %\affiliation{
@@ -152,11 +153,11 @@
 \author{Bernardo Toninho}
 \orcid{0000-0002-0746-7514}
 \affiliation{
-  \department{Departamento de Inform\'{a}tica}
-  \institution{NOVA-LINCS, FCT-NOVA, Universidade Nova de Lisboa}
+  \department{Departamento de Engenharia Inform\'{a}tica}
+  \institution{Instituto Superior Técnico, Universidade de Lisboa and INESC-ID}
   %\city{City}
   \country{Portugal}}
-\email{btoninho@fct.unl.pt}
+\email{bernardo.toninho@tecnico.ulisboa.pt}
 % CHECK: https://www.acm.org/binaries/content/assets/publications/taps/latex-best_practices-06-may-2020.pdf
 
 % \date{ }
@@ -1805,7 +1806,7 @@ linear resources $x$ and $y$:
 % , as per the insights developed in
 % Section~\ref{sec:semantic-linearity-examples},
 \[
-f = \lambda \xl.~\lambda \y[1].~\llet{u_{\{x:_1\s,y:_1\s\}} = (x,y)}{e}
+f = \lambda \x:_1\tau.~\lambda \y[1].~\llet{u_{\{x:_1\tau,y:_1\s\}} = (x,y)}{e}
 \]
 Furthermore, usage environments guarantee that using a $\Delta$-bound variable
 is mutually exclusive with directly using the resources it is annotated with --
@@ -1814,7 +1815,9 @@ usage environment, meaning they are no longer available for direct usage.
 Dually, using the linear resources directly means they are no longer available
 to consume through the usage environment of the $\Delta$-bound variable. The
 $\Delta$-bound variable can be left unused since it is unrestricted, regardless
-of the variables it is annotated with.
+of the variables it is annotated with. \ROUNDTWO{In the example above,
+  our type system ensures that \emph{either} $x$ and $y$ are consumed
+  or $u$ is consumed in $e$, since $u$ has usage environment $\{x:_1\tau,y:_1\s\}$.}
 
 % Finally, we note that usage environments bear a strong resemblance to the linear
 % typing environments in the main typing judgement,
@@ -1830,7 +1833,11 @@ of the variables it is annotated with.
 
 \paragraph{\texorpdfstring{$\D$}{Delta}-bound variables}
 
-A $\Delta$-bound variable $u$ is a variable annotated with a usage environment $\Delta$. Crucially, for any $\Delta$-bound variable $u$:
+A $\Delta$-bound variable $u$ is a variable annotated with
+\ROUNDTWO{some} usage environment \ROUNDTWO{$\Delta'$}.
+\ROUNDTWO{For conciseness, we use the meta-variable $\Delta$ to refer to the usage
+  environment of a $\Delta$-bound variable.}
+Crucially, for any $\Delta$-bound variable $u$:
 %
 %\begin{enumerate}
 %\item
@@ -1851,8 +1858,8 @@ context of any other derivation.
 % other) usage environment, are ill-typed, as the resources are already
 % allocated to the derivation of $u$.
 Similarly, (3) also follows from (1), because if the linear resources aren't
-consumed in the $\Delta$-var derivation, they must be consumed in an
-alternative derivation (or otherwise the expression is ill-typed).
+consumed \ROUNDTWO{by a use of $u$}, they must be consumed in 
+some other derivation (or otherwise the \ROUNDTWO{overall} expression is ill-typed).
 %
 These observations all lead to the typing rule for $\Delta$-bound
 variables:
