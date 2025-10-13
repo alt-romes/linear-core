@@ -90,6 +90,8 @@
 \newcommand{\lletrec}[2]{\mathsf{letrec}~#1~\mathsf{in}~#2}
 \newcommand{\ccase}[2]{\mathsf{case}~#1~\mathsf{of}~#2}
 
+
+
 \definecolor{darkblue}{rgb}{0,0,0.5}
 \definecolor{darkgreen}{rgb}{0,0.3,0}
 \definecolor{darkpink}{rgb}{0.4,0,0.3}
@@ -119,6 +121,10 @@
   showstringspaces=false,
   morecomment=[l]\%,
 }
+
+
+ \newcommand{\ROUNDTWO}[1]{{\color{red}#1}}
+%\newcommand{\ROUNDTWO}[1]{#1}
 
 \input{proof}
 \input{language-v2/proof}
@@ -426,7 +432,7 @@ transformations that, while correct under non-strict evaluation, are rejected
 by traditional linear typing disciplines.
 %
 %
-Additionally, we show our system
+Additionally, we \ROUNDTWO{that} show our system
 %
 % and its implications on validating and influencing optimising transformations
 % by designing a type system which analyses how syntactic linearity breaks down
@@ -452,7 +458,7 @@ accounts for semantic linearity in the presence of laziness. To the
 best of our knowledge, this is the first type system to capture linearity
 semantically in this context (Section~\ref{sec:main:linear-core}).
 
-\item We prove our type system is sound, guarantees linear resource usage, and
+\item We prove that our type system is sound, guarantees linear resource usage, and
     prove that multiple optimising transformations, which are rejected in Core,
         are validated by Linear Core (Section~\ref{sec:main:metatheory}).
 
@@ -1041,7 +1047,7 @@ f5 bool x =
 %that those linear resources are used exactly once.
 
 To determine whether the usage of a binding from a recursive group is linear,
-we must infer the superset of resources that may end up being consumed in a
+we must \ROUNDTWO{check} the superset of resources that may end up being consumed in a
 single use of any of the bindings. For a strongly connected recursive group,
 this superset is the same for all bindings by definition.
 %
@@ -1055,7 +1061,7 @@ this superset is the same for all bindings by definition.
 %Finding a solution to this equation is akin to finding a (principle) type for a
 %recursive binding such that occurrences of itself in its definition are also well-typed.
 %
-It follows from the inferred resources used being the same for all bindings
+It follows from the resources used being the same for all bindings
 that at most a single variable from the recursive group can be used in the
 continuation.
 %
@@ -1500,11 +1506,12 @@ Section~\ref{sec:future-work}.
 %
 
 Linear Core makes precise the various insights discussed in the
-previous section in a linear type system that we prove is sound and guarantees
+previous section in a linear type system that we prove \ROUNDTWO{to be} sound and guarantee
 linear resource usage at runtime.
 This result is obtained (see Section~\ref{sec:main:metatheory}) via a soundness argument on a
 call-by-need big-step operational semantics that becomes stuck when linear
-variables in the runtime heap are used more than once. We show this
+variables in the runtime heap are used more than once, \ROUNDTWO{a
+  technical approach that is natural in the literature \cite{}}. We show this
 semantics to be bisimilar to a
 Launchbury-style~\cite{10.1145/158511.158618} natural semantics. 
 %\todo{O que digo aqui sobre a semantica launchbury style?}
@@ -1532,7 +1539,7 @@ binders with \emph{usage environments} (Section~\ref{sec:usage-environments}).
 %
 The second key idea is to have two distinct rules for case
 expressions, branching on whether the scrutinee is in Weak Head Normal
-Form or not, and using ``proof irrelevance'' to track resources that are no
+Form or not, and using  \ROUNDTWO{irrelevance annotations} to track resources that are no
 longer available but have yet to be fully consumed
 (Section~\ref{sec:lc-case-exps}). Additionally, we introduce tags to split
 resources amongst pattern-bound variables and %^as usage environments
@@ -1661,9 +1668,10 @@ case expressions, and alternatives (in its purpose to type semantic linearity).
 The core rules of the calculus for abstraction and application are similar to
 that of $\lambda^q_\to$ and mostly standard. 
 We note that we handle multiplicity polymorphism differently from
-Linear Haskell by ignoring the multiplicity semiring and
-conservatively treating all multiplicity polymorphic functions as
-linear, for the sake of simplicity.
+Linear Haskell by \ROUNDTWO{effectively} ignoring the multiplicity semiring and
+treating all multiplicity polymorphic \ROUNDTWO{variables}
+\ROUNDTWO{parametrically}, for the sake of simplicity. \ROUNDTWO{Such
+  variables cannot be duplicated in our system.}
 %
 The full type system is given in Figure~\ref{fig:linear-core-typing-rules},
 with auxiliary judgements given in
@@ -1690,16 +1698,17 @@ for sub-derivations and may unrestrictedly exist in the variable rules.
 %
 
 Occurrences of unrestricted variables from $\G$ are well-typed as long as the linear
-environment is empty, while occurrences of linear variables are only well-typed
+environment is empty, while occurrences of linear \ROUNDTWO{(or multiplicity polymorphic)} variables
+are only well-typed
 when the variable being typed is the only resource available in the
-linear context (rules $Var_\omega$ and $Var_1$, respectively).
+linear context (rules $Var_\omega$, $Var_1$ \ROUNDTWO{and $Var_p$}, respectively).
 % \[
 % \begin{array}{cc}
 % \TypeVarOmega & \TypeLinearVar
 % \end{array}
 % \]
-In both cases, the linear context must contain exactly what is required to
-prove the proposition, whereas the unrestricted context may contain arbitrary
+In \ROUNDTWO{the $Var_1$ and $Var_p$ cases}, the linear context must contain exactly \ROUNDTWO{the
+  appropriate variable binding}, whereas the unrestricted context may contain arbitrary
 variables.
 %
 Variables in contexts are annotated with their type and multiplicity, so
@@ -1751,10 +1760,9 @@ doing so and therefore we opt for a simpler design.
 
 Multiplicity abstractions ($\Lambda I$) introduce a multiplicity variable $p$,
 and construct expressions of type $\forall p.~\s$, i.e. a type universally
-quantified over a multiplicity variable $p$. Again, conservatively, in the body
-of the abstraction, function types annotated with a $p$ variable and datatype
-fields with multiplicity $p$ are typed as though they are linear functions and
-linear fields, because $p$ can be instantiated at both $\omega$ and $1$.
+quantified over a multiplicity variable $p$. \ROUNDTWO{In the body
+of the abstraction, function types and datatype fields annotated with the multiplicity
+variable $p$ are typed parametrically in their multiplicity, since} $p$ can be instantiated at both $\omega$ and $1$.
 %\[
 %%\TypeMultLamIntro \quad \TypeMultLamElim
 %\]
@@ -1780,13 +1788,13 @@ in-scope  multiplicity variable in $\G$.
 \subsection{Usage environments\label{sec:usage-environments}}
 
 A \emph{usage environment} $\Delta$ encodes the idea that lazy
-bindings do not consume resources upon definition, but rather when the bindings themselves are consumed.
-Specifically, we annotate so-called $\Delta$-bound variables with a \emph{usage
-environment} to denote that consuming these $\D$-variables equates to consuming the
-resources in the annotated usage environment $\D$ (which is essentially a
-multiset of linear resources).
+\ROUNDTWO{variable} bindings do not consume resources upon definition, but rather when the bindings themselves are consumed.
+Specifically, we annotate so-called $\Delta$-bound variables with \ROUNDTWO{their} \emph{usage
+environment} \ROUNDTWO{$\Delta$} to denote that consuming
+\ROUNDTWO{such variables must be equated with} consuming the
+resources in the annotated \ROUNDTWO{typing} environment.
 %
-$\Delta$-bound variables are introduced in the unrestricted environment by
+\ROUNDTWO{Such} variables are introduced in the unrestricted environment by
 several constructs such as (recursive) let binders, case binders, and case
 pattern variables.
 %
