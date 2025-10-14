@@ -135,10 +135,11 @@
 \input{language-v4/TheoremsAndLemmas}
 
 %\title{Semantic linearity in a lazy optimizing compiler]
-\title{Effectively Checking Semantic Linearity in a Lazy Functional Language}
+\title{Lazy Linearity for a Core Functional Language}
 %\subtitle{Type-checking Linearity in GHC Core}
 
 \author{Rodrigo Mesquita}
+\orcid{0009-0005-1467-115X}
 %\affiliation{
   %\department{Departamento de Inform\'{a}tica}
   %\institution{FCT-NOVA, Universidade Nova de Lisboa}
@@ -198,16 +199,28 @@
 \begin{document}
 
 \begin{abstract}
-Linear type systems can be used to guarantee (linear) resources are used exactly once.
-Traditionally, using a resource is synonymous with its \emph{syntactic}
-occurrence in the program, however, under the lens of non-strict evaluation,
-linearity can be further understood \emph{semantically}, where a
-syntactic occurrence of a resource does not necessarily entail
+Traditionally, \ROUNDTWO{in linearly typed languages, consuming} a linear resource is synonymous
+with its syntactic occurrence in the program. However, under the lens of
+non-strict evaluation, linearity can be further understood semantically,
+where a syntactic occurrence of a resource does not necessarily entail
 using that resource when the program is executed.
-Semantic linearity becomes especially vital when considering the
-internal language of an optimising compiler, where optimisations
-heavily rewrite the source program in ways that can often break
-syntactic linearity but that aim to preserve the program's semantics.
+%
+\ROUNDTWO{While this distinction is largely unexplored, it becomes unavoidable
+    for} Haskell's optimising compiler, which heavily rewrites the source
+    program in ways that break syntactic linearity but preserve the program's
+    semantics.
+% \ROUNDTWO{This distinction becomes vital in the Haskell optimising compiler,} where
+% optimisations heavily rewrite the source program in ways that break syntactic
+% linearity but preserve the program's semantics
+%
+% This distinction is 
+% \ROUNDTWO{This distinction is critical for the Haskell optimising compiler, 
+%
+% when considering the internal language of an optimising compiler, where
+% optimisations heavily rewrite the source program in ways that break syntactic
+% linearity but preserve the program's semantics.
+%
+%
 % %
 % Semantic linearity is especially necessary in optimising compilers for
 % languages combining linearity and laziness: optimisations leverage laziness to
@@ -215,14 +228,16 @@ syntactic linearity but that aim to preserve the program's semantics.
 % laziness to its limit, regardless of the original program typing linearity
 % conservatively.
 %
-
-We present Linear Core, the first type system that understands semantic
-linearity in the presence of non-strict evaluation, suitable for the Core
-intermediate language of the Glasgow Haskell Compiler. We prove Linear Core
-is sound and guarantees linear resource usage, and prove multiple optimising
-transformations preserve linearity in Linear Core while failing to do so in
-Core. We have implemented Linear Core as a compiler plugin to validate the
-system against linearity-heavy libraries, including
+%
+We introduce Linear Core, \ROUNDTWO{a novel system which accepts the lazy
+semantics of linearity statically} and
+% \ROUNDTWO{Linear Core explores the interaction between laziness and linearity}
+is suitable for the Core intermediate language of the
+Glasgow Haskell Compiler. We prove \ROUNDTWO{that} Linear Core is sound,
+guarantees linear resource usage, and \ROUNDTWO{that} multiple
+optimising transformations preserve linearity in Linear Core while failing
+to do so in Core. We have implemented Linear Core as a compiler plugin to
+validate the system against linearity-heavy libraries, including
 \texttt{linear-base}.%^, in the heart of the compiler.
 \end{abstract}
 
