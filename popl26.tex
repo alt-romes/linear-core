@@ -258,17 +258,15 @@ validate the system against linearity-heavy libraries, including
 % deemed ``wrong'' by the type system design. This idea is captured in
 % the motto ``well-typed programs do not go wrong''.%~\cite{}.
 
-Linear types~\cite{cite:linear-logic,cite:barberdill} increase the expressiveness
-of type systems by allowing them to enforce desirable usage patterns
-for certain resources (e.g.~a
-file handle). Typically, linear types can be used to enforce resources are used \emph{exactly once}.
+Linear types~\cite{cite:linear-logic,cite:barberdill} increase the
+expressiveness of type systems by \ROUNDTWO{guaranteeing that certain
+resources} are used \emph{exactly once}.
 %
-In programming languages with a linear type system, not using certain resources
-or using them twice is flagged as a type error. For instance, linear types can
-statically enforce correct usage of file or socket descriptors, or
-that heap-allocated memory is freed exactly once (i.e.,~leaks and double-frees become
-type errors), or even guarantee deadlock freedom in channel-based communication
-protocols~\cite{10.1007/978-3-642-15375-4_16},
+In programming languages with a linear type system, \ROUNDTWO{discarding so-called linear} resources,
+or using them twice, is flagged as a type error. Linear types can \ROUNDTWO{be used to}, for instance,
+statically enforce correct usage of file descriptors, that heap-allocated
+memory is freed exactly once \ROUNDTWO{s.t.}~leaks and double-frees become type errors,
+or guarantee deadlock freedom in channel-based communication protocols~\cite{10.1007/978-3-642-15375-4_16},
 % implement safe
 % high-performance language interoperability~\cite{}, 
 %guarantee that quantum entangled states are not duplicated~\cite{}
@@ -294,11 +292,11 @@ mainstream languages.
 Consequently, few general purpose programming languages have linear or substructural
 type systems. Among them are Idris~2~\cite{brady:LIPIcs.ECOOP.2021.9},
 % a linearly and dependently typed language based on Quantitative Type Theory,
-Rust~\cite{10.1145/2692956.2663188}, a language whose
+Rust~\cite{10.1145/2692956.2663188}, whose
 ownership types build on linear types to guarantee memory safety
 without garbage collection, and, more recently,
 Haskell~\cite{cite:linearhaskell}, a pure, functional, and
-\emph{lazy} general purpose programming language.
+\emph{lazy} general purpose language.
 %
 % Besides Haskell's supporting linear
 % types according to the said paper, Idris 2\cite{} supports linear types in a
@@ -307,19 +305,18 @@ Haskell~\cite{cite:linearhaskell}, a pure, functional, and
 % linear types. 
 %
 
-Linearity in Haskell stands out from linearity in other
-languages because linear types permeate Haskell down to (its) Core, the
-intermediate language into which Haskell is translated by the Glasgow Haskell Compiler (GHC).
+Linearity in Haskell stands out from linearity in other languages because
+linear types permeate Haskell down to Core, the intermediate language into
+which Haskell is translated by the Glasgow Haskell Compiler (GHC).
 %
-Core is a minimal, explicitly typed, lazy functional language with
-both linear and unrestricted types, to which multiple
-Core-to-Core optimising transformations are applied during
-compilation. Notably Core does not have a (higher-order or otherwise)
-store.
+Core is a minimal, explicitly typed, \ROUNDTWO{pure} lazy functional language with both
+linear and unrestricted types, to which multiple Core-to-Core optimising
+transformations are applied during compilation.
 %
-Typechecking Core serves as a sanity check to the correction of such
-transformations, since unsound ones are likely to introduce ill-typed
-expressions. %, making them easy to spot.
+Notably, Core \ROUNDTWO{is typechecked after each transformation}. This serves
+as a sanity check to the correction of \ROUNDTWO{the implementation} of
+\ROUNDTWO{such} transformations, since unsound ones are likely to introduce
+ill-typed expressions. %, making them easy to spot.
 %
 % If a Core program fails to typecheck, the
 % optimising transformations are very likely to have introduced an error in the
@@ -369,7 +366,7 @@ such as inlining and $\beta$-reduction, to produce more efficient programs.
 % Even more, linearity in Core can inform Core-to-Core optimising
 % transformations~\cite{cite:let-floating,peytonjones1997a,cite:linearhaskell},
 % including inlining and $\beta$-reduction, to produce more performant programs.
-
+%
 % Linear core actually not so good
 % Additionally, while not yet a reality, linearity in Core could be used to inform
 % certain program optimisations, i.e. having linear types in Core could be used to
@@ -384,7 +381,7 @@ such as inlining and $\beta$-reduction, to produce more efficient programs.
 % performance potential. On the contrary, the linearity information could be
 % integrated in the analysis and used as a (non-heuristic) cardinality
 % \emph{declaration}.
-
+%
 % While the current version of Core is linearity-aware (i.e.,~Core has so-called
 % multiplicity annotations in variable binders), its type system does not (fully)
 % validate the linearity constraints in the desugared program and essentially
@@ -395,15 +392,14 @@ such as inlining and $\beta$-reduction, to produce more efficient programs.
 % if we can typecheck linearity in the surface level Haskell why do we fail to do
 % so in Core?
 %
-
-Despite the advantages of adding linear types to Core, the status quo is
+%
+However, despite the advantages of having linear types in Core, the status quo is
 that linearity is effectively ignored in Core, being only checked
-in the source Haskell code. The reason is that the desugaring
-and subsequent Core-to-Core optimising transformations
-eliminate and rearrange most of the syntactic constructs through
-which linearity checking is performed -- often resulting in programs
-that are syntactically very different from the original, especially
-due to the flexibility provided by laziness wrt the
+in the source Haskell code. The reason is that, after desugaring, the
+Core-to-Core optimising transformations eliminate and rearrange most of the
+syntactic constructs through which linearity checking is performed -- often
+resulting in programs that are syntactically very different from the original,
+especially due to the flexibility provided by laziness with regard to the
 optimisations a compiler may perform.
 
 While compiler optimisations aim to preserve the semantics of
@@ -448,7 +444,7 @@ transformations that, while correct under non-strict evaluation, are rejected
 by traditional linear typing disciplines.
 %
 %
-Additionally, we \ROUNDTWO{that} show our system
+Additionally, we show \ROUNDTWO{that} our system
 %
 % and its implications on validating and influencing optimising transformations
 % by designing a type system which analyses how syntactic linearity breaks down
