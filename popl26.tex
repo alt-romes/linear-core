@@ -347,7 +347,7 @@ ill-typed expressions. %, making them easy to spot.
         % only language featuring both laziness and linearity.
 
 Just as Core's type system \cite{10.1145/1190315.1190324} provides a degree of validation to the
-translation from Haskell (dubbed \emph{desugaring}) and the subsequent
+translation from Haskell, dubbed \emph{desugaring}, and the subsequent
 optimising transformations, a linearly typed Core would guarantee that
 linear resource usage in the source language is not violated by desugaring
 and the compiler optimisation passes. Moreover, linearity information in
@@ -554,7 +554,7 @@ Appendices~\ref{app:proofs},~\ref{app:optimisations} and~\ref{app:opsem}.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % {{{ Linearity, Semantically
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Linearity, Lazily\label{sec:linearity-semantically}}
+\section{Linearity, Semantically\label{sec:linearity-semantically}}
 
 Linear type systems guarantee that linear resources are consumed exactly once.
 \ROUNDTWO{Thus}, whether a program is \ROUNDTWO{accepted as linear} intrinsically depends on
@@ -562,20 +562,25 @@ the definition of consuming a resource.
 %
 \ROUNDTWO{Traditionally}, consuming a resource \ROUNDTWO{has been} equated with its 
 syntactic occurrence along a control-flow path in the program. However, as this
-section \ROUNDTWO{aims to} make clear, in linear type systems for non-strict languages, a
-distinction between using resources \emph{syntactically} and \emph{semantically} is needed.
+section \ROUNDTWO{aims to} make clear, \ROUNDTWO{in a non-strict context, a
+syntactic definition of linearity is much too conservative}.
 %
-For instance, in the following Haskell-like program defining a linear
-function \lstinline{f} (i.e., a function that should use its argument
-exactly once), there are two syntactic
+For instance, in the following Haskell-like program, \lstinline{f} is a linear
+function (a function that must use its argument
+exactly once), but there are two syntactic
 occurrences of \lstinline{handle}: one is in a let-bound computation that
-closes this handle, the other is returned. If the program is evaluated lazily,
-the handle will not be closed because the computation that closes the handle is
-never evaluated (the non-linear \lstinline{x} goes unused).
+closes this handle, the other \ROUNDTWO{is in the first branch}. If the program is
+evaluated lazily, the handle will, \ROUNDTWO{dynamically, either be closed in
+the second branch, or returned untouched in the first}, since the computation
+which closes the handle is \ROUNDTWO{not needed in the first branch}.
 %
 \begin{lstlisting}
 f : Handle *' $\lolli$ '* Handle
-f handle = let x = close handle in handle
+f handle =
+    let closed = close handle in
+    if <cond>
+        then handle
+        else closed
 \end{lstlisting}
 %
 % Intuitively, a computation that depends on a linear resource to produce a
@@ -622,7 +627,7 @@ f handle = let x = close handle in handle
 %occurrence of a resource in an expression only entails consuming that resource
 %iff the expression itself is fully consumed.
 %
-Intuitively, a computation that depends on a linear resource to produce a
+Intuitively, a computation that depends on a linear resource to produce some
 result consumes that resource iff the result is fully consumed; in
 contrast, a computation that depends on a linear resource, but is never run,
 will not consume that resource.
@@ -638,8 +643,8 @@ Given this observation, %and exploring the connection between computation and ev
 % language's evaluation strategy.
 %
 we turn our focus to linearity under lazy evaluation since the distinction between semantically and syntactically
-consuming a resource is only exposed under non-strict semantics (and since GHC Core is
-lazy).
+consuming a resource is only exposed under non-strict semantics, and because GHC Core is
+lazy.
 %. 
 
 
@@ -663,7 +668,7 @@ lazy).
 % 
 % Or maybe just drop this section altogether
 
-\subsection{Lazy Linearity by Example\label{sec:semantic-linearity-examples}}
+\subsection{Semantic Linearity by Example\label{sec:semantic-linearity-examples}}
 
 This section aims to develop an intuition for semantic linearity through simple
 Core programs that can be understood as linear but are rejected by Core's
@@ -816,8 +821,8 @@ In general, a let-bound expression that captures a linear variable
 can be conditionally needed at runtime, depending on the branch taken.
 Both optimising transformations (float-out) and programmers used to
 non-strict evaluation are keen to write programs with bindings that are selectively
-used in case alternatives, such as (we write $\lolli$ for linear
-functions and \lstinline{->} for non-linear functions):
+used in case alternatives, such as in the following program. Note that we write
+$\lolli$ for linear functions and \lstinline{->} for non-linear functions:
 %
 \begin{notyet}
 \begin{lstlisting}
