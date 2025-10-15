@@ -392,10 +392,9 @@ such as inlining and $\beta$-reduction, to produce more efficient programs.
 % if we can typecheck linearity in the surface level Haskell why do we fail to do
 % so in Core?
 %
-%
-However, despite the advantages of having linear types in Core, the status quo is
+\ROUNDTWO{However, despite the advantages of having linear types in Core, the status quo is}
 that linearity is effectively ignored in Core, being only checked
-in the source Haskell code. The reason is that, after desugaring, the
+in the source Haskell code. The reason is that, \ROUNDTWO{after} desugaring, the
 Core-to-Core optimising transformations eliminate and rearrange most of the
 syntactic constructs through which linearity checking is performed -- often
 resulting in programs that are syntactically very different from the original,
@@ -404,16 +403,16 @@ optimisations a compiler may perform.
 
 While compiler optimisations aim to preserve the semantics of
 programs and therefore a program's resource consumption,
-a \emph{naive} syntactic analysis of the optimised programs (as
-performed by the current Core type checker) often fails to recognize
-the program as linear.
+a naive syntactic analysis of the optimised programs as
+performed by the current Core type checker often fails to recognize
+\ROUNDTWO{resulting} programs as linear.
 %
 As a trivial example, let $x$ be a linear resource in the next two expressions,
 where the latter results from inlining $y$ without eliminating the
-binder (a common optimising transformation in GHC). Even
+binder -- a common optimising transformation in GHC. Even
 though the second expression no longer appears linear (as there are now two occurrences
 of $x$), it is indeed linear because the let-bound expression is never
-evaluated under \emph{lazy evaluation} and $x$ is still consumed exactly once (when it is freed in the let body):
+evaluated under \ROUNDTWO{non-strict} evaluation and $x$ is still consumed exactly once (when it is freed in the let body):
 % executed, $x$ will be freed exactly once:
 %
 % , \emph{is} linear, as the let bound expression freeing $x$
@@ -433,9 +432,9 @@ evaluated under \emph{lazy evaluation} and $x$ is still consumed exactly once (w
 % \end{boxedminipage}
 
 The Core optimising transformations expose a fundamental limitation of Core's
-type system: it does not account for the non-strict evaluation model
+\ROUNDTWO{linear} type system: it does not account for the non-strict evaluation model
 of Core and, thus, a whole class of programs that are linear under the lens of
-non-strict evaluation are rejected by Core's current linear type system.
+non-strict evaluation are rejected by Core's current \ROUNDTWO{checker}.
 %
 In this work, we address this limitation by exploring how syntactic linearity
 breaks down in the presence of non-strictness and design a linear type
@@ -456,19 +455,22 @@ Our contributions are as follows:
 %
 \begin{itemize}
 
-\item We introduce the concept of \emph{semantic} linearity, in
-contrast to \emph{syntactic} linearity in Haskell, by example
-(Section~\ref{sec:linearity-semantically}).
+\item We \ROUNDTWO{illustrate} the \ROUNDTWO{lazy semantics} of linearity, in
+contrast to the \ROUNDTWO{traditional} syntactic \ROUNDTWO{understanding
+of} linearity, in Haskell, by example (Section~\ref{sec:linearity-semantically}).
 %
-A precise definition of \emph{semantic} linearity is given by our instrumented
-operational semantics, under which a program using a linear resource
-non-linearly gets stuck (Section~\ref{sec:main:metatheory}).
+A precise \ROUNDTWO{semantic definition of} linearity, \ROUNDTWO{closely
+following that of Linear Haskell~\cite{cite:linearhaskell}}, is given by
+our instrumented operational semantics, under which a program using a
+linear resource non-linearly gets stuck
+(Section~\ref{sec:main:metatheory}).
 
-\item We introduce Linear Core, a non-strict linear language with
-the key features of Core (except for type equality coercions), whose type system
-accounts for semantic linearity in the presence of laziness. To the
-best of our knowledge, this is the first type system to capture linearity
-semantically in this context (Section~\ref{sec:main:linear-core}).
+\item We introduce Linear Core, a \ROUNDTWO{lazy} linear language with
+the key features of Core (except for type equality coercions), whose type
+system \ROUNDTWO{accepts the lazy} semantics of linearity. To the best of our
+knowledge, this is the first type system \ROUNDTWO{to accept programs
+which depend on non-strict evaluation to be understood as linear}
+(Section~\ref{sec:main:linear-core}).
 
 \item We prove that our type system is sound, guarantees linear resource usage, and
     prove that multiple optimising transformations, which are rejected in Core,
@@ -483,7 +485,11 @@ it accepts the programs resulting from transformations in libraries such as
 
 \end{itemize}
 
-\noindent Additional proofs and definitions are given in
+\noindent \ROUNDTWO{While GHC's Core language is our main focus, we
+note that the ideas explored in this work can potentially be applied to any
+language with non-strict features, even if the language itself is strict.}
+
+Additional proofs and definitions are given in \ROUNDTWO{TODO}
 Appendices~\ref{app:proofs},~\ref{app:optimisations} and~\ref{app:opsem}.
 
 %
@@ -548,17 +554,16 @@ Appendices~\ref{app:proofs},~\ref{app:optimisations} and~\ref{app:opsem}.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % {{{ Linearity, Semantically
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Linearity, Semantically\label{sec:linearity-semantically}}
+\section{Linearity, Lazily\label{sec:linearity-semantically}}
 
-A linear type system typically guarantees that linear resources are
-consumed exactly once. Consequently, whether a program is
-well-typed under this lens intrinsically depends on the
-definition of consuming a resource.
-In general, consuming a resource is equated with its 
-\emph{syntactic occurrence} along a control-flow path in the program. However, as this section
-makes clear, in linear type systems for non-strict
-languages, a distinction between using
-resources \emph{syntactically} and \emph{semantically} is needed.
+Linear type systems guarantee that linear resources are consumed exactly once.
+\ROUNDTWO{Thus}, whether a program is \ROUNDTWO{accepted as linear} intrinsically depends on
+the definition of consuming a resource.
+%
+\ROUNDTWO{Traditionally}, consuming a resource \ROUNDTWO{has been} equated with its 
+syntactic occurrence along a control-flow path in the program. However, as this
+section \ROUNDTWO{aims to} make clear, in linear type systems for non-strict languages, a
+distinction between using resources \emph{syntactically} and \emph{semantically} is needed.
 %
 For instance, in the following Haskell-like program defining a linear
 function \lstinline{f} (i.e., a function that should use its argument
@@ -658,7 +663,7 @@ lazy).
 % 
 % Or maybe just drop this section altogether
 
-\subsection{Semantic Linearity by Example\label{sec:semantic-linearity-examples}}
+\subsection{Lazy Linearity by Example\label{sec:semantic-linearity-examples}}
 
 This section aims to develop an intuition for semantic linearity through simple
 Core programs that can be understood as linear but are rejected by Core's
