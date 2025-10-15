@@ -879,8 +879,9 @@ rejected.
 % if computed, must be consumed exactly once, or, otherwise, we risk discarding
 % or duplicating (the parts of) the resources that were captured in the result.
 
-Lastly, consider a (ill-typed) program which defines two let bindings \incode{z} and \incode{y}, where
-\incode{z} uses \incode{y} which in turn uses the linear resource \incode{x}:
+Lastly, consider an ill-typed program which defines two let bindings \incode{z}
+and \incode{y}, where \incode{z} uses \incode{y} which in turn uses the linear
+resource \incode{x}:
 %
 \begin{noway}
 \begin{lstlisting}
@@ -889,14 +890,15 @@ f2 use x = let y = use x in let z = use y in ()
 \end{lstlisting}
 \end{noway}
 %
-Even though the binding \incode{y} is used in \incode{z}, \incode{x} is never
-consumed because \incode{z} isn't evaluated in the let body, and, thus,
-\incode{y} isn't evaluated either. We use this example to highlight that even
-for let-bound variables, the syntactic occurrence of a variable isn't enough to
-determine whether it is used. Instead, we ought to think of uses of \incode{y}
-as implying using \incode{x}, and therefore uses of \incode{z} imply using
-\incode{x}, however, if neither are used, then \incode{x} isn't used. Since
-\incode{x} is effectively discarded, this example also violates linearity.
+Even though \incode{y} occurs in \incode{z}, \incode{x} is never consumed
+\ROUNDTWO{because \incode{z} is discarded}. \ROUNDTWO{This example highlights
+that naively checking for syntactic occurrences of let-bound variables such as
+\incode{y} is also inadequate to track resource usage}.
+%
+\ROUNDTWO{A better mental model is that} using \incode{y} implies
+using \incode{x}, and thus using \incode{z} implies using \incode{x}
+\ROUNDTWO{too}. If neither \incode{z} nor \incode{y} are used, then \incode{x}
+is \ROUNDTWO{effectively discarded}.
 
 % \parawith{Summary}
 % The examples so far build an intuition for semantic linearity in the presence
