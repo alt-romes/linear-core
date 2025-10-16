@@ -1937,13 +1937,13 @@ guarantees the desired mutual exclusion property between the binder and the reso
 \]
 The rule for (non-recursive) let bindings splits the linear environment in $\D$
 and $\D'$. $\D$ is used to type the body $e$ of the let binding $x$. Perhaps
-surprisingly, the resources $\D$ used to type $e$ are still available in the
-environment to type the let body $e'$, alongside the unrestricted $x$ binding
-annotated with the usage environment $\D$. In essence, the resources of $e$ being
-available in $e'$ reflects how typing the body of a lazy binder
-doesn't consume resources, and the binding $x$ being an unrestricted
-$\D$-variable ensures that using it will consume the resources $\D$ the
-expression captures, \emph{if} it is used.
+surprisingly, the resources $\D$ are still available to type the let body $e'$, alongside the unrestricted $x$ binding
+annotated with the usage environment $\D$. The resources of $e$ being
+available in $e'$ reflects how the body of a lazy binder
+doesn't consume resources outright, and $x$ being an
+\ROUNDTWO{unrestricted $\Delta$-bound variable}
+ensures that using $x$ will consume the resources $\D$ that $e$
+captures.
 % \todo[inline]{Let bindings are hard, if they are used then we use resources. If
 % they don't get used then we use no resources! In practice, resources that show
 % up in the body of the let must be used, be it by using the let binder, or by
@@ -1961,9 +1961,10 @@ expression captures, \emph{if} it is used.
 % themselves, and we may have more than one binding.
 %
 Recursive let bindings also bind expressions lazily and so
-introduce a $\D$-bound variable for each binding. Resources required to type the
-let-bindings are still available in the body of the let, to later be consumed
-via $\D$-bound variables, or, directly, if the let-bindings are unused.
+introduce a $\D$-bound variable for each binding. \ROUNDTWO{The} resources required to type the
+let-bindings are still available in the \ROUNDTWO{let body}. \ROUNDTWO{These
+resources may} be consumed
+via \ROUNDTWO{the corresponding} $\D$-bound variables, or directly if the let-bindings are unused.
 %
 %Additionally, as seen in Section
 %\ref{sec:semantic-linearity-examples:recursive-lets}, recursive uses of a
@@ -2013,11 +2014,11 @@ let body.
 \]
 This formulation is not syntax-directed 
 % (from which an implementation is direct) 
-because determining a particular $\D$
-to type and annotate all binders is not obvious. We present our system and
-metatheory agnostically to the challenge of inferring this linear typing
-environment by assuming recursive let expressions are annotated with the
-correct typing environment.
+since \ROUNDTWO{it does not describe how to annotate binders with} a
+particular \ROUNDTWO{usage environment} $\D$.
+\ROUNDTWO{Our system simply assumes the annotations are explicitly
+  provided in the source and checks the correctness of the overall
+  recursive let.} 
 
 In practice, determining this typing environment $\D$ amounts to finding a
 least upper bound of the resources needed to type each mutually-recursive
