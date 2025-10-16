@@ -97,8 +97,8 @@
     \mprset{flushleft}
     \infer[(Case$_\textrm{WHNF}$)]
     {\textrm{e is in \emph{WHNF}} \\ \G;\D \Vdash e:\tau \gtrdot \ov{\D_i}
-    \\ \ROUNDTWO{\ov{\G,\var[z][\ov{\D_i}];\ov{\D_i},\D' \vdash \rho\Rightarrow e' :^z_{\ov{\D_i}} \s}}}
-    {\judg[\G][\D,\D']{\ccase{e}{\var[z][\ov{\D_i}]~\{\ov{\rho \ROUNDTWO{\Rightarrow} e'}\}}}{\s}}
+    \\ {\ov{\G,\var[z][\ov{\D_i}];\ov{\D_i},\D' \vdash \rho\,\,\ROUNDTWO{\Rightarrow}\,\, e' :^z_{\ov{\D_i}} \s}}}
+    {\judg[\G][\D,\D']{\ccase{e}{\var[z][\ov{\D_i}]~\{\ov{\rho \,\,\ROUNDTWO{\Rightarrow}\,\, e'}\}}}{\s}}
 }
 
 \newcommand{\TypeCaseWHNF}{
