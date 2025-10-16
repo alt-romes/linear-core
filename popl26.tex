@@ -1214,50 +1214,53 @@ to WHNF. Moreover, in Core, the alternative patterns are always exhaustive.
 % ($\_$), or a constructor and its linear and non-linear component binders
 % ($K~\ov{x}\ov{y}$, with $\ov{x}$ as linearly-bound variables and $\ov{y}$ as
 % unrestricted ones).
-
+%
 %\end{enumerate}
-
+%
 % ROMES:TODO: We should talk about WHNF in the background, not here.
 % \parawith{WHNF} An expression is in Weak Head Normal Form when 
-
-We start with an
-example of a program that constructs a tuple from linear resources then pattern
-matches on it, then uses both linearly-bound variables from the tuple pattern
-match. This is well-typed in Linear Haskell:
+%
+\ROUNDTWO{The first} example program constructs a tuple from linear resources,
+matches on it, then uses both linearly-bound variables from the tuple pattern.
+This is well-typed in Linear Haskell:
 \begin{working}
 \begin{lstlisting}
 f6 :: a *' $\lolli$ '* b *' $\lolli$ '* (a *' $\lolli$ '* b *' $\lolli$ '* c) -> c
 f6 x y use = case (x,y) of z { (a,b) -> use a b }
 \end{lstlisting}
 \end{working}
-What might be more surprising is that a similar program which discards the
-pattern variables and instead uses the resources in the scrutinee is 
-\emph{semantically} linear, despite not being accepted by Linear Haskell:
+\ROUNDTWO{Perhaps surprisingly}, a similar program which discards the pattern
+variables, and instead uses the resources \ROUNDTWO{from} the scrutinee
+\ROUNDTWO{again}, is still linear, despite not being accepted by Linear Haskell:
 \begin{notyet}
 \begin{lstlisting}
 f7 :: a *' $\lolli$ '* b *' $\lolli$ '* (a *' $\lolli$ '* b *' $\lolli$ '* c) -> c
 f7 x y use = case (x,y) of z { (a,b) -> use x y }
 \end{lstlisting}
 \end{notyet}
-We justify that \incode{f7} is linear by appealing to the fact that 
-the tuple being scrutinized is already in WHNF and so evaluating it will
-not consume either $x$ or $y$. Even if the tuple was constructed with
-two expressions using $x$ and $y$ respectively, no computation would happen
-since we are not using $a$ or $b$ (thereby never forcing the arguments
-of the tuple). However, if we did use $a$ in the case body, then $x$
-would be unavailable (as opposed to \incode{y}) and \incode{f8} below must be rejected:
+\incode{f7} \ROUNDTWO{can be seen as} linear by \ROUNDTWO{realizing} that
+the tuple being scrutinized is already in WHNF, so evaluating it again does
+not consume either $x$ \ROUNDTWO{nor} $y$. Even if the tuple \ROUNDTWO{paired}
+two \ROUNDTWO{arbitrary} expressions which \ROUNDTWO{captured} $x$ and $y$,
+\ROUNDTWO{because $a$ and $b$ are not forced in the continuation, $x$ and $y$ would remain unused.}
+\ROUNDTWO{On the other hand, as seen in the next example}, if $a$ were used in 
+the case body, then $x$ \ROUNDTWO{is consumed via $a$ and must not be used again.}
+Thus, \incode{f8} must be rejected:
 \begin{noway}
 \begin{lstlisting}
 f8 :: a *' $\lolli$ '* b *' $\lolli$ '* (a *' $\lolli$ '* a *' $\lolli$ '* c) -> c
 f8 x y use = case (x,y) of z { (a,b) -> use a x }
 \end{lstlisting}
 \end{noway}
-This idea that $x$ and $a$ are mutually exclusive is the same behind let
-bindings being mutually exclusive to the resources that define them.
-By forcing the pattern variable we run the computations
-defined in terms of the linear variables used for that constructor
-argument. Otherwise, if we do not use the pattern variables, then we
-do not run the computation and thus no resources are consumed.
+This idea that $x$ and $a$ are mutually exclusive is \ROUNDTWO{akin to how} let
+bindings \ROUNDTWO{are} mutually exclusive \ROUNDTWO{with the set} of resources
+\ROUNDTWO{they capture, in the let-continuation}.
+\ROUNDTWO{Forcing a pattern variable evaluates the corresponding expression to
+which the constructor was applied, and all linear variables captured by that
+expression may }.
+Otherwise, if we do not use the
+pattern variables, then we do not run the computation and thus no resources are
+consumed.
 
 A third (semantically well-typed, but rejected by Linear Haskell) option is to use the case binder $z$ instead of $a,b$ or $x,y$:
 \begin{notyet}
