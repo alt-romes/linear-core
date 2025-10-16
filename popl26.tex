@@ -346,7 +346,8 @@ ill-typed expressions. %, making them easy to spot.
         % our knowledge, it is the
         % only language featuring both laziness and linearity.
 
-Just as Core's type system \cite{10.1145/1190315.1190324} provides a degree of validation to the
+Just as Core's type system \cite{10.1145/1190315.1190324} provides a
+degree of validation to the 
 translation from Haskell, dubbed \emph{desugaring}, and the subsequent
 optimising transformations, a linearly typed Core would guarantee that
 linear resource usage in the source language is not violated by desugaring
@@ -1608,7 +1609,7 @@ annotated with a multiplicity $\pi$ and a type $\s$. Then, there are
 non-recursive let bindings $\llet{\xD = e}{e'}$, recursive let bindings
 $\lletrec{\ov{\xD = e}}{e'}$, where the overline denotes a set of distinct
 bindings $x_1{:}_{\D}\s_1\dots x_n{:}_{\D}\s_n$ and associated expressions
-$e_1\dots e_n$, and case expressions $\ccase{e}{\zD~\{\ov{\rho \to e'}\}}$,
+$e_1\dots e_n$, and case expressions $\ccase{e}{\zD~\{\ov{\rho \Rightarrow e'}\}}$,
 where $z$ is the case binder and the overline denotes a set of distinct
 patterns $\rho_1\dots \rho_n$ and corresponding right hand sides $e'_1\dots
 e'_n$. We often omit the case binder $z$ when it is unused. Notably, (recursive) let-bound
@@ -1887,13 +1888,14 @@ some other derivation (or otherwise the \ROUNDTWO{overall} expression is ill-typ
 These observations lead to the typing rule for $\Delta$-bound
 variables:
 
-\vspace{-0.5cm}
+%\vspace{-0.5cm}
 \[
 \TypeVarDelta
 \]
 The rule states that an occurrence of a $\Delta$-bound variable is well-typed if
 the linear environment is made up exactly of the resources in the usage environment of
-that variable.
+that variable, \ROUNDTWO{denoted by the $\Delta = \Delta'$ premise of
+  the rule.}
 %
 \ROUNDTWO{$\Delta$-bound variables} are unrestricted and can be discarded and duplicated, despite
 multiple occurrences of the \ROUNDTWO{variable} in an expression not
@@ -1911,10 +1913,12 @@ binders are evaluated in the let body.
 %, i.e. linear resources required by let-bound expressions are consumed lazily.
 %
 Moreover, resources captured by a let-bound expression cannot be used
-simultaneously with the let-binder in its body, since said
-resources would end up being consumed more than once and violate (semantic)
-linearity. The binder has to be used in mutual exclusion with the linear
-resources captured by the expression it binds -- either the binding or the
+simultaneously with the let-binder in its body, since \ROUNDTWO{those}
+resources would end up being consumed more than once and violate
+\ROUNDTWO{the semantics of}
+linearity. % The binder has to be used in mutual exclusion with the linear
+% resources captured by the expression it binds --
+Either the binding or the
 resources \emph{must} be used.
 
 % Indeed, usage environments allow us to encode mutual exclusivity between
@@ -1925,7 +1929,7 @@ $\Delta$-bound variable.
 % , that is, let-bound variables bind expressions in which
 % the resources required to type them are consumed lazily rather than eagerly.
 %
-Annotating let-bound variables with a usage environment $\D$ delays the
+Annotating let-bound variables with \ROUNDTWO{their} usage environment $\D$ delays the
 consumption of resources to when the variables themselves are used and
 guarantees the desired mutual exclusion property between the binder and the resources:
 \[

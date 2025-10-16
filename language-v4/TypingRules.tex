@@ -97,57 +97,58 @@
     \mprset{flushleft}
     \infer[(Case$_\textrm{WHNF}$)]
     {\textrm{e is in \emph{WHNF}} \\ \G;\D \Vdash e:\tau \gtrdot \ov{\D_i}
-    \\ \ov{\G,\var[z][\ov{\D_i}];\ov{\D_i},\D' \vdash_{alt} \rho\to e' :^z_{\ov{\D_i}} \tau \Rightarrow \s}}
-    {\judg[\G][\D,\D']{\ccase{e}{\var[z][\ov{\D_i}]~\{\ov{\rho \to e'}\}}}{\s}}
+    \\ \ROUNDTWO{\ov{\G,\var[z][\ov{\D_i}];\ov{\D_i},\D' \vdash \rho\Rightarrow e' :^z_{\ov{\D_i}} \s}}}
+    {\judg[\G][\D,\D']{\ccase{e}{\var[z][\ov{\D_i}]~\{\ov{\rho \ROUNDTWO{\Rightarrow} e'}\}}}{\s}}
 }
 
 \newcommand{\TypeCaseWHNF}{
     \infer[(Case$_\textrm{WHNF}$)]
     {\textrm{e is in \emph{WHNF}} \and e~\textsf{matches}~\rho_j
-    \and \ov{\judg[\G,z{:}_{\irr{\D}}\tau][\irr{\D},\D']{\rho\to e'}{\tau
-        \Rightarrow_\mathsf{NWHNF} \s}[alt][\irr{\D}][z]}\\
+    \and \ROUNDTWO{\ov{\judg[\G,z{:}_{\irr{\D}}\tau][\irr{\D},\D']{\rho \Rightarrow_\mathsf{NWHNF}  e'}{
+        \s}[][\irr{\D}][z]}}\\
     \G;\D \Vdash e:\tau \gtrdot \ov{\D_i} \and
-    \G,\var[z][\ov{\D_i}];\ov{\D_i},\D' \vdash_{alt} \rho_j \to e'
-    :^z_{\ov{\D_i}} \tau \Rightarrow_\mathsf{WHNF} \s
+    \ROUNDTWO{\G,\var[z][\ov{\D_i}];\ov{\D_i},\D' \vdash \rho_j \Rightarrow e'
+    :^z_{\ov{\D_i}} \s}
     }
-    {\judg[\G][\D,\D']{\ccase{e}{\var[z][\ov{\D_i}]~\{\ov{\rho \to e'}\}}}{\s}}
+    {{\judg[\G][\D,\D']{\ccase{e}{\var[z][\ov{\D_i}]~\{\ov{\rho \,\ROUNDTWO{\Rightarrow}\, e'}\}}}{\s}}}
 }
 
-\newcommand{\TypeCaseNotWHNFIncorrect}{
-    \mprset{flushleft}
-    \infer[(CaseNotWHNF)]
-    {\textrm{e is definitely not in \emph{WHNF}} \\
-    \judg{e}{\tau}
-    \\
-    \ov{\judg[\subst{\G}{\irr{\D}}{\D},z{:}_{\irr{\D}}\tau][\irr{\D},\D']{\rho\to
-        e'}{\tau \Longrightarrow \s}[alt][\irr{\D}][z]}}
-    {\splitjudg{\ccase{e}{\z[\irr{\D}]~\{\ov{\rho \to e'}\}}}{\s}}
-    % TODO: Add that [d1] entails moving all delta usages to [delta] usages in all vars i d1
-}
+% \newcommand{\TypeCaseNotWHNFIncorrect}{
+%     \mprset{flushleft}
+%     \infer[(CaseNotWHNF)]
+%     {\textrm{e is definitely not in \emph{WHNF}} \\
+%     \judg{e}{\tau}
+%     \\
+%     \ov{\judg[\subst{\G}{\irr{\D}}{\D},z{:}_{\irr{\D}}\tau][\irr{\D},\D']{\rho\to
+%         e'}{\tau \Longrightarrow \s}[alt][\irr{\D}][z]}}
+%     {\splitjudg{\ccase{e}{\z[\irr{\D}]~\{\ov{\rho \to e'}\}}}{\s}}
+%     % TODO: Add that [d1] entails moving all delta usages to [delta] usages in all vars i d1
+% }
 
 \newcommand{\TypeCaseNotWHNF}{
     \mprset{flushleft}
     \infer[(Case$_\textrm{Not WHNF}$)]
     {\textrm{e is not in \emph{WHNF}} \\
     \judg{e}{\tau}
-    \\ \ov{\judg[\G,z{:}_{\irr{\D}}\tau][\irr{\D},\D']{\rho\to e'}{\s \Rightarrow_\mathsf{NWHNF} \s}[alt][\irr{\D}][z]}
+    \\ \ov{\judg[\G,z{:}_{\irr{\D}}\tau][\irr{\D},\D']{\ROUNDTWO{\rho \Rightarrow_\mathsf{NWHNF}}\, e'}{ \s}[][{\irr{\D}}][{z}]}
     }
-    {\splitjudg{\ccase{e}{\z[\irr{\D}]~\{\ov{\rho \to e'}\}}}{\s}}
+    {\splitjudg{\ccase{e}{\z[\irr{\D}]~\{\ov{\rho\,
+            \ROUNDTWO{\Rightarrow}\, e'}\}}}{\s}}
     % TODO: Add that [d1] entails moving all delta usages to [delta] usages in all vars i d1
 }
 
 % We no longer do this, because with beta-reduction this isn't sound.
 % Great, we become uniform in that variables are considered not in WHNF
-\newcommand{\TypeCaseVar}{
-    \mprset{flushleft}
-    \infer[(CaseVar)]
-    {\textrm{x is a \emph{var}} \\ \judg{x}{\s}
-    \\ \ov{\judg[\G][\D',\xl][\d',z{:}_x\s]{\rho\to e'}{\s \Longrightarrow \vp}[alt][x][z]}}
-    {\splitjudg{\ccase{x}{\z[x]~\{\ov{\rho \to e'}\}}}{\vp}}
+% \newcommand{\TypeCaseVar}{
+%     \mprset{flushleft}
+%     \infer[(CaseVar)]
+%     {\textrm{x is a \emph{var}} \\ \judg{x}{\s}
+%     \\ \ov{\judg[\G][\D',\xl][\d',z{:}_x\s]{\rho\to e'}{\s \Longrightarrow \vp}[alt][x][z]}}
+%     {\splitjudg{\ccase{x}{\z[x]~\{\ov{\rho \to e'}\}}}{\vp}}
     % TODO: Explain that \delta becomes irrelevant since all its variables were
     % consumed. Perhaps there's a case to be made about pseudo-unrestricted
     % delta vars being moved here.
-}
+%}
 
 % TODO: For the next three rules, do I really need the K \in \Gamma bit? At least
 % in the preservation to invoke constructor application lemma I do.
@@ -159,7 +160,7 @@
     \\ n > 0
     \\ K:\ov{\tau_i \to_\pi} \tau \in \G
     }
-    {\judg{K~\ov{\xo},\ov{y_i{:}_1\tau_i}^n\to e}{\tau \Longrightarrow \s}[alt][\D_s][z]}
+    {\judg{K~\ov{\xo},\ov{y_i{:}_1 \ROUNDTWO{\tau_i}^n\Rightarrow e}{ \s}[][\D_s][z]}}
 }
 
 \newcommand{\TypeAltNSecondIncorrect}{
@@ -170,7 +171,7 @@
     \\ n > 0
     \\ K:\ov{\tau_i \to_\pi} \tau \in \G
     }
-    {\judg{K~\ov{\xo},\ov{y_i{:}_1\tau_i}^n\to e}{\tau \Longrightarrow \s}[alt][\D_s][z]}
+    {\ROUNDTWO{\judg{K~\ov{\xo},\ov{y_i{:}_1\tau_i}^n \Rightarrow e}{ \s}[][\D_s][z]}}
 }
 
 \newcommand{\TypeAltNNotWHNF}{
@@ -181,7 +182,7 @@
     % \\ n > 0
     % \\ K:\ov{\s \to_\pi} \s \in \G
     }
-    {\judg{K~\ov{\xo},\ov{y_i{:}_1\tau_i}^n\to e}{\tau \Rightarrow_\mathsf{NWHNF} \s}[alt][\D_s][z]}
+    {\judg{K~\ov{\xo},\ov{y_i{:}_1\tau_i}^n \,\ROUNDTWO {\Rightarrow_\mathsf{NWHNF}}\,  e}{\s}[][\D_s][z]}
 }
 
 \newcommand{\TypeAltNWHNF}{
@@ -191,7 +192,7 @@
     % \\ n > 0
     % \\ K:\of{\s \to_\pi} \s \in \G
     }
-    {\judg{K~\ov{\xo},\ov{y_i{:}_1\tau_i}^n\to e}{\tau \Rightarrow_\mathsf{WHNF} \s}[alt][\ov{\D_i}^n][z]}
+    {\judg{K~\ov{\xo},\ov{y_i{:}_1\tau_i}^n \,\ROUNDTWO{\Rightarrow_\mathsf{WHNF}}\,e}{ \s}[][\ov{\D_i}^n][z]}
 }
 
 \newcommand{\TypeAltZero}{
@@ -200,14 +201,14 @@
     { \judg[\subst{\G}{\cdot}{\D_s}_z,\ov{\xo}][\subst{\D}{\cdot}{\D_s}]{e}{\s}
     % \\ K:\ov{\s_i \to_\omega} \s \in \G
     }
-    {\judg{K~\ov{\xo}\to e}{\tau \Rightarrow \s}[alt][\D_s][z]}
+    {\judg{K~\ov{\xo}\,\ROUNDTWO{\Rightarrow}\, e}{ \s}[][\D_s][z]}
 }
 
 \newcommand{\TypeAltWild}{
     \mprset{flushleft}
     \infer[(Alt\_)]
     { \judg{e}{\s} }
-    {\judg{\_ \to e}{\tau \Rightarrow \s}[alt][\D_s][z]}
+    {{\judg{\_ \,\ROUNDTWO{\Rightarrow}\ e}{ \s}[][\D_s][z]}}
 }
 
 \newcommand{\TypeWHNFCons}{
@@ -280,7 +281,7 @@
 % Ouch, nope, not the case var
 %    \TypeCaseVar
 \\[0.6cm]
-    \judgment{\judg{\rho \to e}{\tau \Rightarrow \s}[alt][\Delta_s][z]}
+    \ROUNDTWO{\judgment{\judg{\rho \Rightarrow e}{ \s}[][\Delta_s][z]}}
 \\[0.4cm]
     \TypeAltNWHNF
 \quad
