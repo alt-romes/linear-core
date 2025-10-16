@@ -393,7 +393,7 @@ such as inlining and $\beta$-reduction, to produce more efficient programs.
 % if we can typecheck linearity in the surface level Haskell why do we fail to do
 % so in Core?
 %
-\ROUNDTWO{However, despite the advantages of having linear types in Core, the status quo is}
+\ROUNDTWO{However}, despite the advantages of \ROUNDTWO{having} linear types in Core, the status quo is
 that linearity is effectively ignored in Core, being only checked
 in the source Haskell code. The reason is that, \ROUNDTWO{after} desugaring, the
 Core-to-Core optimising transformations eliminate and rearrange most of the
@@ -462,7 +462,7 @@ of} linearity, in Haskell, by example (Section~\ref{sec:linearity-semantically})
 %
 A precise \ROUNDTWO{semantic definition of} linearity, \ROUNDTWO{closely
 following that of Linear Haskell~\cite{cite:linearhaskell}}, is given by
-our instrumented operational semantics, under which a program using a
+our instrumented operational semantics under which a program using a
 linear resource non-linearly gets stuck
 (Section~\ref{sec:main:metatheory}).
 
@@ -572,7 +572,7 @@ exactly once), but there are two syntactic
 occurrences of \lstinline{handle}: one is in a let-bound computation that
 closes this handle, the other \ROUNDTWO{is in the first branch}. If the program is
 evaluated lazily, the handle will, \ROUNDTWO{dynamically, either be closed in
-the second branch, or returned untouched in the first}, since the computation
+the second branch, or be returned untouched in the first}, since the computation
 which closes the handle is \ROUNDTWO{not needed in the first branch}.
 %
 \begin{lstlisting}
@@ -643,9 +643,10 @@ Given this observation, %and exploring the connection between computation and ev
 % above example and for programs in general, should be defined in function of the
 % language's evaluation strategy.
 %
-we turn our focus to linearity under lazy evaluation since the distinction between semantically and syntactically
-consuming a resource is only exposed under non-strict semantics, and because GHC Core is
-lazy.
+we turn our focus to linearity under lazy evaluation
+\ROUNDTWO{specifically} since the distinction between semantically and
+syntactically consuming a resource is only exposed under non-strict semantics,
+and because GHC Core is lazy.
 %. 
 
 
@@ -1169,7 +1170,7 @@ do consume resources.
 %functions that fully consume their linear arguments.
 % CORTEI
 To understand exactly how,
-we turn to the definition of \emph{consuming} a resource from Linear
+we turn to the definition of consuming a resource from Linear
 Haskell~\cite{cite:linearhaskell}:
 %begin{itemize}
 % \item
@@ -1185,8 +1186,8 @@ to consume a value of atomic base type (such as~\texttt{Int} or
         % once if pattern-matched on \emph{and} both the first and second element are
         % consumed once.
 %\end{itemize}
-Thus, we can consume a linear resource by fully evaluating it -- and evaluation
-happens in case expressions.
+Thus, we can consume a linear resource by fully evaluating it, and evaluation
+happens with case expressions.
 
 %%% In Section~\ref{sec:generalizing-evaluation-consuming} we generalize the idea
 %%% that consuming a resource is deeply tied to evaluation.  Here, we continue
