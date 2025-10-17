@@ -468,7 +468,24 @@ linear resource non-linearly gets stuck
 
 \item We introduce Linear Core, a \ROUNDTWO{lazy} linear language with
 the key features of Core (except for type equality coercions), whose type
-system \ROUNDTWO{accepts the lazy} semantics of linearity. To the best of our
+system \ROUNDTWO{is designed to reconcile with the lazy} semantics of
+linearity. \ROUNDTWO{Our system achieves this via a novel combination
+  of features: explicit tracking linear dependencies of variables
+  through \emph{usage environments}
+  (Section~\ref{sec:usage-environments}), codifying that lazy variable
+  bindings do not consume resources upon definition, but rather when
+  the variables are consumed;
+  a distinct treatment of case
+  scrutinees in weak-head normal form (Section~\ref{sec:onwhnf}),
+  identifying that linear resources captured by case expressions in
+  WHNF can be safely used in branches since the case will not further
+  evaluate its scrutinee; and a notion of irrelevant and tagged resources
+  (Section~\ref{sec:irrev}), which allow for fine-grained control over
+  variable usage. Namely, linear resources occurring in non-WHNF case
+  scrutinees can no longer be used in the alternative, while the
+  pattern variables (or the case binder) must necessarily be used. } 
+%
+To the best of our
 knowledge, this is the first type system \ROUNDTWO{to accept programs
 which depend on non-strict evaluation to be understood as linear}
 (Section~\ref{sec:main:linear-core}).
@@ -490,8 +507,9 @@ it accepts the programs resulting from transformations in libraries such as
 note that the ideas explored in this work can potentially be applied to any
 language with non-strict features, even if the language itself is strict.}
 
-Additional proofs and definitions are given in \ROUNDTWO{TODO}
-Appendices~\ref{app:proofs},~\ref{app:optimisations} and~\ref{app:opsem}.
+Additional proofs and definitions are given in \ROUNDTWO{the extended
+  version of the paper~\cite{techreport}.}
+%Appendices~\ref{app:proofs},~\ref{app:optimisations} and~\ref{app:opsem}.
 
 %
 % We review background concepts fundamental to our work in
@@ -564,16 +582,19 @@ the definition of consuming a resource.
 \ROUNDTWO{Traditionally}, consuming a resource \ROUNDTWO{has been} equated with its 
 syntactic occurrence along a control-flow path in the program. However, as this
 section \ROUNDTWO{aims to} make clear, \ROUNDTWO{in a non-strict context, a
-syntactic definition of linearity is much too conservative}.
+syntactic definition of linearity is overly conservative}.
 %
 For instance, in the following Haskell-like program, \lstinline{f} is a linear
 function (a function that must use its argument
 exactly once), but there are two syntactic
 occurrences of \lstinline{handle}: one is in a let-bound computation that
-closes this handle, the other \ROUNDTWO{is in the first branch}. If the program is
-evaluated lazily, the handle will, \ROUNDTWO{dynamically, either be closed in
-the second branch, or be returned untouched in the first}, since the computation
-which closes the handle is \ROUNDTWO{not needed in the first branch}.
+closes this handle, the other \ROUNDTWO{is in the then branch of a
+  conditional}. If the program is 
+evaluated lazily, the handle will, \ROUNDTWO{dynamically, either be
+  used exactly once (i.e,~closed) in
+the else branch, or be used exactly once (i.e.,~returned) in the then branch}, since the 
+\ROUNDTWO{let-bound variable is not needed in that branch and
+so the expression which closes the handle is never evaluated}.
 %
 \begin{lstlisting}
 f : Handle *' $\lolli$ '* Handle
@@ -2168,7 +2189,7 @@ as there is always only a single sub-expression in lambda abstractions.
 %     the linear components of that pattern.
 % }
 
-\subsubsection{Branching on WHNF-ness}
+\subsubsection{Branching on WHNF-ness}\label{sec:onwhnf}
 
 The dichotomy between evaluation (and resource usage) of a case expression
 whose scrutinee is in weak head normal form and one whose scrutinee is not
@@ -2390,7 +2411,7 @@ discarded or duplicated (e.g. via the case binder).
 
 %\end{enumerate}
 
-\subsubsection{Proof irrelevant resources}
+\subsubsection{Proof irrelevant resources}\label{sec:irrev}
 
 When the scrutinee is not in WHNF, it is not statically known which resources
 will have been consumed after evaluating said scrutinee, or which
