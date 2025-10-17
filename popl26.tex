@@ -3006,22 +3006,22 @@ resources.
 \renewcommand{\DeltaLinearRelationLemma}{
 \begin{restatable}[$\Delta$-bound to Linear]{lemma}{deltaone}\label{lem:deltaone}
 % Any $\Delta$-variable with a fully-irrelevant usage environment can be made a linear variable as long as its irrelevant environment is dropped from the linear environment (and the unrestricted env. is updated accordingly).\\
-If $\G,\x[\irr{\D}]; \irr{\D},\D' \vdash e : \vp$ 
-then $\G[x/\irr{\D}]; \D',\xl \vdash e :\vp$.
+If $\G,\x[\irr{\D}]; \irr{\D},\D' \vdash e : \s$ 
+then $\G[x/\irr{\D}]; \D',\xl \vdash e :\s$.
 \end{restatable}
 }
 
 \renewcommand{\LinearDeltaRelationLemma}{
   \begin{restatable}[Linear to $\Delta$-bound]{lemma}{onedelta}\label{lem:onedelta}
-If $\G; \D',\xl \vdash e :\vp$
-then $\G[\D/x],\xD; \D,\D' \vdash e : \vp$ ($\Delta$ fresh).
+If $\G; \D',\xl \vdash e :\s$
+then $\G[\D/x],\xD; \D,\D' \vdash e : \s$ ($\Delta$ fresh).
 \end{restatable}
 }
 
 \renewcommand{\DeltaUnrestrictedRelationLemma}{
 \begin{restatable}[Unrestricted and $\Delta$-bound]{lemma}{undelta}\label{lem:undelta}
 %An unrestricted variable is equivalent to a $\D$-var with an empty usage environment.\\
-$\G,\xo; \D \vdash e : \vp$ iff $\G,\x[\cdot]; \D \vdash e : \vp$
+$\G,\xo; \D \vdash e : \s$ iff $\G,\x[\ROUNDTWO{\emptyset}]; \D \vdash e : \s$
 \end{restatable}
 }
 
@@ -3031,14 +3031,16 @@ A well-typed program with a linear variable ($\xl$) is equivalently
 well-typed if the linear variable were instead $\D$-bound ($\xD$) with
 usage environment $\D$, with $\D$ available in the linear context and
 \ROUNDTWO{with any occurrences of $x$ in usage environments in $\G$
-  expanded into $x$'s usage environment $\Delta$, with the abuse of notation $\Gamma[\Delta/x]$.
+  expanded into $x$'s usage environment $\Delta$, with the abuse of notation $\Gamma[\Delta/x]$.}
 
 \LinearDeltaRelationLemma
 
 
 \noindent Dually, any $\Delta$-bound variable with an irrelevant usage
 environment can be made into a linear variable as long as its
-(irrelevant) environment is dropped from the linear context.
+(irrelevant) environment is dropped from the linear context
+\ROUNDTWO{and all the occurrences of the set of variables $[\D]$ in
+  usage environments in $\Gamma$ are collapsed to $x$, written $\Gamma[x/[\Delta]]$}.
 
 % Dually, a well-typed program with resources $\D$ and $\D$-bound
 % variable ($\xD$) is equivalently well-typed, as long as $\D$ is consumed
@@ -3059,8 +3061,8 @@ variables with an empty usage environment are equivalent.
 
 \paragraph{Irrelevance}
 %
-Proof irrelevant resources can only be consumed
-indirectly, essentially encoding that the (non-WHNF) case scrutinee
+Irrelevant resources \ROUNDTWO{(Section~\ref{sec:irrev})} can only be consumed
+indirectly, essentially encoding that the non-WHNF case scrutinee
 resources must be consumed through the case binder or the linear
 pattern-bound variables.
 %
@@ -3091,9 +3093,9 @@ well-typed by the $Case_{\textrm{WHNF}}$ once the scrutinee is evaluated to WHNF
 \WHNFConvSoundness
 
 The \emph{Irrelevance} lemma witnesses the soundness of typing a
-case alternative with proof irrelevant resources with respect to
+case alternative with irrelevant resources with respect to
 typing the same expression with arbitrary resources. However, typing
-a case alternative with proof irrelevant resources is not complete wrt using
+a case alternative with irrelevant resources is not complete wrt using
 arbitrary resources -- a counter example needs only to use a resource
 directly.
 
@@ -3116,8 +3118,7 @@ We prove type safety of the Linear Core system via the standard type
 preservation and progress results. As is customary, we make use of multiple
 substitution lemmas, one for each kind of variable: unrestricted variables
 $\xo$, linear variables $\xl$, and $\D$-bound variables $\xD$. The
-development is reported in Appendices~\ref{app:proofs}
-and~\ref{app:opsem}, where type safety is established directly for the
+development is reported in \cite{techreport}, where type safety is established directly for the
 instrumented semantics and ported to the natural semantics via a
 bisimulation argument.
 
@@ -3288,35 +3289,35 @@ preserving in Linear Core. %(i.e.,~preserve linearity semantically).
   {\small
   \[
     \begin{array}{ll}
-   (\llet{\xD = e}{e'} )  \Longrightarrow \llet{\xD =       e}{e'[e/x]} &                    \mbox{Inlining}\\
-       (\lambda \x[\pi][\s].~e)~e'  \Longrightarrow e[e'/x]  &                \mbox{$\beta$-reduction}\\
+   (\llet{\xD = e}{e'} )  \Longrightarrow \llet{\xD =       e}{e'[e/x]} &                    \mbox{Inlining}\\[1ex]
+       (\lambda \x[\pi][\s].~e)~e'  \Longrightarrow e[e'/x]  &                \mbox{$\beta$-reduction}\\[1ex]
       (\ccase{(K~\ov{e})}{\z[\D][\s]~\{\overline{\rho_j\to e_j}, K~\ov{x} \to e_i, \overline{\rho_k\to e_k}\}} )\Longrightarrow  e_i\ov{[e/x]}[K~\ov{e}/z] &
-                                  \mbox{Case of known constr.}\\
+                                  \mbox{Case of known constr.}\\[1.5ex]
       (\ccase{(\ccase{e_c}{\z[\D]~\{\ov{\rho_{c_i}\to e_{c_i}}\}})}{\var[w][\irr{\D,\D'}][\s']~\{\ov{\rho_i\to e_i}\}})\\
             \Longrightarrow 
             %{{{
       \ccase{e_c}{\z[\D]~\{\ov{\rho_{c_i} \to \ccase{e_{c_i}}{w~\{\ov{\rho_i\to e_i}\}}}\}}
-      & \mbox{Case-of-case}\\
+      & \mbox{Case-of-case}\\[1.5ex]
       (\lambda \y[\pi].~\llet{\xD = e}{e'})
       \Longrightarrow
-      \llet{\xD=e}{\lambda\y[\pi].~e'} & \mbox{Commuting let-$\lambda$}\\
-      ((\llet{v = e}{b})~a) \Longrightarrow \llet{v = e}{b~a} &\mbox{Commuting let-app.}\\
+      \llet{\xD=e}{\lambda\y[\pi].~e'} & \mbox{Commuting let-$\lambda$}\\[1ex]
+      ((\llet{v = e}{b})~a) \Longrightarrow \llet{v = e}{b~a} &\mbox{Commuting let-app.}\\[1ex]
       (\ccase{(\llet{v = e}{b})}{\{\overline{\rho\to e'}\}}) \Longrightarrow
       %{{{
       \llet{v =  e}{\ccase{b}{\{\overline{\rho\to e'}\}}}
                                &
-                                 \mbox{Commuting let-case}\\
+                                 \mbox{Commuting let-case}\\[1ex]
       (\ccase{e}{\{\overline{\rho_j\to e_j}, \rho \to E[e_1],
-      \overline{\rho_k\to e_k}\}} ) \qquad (\mbox{$x$ fresh}) \\
+      \overline{\rho_k\to e_k}\}} ) \qquad (\mbox{$x$ fresh}) \\[1.5ex]
       %{{{
      \Longrightarrow \llet{x = e_1}{\ccase{e}{\{\overline{\rho_j\to e_j}, \rho \to E[x], \overline{\rho_k\to e_k}\}}} 
-                                                                        & \mbox{Commuting case-let}\\
+                                                                        & \mbox{Commuting case-let}\\[1.5ex]
       (\llet{x = (\llet{v = e}{b})}{c}) \Longrightarrow \llet{v = e}{\llet{x = b}{c}}
-                                                                      & \mbox{Commuting let-let}\\
-      f \Longrightarrow \lambda x.(f~x) & \mbox{$\eta$-expansion}\\
-      \lambda x.(f~x) \Longrightarrow f & \mbox{$\eta$-reduction}\\
+                                                                      & \mbox{Commuting let-let}\\[1ex]
+      f \Longrightarrow \lambda x.(f~x) & \mbox{$\eta$-expansion}\\[1ex]
+      \lambda x.(f~x) \Longrightarrow f & \mbox{$\eta$-reduction}\\[1ex]
       (\ccase{x}{z~\{\ov{\rho_i\to e_i}\}}) \Longrightarrow \ccase{x}{z~\{\ov{\rho_i\to  e_i[z/x]}\}}
-                                                                      & \mbox{Binder swap}\\
+                                                                      & \mbox{Binder swap}\\[1ex]
       % (\ccase{x}{z~\{\ov{\rho_i\to e_i}\}} )\Longrightarrow \ccase{x}{z~\{\ov{\rho_i\to e_i[x/z]}\}}
       %                                                                 & \mbox{Reverse binder swap}
     \end{array}
@@ -3324,7 +3325,7 @@ preserving in Linear Core. %(i.e.,~preserve linearity semantically).
   \caption{Optimising transformations validated by Linear
     Core\label{fig:opttrans} (for commuting case-let we
       require $e_1$ not to capture the case binder, variables bound by the
-      pattern $\rho$ and the context $E[{-}]$ -- see Appendix~\ref{app:optimisations} for
+      pattern $\rho$ and the context $E[{-}]$ -- see \cite{techreport} for
     details).} 
 \end{figure}
 
