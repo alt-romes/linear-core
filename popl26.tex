@@ -1282,7 +1282,8 @@ expression may end up being used}.
 % If we do not use the pattern variables, then we do not run the computation and
 % thus no resources are consumed.
 %
-A third (semantically well-typed, but rejected by Linear Haskell) option is to use the case binder $z$ instead of $a,b$ or $x,y$:
+A third option, semantically \ROUNDTWO{linear}, but rejected by Linear Haskell, is to use
+the case binder $z$ instead of $a,b$ or $x,y$:
 \begin{notyet}
 \begin{lstlisting}
 f9 :: a *' $\lolli$ '* b *' $\lolli$ '* (a *' $\lolli$ '* b *' $\lolli$ '* c) -> c
@@ -1295,19 +1296,24 @@ linear resources are consumed. Essentially, in this example, using $a$ entails
 using the resource $x$, $b$ the resource $y$, and the case binder $z$ entails
 using both $a$ and $b$.
 
-Dually, consider the scrutinee to be an expression that's not in WHNF, s.t.
-evaluating it to WHNF will require performing computation and thus consume linear
-resources (\incode{f10} below is well-typed in our system but rejected
-by Linear Haskell):
+\ROUNDTWO{Conversely}, if the scrutinee is an expression that's not in WHNF,
+evaluation to WHNF \ROUNDTWO{may indeed} consume \ROUNDTWO{some or all of the}
+linear resources \ROUNDTWO{captured by said scrutinee}. \ROUNDTWO{Consider the following
+non-WHNF scrutinee example},
+\incode{f10}, \ROUNDTWO{which is accepted} by our system:
 \begin{notyet}
 \begin{lstlisting}
 f10 :: a *' $\lolli$ '* b *' $\lolli$ '* (a *' $\lolli$ '* b *' $\lolli$ '* (c,d)) -> (c,d)
 f10 x y use = case use x y of z { (a,b) -> z }
 \end{lstlisting}
 \end{notyet}
-Unlike when the scrutinee was in WHNF, we can no longer use $x,y$ in the case
-alternatives, but we must still use either the case binder $z$ or the linear
-pattern variables $a,b$. %  e.g. it would be quite disastrous if any of the following typechecked:
+\ROUNDTWO{In contrast to} a scrutinee in WHNF, \ROUNDTWO{the resources captured
+by a non-WHNF scrutinee} (here, $x,y$), \ROUNDTWO{conservatively, can no longer
+be used} in the case alternatives, \ROUNDTWO{since reducing \incode{use x y} to
+WHNF may consume (parts of) $x$ and/or $y$}. \ROUNDTWO{Consequently}, either the case
+binder $z$ or the linear pattern variables $a,b$ must be used exactly
+once,
+%  e.g. it would be quite disastrous if any of the following typechecked:
 % \begin{noway}
 % \begin{lstlisting}
 % doubleFree :: Ptr *' $\lolli$ '* (Ptr *' $\lolli$ '* Result) -> Result
@@ -1330,27 +1336,28 @@ pattern variables $a,b$. %  e.g. it would be quite disastrous if any of the foll
 %\end{code}
 %\end{notyet}
 %
-The result of evaluating the scrutinee must be consumed exactly once to guarantee
-that the resources used in the scrutinee are fully consumed. %, or
+since the linear resources in the scrutinee are \ROUNDTWO{only} fully consumed
+if the result of evaluating the scrutinee \ROUNDTWO{is also} fully consumed . %, or
                                 %risk them being only ``almost''
                                 %consumed.
 For instance, take
-\incode{use} in \incode{f10} to be the pairing function \incode{(,)}: it is not sufficient for \incode{use x y} to be
-evaluated to WHNF to consume \incode{x} and \incode{y}. Otherwise, if all the resources were
-considered to be fully consumed after the scrutinee were evaluated in a case
-expression, we could simply ignore the pattern variables, potentially
-discarding linear resources. In
-short, if the scrutinee is not in WHNF we must either consume the case binder
-or the linear components of the pattern.
-
-
-On the other hand, if we match on a constructor without any linear components,
-all linear resources used in the scrutinee must have been fully consumed in
-that branch since the result of evaluating it can be consumed unrestrictedly
-(by definition, a constructor application to unrestricted arguments is also
-unrestricted).
+\incode{use} in \incode{f10} to be the pairing function \incode{(,)}: it is not
+sufficient for \incode{use x y} to be evaluated to WHNF to consume \incode{x}
+and \incode{y}.
 %
-Hence, in the branch for a constructor without linear fields, the case
+If all the resources were considered to be fully consumed after
+\ROUNDTWO{evaluating the} scrutinee to \ROUNDTWO{WHNF}, the pattern variables
+could simply be ignored and thus linear resources potentially discarded.
+In \ROUNDTWO{practice}, if the scrutinee is not in WHNF then \ROUNDTWO{either}
+the case binder or the linear components of the pattern \ROUNDTWO{must be consumed}.
+
+\ROUNDTWO{Alternatively}, if a constructor without any linear components \ROUNDTWO{is matched},
+all linear resources used in the scrutinee must \ROUNDTWO{already} have been
+fully consumed in that branch since the result of evaluating it can be consumed
+unrestrictedly (by definition, a constructor application to unrestricted
+arguments is also unrestricted).
+%
+Hence, in the \ROUNDTWO{case-}branch for a constructor without linear fields, the case
 binder can also be used unrestrictedly. For example, the program in
 Figure~\ref{fig:nolin} is semantically linear.
 %
