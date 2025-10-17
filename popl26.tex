@@ -1585,22 +1585,48 @@ current type system.
 %To the best of our knowledge, we are the first to prove optimisations preserve
 %types in a non-strict linear language.
 % 
-Despite the focus on GHC Core, the fundamental ideas for
-understanding linearity in our call-by-need calculus can be readily applied to
-other non-strict languages.
+Despite the focus on GHC Core, the fundamental ideas for \ROUNDTWO{typing} linearity in
+our call-by-need calculus may be applied to other languages \ROUNDTWO{which
+combine non-strict features or semantics with linearity}.
 
-Linear Core's first key idea is to delay consuming
-resources until a computation that depends on those resources is effectively
-evaluated or returned. Delayed consumption is tracked by annotating relevant
-binders with \emph{usage environments} (Section~\ref{sec:usage-environments}).
+\ROUNDTWO{The key ideas that make Linear Core work are:}
+
+\ROUNDTWO{
+\begin{enumerate}
+    \item Usage environments (Section~\ref{sec:usage-environments})
+    \item Distinct treatment of case scrutinees in WHNF (Section~\ref{sec:onwhnf})
+    \item Irrelevant and tagged resources (Sections~\ref{sec:irrev}~and~\ref{sec:tagging})
+\end{enumerate}
+
+\noindent (1) Encodes the idea that lazy bindings do not consume resources upon
+definition, but rather when the bound variables themselves are consumed.
+Consuming a variable with some usage environment $\Delta$ equates to consuming
+the variables contained in $\Delta$.
 %
-The second key idea is to have two distinct rules for case
-expressions, branching on whether the scrutinee is in Weak Head Normal
-Form or not, and using  \ROUNDTWO{irrelevance annotations} to track resources that are no
-longer available but have yet to be fully consumed
-(Section~\ref{sec:lc-case-exps}). Additionally, we introduce tags to split
-resources amongst pattern-bound variables and %^as usage environments
-encode that all linear components of a pattern must be used in tandem.
+(2) Case expressions in WHNF may capture ambient linear resources, but these
+resources can be safely used in branches since the case will not further
+evaluate its scrutinee. On the other hand, scrutinizing a non-WHNF expression
+must be treated more conservatively.
+%
+(3) Irrelevant resources make existing bindings unusable while forcing the use
+of others. Namely, linear resources occurring in non-WHNF case scrutinees can
+no longer be used in the alternatives, while the pattern variables or the case
+binder must necessarily be used. Tagged resources follow the observation that
+some variables must be used jointly or not at all.
+}
+%
+% Linear Core's first key idea is to delay consuming
+% resources until a computation that depends on those resources is effectively
+% evaluated or returned. Delayed consumption is tracked by annotating relevant
+% binders with \emph{usage environments} (Section~\ref{sec:usage-environments}).
+%
+% The second key idea is to have two distinct rules for case
+% expressions, \ROUNDTWO{discriminating} on whether the scrutinee is in Weak Head Normal
+% Form or not, and using  \ROUNDTWO{irrelevance annotations} to track resources that are no
+% longer available but have yet to be fully consumed
+% (Section~\ref{sec:lc-case-exps}). Additionally, we introduce tags to split
+% resources amongst pattern-bound variables and %^as usage environments
+% encode that all linear components of a pattern must be used in tandem.
 
 We present Linear Core's syntax and type system incrementally, starting with the
 judgements and base linear calculi rules (Section~\ref{sec:base-calculi}).
@@ -2573,7 +2599,7 @@ in which intermediate programs commonly scrutinize expressions in WHNF.
 % $\D$-substitution is not well-defined.  \todo[inline]{What is the
 %   $\Delta$-substitution? Clarify}
 
-\subsubsection{Splitting and tagging fragments}
+\subsubsection{Splitting and tagging fragments}\label{sec:tagging}
 
 %% NOTA -- Sempre a repetir a mesma coisa
 % Intuitively, in case alternatives whose scrutinee is not in WHNF,
