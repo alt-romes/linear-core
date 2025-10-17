@@ -472,18 +472,12 @@ system \ROUNDTWO{is designed to accept the lazy} semantics of
 linearity. \ROUNDTWO{Our system achieves this via a novel combination
   of features: explicit tracking linear dependencies of variables
   through \emph{usage environments}
-  (Section~\ref{sec:usage-environments}), codifying that lazy variable
-  bindings do not consume resources upon definition, but rather when
-  the variables are consumed;
+  (Section~\ref{sec:usage-environments});
   a distinct treatment of case
-  scrutinees in weak-head normal form (Section~\ref{sec:onwhnf}),
-  identifying that linear resources captured by case expressions in
-  WHNF can be safely used in branches since the case will not further
-  evaluate its scrutinee; and a notion of irrelevant and tagged resources
+  scrutinees in weak-head normal form (Section~\ref{sec:onwhnf});
+  and a notion of irrelevant and tagged resources
   (Section~\ref{sec:irrev}), which allow for fine-grained control over
-  variable usage. Namely, linear resources occurring in non-WHNF case
-  scrutinees can no longer be used in the alternative, while the
-  pattern variables (or the case binder) must necessarily be used. } 
+  variable usage.} 
 %
 To the best of our
 knowledge, this is the first type system \ROUNDTWO{to accept programs
@@ -1610,8 +1604,8 @@ must be treated more conservatively.
 %
 (3) Irrelevant resources make existing bindings unusable while forcing the use
 of others. Namely, linear resources occurring in non-WHNF case scrutinees can
-no longer be used in the alternatives, while the pattern variables or the case
-binder must necessarily be used. Tagged resources follow the observation that
+no longer be used in the alternatives, while the pattern variables (or the case
+binder) must necessarily be used. Tagged resources follow the observation that
 some variables must be used jointly or not at all.
 }
 %
@@ -1636,7 +1630,7 @@ Then, usage environments, the rule for $\Delta$-bound variables, and rules for
 %
 Finally, we introduce the rules to type case expressions and case alternatives,
 along with the key insights to do so, namely \ROUNDTWO{discriminating by} the WHNF-ness of
-scrutinee, irrelevant resources, and tagging (Section~\ref{sec:lc-case-exps}).
+the scrutinee, irrelevant resources, and tagging (Section~\ref{sec:lc-case-exps}).
 
 % We start by introducing the Core-like language, $\dots$ usage environments as a
 % way to encode choice between the way a resource is used $\dots$\todo{$\dots$}
@@ -3057,7 +3051,7 @@ A well-typed program with a linear variable ($\xl$) is equivalently
 well-typed if the linear variable were instead $\D$-bound ($\xD$) with
 usage environment $\D$, with $\D$ available in the linear context and
 \ROUNDTWO{with any occurrences of $x$ in usage environments in $\G$
-  expanded into $x$'s usage environment $\Delta$, with the abuse of notation $\Gamma[\Delta/x]$.
+  expanded into $x$'s usage environment $\Delta$, with the abuse of notation $\Gamma[\Delta/x]$}.
 
 \LinearDeltaRelationLemma
 
