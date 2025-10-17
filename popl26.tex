@@ -1602,8 +1602,8 @@ Then, usage environments, the rule for $\Delta$-bound variables, and rules for
 (recursive) let bindings (Section~\ref{sec:usage-environments}).
 %
 Finally, we introduce the rules to type case expressions and case alternatives,
-along with the key insights to do so, namely branching on WHNF-ness of
-scrutinee, proof irrelevant resources, and tagging (Section~\ref{sec:lc-case-exps}).
+along with the key insights to do so, namely \ROUNDTWO{discriminating by} the WHNF-ness of
+scrutinee, irrelevant resources, and tagging (Section~\ref{sec:lc-case-exps}).
 
 % We start by introducing the Core-like language, $\dots$ usage environments as a
 % way to encode choice between the way a resource is used $\dots$\todo{$\dots$}
@@ -2133,6 +2133,7 @@ typed on an empty linear environment. A lambda expression is typed with
 the main typing judgement and trivially ``outputs'' the whole $\D$ environment,
 as there is always only a single sub-expression in lambda abstractions.
 
+
 % Precisamos disto?
 % %
 % \begin{tabbing}
@@ -2193,8 +2194,9 @@ as there is always only a single sub-expression in lambda abstractions.
 
 The dichotomy between evaluation (and resource usage) of a case expression
 whose scrutinee is in weak head normal form and one whose scrutinee is not
-leads to one of the key insights of $\lambda^\pi_\Delta$: we must \emph{branch}
-on weak head normal formed-ness to accurately type case expressions.
+leads to one of the key insights of $\lambda^\pi_\Delta$:
+\ROUNDTWO{accurate typing of case expressions depends on whether the scrutinee is in WHNF.}
+%
 %
 When the scrutinee is already in WHNF, the resources are
 unused upon evaluation and thus available in the alternatives.
@@ -2213,8 +2215,13 @@ The first function uses $x$ linearly, but the second does not.
 Alternatives may also use the case binder or pattern variables, referring to, respectively,
 the whole scrutinee and all its used resources; or
 constructor arguments and the resources used to type them.
-% Using the case binder entails using all the resources required by the scrutinee, and using a pattern
-% variable implies using the resources of the corresponding constructor argument.
+\ROUNDTWO{The reader may wonder about the significance of case expressions
+  where the scrutinee is in WHNF. We note that in an
+  optimizing compiler (such as GHC) many intermediate programs that
+  arise due to program transformations commonly scrutinize expressions
+  in WHNF.}
+
+
 
 There are three competing ways
 to use the resources from a scrutinee in WHNF in a case alternative: directly, via
@@ -2238,7 +2245,7 @@ First, we assert this rule is only applicable to expressions in weak head
 normal form. Second, we appeal to the typing judgement for expressions in WHNF
 to determine the split of resources amongst the scrutinee
 sub-expressions. Finally, we type all case alternatives with the same context, using the
-$\vdash_{alt}$ judgement, introducing
+introducing
 the case binder $z$ in the unrestricted environment as a $\D$-bound
 variable whose usage environment is the linear resources $\ov{\D_i}$ used to type the
 scrutinee. Those same resources $\ov{\D_i}$ are again made available in the
@@ -2255,8 +2262,8 @@ Although the main idea for typing ``WHNF case expressions'' is conveyed by
 this rule, the full rule of our system is slightly more involved, as will be seen after
 discussing cases of scrutinees not in WHNF.
 
-The alternative judgement $\G;\D \vdash_{alt} \rho \to e :^z_\D \s \Rightarrow
-\vp$ is used to type case alternatives, encompassing three
+The alternative judgement \ROUNDTWO{$\G;\D \vdash \rho \Rightarrow e :^z_\D 
+\s$} is used to type case alternatives, encompassing three
 modes that are distinguished by the kind of arrow that is used:
 for alternatives of case expressions whose scrutinee is in WHNF
 ($\Rightarrow_\mathsf{WHNF}$), not in WHNF ($\Rightarrow_\mathsf{NWHNF}$),
@@ -2326,8 +2333,8 @@ The rule deletes the annotated scrutinee environment $\D_s$ from
 %two select environments:
 the linear typing context (written $\D[\cdot/\D_s]$, a substitution of
 the scrutinee typing environment by the empty linear environment $\cdot$)
-and from the usage environment of the case binder $z$ (written $\G[\cdot/\D_s]_z$
-to similarly delete $\D_s$ from the usage environment of the $\D$-var $z$ in $\G$).
+and from the usage environment of the case binder $z$, written $\G[\cdot/\D_s]_z$
+to delete $\D_s$ from the usage environment of the \ROUNDTWO{$\D$-bound variable} $z$ in $\G$.
 Given that the case-binder $z$ is always annotated with $\D_s$ (essentially,
 the linear environment typing the scrutinee), this latter substitution makes
 the case-binder unrestricted in branches with unrestricted patterns.
@@ -2411,11 +2418,12 @@ discarded or duplicated (e.g. via the case binder).
 
 %\end{enumerate}
 
-\subsubsection{Proof irrelevant resources}\label{sec:irrev}
+\subsubsection{Irrelevant resources}\label{sec:irrev}
 
-When the scrutinee is not in WHNF, it is not statically known which resources
-will have been consumed after evaluating said scrutinee, or which
-are transferred into the branch continuation, e.g. as in $\ccase{f\ x}{z\ \{K\
+When the scrutinee is not in WHNF
+\ROUNDTWO{we cannot statically determine which resources are consumed
+  upon scrutinee evaluation or which are transferred into the branch continuation}
+e.g. as in $\ccase{f\ x}{z\ \{K\
 a \rightarrow e\}}$:
 \begin{enumerate}
 
@@ -2431,14 +2439,6 @@ a \rightarrow e\}}$:
     scrutinee to the alternative are ultimately consumed (in the example, $x$
     is not consumed by evaluating the scrutinee for $f = K$).
 
-    Considering (1), we must resort to a more uniform method of guaranteeing we
-    ``finish consuming'' the scrutinee. There are only two ways of
-    uniformly referring to the remaining linear resources in the newly-evaluated scrutinee:
-
-        \begin{itemize}
-            \item The case binder, which refers to the whole result of evaluating the scrutinee;
-            \item The linear components of a constructor pattern, which refer to expressions that may contain linear resources.
-        \end{itemize}
 
 %To guarantee all post-evaluation unconsumed scrutinee resources are consumed in
 %the alternative, without statically knowing
@@ -2486,22 +2486,33 @@ a \rightarrow e\}}$:
 % result is consumed (thus their usage environment cannot be empty), but the
 % scrutinee resources cannot be used directly.
 
+\ROUNDTWO{
+    Considering (1), we must resort to a more uniform method of guaranteeing we
+    ``finish consuming'' the scrutinee. There are only two ways of
+    uniformly referring to the remaining linear resources in the newly-evaluated scrutinee:
+
+        \begin{itemize}
+            \item The case binder, which refers to the whole result of evaluating the scrutinee;
+            \item The linear components of a constructor pattern, which refer to expressions that may contain linear resources.
+        \end{itemize}}
+
 To encode  linear resources that cannot be
 directly used (i.e.,~to which the $\textsc{Var}$ rule is not
-applicable) we introduce \emph{proof irrelevant} resources, written as linear resources
-within square brackets $[ x{:}\s]$ and lifted to contexts as $[\D]$.
-Proof irrelevant resources
+applicable) we introduce \emph{irrelevant} resources, written as linear resources
+within square brackets $[ x{:}\s]$ and \ROUNDTWO{pointwise} lifted to contexts
+\ROUNDTWO{and usage environments} as $[\D]$.
+Irrelevant resources
 are linear resources in every sense, meaning they must be used
-exactly once. However, since proof irrelevant resources cannot be
+exactly once. However, since irrelevant resources cannot be
 discarded or used directly, they have to be consumed \emph{indirectly} via
 $\D$-bound variables, namely, the case binder, or, in mutual exclusion, the linear pattern-bound
 variables.
 
 Hence, to type a case expression whose scrutinee is not in WHNF, we
 type the scrutinee with linear resources $\D$ and the case
-alternatives by introducing the case binder with a usage environment $[\D]$,
-having the same proof irrelevant linear context $[\D]$ in the typing
-environment, and annotating the judgement with the proof irrelevant resources
+alternatives by introducing the case binder with an \ROUNDTWO{irrelevant} usage environment $[\D]$,
+having the same irrelevant $[\D]$ in the typing
+environment, and annotating the judgement with the irrelevant resources
 for use in the $\Rightarrow_{\textsf{NWHNF}}$ judgement:
 \[
 \TypeCaseNotWHNF
@@ -2524,8 +2535,9 @@ judgement annotation to be made ``irrelevant''.
 % resources, be those irrelevant or relevant resources}
 
 Finally, we recall the tentative $Case_\textrm{WHNF}$ rule presented before and
-highlight its flaw: the $\G;\D \vdash_{alt} \rho \to e :^z_{\D_s} \s \Rightarrow_{\textsf{WHNF}}
-\vp$ judgement is only well-defined for patterns $\rho$ matching the WHNF form
+highlight its flaw: the $\G;\D \vdash \rho \Rightarrow_{\textsf{WHNF}}
+e :^z_{\D_s} \s$ judgement is only well-defined for patterns $\rho$
+matching the WHNF form 
 of the scrutinee, as the distribution of resources per constructor components
 only makes sense for the constructor pattern matching the scrutinee.
 % Essentially, if the scrutinee is in WHNF the matching alternative is easily
@@ -2534,12 +2546,15 @@ only makes sense for the constructor pattern matching the scrutinee.
 % %
 Alternatives not matching the scrutinee could use resources arbitrarily as they
 will never be executed. We uniformly treat non-matching alternatives
-as if the scrutinee were not in WHNF. Having introduced proof irrelevant
+as if the scrutinee were not in WHNF. Having introduced irrelevant
 resources, we can now present the full $Case_\textrm{WHNF}$ rule:
 \[
 \TypeCaseWHNF
 \]
-We note that it might seem unusual to specialize a rule for expressions in
+\ROUNDTWO{where the matching pattern is typed as before, with the
+  case-binder $z$ is annotated with the appropriate usage environment;
+  and the non-matching patterns are if the scrutinee were notin WHNF.}
+We again note that it might seem unusual to specialize a rule for expressions in
 WHNF, as programs scrutinizing an expression in WHNF are rarely
 written by humans.
 Yet, our system is designed to be suitable for optimising compilers
@@ -2561,7 +2576,7 @@ in which intermediate programs commonly scrutinize expressions in WHNF.
 % variables (for uniformity, we also treat alternatives that do not match a
 % scrutinee in WHNF this way).
 
-As opposed to scrutinees in WHNF, where the resources used to type a scrutinee
+As opposed to scrutinees in WHNF, where resources 
 can be cleanly divided amongst the various sub-expressions of a constructor
 application and, henceforth, each pattern variable, there is no direct mapping
 between the resources typing a scrutinee not in WHNF and the usage
@@ -2578,12 +2593,12 @@ environments of pattern variables in any alternative.
 We introduce \emph{tagged resources} as a means to enforce that all pattern-bound
 variables for a scrutinee not in WHNF are either \emph{jointly} used to consume
 all resources occurring in the environment, or not at all (instead, the case
-binder may be used). Given linear resources $[\D_s]$ used to type a scrutinee,
+binder may be used). Given \ROUNDTWO{irrelevant} resources $[\D_s]$ used to type a scrutinee,
 and a pattern $K~\ov{x_\omega},\ov{y_i}$ with $i$ linear components, we assign
 a usage environment $\D_i$ to each linear pattern variable where $\D_i$ is
 obtained from the scrutinee environment \emph{tagged} with the constructor name
 and linear-variable index $\lctag{\irr{\D_s}\!}{K_i}$. Then, $y_i{:}_{\D_i}\s$ is
-introduced in $\G$, just like other $\D$-variables.
+introduced in $\G$, just like other $\D$-bound variables.
 \[
   \begin{array}{cc}
     \TypeAltNNotWHNF & \TypeVarSplit
@@ -2594,10 +2609,11 @@ introduced in $\G$, just like other $\D$-variables.
 % position of the pattern variable among all bound variables in that pattern.
 %
 Having uniquely tagged the resources in the usage environment of each pattern
-variable, we need only to express that (1) the pattern-bound $\D$-variables can
+variable, we need only express that (1) the pattern $\D$-bound variables can
 be used (i.e., the tagged resources need be available in the linear
 environment in order for the $\textsc{Var}_\D$ rule to be applicable) and (2)
-if a $K$-pattern-bound $\D$-variable is consumed, all remaining $K$-$\D$-variables,
+if a $K$-pattern $\D$-bound variable is consumed, all remaining
+$K$-$\D$-bound variables,
 standing for the remaining linear components of the same pattern, must also be
 consumed.
 
@@ -2862,8 +2878,7 @@ semantics, with the exception of the linear variable rule which erases
 the binding from the execution environment. Both semantics define
 evaluation relations of the form $a \Downarrow b$, where $a$ and $b$
 are evaluation states. We also rely on a notion
-of partial derivations and partial evaluation (see
-Appendix~\ref{app:opsem}), written $a\Downarrow^* b$, which allows us
+of partial derivations and partial evaluation (see~\cite{techreport}), written $a\Downarrow^* b$, which allows us
 to state and reason about a progress property.
 
 \begin{figure}
@@ -3007,7 +3022,9 @@ $\G,\xo; \D \vdash e : \vp$ iff $\G,\x[\cdot]; \D \vdash e : \vp$
 % variables
 A well-typed program with a linear variable ($\xl$) is equivalently
 well-typed if the linear variable were instead $\D$-bound ($\xD$) with
-usage environment $\D$, with $\D$ available in the linear context (and the unrestricted context updated accordingly).
+usage environment $\D$, with $\D$ available in the linear context and
+\ROUNDTWO{with any occurrences of $x$ in usage environments in $\G$
+  expanded into $x$'s usage environment $\Delta$, with the abuse of notation $\Gamma[\Delta/x]$.
 
 \LinearDeltaRelationLemma
 
