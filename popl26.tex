@@ -1276,13 +1276,12 @@ f8 x y use = case (x,y) of z { (a,b) -> use a x }
 This idea that $x$ and $a$ are mutually exclusive is \ROUNDTWO{akin to how} let
 bindings \ROUNDTWO{are} mutually exclusive \ROUNDTWO{with the set} of resources
 \ROUNDTWO{they capture, in the let-continuation}.
-\ROUNDTWO{Forcing a pattern variable evaluates the corresponding expression to
-which the constructor was applied, and all linear variables captured by that
-expression may }.
-Otherwise, if we do not use the
-pattern variables, then we do not run the computation and thus no resources are
-consumed.
-
+\ROUNDTWO{Forcing a pattern variable evaluates the expression for the
+corresponding constructor field, and all linear variables captured by that
+expression may end up being used}.
+% If we do not use the pattern variables, then we do not run the computation and
+% thus no resources are consumed.
+%
 A third (semantically well-typed, but rejected by Linear Haskell) option is to use the case binder $z$ instead of $a,b$ or $x,y$:
 \begin{notyet}
 \begin{lstlisting}
@@ -1290,10 +1289,11 @@ f9 :: a *' $\lolli$ '* b *' $\lolli$ '* (a *' $\lolli$ '* b *' $\lolli$ '* c) ->
 f9 x y use = case (x,y) of z { (a,b) -> uncurry use z }
 \end{lstlisting}
 \end{notyet}
-Again, $z$ is mutually exclusive with $(a,b)$ and with $(x,y)$, but at least one of
-the three must occur to ensure the linear resources are consumed. In this
-example, we can think that using $a$ entails using the resource $x$, $b$ the
-resource $y$, and the case binder $z$ entails using both $a$ and $b$.
+Again, $z$ is mutually exclusive with $(a,b)$ and with $(x,y)$, but at least
+one of the three must \ROUNDTWO{be used} to ensure the
+linear resources are consumed. Essentially, in this example, using $a$ entails
+using the resource $x$, $b$ the resource $y$, and the case binder $z$ entails
+using both $a$ and $b$.
 
 Dually, consider the scrutinee to be an expression that's not in WHNF, s.t.
 evaluating it to WHNF will require performing computation and thus consume linear
