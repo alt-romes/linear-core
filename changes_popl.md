@@ -8,6 +8,7 @@ greatly improved the revised version of our paper.
 ## Overview
 
 We have highlighted in purple all of the additions to the paper.
+
 As per our response, we have implemented all of the items in the proposed change list.
 Specifically:
  - Revised the paper title and abstract,
@@ -18,6 +19,7 @@ Specifically:
  - Address all minor corrections and presentation issued, expanding explanations
    as requested.
 
+We have also deanonymized the paper as requested in the author instructions.
 
 ## Main Changes
 
