@@ -15,19 +15,19 @@
 \begin{proof}~
 \begin{tabbing}
     Subcase $x$ is linear\\
-    (1) $\G; \D,\xl \vdash \ccase{x}{\z[\irr{x}]~\{\ov{\rho \to e}\}} : \vp$\\
+    (1) $\G; \D,\xl \vdash \ccase{x}{\z[\irr{x}]~\{\ov{\rho \Rightarrow e}\}} : \vp$\\
     (2) $\G; \xl \vdash x : \s$\`by inv. on $Case_\textrm{Not WHNF}$\\
-    (3) $\ov{\G, \z[\irr{x}]; \D, \irr{\xl} \vdash_{alt} \rho \to e :^z_{\irr{x}} \s \Rrightarrow \vp}$\`by inv. on $Case_\textrm{Not WHNF}$\\
-    (4) $\ov{\G, \z[\irr{x}]; \D, \irr{\xl} \vdash_{alt} \rho \to e[z/x] :^z_{\irr{x}} \s \Rrightarrow \vp}$\\\`by $x$ cannot occur in $e$ bc it's proof irrelevant\\
-    (5) $\G;\D,\xl \vdash \ccase{x}{\z[\irr{x}]~\{\ov{\rho \to e[z/x]}\}} : \vp$\`by $Case_\textrm{Not WHNF}$\\
+    (3) $\ov{\G, \z[\irr{x}]; \D, \irr{\xl} \vdash_{alt} \rho \Rightarrow e :^z_{\irr{x}} \s \Rrightarrow \vp}$\`by inv. on $Case_\textrm{Not WHNF}$\\
+    (4) $\ov{\G, \z[\irr{x}]; \D, \irr{\xl} \vdash_{alt} \rho \Rightarrow e[z/x] :^z_{\irr{x}} \s \Rrightarrow \vp}$\\\`by $x$ cannot occur in $e$ bc it's proof irrelevant\\
+    (5) $\G;\D,\xl \vdash \ccase{x}{\z[\irr{x}]~\{\ov{\rho \Rightarrow e[z/x]}\}} : \vp$\`by $Case_\textrm{Not WHNF}$\\
     Subcase $x$ is unrestricted\\
-    (1) $\G,\xo; \D \vdash \ccase{x}{\z[\cdot]~\{\ov{\rho \to e}\}} : \vp$\\
+    (1) $\G,\xo; \D \vdash \ccase{x}{\z[\cdot]~\{\ov{\rho \Rightarrow e}\}} : \vp$\\
     (2) $\G,\xo; \cdot \vdash x : \s$\`by inv. on $Case_\textrm{Not WHNF}$\\
-    (3) $\ov{\G,\xo, \z[\cdot]; \D \vdash_{alt} \rho \to e :^z_{\cdot} \s \Rrightarrow \vp}$\`by inv. on $Case_\textrm{Not WHNF}$\\
+    (3) $\ov{\G,\xo, \z[\cdot]; \D \vdash_{alt} \rho \Rightarrow e :^z_{\cdot} \s \Rrightarrow \vp}$\`by inv. on $Case_\textrm{Not WHNF}$\\
     (4) $\G,\z[\cdot]; \cdot \vdash z : \s$\`by $Var_\D$\\
-    (5) $\ov{\G, \z[\cdot]; \D \vdash_{alt} \rho \to e[z/x] :^z_{\cdot} \s \Rrightarrow \vp}$\`by unr. subst. lemma (3,4)\\
-    % (5.5) $\ov{\G,\xo, \z[\cdot]; \D \vdash_{alt} \rho \to e[z/x] :^z_{\cdot} \s \Rrightarrow \vp}$\`by (admissible) $Weaken_\omega$\\
-    (6) $\G,\xo;\D \vdash \ccase{x}{\z[\cdot]~\{\ov{\rho \to e[z/x]}\}} : \vp$\`by $Weaken_\omega$ and $Case_\textrm{Not WHNF}$\\
+    (5) $\ov{\G, \z[\cdot]; \D \vdash_{alt} \rho \Rightarrow e[z/x] :^z_{\cdot} \s \Rrightarrow \vp}$\`by unr. subst. lemma (3,4)\\
+    % (5.5) $\ov{\G,\xo, \z[\cdot]; \D \vdash_{alt} \rho \Rightarrow e[z/x] :^z_{\cdot} \s \Rrightarrow \vp}$\`by (admissible) $Weaken_\omega$\\
+    (6) $\G,\xo;\D \vdash \ccase{x}{\z[\cdot]~\{\ov{\rho \Rightarrow e[z/x]}\}} : \vp$\`by $Weaken_\omega$ and $Case_\textrm{Not WHNF}$\\
 \end{tabbing}
 
 

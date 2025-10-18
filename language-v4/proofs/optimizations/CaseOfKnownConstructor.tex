@@ -18,8 +18,8 @@ The proof follows trivially from the preservation theorem.
 
 \begin{proof}~
 \begin{tabbing}
-    (1) $\G; \D, \D' \vdash \ccase{K~\ov{e}}{\z[\D][\s]~\{..., K~\ov{x} \to e_i\}} : \vp$\\
-    (2) $\ccase{K~\ov{e}}{\z[\D][\s]~\{..., K~\ov{x} \to e_i\}} \longrightarrow e_i\ov{[e/x]}[K~\ov{e}/z]$\\
+    (1) $\G; \D, \D' \vdash \ccase{K~\ov{e}}{\z[\D][\s]~\{..., K~\ov{x} \Rightarrow e_i\}} : \vp$\\
+    (2) $\ccase{K~\ov{e}}{\z[\D][\s]~\{..., K~\ov{x} \Rightarrow e_i\}} \longrightarrow e_i\ov{[e/x]}[K~\ov{e}/z]$\\
     (3) $\G; \D,\D' \vdash e_i\ov{[e/x]}[K~\ov{e}/z] : \vp$\` by preservation theorem (1,2)\\
 \end{tabbing}
 \end{proof}

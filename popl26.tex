@@ -466,7 +466,7 @@ our instrumented operational semantics under which a program using a
 linear resource non-linearly gets stuck
 (Section~\ref{sec:main:metatheory}).
 
-\item We introduce Linear Core, a \ROUNDTWO{lazy} linear language with
+\item We introduce Linear Core (Section~\ref{sec:main:linear-core}), a \ROUNDTWO{lazy} linear language with
 the key features of Core (except for type equality coercions), whose type
 system \ROUNDTWO{is designed to accept the lazy} semantics of
 linearity. \ROUNDTWO{Our system achieves this via a novel combination
@@ -480,22 +480,31 @@ linearity. \ROUNDTWO{Our system achieves this via a novel combination
 %
 To the best of our
 knowledge, this is the first type system \ROUNDTWO{to accept programs
-which depend on non-strict evaluation to be understood as linear}
-(Section~\ref{sec:main:linear-core}).
+which depend on non-strict evaluation to be understood as linear}.
 
 \item We prove that our type system is sound, guarantees linear resource usage, and
     prove that multiple optimising transformations, which are rejected in Core,
         are validated by Linear Core (Section~\ref{sec:main:metatheory}).
 
 \item We discuss our implementation of Linear Core as a GHC
-  plugin\footnote{We plan to submit our implementation as a companion
-    artifact to this paper.} which checks linearity in
+  plugin which checks linearity in
 all intermediate Core programs produced during the compilation process, showing
 it accepts the programs resulting from transformations in libraries such as
 \texttt{linear-base} (Section~\ref{sec:discuss:implementation}).
 
 \end{itemize}
 
+\ROUNDTWO{The reader may wonder whether the complexities of our
+  system hinted above are a better alternative to simply specializing
+  the optimisation passes to produce code that passes a more naive
+  linearity check. This avenue was already explored during the
+  implementation of Linear
+  Haskell in
+  GHC\footnote{https://gitlab.haskell.org/ghc/ghc/-/issues/22123},
+ exhibiting the prohibitive cost of too often restricting
+ optimisations and producing less efficient code. Our work adheres to
+ the principle that the type system bends to the optimisations, not
+ the other way around.}
 \noindent \ROUNDTWO{While GHC's Core language is our main focus, we
 note that the ideas explored in this work can potentially be applied to any
 language with non-strict features, even if the language itself is strict.}
@@ -1605,8 +1614,10 @@ must be treated more conservatively.
 of others. Namely, linear resources occurring in non-WHNF case scrutinees can
 no longer be used in the alternatives, while the pattern variables (or the case
 binder) must necessarily be used. Tagged resources follow the observation that
-some variables must be used jointly or not at all.
-}
+some variables must be used jointly or not at all.}
+
+
+
 %
 % Linear Core's first key idea is to delay consuming
 % resources until a computation that depends on those resources is effectively
@@ -1631,13 +1642,6 @@ Finally, we introduce the rules to type case expressions and case alternatives,
 along with the key insights to do so, namely \ROUNDTWO{discriminating by} the WHNF-ness of
 the scrutinee, irrelevant resources, and tagging (Section~\ref{sec:lc-case-exps}).
 
-% We start by introducing the Core-like language, $\dots$ usage environments as a
-% way to encode choice between the way a resource is used $\dots$\todo{$\dots$}
-%
-
-%\todo[inline]{Explicar algumas das ideias fundamentais, e apresentar as regras
-%iterativamente. Podemos começar com as triviais e avançar para os dois pontos
-%mais difíceis : Lets e Cases}
 
 \subsection{Language Syntax}
 
@@ -4526,7 +4530,7 @@ let-binding of variables $\ov{x_i}$.
     (e~e')^* & \triangleq & \llet{x{:}_{\Delta}\sigma =
                             (e')^*}{(e)^*~x}     \\ &&\qquad \mbox{with
                             $\Gamma;\Delta' \vdash e :
-                            \sigma\rightarrow_\pi \varphi$} \\ &&\qquad \mbox{and
+                            \sigma\rightarrow_\pi \tau$} \\ &&\qquad \mbox{and
                                        $\Gamma;\Delta \vdash e' : \sigma$}\\
       K~\ov{e_i} & \triangleq & \llet{\ov{x_i:_{\Delta_i} \sigma_i =
                                    (e_i)^*}}{K~\ov{x_i}} \\ &&
@@ -4534,10 +4538,10 @@ let-binding of variables $\ov{x_i}$.
                                        $\ov{\Gamma;\Delta_i\vdash
                                        e_i :
                                        \sigma_i}$}\\                                              
-(\ccase{e}{z{:}_{\Delta}\sigma~\{\overline{\rho\to e'}\}})^* &
+(\ccase{e}{z{:}_{\Delta}\sigma~\{\overline{\rho\ROUNDTWO{\Rightarrow} e'}\}})^* &
                                                                \triangleq
                                 &
-                                  \ccase{(e)^*}{z{:}_{\Delta}\sigma~\{\overline{\rho\to (e')^*}\}}\\
+                                  \ccase{(e)^*}{z{:}_{\Delta}\sigma~\{\overline{\rho\ROUNDTWO{\Rightarrow} (e')^*}\}}\\
     (\llet{x{:}_{\Delta}\sigma = e}{e'}      )^* & \triangleq & \llet{x{:}_{\Delta}\sigma  = (e)^*}{(e')^*}    \\
     (\lletrec{\overline{x{:}_{\Delta}\sigma = e}}{e'}  )^* & \triangleq &\lletrec{\overline{x{:}_{\Delta}\sigma = (e)^*}}{(e')^*}  
       \end{array}
@@ -4700,7 +4704,7 @@ used.
     \Gamma ;\Delta \vdash (\Theta' \mid e'\ov{[x_i/y_{i,j}]}[K~\ov{x_i}/z]
     ) \Downarrow (\Theta'' \mid v) :\tau , \Sigma }
     {\Gamma ;\Delta \vdash (\Theta \mid
-    \ccase{e}{z{:}_{\Delta'}T~\{{\dots,K~\ov{y_{i,j}} \to e', {\dots} }\}})
+    \ccase{e}{z{:}_{\Delta'}T~\{{\dots,K~\ov{y_{i,j}} \,\ROUNDTWO{\Rightarrow}\, e', {\dots} }\}})
     \Downarrow (\Theta'' \mid  v) : \tau , \Sigma}\\[1.5em]
 
     
@@ -4712,7 +4716,7 @@ used.
     \Gamma ;\Delta \vdash (\Theta' \mid  e'[K~\ov{x_i}/z])
     \Downarrow (\Theta'' \mid v) : \tau,\Sigma }
     {\Gamma ; \Delta \vdash (\Theta \mid 
-    \ccase{e}{z{:}_{\Delta'}T~\{\dots , \_\to
+    \ccase{e}{z{:}_{\Delta'}T~\{\dots , \_\,\ROUNDTWO{\Rightarrow}\,
     e'}\}) \Downarrow (\Theta'' \mid v) : \tau}
     \\[1.5em]
 
@@ -5037,16 +5041,16 @@ environment expansion can decide whether to unwrap to a letrec group or
 not. Unlike the case proved here, when the $\D$-binding belongs to a let group,
 the whole group is unwrapped and we can invert the assumption to get an
 $e$ typed with the $x$s from the group.\\
-\item[Case:] $\Gamma; \Delta \vdash (\Theta \mid \ccase{e}{z{:}_{\Delta'}\s~\{K~\ov{y_i}\to e'}\}) \Downarrow (\Theta'' \mid v) : \tau$
+\item[Case:] $\Gamma; \Delta \vdash (\Theta \mid \ccase{e}{z{:}_{\Delta'}\s~\{K~\ov{y_i}\Rightarrow e'}\}) \Downarrow (\Theta'' \mid v) : \tau$
 \begin{tabbing}
-    (1) $\Gamma; \Delta \vdash \Theta \mid \ccase{e}{z{:}_{\Delta_a}\s~\{K~\ov{y_i}\to e'}\} : \tau, \Sigma$\\
-    (2) $\G, \Theta{\uparrow}^\omega; \D, \Theta{\uparrow}^1 \vdash (\ccase{e}{z{:}_{\Delta_a}\s~\{K~\ov{y_i}\to e'}\}, \Theta{\downarrow}^1_e, \Sigma) : \tau \otimes \bigotimes(\Theta{\downarrow}^1_\sigma) \otimes \bigotimes(\Sigma)$\`by \ref{lem:unwrapenv}\\
+    (1) $\Gamma; \Delta \vdash \Theta \mid \ccase{e}{z{:}_{\Delta_a}\s~\{K~\ov{y_i}\Rightarrow e'}\} : \tau, \Sigma$\\
+    (2) $\G, \Theta{\uparrow}^\omega; \D, \Theta{\uparrow}^1 \vdash (\ccase{e}{z{:}_{\Delta_a}\s~\{K~\ov{y_i}\Rightarrow e'}\}, \Theta{\downarrow}^1_e, \Sigma) : \tau \otimes \bigotimes(\Theta{\downarrow}^1_\sigma) \otimes \bigotimes(\Sigma)$\`by \ref{lem:unwrapenv}\\
     (3) $Let~\G' = \G, \Theta\uparrow^\omega; \D_a,\D_b,\D_2,\D_3 = \D,\Theta\uparrow^1$\`s.t. $(\D_2,\D_3)$ types $(\Theta\downarrow^1_e, \Sigma)$\\
-    (4) $\G'; \D_a, \D_b \vdash \ccase{e}{z{:}_{\D_a}\s\{K~\ov{y_i}\to e'\}} : \tau$\\
+    (4) $\G'; \D_a, \D_b \vdash \ccase{e}{z{:}_{\D_a}\s\{K~\ov{y_i}\Rightarrow e'\}} : \tau$\\
     Subcase $e$ is in WHNF (thus $= K~\ov{x_i}$)\\
     (5) $\G'; \D_a \Vdash K~\ov{x_i} : \s \gtrdot \ov{\D_i}$\` by subcase\\
     (6) $\G', z{:}_{\D_a}\s; \D_a, \D_b \vdash_{alt} K~\ov{y_i} \to e' :^z_{\D_i} \s \Rightarrow \tau$\` by inv\\
-    Subsubcase $\vdash_{alt}$ $Alt_{WHNF}$\\
+    Subsubcase $\vdash$ $Alt_{WHNF}$\\
     (7) $\G', z{:}_{\D_a}\s, \ov{y_i{:}_\omega\s_i}, \ov{y_j{:}_{\Delta_j}\s_j}; \D_a, \D_b \vdash e' : \tau$\` by inv\\
     (8) $\Theta' = \Theta$\` in this subcase because $(\Theta \mid K~\ov{x_i})\Downarrow(\Theta \mid K~\ov{x_i})$\\
     (9) $\G'; \ov{\D_i} \vdash K~\ov{x_i} : \s$\` by inv (5)\\
@@ -5056,7 +5060,7 @@ $e$ typed with the $x$s from the group.\\
     (13) $\G'; \D_a, \D_b \vdash e'\ov{[x_{i,j}/y_{i,j}]}[K~\ov{x_{i,j}}/z] : \tau$\` by $\D$-subst lemma and $\ov{\D_i} = \D_a$ (9,12)\\
     (14) $\G; \D \vdash \Theta \mid e'\ov{[x_{i,j}/y_{i,j}]}[K~\ov{x_{i,j}}/z] : \tau, \Sigma$\` by well-typed state\\
     (15) $\G; \D \vdash \Theta'' \mid v : \tau, \Sigma$\` by induction hypothesis\\
-    Subsubcase $\vdash_{alt}$ $Alt_{0}$\\
+    Subsubcase $\vdash$ $Alt_{0}$\\
     (7) $(\G', z{:}_{\D_a}\s)[\cdot/\D_a]_z, \ov{y_i{:}_\omega\sigma_i}; (\D_a, \D_b)[\cdot / \D_a] \vdash e' : \tau$\` by inv subcase\\
     (8) $\G', z{:}_{\cdot}, \ov{y_i{:}_\omega\sigma_i}; \D_b \vdash e' : \tau$\` by $z$ cannot occur in $\G'$\\
     (9) Since $\G';\D_a \Vdash K~\ov{x_i}$, in this subcase $\D_a = \cdot$\\
@@ -5068,7 +5072,7 @@ $e$ typed with the $x$s from the group.\\
     Subcase $e$ is not in WHNF\\
     (5) $\G'; \D_a \vdash e : \s$\` by inv on case\\
     (6) $\G', z{:}_{\irr{\D_a}}\s; \irr{\D_a}, \D_b \vdash_{alt} K~\ov{y_{i,j}} \to e' :^z_{\irr{\D_a}} \s $\` by inv on case\\
-    Subsubcase $\vdash_{alt}$ $Alt_{NWHNF}$\\
+    Subsubcase $\vdash$ $Alt_{NWHNF}$\\
     (7) $\G', z{:}_{\irr{\D_a}}\s, \ov{y_i{:}_\omega\s_i}, \ov{y_j{:}_{\Delta_j}\s_j}; \irr{\D_a}, \D_b \vdash e' : \tau$\` for \ov{\D_j = \lctag{\irr{\D_a}}{K_j}}, by inv.\\
     (8) $\G', z{:}_{\ov{y_j{:}_1\s_j}}\s, \ov{y_i{:}_\omega\s_i}; \ov{y_j{:}_1\s_j}, \D_b \vdash e' : \tau$\` by $\D$-bound to linear\\
     (9) $\G', z{:}_{\ov{y_j{:}_1\s_j}}\s, \ov{y_i{:}_\omega\s_i}; \D_a, \D_b, \ov{y_j{:}_1\s_j} \vdash (e, e') : \sigma \otimes \tau$\` by pair (5,8)\\
@@ -5084,7 +5088,7 @@ $e$ typed with the $x$s from the group.\\
     (17) $\G''; \D_c, \D_d \vdash e'\ov{[x_{i,j}/y_{i,j}]}[K~\ov{x_{i,j}}/z] : \tau$\`by $\D$-subst lemma (13a,16)\\
     (18) $\G; \D \vdash \Theta' \mid e'\ov{[x_{i,j}/y_{i,j}]}[K~\ov{x_{i,j}}/z] : \tau, \Sigma$\`by well-typed state\\
     (19) $\G; \D \vdash \Theta'' \mid v : \tau, \Sigma$\`by induction hypothesis\\
-    Subsubcase $\vdash_{alt}$ $Alt_0$\\
+    Subsubcase $\vdash$ $Alt_0$\\
     (7) $\G', z{:}_\cdot\s, \ov{y_i{:}_\omega\s_i}; \D_b \vdash e' : \tau$\` by inv\\
     (8) $\G', z{:}_\cdot\s, \ov{y_i{:}_\omega\s_i}; \D_a, \D_b \vdash (e, e') : \sigma \otimes \tau$\` by pair (5,7)\\
     (9) $\G, z{:}_\cdot\s, \ov{y_i{:}_\omega\s_i}; \D \vdash \Theta \mid e : \sigma, e' : \tau, \Sigma$\` by well-typed state\\
@@ -5100,12 +5104,12 @@ $e$ typed with the $x$s from the group.\\
     \tau, \Sigma$\` by well-typed state\\
     (16) $\G; \D \vdash \Theta'' \mid v : \tau, \Sigma$\` by induction hypothesis\\
 \end{tabbing}
-\item[Case:] $\Gamma; \Delta \vdash (\Theta \mid \ccase{e}{z{:}_{\Delta'}\s~\{\_ \to e'}\}) \Downarrow (\Theta'' \mid v) : \tau$
+\item[Case:] $\Gamma; \Delta \vdash (\Theta \mid \ccase{e}{z{:}_{\Delta'}\s~\{\_ \Rightarrow e'}\}) \Downarrow (\Theta'' \mid v) : \tau$
 \begin{tabbing}
-    (1) $\Gamma; \Delta \vdash \Theta \mid \ccase{e}{z{:}_{\Delta_a}\s~\{\_ \to e'}\} : \tau, \Sigma$\\
-    (2) $\G, \Theta{\uparrow}^\omega; \D, \Theta{\uparrow}^1 \vdash (\ccase{e}{z{:}_{\Delta_a}\s~\{\_ \to e'}\}, \Theta{\downarrow}^1_e, \Sigma) : \tau \otimes \bigotimes(\Theta{\downarrow}^1_\sigma) \otimes \bigotimes(\Sigma)$\`by \ref{lem:unwrapenv}\\
+    (1) $\Gamma; \Delta \vdash \Theta \mid \ccase{e}{z{:}_{\Delta_a}\s~\{\_ \Rightarrow e'}\} : \tau, \Sigma$\\
+    (2) $\G, \Theta{\uparrow}^\omega; \D, \Theta{\uparrow}^1 \vdash (\ccase{e}{z{:}_{\Delta_a}\s~\{\_ \Rightarrow e'}\}, \Theta{\downarrow}^1_e, \Sigma) : \tau \otimes \bigotimes(\Theta{\downarrow}^1_\sigma) \otimes \bigotimes(\Sigma)$\`by \ref{lem:unwrapenv}\\
     (3) $Let~\G' = \G, \Theta\uparrow^\omega; \D_a,\D_b,\D_2,\D_3 = \D,\Theta\uparrow^1$\`s.t. $(\D_2,\D_3)$ types $(\Theta\downarrow^1_e, \Sigma)$\\
-    (4) $\G'; \D_a, \D_b \vdash \ccase{e}{z{:}_{\D_a}\s\{\_ \to e'\}} : \tau$\\
+    (4) $\G'; \D_a, \D_b \vdash \ccase{e}{z{:}_{\D_a}\s\{\_ \Rightarrow e'\}} : \tau$\\
     (5) $\G'; \D_a \vdash e : \sigma$\\
     Subcase $e$ is in WHNF\\
     (-) Similar to the same subcase in the case-with-pattern-vars reduction,\\

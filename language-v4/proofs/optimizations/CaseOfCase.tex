@@ -3,46 +3,46 @@
 
 \begin{proof}~
 \begin{tabbing}
-    (1) $\G; \D, \D', \D'' \vdash \ccase{\ccase{e_c}{\zD~\{\ov{\rho_{c_i} \to e_{c_i}}\}}}{w{:}\s'~\{\ov{\rho_i \to e_i}\}} : \vp$\\
-    (2) $\G; \D, \D' \vdash \ccase{e_c}{\zD~\{\ov{\rho_{c_i} \to e_{c_i}}\}} : \s'$ \`by inv.\\
-    (3) $\ov{\G, \var[w][\irr{\D,\D'}][\s']; \irr{\D,\D'},\D'' \vdash_{alt} \rho \to e_i :^w_{\irr{\D,\D'}} \s' \Rightarrow \vp}$\`by inv.\\
+    (1) $\G; \D, \D', \D'' \vdash \ccase{\ccase{e_c}{\zD~\{\ov{\rho_{c_i} \Rightarrow e_{c_i}}\}}}{w{:}\s'~\{\ov{\rho_i \Rightarrow e_i}\}} : \vp$\\
+    (2) $\G; \D, \D' \vdash \ccase{e_c}{\zD~\{\ov{\rho_{c_i} \Rightarrow e_{c_i}}\}} : \s'$ \`by inv.\\
+    (3) $\ov{\G, \var[w][\irr{\D,\D'}][\s']; \irr{\D,\D'},\D'' \vdash \rho \Rightarrow e_i :^w_{\irr{\D,\D'}} \vp}$\`by inv.\\
     Subcase $e_c$ is not in WHNF\\
     (4) $\G;\D \vdash e_c : \s$\\
-    (5) $\ov{\G,\var[z][\irr{\D}]; \irr{\D}, \D' \vdash \rho_{c_i} \to e_{c_i} :^z_{\irr{\D}} \s \Rrightarrow \s'}$\`by inv. (2)\\
+    (5) $\ov{\G,\var[z][\irr{\D}]; \irr{\D}, \D' \vdash \rho_{c_i} \Rightarrow e_{c_i} :^z_{\irr{\D}} \s'}$\`by inv. (2)\\
     For all alternatives\\
     Subcase $\rho_{c_i} = \_$\\
     (6) $\G,\var[z][\irr{\D}]; \irr{\D}, \D' \vdash e_{c_i} : \s'$\`by inv. on $Alt\_$ (5)\\
-    (7) $\ov{\G, \var[w][\irr{\irr{\D},\D'}][\s'],\D''; \irr{\D,\D'},\D'' \vdash_{alt} \rho \to e_i :^w_{\irr{\irr{\D},\D'}} \s' \Rightarrow \vp}$\`by irrelevance (3)\\
+    (7) $\ov{\G, \var[w][\irr{\irr{\D},\D'}][\s'],\D''; \irr{\D,\D'},\D'' \vdash_{alt} \rho \Rightarrow e_i :^w_{\irr{\irr{\D},\D'}} \vp}$\`by irrelevance (3)\\
     Subcase $e_{c_i}$ is not in WHNF\\
-    (8) $\G,\var[z][\irr{\D}]; \irr{\D},\D',\D'' \vdash \ccase{e_{c_i}}{w{:}_{\irr{\irr{\D},\D'}}\s'~\{\ov{\rho_i \to e_i}\}} : \vp$\\\`by (6,7) CaseNotWHNF\\
+    (8) $\G,\var[z][\irr{\D}]; \irr{\D},\D',\D'' \vdash \ccase{e_{c_i}}{w{:}_{\irr{\irr{\D},\D'}}\s'~\{\ov{\rho_i \Rightarrow e_i}\}} : \vp$\\\`by (6,7) CaseNotWHNF\\
     Subcase $e_{c_i}$ is in WHNF\\
     (8) $\G,z{:}_{\irr{\D}}\s; \irr{\D},\D' \Vdash e_{c_i} : \s' \gtrdot \ov{\D_i}$\`for some $\ov{\D_i}$ in this subcase\\
-    (9) $\G, w{:}_{\ov{\D_i}}\s'; \ov{\D_i}, \D'' \vdash_{alt} \rho_j \to e_i :^w_{\ov{\D_i}} \s' \Mapsto \vp$\`by irrelevance (3)\\\` for some matching $\rho_j$\\
-    (10) $\G, \z[\irr{\D}]; \irr{\D},\D',\D'' \vdash \ccase{e_{c_i}}{w{:}_{\ov{\D_i}}\s'~\{\ov{\rho_i \to e_i}\}} : \vp$\` by (7,8,9) CaseWHNF\\
+    (9) $\G, w{:}_{\ov{\D_i}}\s'; \ov{\D_i}, \D'' \vdash \rho_j \Mapsto e_i :^w_{\ov{\D_i}} \vp$\`by irrelevance (3)\\\` for some matching $\rho_j$\\
+    (10) $\G, \z[\irr{\D}]; \irr{\D},\D',\D'' \vdash \ccase{e_{c_i}}{w{:}_{\ov{\D_i}}\s'~\{\ov{\rho_i \Rightarrow e_i}\}} : \vp$\` by (7,8,9) CaseWHNF\\
     Subcase $\rho_{c_i} = K~\ov{\xo}$\\
     (6) $\G,\z[\cdot], \ov{\xo} ; \cdot, \D' \vdash e_{c_i} : \s'$\`by inv. on $Alt0$ (5)\\
-    (7) $\ov{\G; \var[w][\irr{\D'}][\s']; \irr{\D'}, \D'' \vdash_{alt} \rho_i \to e_i :^w_{\irr{\D'}} \s' \Rrightarrow \vp}$\`by irrelevance (3)\\
+    (7) $\ov{\G; \var[w][\irr{\D'}][\s']; \irr{\D'}, \D'' \vdash \rho_i \Rrightarrow e_i :^w_{\irr{\D'}} \vp}$\`by irrelevance (3)\\
     Subcase $e_{c_i}$ is not in WHNF\\
-    (8) $\G,\z[\cdot],\ov{\xo}; \D',\D'' \vdash \ccase{e_{c_i}}{\var[w][\irr{\D'}][\s']~\{\ov{\rho_i \to e_i}\}} : \vp$\`by (6,7) CaseNotWHNF\\
+    (8) $\G,\z[\cdot],\ov{\xo}; \D',\D'' \vdash \ccase{e_{c_i}}{\var[w][\irr{\D'}][\s']~\{\ov{\rho_i \Rightarrow e_i}\}} : \vp$\`by (6,7) CaseNotWHNF\\
     Subcase $e_{c_i}$ is in WHNF\\
     (8) $\G,\z[\cdot], \ov{\xo} ; \cdot, \D' \Vdash e_{c_i} : \s' \gtrdot \ov{\D_i}$\`by (6) in subcase\\
-    (9) $\G, \var[w][\ov{\D_i}][\s']; \ov{\D_i}, \D'' \vdash_{alt} \rho_i \to e_i :^w_{\ov{\D_i}} \s' \Mapsto \vp$\`by irrelevance (3)\\
-    (10) $\G,\z[\cdot],\ov{\xo}; \ov{\D_i},\D'' \vdash \ccase{e_{c_i}}{\var[w][\ov{\D_i}][\s']~\{\ov{\rho_i \to e_i}\}} : \vp$\`by (7,8,9) CaseWHNF\\
+    (9) $\G, \var[w][\ov{\D_i}][\s']; \ov{\D_i}, \D'' \vdash_{alt} \rho_i \Mapsto e_i :^w_{\ov{\D_i}} \vp$\`by irrelevance (3)\\
+    (10) $\G,\z[\cdot],\ov{\xo}; \ov{\D_i},\D'' \vdash \ccase{e_{c_i}}{\var[w][\ov{\D_i}][\s']~\{\ov{\rho_i \Rightarrow e_i}\}} : \vp$\`by (7,8,9) CaseWHNF\\
     Subcase $\rho_{c_i} = K~\ov{\xo}\ov{\y[1]}$, recalling that $e_c$ is not in WHNF\\
     (6) $\G,\z[\irr{\D}], \ov{\xo}, \ov{y{:}_{\lctag{\irr{\D}}{K_i}}\s}; \irr{\D},\D' \vdash e_{c_i} : \s'$\`by inv. on $AltN_\textrm{Not WHNF}$ (5)\\
-    (7) $\G,\var[w][\irr{\irr{\D},\D'}][\s']; \irr{\irr{\D}, \D'}, \D'' \vdash_{alt} \rho_i \to e_i :^w_{\irr{\irr{\D},\D'}} \s' \Rrightarrow \vp$\`by irrelevance (3)\\
+    (7) $\G,\var[w][\irr{\irr{\D},\D'}][\s']; \irr{\irr{\D}, \D'}, \D'' \vdash_{alt} \rho_i \Rrightarrow e_i :^w_{\irr{\irr{\D},\D'}} \vp$\`by irrelevance (3)\\
     Subcase $e_{c_i}$ is not in WHNF\\
-    (8) $\G,\z[\irr{\D}], \ov{\xo}, \ov{y{:}_{\lctag{\irr{\D}}{K_i}}\s}; \irr{\D},\D',\D'' \vdash \ccase{e_{c_i}}{\var[w][\irr{\irr{\D},\D'}][\s']~\{\ov{\rho_i \to e_i}\}} : \vp$\\
+    (8) $\G,\z[\irr{\D}], \ov{\xo}, \ov{y{:}_{\lctag{\irr{\D}}{K_i}}\s}; \irr{\D},\D',\D'' \vdash \ccase{e_{c_i}}{\var[w][\irr{\irr{\D},\D'}][\s']~\{\ov{\rho_i \Rightarrow e_i}\}} : \vp$\\
     Subcase $e_{c_i}$ is in WHNF\\
     (8) $\G,\z[\irr{\D}], \ov{\xo}, \ov{y{:}_{\lctag{\irr{\D}}{K_i}}\s}; \irr{\D},\D' \Vdash e_{c_i} : \s' \gtrdot \ov{\D_i}$\`by (6) in subcase\\
-    (9) $\G,\var[w][\irr{\D},\D'][\s']; \irr{\D}, \D', \D'' \vdash_{alt} \rho_i \to e_i :^w_{\irr{\D},\D'} \s' \Mapsto \vp$\`by irrelevance (3)\\
-    (10) $\G,\z[\irr{\D}], \ov{\xo}, \ov{y{:}_{\lctag{\irr{\D}}{K_i}}\s}; \irr{\D},\D',\D'' \vdash \ccase{e_{c_i}}{\var[w][\irr{\D},\D'][\s']~\{\ov{\rho_i \to e_i}\}} : \vp$\\
+    (9) $\G,\var[w][\irr{\D},\D'][\s']; \irr{\D}, \D', \D'' \vdash_{alt} \rho_i \Mapsto e_i :^w_{\irr{\D},\D'} \vp$\`by irrelevance (3)\\
+    (10) $\G,\z[\irr{\D}], \ov{\xo}, \ov{y{:}_{\lctag{\irr{\D}}{K_i}}\s}; \irr{\D},\D',\D'' \vdash \ccase{e_{c_i}}{\var[w][\irr{\D},\D'][\s']~\{\ov{\rho_i \Rightarrow e_i}\}} : \vp$\\
     Commonly to all alternatives subcases:\\
     (11) $\G;\D,\D',\D'' \vdash \ccase{e_c}{\textrm{alternatives from}~(8)~\textrm{or}~(10)} : \vp$\\
     Subcase $e_c$ is in WHNF\\
     (4) $\G; \D \Vdash e_c : \s \gtrdot \D$\\
-    (5) $\G, \zD; \D,\D' \vdash \rho_{c_j} \to e_{c_i} :^z_\D \s \Mapsto \vp$\`for $\rho_{c_j}$ matches $e_c$\\
-    (5) $\ov{\G, \z[\irr{D}]; \irr{\D},\D' \vdash \rho_{c_i} \to e_{c_i} :^z_{\irr{\D}} \s \Rrightarrow \vp}$\\
+    (5) $\G, \zD; \D,\D' \vdash \rho_{c_j} \Rightarrow e_{c_i} :^z_\D \s \Mapsto \vp$\`for $\rho_{c_j}$ matches $e_c$\\
+    (5) $\ov{\G, \z[\irr{D}]; \irr{\D},\D' \vdash \rho_{c_i} \Rightarrow e_{c_i} :^z_{\irr{\D}} \s \Rrightarrow \vp}$\\
     Continue as in the previous subcase, but with $\D$ instead of $\irr{\D}$\\
 
 \end{tabbing}

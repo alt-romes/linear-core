@@ -210,28 +210,28 @@ Statement (1):
 \begin{tabbing}
     (1) $\G; \D \vdash e' : \s$\\
     Subcase $\D$ occurs in $e$\\
-    (2) $\G,\xD;\D,\D',\D'' \vdash \ccase{e}{\z[\D,\D'][\s']~\{\ov{\rho \to e''}\}} : \vp$\\
+    (2) $\G,\xD;\D,\D',\D'' \vdash \ccase{e}{\z[\D,\D'][\s']~\{\ov{\rho \Rightarrow e''}\}} : \vp$\\
     (3) $e$ is in WHNF\\
     (4) $\rho_j$ matches $e$\\
     (5) $\G,\xD;\D,\D' \vdash e : \s'$\\
-    (6) $\G,\xD,\z[\D,\D'][\s']; \D,\D',\D'' \vdash_{alt} \rho_j \to e'' :^z_{\D,\D'} : \s' \Mapsto \vp$\\
-    (7) $\ov{\G,\xD,\z[\irr{\D,\D'}][\s']; [\D,\D'],\D'' \vdash_{alt} \rho \to e'' :^z_{\irr{\D,\D'}} \s'\Rrightarrow\vp}$\` by inv.\\
+    (6) $\G,\xD,\z[\D,\D'][\s']; \D,\D',\D'' \vdash \rho_j \Mapsto e'' :^z_{\D,\D'} : \vp$\\
+    (7) $\ov{\G,\xD,\z[\irr{\D,\D'}][\s']; [\D,\D'],\D'' \vdash\rho \Rrightarrow e'' :^z_{\irr{\D,\D'}} \vp}$\` by inv.\\
     (8) $\G;\D,\D' \vdash e[e'/x] : \s'$\` by i.h.(1)\\
-    (9) $\G,\z[\D,\D'][\s']; \D,\D',\D'' \vdash_{alt} \rho_j \to e''[e'/x] :^z_{\D,\D'} \s' \Rightarrow \vp$\` by i.h.(2)\\
-    (10) $\ov{\G,\z[\irr{\D,\D'}][\s']; [\D,\D'],\D'' \vdash_{alt} \rho \to e'' :^z_{\irr{\D,\D'}} \s'\Rrightarrow\vp}$\` by (7) and proof steps below\\\`from case $CaseNotWHNF$\\
-    (11) $\G;\D,\D',\D'' \vdash \ccase{e[e'/x]}{\z[\D,\D'][\s']~\{\ov{\rho \to e''[e'/x]}\}} : \vp$\` by $CaseWHNF$\\
+    (9) $\G,\z[\D,\D'][\s']; \D,\D',\D'' \vdash\rho_j \Rightarrow e''[e'/x] :^z_{\D,\D'} \vp $\` by i.h.(2)\\
+    (10) $\ov{\G,\z[\irr{\D,\D'}][\s']; [\D,\D'],\D'' \vdash \rho \Rrightarrow e'' :^z_{\irr{\D,\D'}} \vp}$\` by (7) and proof steps below\\\`from case $CaseNotWHNF$\\
+    (11) $\G;\D,\D',\D'' \vdash \ccase{e[e'/x]}{\z[\D,\D'][\s']~\{\ov{\rho \Rightarrow e''[e'/x]}\}} : \vp$\` by $CaseWHNF$\\
     Subcase $\D$ does not occur in $e$\\
-    (2) $\G,\xD;\D,\D',\D'' \vdash \ccase{e}{\z[\D'][\s']~\{\ov{\rho \to e''}\}} : \vp$\\
+    (2) $\G,\xD;\D,\D',\D'' \vdash \ccase{e}{\z[\D'][\s']~\{\ov{\rho \Rightarrow e''}\}} : \vp$\\
     (3) $e$ is in WHNF\\
     (4) $\rho_j$ matches $e$\\
     (5) $\G,\xD;\D' \vdash e : \s'$\\
     (6) $\G;\D' \vdash e : \s'$\` by (admissible) $Weaken_\D$\\
     (7) $e[e'/x] = e$\` by $x$ cannot occur in $e$\\
-    (8) $\G,\xD,\z[\D'][\s']; \D,\D',\D'' \vdash_{alt} \rho_j \to e'' :^z_{\D'} : \s' \Mapsto \vp$\\
-    (9) $\ov{\G,\xD,\z[\irr{\D'}][\s']; \D,[\D'],\D'' \vdash_{alt} \rho \to e'' :^z_{\irr{\D'}} \s'\Rrightarrow\vp}$\` by inv.\\
-    (10) $\G,\z[\D'][\s']; \D,\D',\D'' \vdash_{alt} \rho_j \to e''[e'/x] :^z_{\D'} \s' \Mapsto \vp$\` by i.h.(2)\\
-    (11) $\ov{\G,\z[\irr{\D'}][\s']; \D,[\D'],\D'' \vdash_{alt} \rho \to e''[e'/x] :^z_{\irr{\D'}} \s'\Rrightarrow\vp}$\\\` by i.h.(2)\\
-    (12) $\G;\D,\D',\D'' \vdash \ccase{e[e'/x]}{\z[\D'][\s']~\{\ov{\rho \to e''[e'/x]}\}} : \vp$\` by $CaseWHNF$\\
+    (8) $\G,\xD,\z[\D'][\s']; \D,\D',\D'' \vdash \rho_j \Mapsto e'' :^z_{\D'} : \vp$\\
+    (9) $\ov{\G,\xD,\z[\irr{\D'}][\s']; \D,[\D'],\D'' \vdash_{alt} \rho \Rrightarrow e'' :^z_{\irr{\D'}} \vp}$\` by inv.\\
+    (10) $\G,\z[\D'][\s']; \D,\D',\D'' \vdash_{alt} \rho_j \Mapsto e''[e'/x] :^z_{\D'} \vp$\` by i.h.(2)\\
+    (11) $\ov{\G,\z[\irr{\D'}][\s']; \D,[\D'],\D'' \vdash_{alt} \rho \Rrightarrow e''[e'/x] :^z_{\irr{\D'}} \vp}$\\\` by i.h.(2)\\
+    (12) $\G;\D,\D',\D'' \vdash \ccase{e[e'/x]}{\z[\D'][\s']~\{\ov{\rho \Rightarrow e''[e'/x]}\}} : \vp$\` by $CaseWHNF$\\
     Subcase $\D$ is partially used in $e$\\
     This is like the subcase above, but consider $\D'$\\
     to contain some of part of $\D$ and $\D$ to refer to the other part only.
@@ -241,21 +241,21 @@ Statement (1):
 \begin{tabbing}
     (1) $\G;\D\vdash e' :\s$\\
     Subcase $\D$ occurs in $e$\\
-    (2) $\G,\xD; \D, \D', \D'' \vdash \ccase{e}{\z[\irr{\D,\D'}][\s']~\{\ov{\rho\to e''}\}}$\\
+    (2) $\G,\xD; \D, \D', \D'' \vdash \ccase{e}{\z[\irr{\D,\D'}][\s']~\{\ov{\rho\Rightarrow e''}\}}$\\
     (3) $\G,\xD; \D, \D' \vdash e : \s'$\` by inv.\\
     (4) $\G; \D,\D' \vdash e[e'/x] : \s'$\` by i.h.(1)\\
-    (5) $\ov{\G,\xD,\z[\irr{\D,\D'}][\s']; [\D,\D'],\D'' \vdash_{alt} \rho \to e'' :^z_{\irr{\D,\D'}} \s'\Rrightarrow\vp}$\` by inv.\\
+    (5) $\ov{\G,\xD,\z[\irr{\D,\D'}][\s']; [\D,\D'],\D'' \vdash \rho \Rrightarrow e'' :^z_{\irr{\D,\D'}} \vp}$\` by inv.\\
     (6) $e''[e'/x] = e$\` by $x$ cannot occur in $\ov{e''}$ since $\D$ is not available (only $\irr{\D}$)\\
-    (7) $\ov{\G,\z[\irr{\D,\D'}][\s']; [\D,\D'],\D'' \vdash_{alt} \rho \to e'' :^z_{\irr{\D,\D'}} \s'\Rrightarrow\vp}$\` by (admissible) $Weaken_\Delta$\\
-    (8) $\G; \D, \D', \D'' \vdash \ccase{e[e'/x]}{\z[\irr{\D,\D'}][\s']~\{\ov{\rho\to e''}\}}$\`by $CaseNotWHNF$\\
+    (7) $\ov{\G,\z[\irr{\D,\D'}][\s']; [\D,\D'],\D'' \vdash \rho \Rrightarrow e'' :^z_{\irr{\D,\D'}} \vp}$\` by (admissible) $Weaken_\Delta$\\
+    (8) $\G; \D, \D', \D'' \vdash \ccase{e[e'/x]}{\z[\irr{\D,\D'}][\s']~\{\ov{\rho\Rightarrow e''}\}}$\`by $CaseNotWHNF$\\
     Subcase $\D$ does not occur in $e$\\
-    (2) $\G,\xD; \D, \D', \D'' \vdash \ccase{e}{\z[\irr{\D'}][\s']~\{\ov{\rho\to e''}\}}$\\
+    (2) $\G,\xD; \D, \D', \D'' \vdash \ccase{e}{\z[\irr{\D'}][\s']~\{\ov{\rho\Rightarrow e''}\}}$\\
     (3) $\G,\xD; \D' \vdash e : \s'$\` by inv.\\
     (4) $\G; \D' \vdash e : \s'$\` by weaken\\
     (5) $e[e'/x] = e$\` by x cannot occur in $e$\\
-    (5) $\ov{\G,\xD,\z[\irr{\D'}][\s']; \D,[\D'],\D'' \vdash_{alt} \rho \to e'' :^z_{\irr{\D'}} \s'\Rrightarrow\vp}$\` by inv.\\
-    (7) $\ov{\G,\z[\irr{\D'}][\s']; \D,[\D'],\D'' \vdash_{alt} \rho \to e''[e'/x] :^z_{\irr{\D'}} \s'\Rrightarrow\vp}$\\\` by i.h.(2)\\
-    (8) $\G; \D, \D', \D'' \vdash \ccase{e}{\z[\irr{\D,\D'}][\s']~\{\ov{\rho\to e''[e'/x]}\}}$\`by $CaseNotWHNF$\\
+    (5) $\ov{\G,\xD,\z[\irr{\D'}][\s']; \D,[\D'],\D'' \vdash\rho \Rrightarrow e'' :^z_{\irr{\D'}} \vp}$\` by inv.\\
+    (7) $\ov{\G,\z[\irr{\D'}][\s']; \D,[\D'],\D'' \vdash_{alt} \rho \Rrightarrow e''[e'/x] :^z_{\irr{\D'}} \vp}$\\\` by i.h.(2)\\
+    (8) $\G; \D, \D', \D'' \vdash \ccase{e}{\z[\irr{\D,\D'}][\s']~\{\ov{\rho\Rightarrow e''[e'/x]}\}}$\`by $CaseNotWHNF$\\
     Subcase $\D$ is partially used in $e$\\
     This is like the subcase above, but consider $\D'$\\
     to contain some of part of $\D$ and $\D$ to refer to the other part only.
@@ -311,22 +311,22 @@ Statement (2):
 % Examples in the call-notes.
     (1) $\G; \D \vdash e' : \s$\\
     Subcase $\D$ occurs in scrutinee\\
-    (2) $\G,\xD; \D,\D',\D'' \vdash_{alt} K~\ov{\x}~\to e :^z_{\D,\D'} \s' \Rightarrow \vp$\\
+    (2) $\G,\xD; \D,\D',\D'' \vdash K~\ov{\x}~\Rightarrow e :^z_{\D,\D'} \vp$\\
     (3) $(\G,\xD)[\cdot/\D,\D']_z; (\D,\D',\D'')[\cdot/\D,\D'] \vdash e : \vp$\\
     (4) $\G[\cdot/\D,\D']_z, \xD; \D'' \vdash e : \vp$\\\`by def. of $[]_z$ subst. and $[]$ subst.\\
     (5) $\G[\cdot/\D,\D']_z, \xD; \D'' \vdash e[e'/x] : \vp$\\\`by $x$ cannot occur in $e$ by $\D$ not available\\
     (6) $\G[\cdot/\D,\D']_z; \D'' \vdash e[e'/x] : \vp$\\\`by (admissible) $Weaken_\D$\\
     (7) $\cdot = (\D,\D')[\cdot/\D,\D']$\\
     (8) $\G[\cdot/\D,\D']_z; (\D,\D',\D'')[\cdot/\D,\D'] \vdash e[e'/x] : \vp$\\\`by (6,7)\\
-    (9) $\G;\D,\D',\D'' \vdash_{alt} e[e'/x] :^z_{\D,\D'} \s' \Rightarrow \vp$\\
+    (9) $\G;\D,\D',\D'' \vdash e[e'/x] :^z_{\D,\D'} \vp$\\
     Subcase $\D$ does not occur in the scrutinee\\
-    (2) $\G,\xD; \D,\D',\D'' \vdash_{alt} K~\ov{\x}~\to e :^z_{\D'} \s' \Rightarrow \vp$\\
+    (2) $\G,\xD; \D,\D',\D'' \vdash K~\ov{\x}~\Rightarrow e :^z_{\D'} \vp$\\
     (3) $(\G,\xD)[\cdot/\D']_z; (\D,\D',\D'')[\cdot/\D'] \vdash e : \vp$\\
     (4) $\G[\cdot/\D']_z, \xD; \D,\D'' \vdash e : \vp$\\\`by def. of $[]_z$ subst. and $[]$ subst.\\
     (5) $\G[\cdot/\D']_z; \D,\D'' \vdash e[e'/x] : \vp$\` by i.h.(1)\\
     (6) $\cdot = \D'[\cdot/\D']$\\
     (7) $\G[\cdot/\D']_z; (\D,\D',\D'')[\cdot/\D'] \vdash e[e'/x] : \vp$\` by (5,6)\\
-    (8) $\G;\D,\D',\D'' \vdash_{alt} \vdash e[e'/x] :^z_{\D'} \s' \Rightarrow \vp$\`by $Alt0$\\
+    (8) $\G;\D,\D',\D'' \vdash \Rightarrow   e[e'/x] :^z_{\D'} \vp$\`by $Alt0$\\
     Subcase $\D$ is partially used in the scrutinee\\
     This is like the subcase above, but consider $\D'$\\
     to contain some of part of $\D$ and $\D$ to refer to the other part only.

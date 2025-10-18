@@ -49,20 +49,20 @@ $\G,\xo; \D \vdash e : \s$ iff $\G,\x[\cdot]; \D \vdash e : \s$
   \begin{enumerate}
   \item If $\judg[\G][\D,\xl]{e}{\vp}$ and $\judg[\G][\D']{e}{\s}$
     then $\judg[\subst{\G}{\D'}{x}][\D,\D']{e[e'/x]}{\vp}$
-  \item If $\judg[\G][\D,\xl]{\rho\to e}{\s \Rightarrow \vp}[alt][\D_s][z]$ and
-    $\judg[\G][\D']{e'}{\s}$ and
+  \item If $\judg[\G][\D,\xl]{\rho\,\ROUNDTWO{\Rightarrow}\, e}{\s }[][\D_s][z]$ and
+    $\judg[\G][\D']{e'}{\tau}$ and
     $\D_s \subseteq \D,x$ then
-    $\judg[\subst{\G}{\D'}{x}][\D,\D']{\rho \to e[e'/x]}{\s \Rightarrow \vp}[alt][\subst{\D_s}{\D'}{x}][z]$
+    $\judg[\subst{\G}{\D'}{x}][\D,\D']{\rho \,\ROUNDTWO{\Rightarrow}\, e[e'/x]}{\s }[][\subst{\D_s}{\D'}{x}][z]$
   \end{enumerate}
 \end{restatable}
 }
 
 \newcommand{\LinearSubstitutionAltsLemma}{
     \begin{restatable}[Substitution of linear variables on case alternatives preserves typing]{lemma}{linearsubstaltslemma}~\\
-    If $\judg[\G][\D,\xl]{\rho\to e}{\s \Rightarrow \vp}[alt][\D_s][z]$ and
-    $\judg[\G][\D']{e'}{\s}$ and
+    If $\judg[\G][\D,\xl]{\rho \Rightarrow e}{\s}[][\D_s][z]$ and
+    $\judg[\G][\D']{e'}{\tau}$ and
     $\D_s \subseteq \D,x$ \\then
-    $\judg[\subst{\G}{\D'}{x}][\D,\D']{\rho \to e[e'/x]}{\s \Rightarrow \vp}[alt][\subst{\D_s}{\D'}{x}][z]$
+    $\judg[\subst{\G}{\D'}{x}][\D,\D']{\rho \Rightarrow e[e'/x]}{\s }[][\subst{\D_s}{\D'}{x}][z]$
 \end{restatable}
 }
 
@@ -73,8 +73,8 @@ $\G,\xo; \D \vdash e : \s$ iff $\G,\x[\cdot]; \D \vdash e : \s$
 \item If $\Gamma, x{:}_\omega\sigma; \Delta \vdash e : \varphi$ and
   $\Gamma; \cdot \vdash e' : \sigma$ then $\G,\D \vdash e[e'/x] :
   \varphi$
- \item If $\G, \xo; \D \vdash_{alt} \rho \to e :^z_{\Delta_s} \s' \Rightarrow \vp$ and $\G; \D \vdash e' : \s$
-    then $\G; \D \vdash_{alt} \rho \to e[e'/x] :^z_{\Delta_s} \s' \Rightarrow \vp$
+ \item If $\G, \xo; \D \vdash \rho \Rightarrow  e :^z_{\Delta_s} \s$ and $\G; \D \vdash e' : \tau$
+    then $\G; \D \vdash\rho \Rightarrow e[e'/x] :^z_{\Delta_s} \s$
   \end{enumerate}
 
 \end{restatable}
@@ -83,8 +83,8 @@ $\G,\xo; \D \vdash e : \s$ iff $\G,\x[\cdot]; \D \vdash e : \s$
 \newcommand{\UnrestrictedSubstitutionAltsLemma}{
 \begin{restatable}[Substitution of unrestricted variables on case alternatives
     preserves typing]{lemma}{unrestrictedsubstaltslemma}
-If $\G, \xo; \D \vdash_{alt} \rho \to e :^z_{\Delta_s} \s' \Rightarrow \vp$ and $\G; \D \vdash e' : \s$
-    then $\G; \D \vdash_{alt} \rho \to e[e'/x] :^z_{\Delta_s} \s' \Rightarrow \vp$
+If $\G, \xo; \D \vdash \rho \Rightarrow  e :^z_{\Delta_s} \s$ and $\G; \D \vdash e' : \tau$
+    then $\G; \D \vdash\rho \Rightarrow e[e'/x] :^z_{\Delta_s} \s$
 \end{restatable}
 }
 
@@ -95,8 +95,8 @@ If $\G, \xo; \D \vdash_{alt} \rho \to e :^z_{\Delta_s} \s' \Rightarrow \vp$ and 
   \begin{enumerate}
 \item If $\G,\xD; \D, \D' \vdash e : \varphi$ and $\G; \D \vdash e' :
   \sigma$ then $\G; \D, \D' \vdash e[e'/x] : \varphi$
- \item If $\G,\xD; \D,\D' \vdash_{alt} \rho \to e :^z_{\Delta_s} \s' \Rightarrow \vp$ and
-    $\G; \D \vdash e' : \s$ and $\Delta_s \subseteq (\Delta,\Delta')$ then $\G; \D, \D' \vdash_{alt} \rho \to e[e'/x] :^z_{\Delta_s} \s' \Rightarrow \vp$
+ \item If $\G,\xD; \D,\D' \vdash \rho \Rightarrow e :^z_{\Delta_s} \s'$ and
+    $\G; \D \vdash e' : \s$ and $\Delta_s \subseteq (\Delta,\Delta')$ then $\G; \D, \D' \vdash \rho \Rightarrow e[e'/x] :^z_{\Delta_s} \s' $
   \end{enumerate}
 
 % TODO: Write a paragraph about why this lemma has to have the same delta in the subst.
@@ -111,8 +111,8 @@ If $\G, \xo; \D \vdash_{alt} \rho \to e :^z_{\Delta_s} \s' \Rightarrow \vp$ and 
 \newcommand{\DeltaSubstitutionAltsLemma}{
 \begin{restatable}[Substitution of $\Delta$-bound variables on case alternatives
     preserves typing]{lemma}{deltasubstaltslemma}~\\
-If $\G,\xD; \D,\D' \vdash_{alt} \rho \to e :^z_{\Delta_s} \s' \Rightarrow \vp$ and
-    $\G; \D \vdash e' : \s$ and $\Delta_s \subseteq (\Delta,\Delta')$ then $\G; \D, \D' \vdash_{alt} \rho \to e[e'/x] :^z_{\Delta_s} \s' \Rightarrow \vp$
+If $\G,\xD; \D,\D' \vdash \rho \Rightarrow e :^z_{\Delta_s} \s' $ and
+    $\G; \D \vdash e' : \s$ and $\Delta_s \subseteq (\Delta,\Delta')$ then $\G; \D, \D' \vdash \rho \Rightarrow e[e'/x] :^z_{\Delta_s} \s' $
 \end{restatable}
 }
 
@@ -140,13 +140,13 @@ If $\G; \D \vdash (\lambda \x[\pi][\s].~e)~e' : \vp$ then $\G; \D \vdash e[e'/x]
 
 \newcommand{\BinderSwapTheorem}{
 \begin{theorem}[Binder-swap preserves types]~\\
-If $\G; \D \vdash \ccase{x}{z~\{\ov{\rho_i\to e_i}\}} : \vp$ then $\G; \D \vdash \ccase{x}{z~\{\ov{\rho_i\to e_i[z/x]}\}} : \vp$
+If $\G; \D \vdash \ccase{x}{z~\{\ov{\rho_i\Rightarrow  e_i}\}} : \vp$ then $\G; \D \vdash \ccase{x}{z~\{\ov{\rho_i\Rightarrow e_i[z/x]}\}} : \vp$
 \end{theorem}
 }
 
 \newcommand{\ReverseBinderSwapTheorem}{
 \begin{proposition}[Reverse-binder-swap preserves types]~\\
-If $\G; \D \vdash \ccase{x}{z~\{\ov{\rho_i\to e_i}\}} : \vp$ then $\G; \D \vdash \ccase{x}{z~\{\ov{\rho_i\to e_i[x/z]}\}} : \vp$
+If $\G; \D \vdash \ccase{x}{z~\{\ov{\rho_i\Rightarrow  e_i}\}} : \vp$ then $\G; \D \vdash \ccase{x}{z~\{\ov{\rho_i\Rightarrow  e_i[x/z]}\}} : \vp$
 \end{proposition}
 }
 
@@ -184,14 +184,14 @@ HELP: How to define?
 
 \newcommand{\CaseOfKnownConstructorTheorem}{
 \begin{theorem}[Case-of-known-constructor preserves types]~\\
-If $\G; \D, \D' \vdash \ccase{K~\ov{e}}{\z[\D][\s]~\{..., K~\ov{x} \to e_i\}} : \vp$ then $\G; \D,\D' \vdash e_i\ov{[e/x]}[K~\ov{e}/z] : \vp$
+If $\G; \D, \D' \vdash \ccase{K~\ov{e}}{\z[\D][\s]~\{..., K~\ov{x} \Rightarrow e_i\}} : \vp$ then $\G; \D,\D' \vdash e_i\ov{[e/x]}[K~\ov{e}/z] : \vp$
 \end{theorem}
 }
 
 \newcommand{\CaseOfCaseTheorem}{
 \begin{restatable}[Case-of-case preserves types]{theorem}{caseofcasethm}~\\
-    If $\G; \D, \D',\D'' \vdash \ccase{\ccase{e_c}{\z[\D]~\{\ov{\rho_{c_i} \to e_{c_i}}\}}}{\var[w][\irr{\D,\D'}][\s']~\{\ov{\rho_i \to e_i}\}} : \vp$\\
-    then $\G; \D, \D',\D'' \vdash \ccase{e_c}{\z[\D]~\{\ov{\rho_{c_i} \to \ccase{e_{c_i}}{w~\{\ov{\rho_i \to e_i}\}}}\}} : \vp$\\
+    If $\G; \D, \D',\D'' \vdash \ccase{\ccase{e_c}{\z[\D]~\{\ov{\rho_{c_i} \Rightarrow e_{c_i}}\}}}{\var[w][\irr{\D,\D'}][\s']~\{\ov{\rho_i \Rightarrow e_i}\}} : \vp$\\
+    then $\G; \D, \D',\D'' \vdash \ccase{e_c}{\z[\D]~\{\ov{\rho_{c_i} \Rightarrow \ccase{e_{c_i}}{w~\{\ov{\rho_i \Rightarrow e_i}\}}}\}} : \vp$\\
 \end{restatable}
 }
 

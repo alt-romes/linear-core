@@ -187,27 +187,27 @@ Statement (1):
 \begin{tabbing}
     (1) $\judg[\G][\D']{e'}{\s}$\\
     Subcase $x$ occurs in $e$\\
-    (2) $\judg[\G][\D,\xl,\D'']{\ccase{e}{\z[\D,\xl][\s']~\{\ov{\rho\to e''}\}}}{\vp}$\\
+    (2) $\judg[\G][\D,\xl,\D'']{\ccase{e}{\z[\D,\xl][\s']~\{\ov{\rho\Rightarrow e''}\}}}{\vp}$\\
     (3) $e$ is in WHNF\\
     (4) $\judg[\G][\D,\xl]{e}{\s'}$\\
     (5) $\rho_j~\textrm{matches}~e$
-    (6) $\judg[\G,\zr{\D,\xl}{\s'}][\D,\xl,\D'']{\rho_j \to e''}{\s' \Mapsto \vp}[alt][\D,\xl][z]$\\
-    (7) $\ov{\judg[\G,\zr{\irr{\D,\xl}}{\s'}][\irr{\D,\xl},\D'']{\rho\to e''}{\s' \Rrightarrow \vp}[alt][\irr{\D,\xl}][z]}$\`by inv.\\
+    (6) $\judg[\G,\zr{\D,\xl}{\s'}][\D,\xl,\D'']{\rho_j \Mapsto  e''}{\vp}[][\D,\xl][z]$\\
+    (7) $\ov{\judg[\G,\zr{\irr{\D,\xl}}{\s'}][\irr{\D,\xl},\D'']{\rho\Rrightarrow e''}{\vp}[][\irr{\D,\xl}][z]}$\`by inv.\\
     (8) $\judg[\subst{\G}{\D'}{x}][\D,\D']{e[e'/x]}{\vp}$\`by i.h.(1)\\
-    (9) $\judg[\subst{\G}{\D'}{x},\zr{\D,\D'}{\s'}][\D,\D',\D'']{\rho_j \to e''[e'/x]}{\s' \Mapsto \vp}[alt][\D,\D'][z]$\` by i.h.(2)\\
-    (10) $\ov{\judg[\subst{\G}{\D'}{x},\zr{\irr{\D,\D'}}{\s'}][\irr{\D,\D'},\D'']{\rho\to e''[e'/x]}{\s' \Rrightarrow \vp}[alt][\irr{\D,\D'}][z]}$ \` by Irrelevance\\
+    (9) $\judg[\subst{\G}{\D'}{x},\zr{\D,\D'}{\s'}][\D,\D',\D'']{\rho_j \Mapsto e''[e'/x]}{\ \vp}[][\D,\D'][z]$\` by i.h.(2)\\
+    (10) $\ov{\judg[\subst{\G}{\D'}{x},\zr{\irr{\D,\D'}}{\s'}][\irr{\D,\D'},\D'']{\rho\Rrightarrow e''[e'/x]}{ \vp}[alt][\irr{\D,\D'}][z]}$ \` by Irrelevance\\
     (11) $\judg[\subst{\G}{\D'}{x}][\D,\D',\D'']{\ccase{e[e'/x]}{\z[\D,\D'][\s']~\{\ov{\rho\to e''[e'/x]}\}}}{\vp}$\\
     Subcase $x$ occurs in $\ov{e''}$\\
-    (2) $\judg[\G][\D,\D'',\xl]{\ccase{e}{\z[\D][\s']~\{\ov{\rho\to e''}\}}}{\vp}$\\
+    (2) $\judg[\G][\D,\D'',\xl]{\ccase{e}{\z[\D][\s']~\{\ov{\rho\Rightarrow e''}\}}}{\vp}$\\
     (3) $e$ is in WHNF\\
     (4) $\rho_j$ matches $e$\\
     (5) $\judg[\G][\D]{e}{\s'}$\\
     (6) $\judg[\G,\zr{\D}{\s'}][\D,\D'',\xl]{\rho_j \to e''}{\s' \Mapsto \vp}[alt][\D][z]$\\
-    (7) $\ov{\judg[\G,\zr{\irr{\D}}{\s'}][\irr{\D},\D'',\xl]{\rho\to e''}{\s' \Rrightarrow \vp}[alt][\irr{\D}][z]}$\`by inv.\\
+    (7) $\ov{\judg[\G,\zr{\irr{\D}}{\s'}][\irr{\D},\D'',\xl]{\rho\Rrightarrow e''}{\vp}[][\irr{\D}][z]}$\`by inv.\\
     (8) $e[e'/x] = e$\` by $x$ does not occur in $e$\\
-    (9) $\judg[\subst{\G}{\D'}{x},\zr{\D}{\s'}][\D,\D'',\D']{\rho_j \to e''[e'/x]}{\s' \Mapsto \vp}[alt][\D][z]$\`by i.h.(2)\\
-    (10) $\ov{\judg[\subst{\G}{\D'}{x},\zr{\irr{\D}}{\s'}][\irr{\D},\D'',\D']{\rho\to e''[e'/x]}{\s' \Rrightarrow \vp}[alt][\irr{\D}][z]}$\`by i.h.(2)\\
-    (11) $\judg[\subst{\G}{\D'}{x}][\D,\D'',\D']{\ccase{e}{\z[\D][\s']~\{\ov{\rho\to e''[e'/x]}\}}}{\vp}$\\
+    (9) $\judg[\subst{\G}{\D'}{x},\zr{\D}{\s'}][\D,\D'',\D']{\rho_j \Mapsto e''[e'/x]}{\vp}[][\D][z]$\`by i.h.(2)\\
+    (10) $\ov{\judg[\subst{\G}{\D'}{x},\zr{\irr{\D}}{\s'}][\irr{\D},\D'',\D']{\rho\Rrightarrow e''[e'/x]}{ \vp}[][\irr{\D}][z]}$\`by i.h.(2)\\
+    (11) $\judg[\subst{\G}{\D'}{x}][\D,\D'',\D']{\ccase{e}{\z[\D][\s']~\{\ov{\rho\Rightarrow e''[e'/x]}\}}}{\vp}$\\
 \end{tabbing}
 
 \item[Case:] $CaseNotWHNF$
@@ -215,24 +215,24 @@ Statement (1):
 \begin{tabbing}
   (1) $\judg[\G][\D']{e'}{\s}$\\
   Subcase $x$ occurs in $e$\\
-    (2) $\judg[\G][\D,\xl,\D'']{\ccase{e}{\z[\irr{\D,\xl}][\s']~\{\ov{\rho\to e''}\}}}{\vp}$\\
+    (2) $\judg[\G][\D,\xl,\D'']{\ccase{e}{\z[\irr{\D,\xl}][\s']~\{\ov{\rho\Rightarrow e''}\}}}{\vp}$\\
     (3) $e$ is definitely not in WHNF\\
     (4) $\judg[\G][\D,\xl]{e}{\s'}$\`by inv.\\
-    (5) $\ov{\judg[\G,\zr{\irr{\D,\xl}}{\s'}][\irr{\D,\xl},\D'']{\rho\to e''}{\s' \Rrightarrow \vp}[alt][\irr{\D,\xl}][z]}$\`by inv.\\
+    (5) $\ov{\judg[\G,\zr{\irr{\D,\xl}}{\s'}][\irr{\D,\xl},\D'']{\rho\Rrightarrow e''}{\vp}[][\irr{\D,\xl}][z]}$\`by inv.\\
     (6) $\judg[\subst{\G}{\D'}{x}][\D,\D']{e[e'/x]}{\vp}$\`by i.h.(1)\\
-    (7) $\ov{\judg[\subst{\G}{\D'}{x},\zr{\irr{\D,\D'}}{\s'}][\irr{\D,\D'},\D'']{\rho\to e''[e'/x]}{\s' \Rrightarrow \vp}[alt][\irr{\D,\D'}][z]}$ \` by Irrelevance\\
+    (7) $\ov{\judg[\subst{\G}{\D'}{x},\zr{\irr{\D,\D'}}{\s'}][\irr{\D,\D'},\D'']{\rho\Rrightarrow e''[e'/x]}{ \vp}[][\irr{\D,\D'}][z]}$ \` by Irrelevance\\
     % \` by subst. of p. irr. vars in alt.\\
     % \` or, simply, congruence? \\
     % \` (x only occurs in ctxts, so replace all xs by $\D'$, starting by $\G$)?\\
-    (8) $\judg[\subst{\G}{\D'}{x}][\D,\D',\D'']{\ccase{e[e'/x]}{\z[\D,\D'][\s']~\{\ov{\rho\to e''[e'/x]}\}}}{\vp}$\\
+    (8) $\judg[\subst{\G}{\D'}{x}][\D,\D',\D'']{\ccase{e[e'/x]}{\z[\D,\D'][\s']~\{\ov{\rho\Rightarrow e''[e'/x]}\}}}{\vp}$\\
   Subcase $x$ occurs in $\ov{e''}$\\
-    (2) $\judg[\G][\D,\D'',\xl]{\ccase{e}{\z[\irr{\D}][\s']~\{\ov{\rho\to e''}\}}}{\vp}$\\
+    (2) $\judg[\G][\D,\D'',\xl]{\ccase{e}{\z[\irr{\D}][\s']~\{\ov{\rho\Rightarrow e''}\}}}{\vp}$\\
     (3) $e$ is definitely not in WHNF\\
     (4) $\judg[\G][\D]{e}{\s'}$\`by inv.\\
-    (5) $\ov{\judg[\G,\zr{\irr{\D}}{\s'}][\irr{\D},\D'',\xl]{\rho\to e''}{\s' \Rrightarrow \vp}[alt][\irr{\D}][z]}$\`by inv.\\
+    (5) $\ov{\judg[\G,\zr{\irr{\D}}{\s'}][\irr{\D},\D'',\xl]{\rho\Rrightarrow e''}{ \vp}[][\irr{\D}][z]}$\`by inv.\\
     (6) $e[e'/x] = e$\` by $x$ does not occur in $e$\\
-    (7) $\ov{\judg[\subst{\G}{\D'}{x},\zr{\irr{\D}}{\s'}][\irr{\D},\D'',\D']{\rho\to e''[e'/x]}{\s' \Rrightarrow \vp}[alt][\irr{\D}][z]}$\`by i.h.(2)\\
-    (8) $\judg[\subst{\G}{\D'}{x}][\D,\D'',\D']{\ccase{e}{\z[\irr{\D}][\s']~\{\ov{\rho\to e''[e'/x]}\}}}{\vp}$\\
+    (7) $\ov{\judg[\subst{\G}{\D'}{x},\zr{\irr{\D}}{\s'}][\irr{\D},\D'',\D']{\rho\Rrightarrow e''[e'/x]}{\vp}[][\irr{\D}][z]}$\`by i.h.(2)\\
+    (8) $\judg[\subst{\G}{\D'}{x}][\D,\D'',\D']{\ccase{e}{\z[\irr{\D}][\s']~\{\ov{\rho\Rightarrow e''[e'/x]}\}}}{\vp}$\\
 \end{tabbing}
 
 % No longer a problem! It really is unsafe to have reverse-binder-swap in face of beta reduction
@@ -270,23 +270,23 @@ Statement (2):
 \item[Case:] $AltN_{WHNF}$
 \begin{tabbing}
     (1) $\judg[\G][\D']{e'}{\s}$\\
-    (2) $\judg[\G][\D,\xl]{\konstructor~\to e}{\s' \Mapsto \vp}[alt][\D_s][z][\dag]$\\
+    (2) $\judg[\G][\D,\xl]{\konstructor~\Mapsto e}{\vp}[][\D_s][z][\dag]$\\
     (3) $\judg[\G,\ov{\xo},\ov{y_i{:}_{\D_i}\s_i}][\D,\xl]{e}{\vp}$\`by inv.\\
     (4) $\judg[\subst{\G}{\D'}{x},\ov{\xo},\ov{y_i{:}_{\subst{\D_i}{\D'}{x}}\s_i}][\D,\D']{e[e'/x]}{\vp}$\` by i.h.(1)\\
-    (5) $\judg[\subst{\G}{\D'}{x}][\D,\D']{\rho \to e[e'/x]}{\s' \Mapsto \vp}[alt][\subst{\D_s}{\D'}{x}][z][\dag]$\` by (4)\\
+    (5) $\judg[\subst{\G}{\D'}{x}][\D,\D']{\rho \Mapsto e[e'/x]}{\vp}[][\subst{\D_s}{\D'}{x}][z][\dag]$\` by (4)\\
 \end{tabbing}
 
 \item[Case:] $AltN_{Not WHNF}$
 \begin{tabbing}
     (1) $\judg[\G][\D']{e'}{\s}$\\
-    (2) $\judg[\G][\D,\xl]{\konstructor~\to e}{\s' \Rrightarrow \vp}[alt][\D_s][z][\ddag]$\\
+    (2) $\judg[\G][\D,\xl]{\konstructor~\Rrightarrow e}{\vp}[][\D_s][z][\ddag]$\\
     % (3) $n > 0$\`by inv.\\
     (3) $\ov{\D_i}=\ov{\lctag{\D_s}{K_j}}^n$\`by inv.\\
     % (5) $\ov{\D_i\neq\cdot}$\\
     (4) $\judg[\G,\ov{\xo},\ov{y_i{:}_{\D_i}\s_i}][\D,\xl]{e}{\vp}$\`by inv.\\
     (5) $\judg[\subst{\G}{\D'}{x},\ov{\xo},\ov{y_i{:}_{\subst{\D_i}{\D'}{x}}\s_i}][\D,\D']{e[e'/x]}{\vp}$\` by i.h.(1)\\
     (6) $\ov{\D_i[\D'/x]}=\ov{\lctag{\D_s[\D'/x]}{K_j}}^n$\`by (3) and cong.\\
-    (7) $\judg[\subst{\G}{\D'}{x}][\D,\D']{\rho \to e[e'/x]}{\s' \Rrightarrow \vp}[alt][\subst{\D_s}{\D'}{x}][z][\ddag]$\` by (5,6)\\
+    (7) $\judg[\subst{\G}{\D'}{x}][\D,\D']{\rho \Rrightarrow e[e'/x]}{ \vp}[][\subst{\D_s}{\D'}{x}][z][\ddag]$\` by (5,6)\\
 \end{tabbing}
 
 \item[Case:] $Alt0$
@@ -306,7 +306,7 @@ Statement (2):
 \begin{tabbing}
   (1) $\judg[\G][\D']{e'}{\s}$\\
   Subcase $x$ occurs in scrutinee\\
-    (2) $\judg[\G][\D,\xl]{K~\ov{\xo}~\to e}{\s' \Rightarrow \vp}[alt][\D_s,\xl][z]$\\
+    (2) $\judg[\G][\D,\xl]{K~\ov{\xo}~\Rightarrow e}{\vp}[][\D_s,\xl][z]$\\
     (2.5) $\judg[\subst{\G}{\cdot}{\D_s,x}_z,\ov{\xo}][\subst{(\D,\xl)}{\cdot}{\D_s,x}]{e}{\vp}$\`by inv.\\
     (3) $\judg[\subst{\G}{\cdot}{\D_s,x}_z,\ov{\xo}][\subst{\D}{\cdot}{\D_s}]{e}{\vp}$\\
     (4) $e[e'/x] = e$\` since $x$ cannot occur in $e$ (erased from cx)\\
@@ -317,16 +317,16 @@ Statement (2):
     % (6) $\G[\cdot/\D_s,x]_z = \G[\D'/x][\cdot/\D_s,\D']_z$\` by cong. of subst.\\
     (8) $\judg[\subst{\subst{\G}{\D'}{x}}{\cdot}{\D_s,\D'}_z,\ov{\xo}][\subst{(\D,\D')}{\cdot}{\D_s,\D'}]{e[e'x]}{\vp}$\` by (4,5,6,7)\\\` and $x$ and $\D'$ are erased from ctx\\
     % (8) $\judg[\G,\ov{\xo}][\subst{(\D,\D')}{\cdot}{\D_s,\D'}][\subst{\subst{\G}{\D'}{x},\d'}{\cdot}{\D_s,\D'}]{e[e'x]}{\vp}$\` by $Weaken_\Delta$\\
-    (9) $\judg[\subst{\G}{\D'}{x}][\D,\D']{K~\ov{\xo}~\to e[e'/x]}{\s' \Rightarrow \vp}[alt][\D_s,\D'][z]$\` by $Alt0$\\
+    (9) $\judg[\subst{\G}{\D'}{x}][\D,\D']{K~\ov{\xo}~\Rightarrow e[e'/x]}{ \vp}[alt][\D_s,\D'][z]$\` by $Alt0$\\
   Subcase $x$ does not occur in scrutinee\\
-    (2) $\judg[\G][\D,\xl]{K~\ov{\xo}~\to e}{\s' \Rightarrow \vp}[alt][\D_s][z]$\\
+    (2) $\judg[\G][\D,\xl]{K~\ov{\xo}~\Rightarrow e}{\vp}[][\D_s][z]$\\
     (3) $\judg[\subst{\G}{\cdot}{\D_s}_z,\ov{\xo}][\subst{\D}{\cdot}{\D_s},\xl]{e}{\vp}$\`by $x$ does not occur in $\D_s$ and inv.\\
     (4) $\judg[\subst{\subst{\G}{\D'}{x}}{\cdot}{\D_s}_z,\ov{\xo}][\subst{\D}{\cdot}{\D_s},\D']{e[e'/x]}{\vp}$\\\`by i.h.(1) and $x$ does not occur in $\D_s$\\
     (5) $\judg[\subst{\subst{\G}{\D'}{x}}{\cdot}{\D_s}_z,\ov{\xo}][\subst{(\D,\D')}{\cdot}{\D_s}]{e[e'/x]}{\vp}$\\
     \`by $\D$ and $\D'$ being disjoint by hypothesis,\\
     \`and $\D_s$ being a subset of $\D$\\ % (CHECK: Done, we require this as requirement to invoke the lemma)\\
     (6) $\D_s[\D'/x] = \D_s$\`by $x$ does not occur in $\D_s$\\
-    (7) $\judg[\subst{\G}{\D'}{x}][\D,\D']{K~\ov{\xo}~\to e[e'/x]}{\s' \Rightarrow \vp}[alt][\subst{\D_s}{\D'}{x}][z]$\\
+    (7) $\judg[\subst{\G}{\D'}{x}][\D,\D']{K~\ov{\xo}~\Rightarrow e[e'/x]}{\vp}[][\subst{\D_s}{\D'}{x}][z]$\\
 \end{tabbing}
 
 % \item[Case:] $Alt\_$ (trivial induction)
