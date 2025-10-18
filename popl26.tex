@@ -2921,6 +2921,7 @@ of partial derivations and partial evaluation (see~\cite{techreport}), written $
 to state and reason about a progress property.
 
 \begin{figure}
+  {\small
 \[
   \begin{array}{c}
     \infer[]
@@ -3019,7 +3020,7 @@ to state and reason about a progress property.
     \Downarrow (\Theta' \mid v) : \tau}
 
    \end{array}
- \]
+ \]}
  \caption{Instrumented Operational Semantics~\label{fig:linopsem}}
   
 \end{figure}
@@ -4009,8 +4010,7 @@ implementation include:
 Overall, the programs rejected by the Linear Core plugin,
 %, in \texttt{linear-base},
 besides validating that our implementation is faithful to the
-$\lambda^\pi_\Delta$ system insofar as programs that should not be accepted
-are deemed ill-typed, provide further insight into the remaining
+$\lambda^\pi_\Delta$ system, provide further insight into the remaining
 details required to fully typecheck linearity in a mature optimising compiler.
 
 
@@ -4414,8 +4414,8 @@ resource management, impose a burden on programmers in being a restrictive
 typing discipline (witnessed, e.g., by Linear
 Constraints~\cite{cite:linearconstraints}). Linear Core eases the restrictions
 of linear typing by being more flexible in understanding linearity for lazy
-languages. In this sense, it is an avenue of future
-work to apply the ideas from this work to the surface Haskell language.
+languages. It is future
+work to apply our ideas to the surface Haskell language.
 
 % \section*{Acknowledgements}
 
