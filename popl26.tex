@@ -2581,9 +2581,11 @@ resources, we can now present the full $Case_\textrm{WHNF}$ rule:
 \[
 \TypeCaseWHNF
 \]
-\ROUNDTWO{where the matching pattern is typed as before, with the
-  case-binder $z$ is annotated with the appropriate usage environment;
-  and the non-matching patterns are if the scrutinee were notin WHNF.}
+\ROUNDTWO{where we appeal to the pattern judgment for WHNF scrutinees
+  for pattern $\rho_j$, allowing the $\ov{\Delta_i}$ resources to be
+  consumed either through the case-binder or outright; and to the
+  non-WHNF judgment for the remaining branches, where the
+  $\Delta$ resources may only be consumed via the case-binder.}
 We again note that it might seem unusual to specialize a rule for expressions in
 WHNF, as programs scrutinizing an expression in WHNF are rarely
 written by humans.
