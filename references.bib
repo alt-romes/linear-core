@@ -748,6 +748,16 @@ location = {Nice, Nice, France},
 series = {TLDI '07}
 }
 
+@book{10.5555/1076265,
+author = {Pierce, Benjamin C.},
+title = {Advanced Topics in Types and Programming Languages},
+year = {2004},
+isbn = {0262162288},
+publisher = {The MIT Press}
+}
+
+  
+
 @inproceedings{DBLP:conf/esop/MarshallVO22,
   author       = {Danielle Marshall and
                   Michael Vollmer and
@@ -998,6 +1008,24 @@ publisher = {Prentice-Hall, Inc.},
 address = {USA}
 }
 
+@InProceedings{10.1007/3-540-18317-5_20,
+author="Brus, T. H.
+and van Eekelen, M. C. J. D.
+and van Leer, M. O.
+and Plasmeijer, M. J.",
+editor="Kahn, Gilles",
+title="Clean --- A language for functional graph rewriting",
+booktitle="Functional Programming Languages and Computer Architecture",
+year="1987",
+publisher="Springer Berlin Heidelberg",
+address="Berlin, Heidelberg",
+pages="364--384",
+abstract="Clean is an experimental language for specifying functional computations in terms of graph rewriting. It is based on an extension of Term Rewriting Systems (TRS) in which the terms are replaced by graphs. Such a Graph Rewriting System (GRS) consists of a, possibly cyclic, directed graph, called the data graph and graph rewrite rules which specify how this data graph may be rewritten. Clean is designed to provide a firm base for functional programming. In particular, Clean is suitable as an intermediate language between functional languages and (parallel) target machine architectures. A sequential implementation of Clean on a conventional machine is described and its performance is compared with other systems. The results show that Clean can be efficiently implemented.",
+isbn="978-3-540-47879-9"
+}
+
+
+
 @inproceedings{10.1145/3471874.3472980,
 author = {Bernardy, Jean-Philippe and Spiwack, Arnaud},
 title = {Evaluating Linear Functions to Symmetric Monoidal Categories},
@@ -1016,6 +1044,29 @@ location = {Virtual, Republic of Korea},
 series = {Haskell 2021}
 }
 }
+
+@article{10.1145/3158093,
+author = {Bernardy, Jean-Philippe and Boespflug, Mathieu and Newton, Ryan R. and Peyton Jones, Simon and Spiwack, Arnaud},
+title = {Linear Haskell: practical linearity in a higher-order polymorphic language},
+year = {2017},
+issue_date = {January 2018},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+volume = {2},
+number = {POPL},
+url = {https://doi.org/10.1145/3158093},
+doi = {10.1145/3158093},
+abstract = {Linear type systems have a long and storied history, but not a clear path forward to integrate with existing languages such as OCaml or Haskell. In this paper, we study a linear type system designed with two crucial properties in mind: backwards-compatibility and code reuse across linear and non-linear users of a library. Only then can the benefits of linear types permeate conventional functional programming. Rather than bifurcate types into linear and non-linear counterparts, we instead attach linearity to function arrows. Linear functions can receive inputs from linearly-bound values, but can also operate over unrestricted, regular values. To demonstrate the efficacy of our linear type system — both how easy it can be integrated in an existing language implementation and how streamlined it makes it to write programs with linear types — we implemented our type system in ghc, the leading Haskell compiler, and demonstrate two kinds of applications of linear types: mutable data with pure interfaces; and enforcing protocols in I/O-performing functions.},
+journal = {Proc. ACM Program. Lang.},
+month = dec,
+articleno = {5},
+numpages = {29},
+keywords = {typestate, polymorphism, linear types, linear logic, laziness, Haskell, GHC}
+}
+
+  
+
+
 
 @inproceedings{10.1145/3471874.3472979,
 author = {Kokke, Wen and Dardha, Ornela},
