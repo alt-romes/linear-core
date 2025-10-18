@@ -505,9 +505,13 @@ it accepts the programs resulting from transformations in libraries such as
  optimisations and producing less efficient code. Our work adheres to
  the principle that the type system bends to the optimisations, not
  the other way around.}
-\noindent \ROUNDTWO{While GHC's Core language is our main focus, we
+
+ \ROUNDTWO{While GHC's Core language is our main focus, we
 note that the ideas explored in this work can potentially be applied to any
-language with non-strict features, even if the language itself is strict.}
+language with non-strict features, even if the language itself is
+strict. We assume some familiarity with Haskell and linear types for
+functional languages, but try to explain our work and motivations
+without assuming much knowledge of GHC and Core. }
 
 Additional proofs and definitions are given in \ROUNDTWO{the extended
   version of the paper~\cite{techreport}.}
