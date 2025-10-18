@@ -141,7 +141,7 @@ Added to introduction.
 
 > 107, The paper contains an appendix with 28 pages of material,
 
-We now reference an extended version of the paper which will be available online.
+We now reference an extended version of the paper which will be available on arXiv.
 
 > 115, There are a lot of parenthetical remarks in the paper
 
