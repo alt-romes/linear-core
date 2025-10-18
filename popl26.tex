@@ -499,14 +499,13 @@ it accepts the programs resulting from transformations in libraries such as
   the optimisation passes to produce code that passes a more naive
   linearity check. This avenue was already explored during the
   implementation of Linear
-  Haskell in
-  GHC\footnote{https://gitlab.haskell.org/ghc/ghc/-/issues/22123},
+  Haskell in GHC,
  exhibiting the prohibitive cost of too often restricting
  optimisations and producing less efficient code. Our work adheres to
  the principle that the type system bends to the optimisations, not
- the other way around.}
+ the other way around\footnote{\url{https://gitlab.haskell.org/ghc/ghc/-/blob/c85c845dc5ad539bf28f1b8c5c1dbb349e3f3d25/compiler/GHC/Core/Lint.hs\#L3225-3235}}.}
 
- \ROUNDTWO{While GHC's Core language is our main focus, we
+\ROUNDTWO{While GHC's Core language is our main focus, we
 note that the ideas explored in this work can potentially be applied to any
 language with non-strict features, even if the language itself is
 strict. We assume some familiarity with Haskell and linear types for
@@ -4406,7 +4405,7 @@ and would allow Core to be linearly typed all throughout.
 Implementing Linear Core in GHC is a challenging endeavour, since we must
 account for all other Core features (e.g. strict constructor fields), propagate
 new or modified data throughout the entire pipeline, and accept more
-optimisations. Despite our initiative in this direction\footnote{https://gitlab.haskell.org/ghc/ghc/-/issues/23218},
+optimisations. Despite our initiative in this direction\footnote{\url{https://gitlab.haskell.org/ghc/ghc/-/merge_requests/10310}},
 we leave this as future work.
 
 \paragraph{Generalizing Linear Core to Haskell.}
