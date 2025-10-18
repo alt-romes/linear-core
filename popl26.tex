@@ -123,7 +123,7 @@
 }
 
 
- \newcommand{\ROUNDTWO}[1]{{\color{red}#1}}
+ \newcommand{\ROUNDTWO}[1]{{\color{purple}#1}}
 %\newcommand{\ROUNDTWO}[1]{#1}
 
 \input{proof}
@@ -2835,13 +2835,13 @@ let-binding of variables $\ov{x_i}$.
     {\Theta : e \Downarrow \Theta' : K~\ov{x_i} \quad
     \Theta' : e'\ov{[x_i/y_i]}[K~\ov{x_i}/z] \Downarrow \Theta'' : v }
     {\Theta :
-    \ccase{e}{z{:}_{\Delta'}\sigma~\{{\dots,K~\ov{y_i} \to e', {\dots}}\}}
+    \ccase{e}{z{:}_{\Delta'}\sigma~\{{\dots,K~\ov{y_i} \Rightarrow e', {\dots}}\}}
     \Downarrow \Theta'' : v}\\[1.5em]
     \infer[]
     {\Theta : e \Downarrow \Theta' : K~\ov{x_i} \quad
     \Theta' : e'[K~\ov{x_i}/z] \Downarrow \Theta'' : v }
     {\Theta :
-    \ccase{e}{z{:}_{\Delta'}\sigma~\{\dots , \_\to
+    \ccase{e}{z{:}_{\Delta'}\sigma~\{\dots , \_\Rightarrow
     e'}\} \Downarrow \Theta'' : v}
     \qquad
     \infer[]
@@ -2983,7 +2983,7 @@ to state and reason about a progress property.
     \Gamma ;\Delta \vdash (\Theta' \mid e'\ov{[x_i/y_{i,j}]}[K~\ov{x_i}/z]
     ) \Downarrow (\Theta'' \mid v) :\tau , \Sigma }
     {\Gamma ;\Delta \vdash (\Theta \mid
-    \ccase{e}{z{:}_{\Delta'}T~\{{\dots,K~\ov{y_{i,j}} \to e', {\dots} }\}})
+    \ccase{e}{z{:}_{\Delta'}T~\{{\dots,K~\ov{y_{i,j}} \Rightarrow e', {\dots} }\}})
     \Downarrow (\Theta'' \mid  v) : \tau , \Sigma}\\[1.5em]
 
     
@@ -2995,7 +2995,7 @@ to state and reason about a progress property.
     \Gamma ;\Delta \vdash (\Theta' \mid  e'[K~\ov{x_i}/z])
     \Downarrow (\Theta'' \mid v) : \tau,\Sigma }
     {\Gamma ; \Delta \vdash (\Theta \mid 
-    \ccase{e}{z{:}_{\Delta'}T~\{\dots , \_\to
+    \ccase{e}{z{:}_{\Delta'}T~\{\dots , \_\Rightarrow
     e'}\}) \Downarrow (\Theta'' \mid v) : \tau}
     \\[1.5em]
     \infer[]
@@ -4165,6 +4165,13 @@ Linear Core can also be seen as a system that validates the programs written in
 Linear Haskell and are compiled by GHC, by guaranteeing (through typing) that
 linear resources are still used exactly once throughout the optimising
 transformations.
+\ROUNDTWO{We note that both Linear Haskell and our work has no
+  special treatment of exceptions. This is also the case in GHC Core,
+  where exceptions have no special status and so there is
+  no natural way of dealing with the interaction between exceptions and
+  linearity in Core itself without a major overhaul of the exception
+  mechanisms of the language. } 
+
 
 \paragraph{Linearity-aware Semantics}
 Several other work explore linearity aware semantics,
