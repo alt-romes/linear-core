@@ -4226,7 +4226,8 @@ safe, guarantees linear resource usage, and that multiple optimising
 transformations, when applied to Linear Core programs, preserve linearity.
 \ROUNDTWO{Our irrelevant resources
   have similarities with 0-multiplicity
-  values from QTT~\cite{brady:LIPIcs.ECOOP.2021.9} and, as previously noted,
+  values from QTT~\cite{brady:LIPIcs.ECOOP.2021.9} which are
+  disallowed from being used directly in executable code and, as previously noted,
   our tagged resources are related to fractional permissions from separation
   logic~\cite{10.5555/1760267.1760273}.}
 
@@ -4245,7 +4246,7 @@ transformations, when applied to Linear Core programs, preserve linearity.
 % They probabluy don't typecheck linearity in Core
 
 \paragraph{Linearity-directed optimisations}
-
+%
 Core-to-Core transformations appear in multiple papers~\cite{cite:let-floating,peytonjones1997a,santos1995compilation,peytonjones2002secrets,baker-finch2004constructed,maurer2017compiling,Breitner2016_1000054251,sergey_vytiniotis_jones_breitner_2017},
 all designed in the context of a typed language (Core) which does not have
 linear types. However, some authors~\cite{cite:let-floating,peytonjones1997a,10.1145/3158093} have observed that
@@ -4296,11 +4297,10 @@ the inliner~\cite{10.1145/3158093}.}
 
 We highlight some avenues of future work. Briefly,
 these include \emph{multiplicity coercions}, optimisations leveraging
-linearity, resource inference for usage environments, and ultimately using
-Linear Core in a mature optimising compiler with lazy evaluation and linear
-types -- the Glasgow Haskell Compiler. Lastly, we discuss the
-% we hypothesize Linear($X$), a linear system parametrized on the evaluation strategy, and the
-generalization of Linear Core to the surface Haskell language.
+linearity, %resource inference for usage environments,
+and incorporating Linear Core in GHC Haskell. % Lastly, we discuss the
+% % we hypothesize Linear($X$), a linear system parametrized on the evaluation strategy, and the
+% generalization of Linear Core to the surface Haskell language.
 
 \paragraph{Multiplicity Coercions.}
 Linear Core does not have type equality coercions, a flagship feature of GHC
