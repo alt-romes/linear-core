@@ -494,17 +494,6 @@ it accepts the programs resulting from transformations in libraries such as
 
 \end{itemize}
 
-\ROUNDTWO{The reader may wonder whether the complexities of our
-  system hinted above are a better alternative to simply specializing
-  the optimisation passes to produce code that passes a more naive
-  linearity check. This avenue was already explored during the
-  implementation of Linear
-  Haskell in GHC,
- exhibiting the prohibitive cost of too often restricting
- optimisations and producing less efficient code. Our work adheres to
- the principle that the type system bends to the optimisations, not
- the other way around\footnote{\url{https://gitlab.haskell.org/ghc/ghc/-/blob/c85c845dc5ad539bf28f1b8c5c1dbb349e3f3d25/compiler/GHC/Core/Lint.hs\#L3225-3235}}.}
-
 \ROUNDTWO{While GHC's Core language is our main focus, we
 note that the ideas explored in this work can potentially be applied to any
 language with non-strict features, even if the language itself is
@@ -1619,6 +1608,17 @@ of others. Namely, linear resources occurring in non-WHNF case scrutinees can
 no longer be used in the alternatives, while the pattern variables (or the case
 binder) must necessarily be used. Tagged resources follow the observation that
 some variables must be used jointly or not at all.}
+
+\ROUNDTWO{The reader may wonder whether the complexities of our
+  system hinted above are a better alternative to simply specializing
+  the optimisation passes to produce code that passes a more naive
+  linearity check. This avenue was already explored during the
+  implementation of Linear
+  Haskell in GHC,
+ exhibiting the prohibitive cost of too often restricting
+ optimisations and producing less efficient code. Our work adheres to
+ the principle that the type system bends to the optimisations, not
+ the other way around\footnote{\url{https://gitlab.haskell.org/ghc/ghc/-/blob/c85c845dc5ad539bf28f1b8c5c1dbb349e3f3d25/compiler/GHC/Core/Lint.hs\#L3225-3235}}.}
 
 
 
