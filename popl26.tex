@@ -3338,7 +3338,7 @@ preserving in Linear Core. %(i.e.,~preserve linearity semantically).
 %\{\overline{\rho\to e'}\}
 \begin{figure}[t]
 
-  {\scriptsize
+  {\small
   \[
     \begin{array}{ll}
    (\llet{\xD = e}{e'} )  \Longrightarrow \llet{\xD =       e}{e'[e/x]} &                    \mbox{Inlining}\\[1ex]
@@ -3996,21 +3996,20 @@ linear types.
 However, Linear Core does not accept every single program produced by the
 optimisation pipeline of GHC. Our manual analysis of rejected programs revealed
 excellent results. Programs considered ill-typed by the Linear Core
-implementation include:
+implementation include programs that:
 %
-%\begin{itemize}
-% \item
-Programs we expected GHC to produce, but know are not seen as linear by $\lambda^\pi_\Delta$.
+\begin{itemize}
+\item we expected GHC to produce, but know are not seen as linear by $\lambda^\pi_\Delta$.
         Namely, programs resulting from the reverse binder swap which
         scrutinize a variable and then use it again in the case alternatives.
         As discussed in Section~\ref{sec:reverse-binder-swap-considered-harmful}, these
         programs could be understood as linear as long as all applications of
-        linear functions are reduced \emph{call-by-need};
-programs rejected due to the lack of ``linearity coercions'' in
+        linear functions are reduced \emph{call-by-need}
+\item were rejected due to the lack of ``linearity coercions'' in
         $\lambda^\pi_\Delta$. Extending Linear Core with \emph{multiplicity coercions} 
         could make these programs be understood as linear
         (discussed in Section~\ref{sec:future-work});
-programs which actually violate linearity, in that the term
+\item actually violate linearity, in that the term
         violates the linear type it is annotated with. These are the programs
         we ultimately want to spot and reject by having a linearly typed Core
         validate intermediate programs. We found both a program which outright
@@ -4018,7 +4017,7 @@ programs which actually violate linearity, in that the term
         fusion~\cite{10.1145/165180.165214,10.1145/1291151.1291199}
         (among other rules) could produce linearly-invalid programs (in one such case,
         the type of \lstinline{build} was not general enough to accommodate linearity).
-%\end{itemize}
+\end{itemize}
 
 Overall, the programs rejected by the Linear Core plugin,
 %, in \texttt{linear-base},
