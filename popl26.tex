@@ -3789,7 +3789,7 @@ consuming fragments of resources through pattern-bound variables.
 \ROUNDTWO{As standard in substructural typing systems, our rules
   non-deterministically split linear resources as needed.}
 \ROUNDTWO{In our implementation,} we thread input/output linear resources through each
-derivation~\cite{DBLP:journals/tcs/CervesatoHP00}.
+derivation~\cite{CERVESATO2000133}.
 %
 To use pattern variables with usage environment $\lctag{\irr{\D}}{K_i}$, the
 scrutinee resources must first be $\textsc{Split}$ into fragments. Instead of
@@ -3911,16 +3911,15 @@ We compiled the Haskell standard library for programming with linear types,
 \texttt{linear-base} (4000 lines, comprising over 100 modules),
 \texttt{linear-smc}~\cite{10.1145/3471874.3472980} (1500 lines),
 \texttt{priority-sesh}~\cite{10.1145/3471874.3472979} (1400 lines),
-\texttt{text-builder-linear}~\cite{cite:text-builder-linear} (1800 lines), and
+\texttt{text-builder-linear} \cite{cite:text-builder-linear} (1800 lines), and
 \texttt{linear-generics}~\cite{cite:linear-generics} (2000 lines), using our
 plugin.
 %
 We count the number of programs accepted by our implementation, where
 each top-level binding in a module counts as a program, and every such
-binding is checked once per optimisation pass, i.e. we check
-all intermediate programs produced by GHC. The total of programs
-rejected is counted in the same way, without ever halting compilation when a
-program is rejected. We note that our implementation is not performance
+binding is checked once per optimisation pass, i.e.~we check
+all intermediate programs produced by GHC. The total of rejected programs
+is counted in the same way, without halting compilation. We note that our implementation is not performance
 conscious and types every intermediate program from scratch.
 % , instead of preserving information throughout the pipeline.
 
