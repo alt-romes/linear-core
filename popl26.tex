@@ -717,22 +717,24 @@ aware of prior to this work).
 %Core's linear type system -- building intuition towards semantic linearity in a
 %lazy language.
 %
+\begingroup
+\setlength{\fboxsep}{0pt}% remove the weird padding in colorbox until the end of this group
 In the examples, a \colorbox{working}{\workingcolorname} background highlights
 programs that are syntactically linear and accepted by Core's linear type
 system.
 %
 A \colorbox{notyet}{\notyetcolorname} or
 \colorbox{limitation}{\limitationcolorname} background mark programs that are
-semantically linear, but not seen as linear by Core's type system. \ROUNDTWO{Our
-system accepts all
-\colorbox{notyet}{\notyetcolorname} programs, but not the
-\colorbox{limitation}{\limitationcolorname} examples. }
+semantically linear, but not seen as linear by Core's type system.
+\ROUNDTWO{Our system accepts all \colorbox{notyet}{\notyetcolorname} programs,
+but not the \colorbox{limitation}{\limitationcolorname} examples.}
 %
 %
 % (while the few \colorbox{limitation}{\limitationcolorname} programs are not accepted).
 A \colorbox{noway}{\nowaycolorname} background indicates that the program
 violates linearity semantically, i.e.~the program effectively
 discards or duplicates linear resources.
+\endgroup% end group
 
 % We discuss recursive and recursive let bindings, and case expressions.
 
@@ -1563,10 +1565,9 @@ consume the result of evaluating the scrutinee.
 In this section, we develop a pure linear calculus $\lambda_\Delta^\pi$,
 dubbed \emph{Linear Core}, that combines the linearity-in-the-arrow
 and multiplicity polymorphism introduced by Linear
-Haskell~\cite{10.1145/3158093} with all the key features of GHC's Core
-language (algebraic datatypes, case expressions, and recursive lazy let bindings),
-except for equality coercions, which we discuss as future work in
-Section~\ref{sec:future-work}. 
+Haskell~\cite{10.1145/3158093} with all the key features of GHC Core: algebraic
+datatypes, case expressions, and recursive lazy let bindings; except for equality
+coercions, which we discuss as future work in Section~\ref{sec:future-work}. 
 %
 
 Linear Core makes precise the various insights discussed in the
