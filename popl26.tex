@@ -3744,23 +3744,28 @@ linear variables.
 
 \section{Linear Core as a GHC Plugin\label{sec:discuss:implementation}}
 
-We have implemented the Linear Core type system as a plugin for the Glasgow
-Haskell Compiler.
+We implemented Linear Core as a plugin for the Glasgow Haskell Compiler.
 GHC plugins allow developers to inspect and modify programs being compiled by
 GHC, at different stages of compilation~\cite{10.1145/3331545.3342599}.
 %
-In particular, for any given Haskell module, Core plugins run for (and receive
-as input) every intermediate program produced in the compilation process, i.e.
-from desugaring and after each optimising transformation.
+% In particular, for any given Haskell module, Core plugins run for (and receive
+% as input) every intermediate program produced in the compilation process, i.e.
+% from desugaring and after each optimising transformation.
 %
-Our implementation further substantiates our claim that Linear Core is
-suitable for the intermediate language of an optimising compiler.
+The Linear Core GHC plugin~\cite{cite:linear-core-plugin} is a typechecker. For
+every single intermediate Core program produced by GHC, our plugin checks the
+linearity of all expressions, failing if a linear resource is not used
+\emph{exactly once} according to \ROUNDTWO{our typing discipline}.
+%
+The plugin implementation of Linear Core provides us with strong confidence
+that the Linear Core type system is suitable for the intermediate language of
+an optimizing compiler, since it is successful in accepting the vast majority
+of real-world linear programs produced by the GHC optimizer, and even
+identified some which violate linearity.
+% Our implementation further substantiates our claim that Linear Core is
+% suitable for the intermediate language of an optimising compiler.
 %\todo[inline]{Tem de ser anonimizado, provavelmente alterando a bib
   %entry para omitir autores e o proprio link}
-The GHC Linear Core plugin~\cite{cite:linear-core-plugin} implements a
-typechecker for Linear Core: given a Core program, our plugin typechecks the
-linearity of all expressions bound in that program, failing if a linear
-resource is not used \emph{exactly once} according to \ROUNDTWO{our typing discipline}.
 %
 % Furthermore, the implementation accepts all example programs from Chapter~\ref{sec:linearity-semantically}
 % deemed well-typed by Linear Core, which are marked with a
@@ -3773,32 +3778,31 @@ resource is not used \emph{exactly once} according to \ROUNDTWO{our typing disci
 % a dash of painful history in the attempt of implementing Linear Core directly
 % into GHC.
 
-The implementation of Linear Core as a typechecker does not follow
-directly from the description of the type system because Linear Core
-is not \emph{syntax-directed}, \ROUNDTWO{given that the goal of our
-  design is to be as simple to reason with as possible.} Specifically,
-the \ROUNDTWO{features of Linear Core that are not syntax-directed are
-  essentially the}
+The implementation of a Linear Core checker does not follow directly from the
+type system because Linear Core is not syntax-directed \ROUNDTWO{(the design
+aims to be as simple to reason with as possible).}
+Specifically, the \ROUNDTWO{features of Linear Core that are not
+syntax-directed are essentially the}
 splitting of linear resources amongst sub-derivations and
 consuming fragments of resources through pattern-bound variables.
 \ROUNDTWO{As standard in substructural typing systems, our rules
   non-deterministically split linear resources as needed.}
 \ROUNDTWO{In our implementation,} we thread input/output linear resources through each
 derivation~\cite{DBLP:journals/tcs/CervesatoHP00}.
-
-For a scrutinee not in WHNF, pattern variables in a case alternative are
-introduced as $\D$-variables with usage environment $\lctag{\irr{\D}}{K_i}$,
-where $\D$ are the scrutinee resources and $K_i$ the tag of that pattern
-variable. To use these pattern variables, the scrutinee resources must be first
-$\textsc{Split}$ into fragments. Instead of guessing which resources need to be split,
-the implementation consumes tagged fragments of a resource \emph{as needed},
-i.e., only when consuming a resource whose usage environment has a resource
-tagged $K_j$ do we $\textsc{Split}$ that resource on $K$ and consume the $K_j$ fragment.
+%
+To use pattern variables with usage environment $\lctag{\irr{\D}}{K_i}$, the
+scrutinee resources must first be $\textsc{Split}$ into fragments. Instead of
+guessing which resources need to be split,
+the implementation consumes tagged fragments of a resource as needed,
+i.e., only when consuming a resource tagged $K_j$ do we $\textsc{Split}$ that
+resource on $K$ and consume the $K_j$ fragment.
 %
 Finally, our implementation must infer the usage environments of binders in
 a recursive let group before using them to typecheck the let body. We use a
 naive $O(n^2)$ algorithm (where $n$ is the number of let bindings) to determine
-these usage environments. %Further research regarding
+these usage environments. We leave the study of the soundness and completeness
+of this implementation strategy to future work.
+%Further research regarding
 %this inference challenge is discussed in Section~\ref{sec:future-work}.
 %
 %
@@ -3898,26 +3902,26 @@ these usage environments. %Further research regarding
 % avenue of future work (Section~\ref{sec:future-work}) exploring the intersection
 % of Linear Core with type equality coercions.
 
-The results of running the Linear Core GHC plugin on large 
-libraries focused around linear types are reported in
-Figure~\ref{fig:core-plugin-res}.
+The results of running the Linear Core GHC plugin on real-world libraries with
+linear types are reported in Figure~\ref{fig:core-plugin-res}.
 %
 %
 We compiled the Haskell standard library for programming with linear types,
-\texttt{linear-base} (4000 lines, comprising over 100 modules), the
-\texttt{linear-smc}~\cite{10.1145/3471874.3472980} (1500 lines) library, and
-\texttt{priority-sesh}~\cite{10.1145/3471874.3472979} (1400 lines), a
-session-types library, using our plugin.
+\texttt{linear-base} (4000 lines, comprising over 100 modules),
+\texttt{linear-smc}~\cite{10.1145/3471874.3472980} (1500 lines),
+\texttt{priority-sesh}~\cite{10.1145/3471874.3472979} (1400 lines),
+\texttt{text-builder-linear}~\cite{cite:text-builder-linear} (1800 lines), and
+\texttt{linear-generics}~\cite{cite:linear-generics} (2000 lines), using our
+plugin.
 %
 We count the number of programs accepted by our implementation, where
 each top-level binding in a module counts as a program, and every such
-binding is typechecked once per optimisation pass (i.e., we typecheck
-all intermediate programs produced by GHC). The total amount of programs
-rejected by the typechecker are counted dually, also across every optimisation
-pass, without halting compilation when a program is rejected. We note that our
-implementation is not performance conscious, and types every intermediate
-program from scratch, instead of preserving information throughout the
-pipeline.
+binding is checked once per optimisation pass, i.e. we check
+all intermediate programs produced by GHC. The total of programs
+rejected is counted in the same way, without ever halting compilation when a
+program is rejected. We note that our implementation is not performance
+conscious and types every intermediate program from scratch.
+% , instead of preserving information throughout the pipeline.
 
 %``Total Rejected'' column, but we distil these rejections into ``Unique
 %Rejections'' by removing duplicate rejections (those of the same
@@ -3983,7 +3987,6 @@ pipeline.
 %were not categorized
 
 
-\vspace{-.1cm}
 {\small
   \input{prototype/core-plugin-results-2}
   }
@@ -4004,13 +4007,11 @@ implementation include programs that:
         scrutinize a variable and then use it again in the case alternatives.
         As discussed in Section~\ref{sec:reverse-binder-swap-considered-harmful}, these
         programs could be understood as linear as long as all applications of
-        linear functions are reduced \emph{call-by-need}
+        linear functions are reduced call-by-need
 \item were rejected due to the lack of ``linearity coercions'' in
-        $\lambda^\pi_\Delta$. Extending Linear Core with \emph{multiplicity coercions} 
-        could make these programs be understood as linear
-        (discussed in Section~\ref{sec:future-work});
-\item actually violate linearity, in that the term
-        violates the linear type it is annotated with. These are the programs
+        $\lambda^\pi_\Delta$. Extending Linear Core with these coercions would
+        make these programs be accepted (as discussed in Section~\ref{sec:future-work});
+\item actually violate linearity. These are the programs
         we ultimately want to spot and reject by having a linearly typed Core
         validate intermediate programs. We found both a program which outright
         discarded a linear resource and that rewrite rules implementing stream
@@ -4018,12 +4019,11 @@ implementation include programs that:
         (among other rules) could produce linearly-invalid programs (in one such case,
         the type of \lstinline{build} was not general enough to accommodate linearity).
 \end{itemize}
-
-Overall, the programs rejected by the Linear Core plugin,
+%
 %, in \texttt{linear-base},
-besides validating that our implementation is faithful to the
-$\lambda^\pi_\Delta$ system, provide further insight into the remaining
-details required to fully typecheck linearity in a mature optimising compiler.
+Besides validating that our implementation is faithful to the
+$\lambda^\pi_\Delta$ system, these programs provide insight as to what more is
+needed to fully understand linearity in a mature optimising compiler.
 
 
 % Talk about using our plugin on linear-base and other code bases... If I can get

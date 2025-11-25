@@ -1,15 +1,17 @@
 \begin{figure}[h]
 \centering{
-\begin{tabular}{|l|c|c|c|}
+\begin{tabular}{|l|c|c|c|c|}
     %\toprule
-    \thead{Library} & \thead{Total\\Accepted} & \thead{Total\\Rejected} & \thead{Accept Rate}\\
+    \thead{Library} & \thead{Total\\Accepted} & \thead{Total\\Rejected} & \thead{Unique\\Rejected} & \thead{Accept Rate}\\
     %\midrule
-    linear-smc & 19438 & 4 & 99.98\% \\
-    \makecell{priority-sesh} & 6781 & 19 & 99.72\% \\
-    linear-base & 112311 & 538 & 99.52\% \\
+    linear-base & 48018 & 735 & 51 & 98.50\% \\
+    linear-smc & 18759 & 5 & 3 & 99.97\% \\
+    priority-sesh & 760 & 95 & 6 & 88.89\% \\
+    text-builder-linear & 4858 & 34 & 6 & 99.30\% \\
+    linear-generics & 63332 & 0 & 0 & 100.00\% \\
     %\bottomrule
 \end{tabular}
 }
-\caption{Linear Core Plugin on Linear Libraries}
+\caption{Linear Core Plugin on Linear Libraries with GHC 9.10.3}
 \label{fig:core-plugin-res}
 \end{figure}
