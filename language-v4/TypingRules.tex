@@ -241,7 +241,7 @@
 
 \newcommand{\TypingRules}{
 \begin{figure}[ht]
-\begin{framed}
+% \begin{framed}
 \small
 \[
 \begin{array}{c}
@@ -250,49 +250,49 @@
     \TypeMultLamIntro
 \qquad
     \TypeMultLamElim
-\\
+\\[0.2cm]
     \TypeLamIntroL
 \qquad
     \TypeLamIntroW
-\\
+\\[0.2cm]
     \TypeVarDelta
   \qquad
     \TypeVarSplit
-  \\
+\\[0.2cm]
     \TypeVarP
   \qquad
     \TypeVarOmega
 \qquad
     \TypeLamElimL
-\\
+\\[0.2cm]
     \TypeLinearVar
 \qquad
   \TypeLamElimW
 \\[0.2cm]
   \TypeConstr
-\\[0.3cm]
+\\[0.2cm]
     \TypeLet
 \quad
     \TypeLetRec
-\\[0.3cm]
+\\[0.2cm]
     \TypeCaseWHNF
 \\
     \TypeCaseNotWHNF
 % Ouch, nope, not the case var
 %    \TypeCaseVar
-\\[0.6cm]
+\\[1cm]
     \ROUNDTWO{\judgment{\judg{\rho \Rightarrow e}{ \s}[][\Delta_s][z]}}
 \\[0.4cm]
     \TypeAltNWHNF
 \quad
     \TypeAltNNotWHNF
-\\
+\\[0.2cm]
     \TypeAltZero
 \qquad
     \TypeAltWild
 \end{array}
 \]
-\end{framed}
+% \end{framed}
 \caption{Linear Core Type System}
 \label{fig:linear-core-typing-rules}
 \end{figure}
@@ -300,14 +300,14 @@
 
 \newcommand{\TypingRulesOther}{
 \begin{figure}[ht]
-\begin{framed}
+% \begin{framed}
 \small
 \[
 \begin{array}{c}
     \judgment{\Gamma \vdash_{mult} \pi}
 \\[0.4cm]
     \TypeWellFormedMult
-\\[0.6cm]
+\\[1cm]
     \judgment{\G; \D \Vdash e : \s \gtrdot \ov{\D_i}}
 \\[0.4cm]
     \TypeWHNFCons
@@ -320,7 +320,7 @@
 % \end{array}
 \end{array}
 \]
-\end{framed}
+% \end{framed}
 \caption{Linear Core Auxiliary Judgements}
 \label{fig:linear-core-other-judgements}
 \end{figure}
