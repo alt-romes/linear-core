@@ -134,33 +134,6 @@
 \input{language-v4/TypingRules}
 \input{language-v4/TheoremsAndLemmas}
 
-%\title{Semantic linearity in a lazy optimizing compiler]
-\title{Lazy Linearity for a Core Functional Language}
-%\subtitle{Type-checking Linearity in GHC Core}
-
-
-\author{Rodrigo Mesquita}
-\orcid{0009-0005-1467-115X}
-\affiliation{%
-  \institution{Well-Typed LLP}
-  \city{London}
-  \country{United Kingdom}
-}
-\email{rodrigo@well-typed.com}
-
-\author{Bernardo Toninho}
-\orcid{0000-0002-0746-7514}
-\affiliation{%
-  \institution{Instituto Superior Técnico, University of Lisbon}
-  \city{Lisbon}
-  \country{Portugal}
-}
-\affiliation{%
-  \institution{INESC-ID}
-  \city{Lisbon}
-  \country{Portugal}
-}
-\email{bernardo.toninho@tecnico.ulisboa.pt}
 
 \begin{CCSXML}
 <ccs2012>
@@ -192,10 +165,49 @@
 \ccsdesc[500]{Software and its engineering~Functional languages}
 \ccsdesc[500]{Software and its engineering~Compilers}
 
-
 \keywords{Linear Types, Lazy Evaluation, Haskell, GHC Core}
 
+\setcopyright{cc}
+\setcctype{by}
+\acmDOI{10.1145/3776711}
+\acmYear{2026}
+\acmJournal{PACMPL}
+\acmVolume{10}
+\acmNumber{POPL}
+\acmArticle{69}
+\acmMonth{1}
+\received{2025-07-10}
+\received[accepted]{2025-11-06}
+
 \begin{document}
+
+%\title{Semantic linearity in a lazy optimizing compiler]
+\title{Lazy Linearity for a Core Functional Language}
+%\subtitle{Type-checking Linearity in GHC Core}
+
+
+\author{Rodrigo Mesquita}
+\orcid{0009-0005-1467-115X}
+\affiliation{%
+  \institution{Well-Typed LLP}
+  \city{London}
+  \country{United Kingdom}
+}
+\email{rodrigo@well-typed.com}
+
+\author{Bernardo Toninho}
+\orcid{0000-0002-0746-7514}
+\affiliation{%
+  \institution{Instituto Superior Técnico, University of Lisbon}
+  \city{Lisbon}
+  \country{Portugal}
+}
+\affiliation{%
+  \institution{INESC-ID}
+  \city{Lisbon}
+  \country{Portugal}
+}
+\email{bernardo.toninho@tecnico.ulisboa.pt}
 
 \begin{abstract}
 Traditionally, \ROUNDTWO{in linearly typed languages, consuming} a linear resource is synonymous
@@ -239,19 +251,6 @@ to do so in Core. We have implemented Linear Core as a compiler plugin to
 validate the system against linearity-heavy libraries, including
 \texttt{linear-base}.%^, in the heart of the compiler.
 \end{abstract}
-
-
-\setcopyright{cc}
-\setcctype{by}
-\acmDOI{10.1145/3776711}
-\acmYear{2026}
-\acmJournal{PACMPL}
-\acmVolume{10}
-\acmNumber{POPL}
-\acmArticle{69}
-\acmMonth{1}
-\received{2025-07-10}
-\received[accepted]{2025-11-06}
 
 
 \maketitle
