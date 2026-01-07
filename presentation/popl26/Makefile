@@ -1,8 +1,10 @@
+INCLUDES = /Users/romes/Developer/beamer-theme/includes
+
 slides.pdf: slides.tex
-	pdflatex $< -o $@
+	TEXINPUTS=$(INCLUDES):.: pdflatex $< -o $@
 
 %.tex: %.lhs
-	lhs2TeX $< -o $@
+	LHS2TEXINPUTS=$(INCLUDES) /Users/romes/.local/bin/lhs2TeX -P$(INCLUDES): $< -o $@
 
 
 .PHONY: clean
