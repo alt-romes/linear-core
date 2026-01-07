@@ -1,0 +1,76 @@
+Notas:
+
+Optimisations make Core programs not look linear.
+Because it can e.g. inline this definition
+This surely isn't linear, or is it?
+At runtime, x will be consumed exactly once
+Why did we type this as non-linear? Because we're thinking that a
+syntactic use of a resource equates to consuming that resource, which
+is not true under lazy evaluation...!
+
+In fact, we have idenitified this as the main limitation of Core's
+linear type system
+
+So we developed a type system
+
+
+Estrutura:
+
+- Linear Haskell
+    - GHC com Linear Types
+    - Existe porque ...
+    - Exemplo (pequenino)
+
+- No contexto do GHC, como integramos linear types na linguagem?
+    - Core (desugared Haskell)
+    - Lazy e Typed
+    - Core Linear is ultimate goal
+        - Fully represent haskell
+        - Validate optimisations and implementation (optimiser better not duplicate resources)
+        - Might inform optimisations
+
+- Motivation: Why isn't Core typed linearly?
+- Key idea: difficult because interaction laziness x linearity
+- The syntactci occurrence of a linear resource is NOT the same as
+  using that resource, under lazy evaluation
+    (integrar aquele racicioncinio acima...)
+
+- Contributions
+    - List
+
+- Linearity Semantically
+    - Lets
+    - Case expressions (semantics: evaluates WHNF)
+    - What does it really mean to consume a resource
+
+- Type System
+    - Key idea: usage environments/Δ-bound variables delay consumption of resources
+        - Let bound variables are canonical Δ-bound variables with usage environments, but there are more
+    - Key idea: type system branches on case expression scrutinizing WHNF? expression
+    - Exemplos
+    - Type System captura tudo
+    - Faz sentido? Metatheory
+        - Mostrei que os tipos são preservados e que expressões bem tipificadas avaliam para valores
+        - E todos os lemas
+        - Preservation é especialmente difícil porque a forma como uma expressão é tipificada depende da avaliação do programa
+        - Desafiante provar
+
+- Resultados?
+    - Objetivo era integrar no Linear Core
+    - Fizemos um plugin que validou imensos programas...
+
+- Future Work
+    - Multiplicity coercions
+
+Notas:
+* não perder nos detalhes tecnicos
+* escolher os exemplos que ilustram cada regra de forma chave
+* Case WHNF e Case Not WHNF
+* nullary constructors, wildcard
+
+Não falar de:
+* Recursion
+* Tagged resources
+
+Rever:
+* Decisões que tomei...
