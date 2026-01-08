@@ -25,9 +25,9 @@
 \newcommand{\lletrec}[2]{\mathsf{letrec}~#1~\mathsf{in}~#2}
 \newcommand{\llet}[2]{\mathsf{let}~#1~\mathsf{in}~#2}
 
-\usetheme{Copenhagen}
+\usetheme{welltyped}
 %\usetheme{Singapore}
-\usecolortheme{seahorse}
+%\usecolortheme{seahorse}
 \setbeamertemplate{navigation symbols}{}
 \setbeamertemplate{itemize items}[circle]
 % \setbeamercovered{transparent}
@@ -84,7 +84,11 @@
 \tikzstyle{do} = [trapezium, trapezium left angle=70, trapezium right angle=110, minimum width=3cm, minimum height=1cm, text centered, draw=black, fill=blue!30]
 \tikzstyle{arrow} = [thick,->,>=stealth]
 
-\setbeamercolor{block body}{bg=notyet}
+\AtBeginDocument{%
+  \setbeamercolor{block body}{parent=,use=,fg=black,bg=notyet}
+  \setbeamercolor{block body alerted}{parent=,use=,fg=black,bg=noway}
+  \setbeamercolor{block body example}{parent=,use=,fg=black,bg=working}
+}
 
 %% Proofs and rules
 \input{../../proof}
@@ -94,12 +98,16 @@
 \input{../../language-v4/Syntax}
 \input{../../language-v4/TypingRules}
 
-\title{Type-checking Linearity in Core:\\ Semantic Linearity for a Lazy Optimising Compiler}
-\author{Rodrigo Mesquita\\Advisor: Bernardo Toninho}
-\institute{
-% NOVA School of Science and Technology
-% \\
-\includegraphics[width=0.4\linewidth]{../logo_nova.png}
+\title{Lazy Linearity for a Core Functional Language}
+\author[R. Mesquita \& B. Toninho]{%
+  Rodrigo Mesquita\inst{1} \and
+  Bernardo Toninho\inst{2,3}
+}
+
+\institute{%
+  \inst{1} Well-Typed LLP, London, United Kingdom\\
+  \inst{2} Instituto Superior Técnico, University of Lisbon, Lisbon, Portugal\\
+  \inst{3} INESC-ID, Lisbon, Portugal\\
 }
 \date{ }
 
@@ -109,26 +117,8 @@
 % laziness and linearity in the heart of the Glasgow Haskell compiler.
 \frame{\titlepage}
 
-% Haskell has Linear Types! Linear types are a type level feature that gives
-% programmers expressiveness to enforce how certain resources are used at
-% runtime. This allows us to build resource-safe abstractions that guarantee
-% correct resource usage e.g. for heap allocated memory, file handles, or, more
-% exotically, for deadlock freedom with session types and quantum programming.
-% languages
-%
-% Linear Haskell introduces the linear function type, which is st:
-% A linear function -o consumes its argument exactly once.
-%
-% Here are two examples:
-% The first is a linear function that binds $x$, so $x$ has to be used exactly
-% once. However, it frees $x$ twice. This function does not typecheck!
-% The second is an OK function which says that it uses $x$ linearly in its type, and it does.
-\begin{frame}{Linear Haskell}
-% Linear types were retroffited to Haskell by introducing linearity in the function type
-Haskell has Linear Types!\\
-\pause
+\begin{frame}{Linear Types (in Haskell)}
 A linear function $\lolli$ consumes its argument \emph{exactly once}
-\pause
 \begin{columns}
 \begin{column}{0.5\textwidth}
 \begin{alertblock}{}
@@ -140,7 +130,30 @@ bad x = do
 \end{code}
 \end{alertblock}
 \end{column}
-\pause
+\begin{column}{0.5\textwidth}
+\begin{exampleblock}{}
+\begin{code}
+ok :: Ptr ?-> IO ()
+ok x = free x
+\end{code}
+\end{exampleblock}
+\end{column}
+\end{columns}
+\end{frame}
+
+\begin{frame}{Is this function linear?}
+A linear function $\lolli$ consumes its argument \emph{exactly once}
+\begin{columns}
+\begin{column}{0.5\textwidth}
+\begin{alertblock}{}
+\begin{code}
+bad :: Ptr ?-> IO ()
+bad x = do
+  free x
+  free x
+\end{code}
+\end{alertblock}
+\end{column}
 \begin{column}{0.5\textwidth}
 \begin{exampleblock}{}
 \begin{code}
