@@ -31,7 +31,13 @@
 \setbeamertemplate{navigation symbols}{}
 \setbeamertemplate{itemize items}[circle]
 % \setbeamercovered{transparent}
-\setbeamertemplate{footline}[frame number]
+\setbeamertemplate{footline}{
+  \hfill%
+  \usebeamercolor[fg]{page number in head/foot}%
+  \usebeamerfont{page number in head/foot}%
+  \setbeamertemplate{page number in head/foot}[framenumber]%
+  \usebeamertemplate*{page number in head/foot}\kern1em\vskip2pt%
+}
 \usepackage{appendixnumberbeamer}
 % \setbeameroption{show notes on second screen}
 % \setbeameroption{show notes}
@@ -39,7 +45,7 @@
 %%%%%%%%%%%%%%  Color-related things   %%%%%%%%%%%%%%
 %include polycode.fmt
 
-%%subst keyword a = "\textcolor{BlueViolet}{\textbf{" a "}}"
+%subst keyword a = "\textcolor{BlueViolet}{" a "}"
 %format ==> = "\Longrightarrow"
 %format forall = "\forall"
 %format ?-> = "\multimap"
@@ -53,6 +59,8 @@
 %format hli (a) = "\textcolor<+(1)>{red}{\hspace{-4pt}" a "}"
 %format hlr (a) = "\textcolor{red}{\hspace{-4pt}" a "}"
 %format hlin (a) = "\textcolor<+(1)>{red}{" a "}"
+
+%format boldPtr = "\textbf{ptr}"
 %%%%%%%%%%%%  End of Color-related things   %%%%%%%%%%%%
 
 % It might make sense to add pretty formating of individual things
@@ -117,16 +125,16 @@
 % laziness and linearity in the heart of the Glasgow Haskell compiler.
 \frame{\titlepage}
 
-\begin{frame}{Linear Types (in Haskell)}
+\begin{frame}{Linear Types}
 A linear function $\lolli$ consumes its argument \emph{exactly once}
 \begin{columns}
 \begin{column}{0.5\textwidth}
 \begin{alertblock}{}
 \begin{code}
 bad :: Ptr ?-> IO ()
-bad x = do
-  free x
-  free x
+bad ptr = do
+  free ptr
+  free ptr
 \end{code}
 \end{alertblock}
 \end{column}
@@ -134,7 +142,7 @@ bad x = do
 \begin{exampleblock}{}
 \begin{code}
 ok :: Ptr ?-> IO ()
-ok x = free x
+ok ptr = free ptr
 \end{code}
 \end{exampleblock}
 \end{column}
@@ -142,27 +150,51 @@ ok x = free x
 \end{frame}
 
 \begin{frame}{Is this function linear?}
-A linear function $\lolli$ consumes its argument \emph{exactly once}
-\begin{columns}
-\begin{column}{0.5\textwidth}
-\begin{alertblock}{}
+\begin{block}{}
+\large
 \begin{code}
-bad :: Ptr ?-> IO ()
-bad x = do
-  free x
-  free x
+interesting :: Ptr ?-> IO ()
+interesting boldPtr =
+  let baz = free boldPtr
+  if ...
+    then baz
+    else free boldPtr
 \end{code}
-\end{alertblock}
-\end{column}
-\begin{column}{0.5\textwidth}
-\begin{exampleblock}{}
+\end{block}
+\end{frame}
+
+\begin{frame}{It depends on the evaluation strategy}
+\begin{minipage}{0.65\textwidth}
+The |interesting| function frees |ptr|:
+\begin{itemize}
+\item More than once, under strict evaluation
+\item Exactly once, under non-strict evaluation
+\end{itemize}
+\end{minipage}
+\begin{minipage}{0.34\textwidth}
 \begin{code}
-ok :: Ptr ?-> IO ()
-ok x = free x
+let baz = free ptr
+if ...
+    then baz
+    else free ptr
 \end{code}
-\end{exampleblock}
-\end{column}
-\end{columns}
+\end{minipage}
+
+\end{frame}
+
+
+\begin{frame}{But |interesting| is always rejected!}
+All linear type systems we know of reject |interesting|.
+
+\begin{itemize}
+\item Traditional linearity is too syntactic
+\item Lazy semantics of linearity are rejected
+\end{itemize}
+
+\textbf{Key observation}:
+
+\centering
+\emph{syntactic linearity $\neq$ semantic linearity}
 \end{frame}
 
 % Linear Types were implemented as an extension in the Glasgow Haskell
@@ -186,21 +218,18 @@ ok x = free x
 % optimising passes preserve linearity -- which should be true -- by
 % typechecking linearity after every transformation! Optimiser should
 % definitely not destroy linearity. We also need linearity in Core to fully represent Linear Haskell.
-\begin{frame}{Linearity in the Glasgow Haskell Compiler (GHC)}
+\begin{frame}{Why do we care? Linearity in GHC}
 \begin{center}
 \begin{tikzpicture}[node distance={5cm}, thick, main/.style = {draw, rectangle, minimum size=1.5em}] 
-\node[main] (1) {{\only<6->{Linear }Haskell}}; 
-\pause
-\node[main] (2) [right of=1] {{\only<7->{Linear }Core}};
+\node[main] (1) {Linear Haskell}; 
+\node[main] (2) [right of=1] {{Core}};
 \draw[->] (1) -- node[above] {Desugar} (2);
-\pause
 \draw[->] (2) to [out=225,in=315,looseness=10] node[below] {Optimize} (2);
-\pause
 \node[main] (3) [right of=2] {Assembly};
 \draw[->] (2) -- node[above] {Code Gen} (3);
 \end{tikzpicture} 
 \end{center}
-\onslide<5->{Core \only<-7>{is}\only<8->{\emph{should be}} both lazy and \only<8->{\emph{linearly} }typed}
+Core is both lazy and statically typed, but linearity has to be ignored.
 \end{frame}
 
 % So, why isn't Core linear? It's key to understand that the optimiser does
@@ -216,10 +245,9 @@ ok x = free x
 % to say they are in the intermediate language's type system.
 % And this only comes up in Core because the optimiser changes around things
 % that were previously linearly conservatively.
-\begin{frame}{So, why isn't Core linear?}
+\begin{frame}{Why isn't Core linear?}
 % Optimisations heavily transform linear programs to the point they stop \emph{looking} linear
-Optimised programs stop \emph{looking} linear
-\pause
+Optimizations destroy \emph{syntactic} linearity
 % \begin{column}{0.5\textwidth}
 % \begin{block}{}
 % \begin{code}
@@ -239,34 +267,33 @@ let y = free x in y
 let y = free x in free x
 \end{code}
 \end{block}
-\pause
-Linearity is ignored in Core, or most programs would be rejected
+%Linearity is ignored, or too many programs would be rejected
 \end{frame}
 
-% Summarising,
-% <bullets>
-\begin{frame}{Semantic vs Syntactic Linearity}
-
-\begin{itemize}
-\item Programs are still linear \emph{semantically} because of laziness\pause
-      %, but are rejected by the type system\pause
-\item \textbf{Key insight:} Under lazy evaluation,\\
-  \begin{center}
-  \emph{syntactic} occurrence $\nRightarrow$ \emph{consuming} a resource\\
-  \emph{syntactic} linearity $\neq$ \emph{semantic} linearity
-  \end{center}\pause
-  % Under call-by-value the distinction barely exists
-  % This is a problem unique to Haskell
-\item We type \emph{syntactic} linearity in Core, but that is not enough\pause
-\item Optimisations push laziness x linearity to the limit
-\end{itemize}
-
-% The meaning of \emph{consuming} a resource is conflated with its
-% \emph{syntactic} occurrence... and that becomes a problem under \emph{lazy} evaluation!
-
-% Under lazy evaluation, a syntactic occurrence of a linear resource is not necessarily \emph{consuming} it.
-% We call 
-\end{frame}
+%% Summarising,
+%% <bullets>
+%\begin{frame}{Semantic vs Syntactic Linearity}
+%
+%\begin{itemize}
+%\item Programs are still linear \emph{semantically} because of laziness\pause
+%      %, but are rejected by the type system\pause
+%\item \textbf{Key insight:} Under lazy evaluation,\\
+%  \begin{center}
+%  \emph{syntactic} occurrence $\nRightarrow$ \emph{consuming} a resource\\
+%  \emph{syntactic} linearity $\neq$ \emph{semantic} linearity
+%  \end{center}\pause
+%  % Under call-by-value the distinction barely exists
+%  % This is a problem unique to Haskell
+%\item We type \emph{syntactic} linearity in Core, but that is not enough\pause
+%\item Optimisations push laziness x linearity to the limit
+%\end{itemize}
+%
+%% The meaning of \emph{consuming} a resource is conflated with its
+%% \emph{syntactic} occurrence... and that becomes a problem under \emph{lazy} evaluation!
+%
+%% Under lazy evaluation, a syntactic occurrence of a linear resource is not necessarily \emph{consuming} it.
+%% We call 
+%\end{frame}
 
 %\begin{frame}{Which is aggressively optimized}
 
@@ -313,9 +340,10 @@ Linearity is ignored in Core, or most programs would be rejected
 \begin{frame}{Our Contributions}
 \begin{itemize}
 % \item We describe \emph{semantic} linearity under lazy evaluation
-\item Linear Core: a type system that \colorbox{notyet}{understands} semantic linearity in the presence of laziness\pause
-\item We proved Linear Core and multiple optimising transformations to be sound\pause
-\item We implemented Linear Core as a GHC plugin
+\item Linear Core: a type system which \colorbox{notyet}{accepts} the lazy semantics of linearity statically
+\item Soundness proof for Linear Core and multiple optimising transformations,
+guaranteeing runtime linearity
+\item Prototype as GHC plugin
 \end{itemize}
 \end{frame}
 
@@ -323,10 +351,10 @@ Linearity is ignored in Core, or most programs would be rejected
 \begin{frame}{}
 \centering
 \large
-Semantic Linearity, by example
+Lazy Linearity, by example
 \end{frame}
 
-\begin{frame}{Semantic Linearity: Lets}
+\begin{frame}{Lazy Linearity: Lets}
 \begin{block}{}
 \begin{code}
 let y = free ptr
@@ -340,7 +368,7 @@ in if condition
 Resources in lets are only consumed if the binder is evaluated
 \end{frame}
 
-\begin{frame}{Semantic Linearity: Case}
+\begin{frame}{Lazy Linearity: Case}
 % Estes programas são criados por optimizações, apesar de parecerem programas
 % que um programador nunca escreveria
 \begin{columns}
@@ -383,7 +411,6 @@ case use x of
 \end{column}
 \end{columns}
 \pause
-\vspace{0.5cm}
 Resources are \emph{kind of} consumed if the expression is evaluated
 % (scrutinee is \emph{not} in WHNF)
 \end{frame}
@@ -802,13 +829,13 @@ limit
 % \end{itemize}
 % \end{frame}
 
-\begin{frame}{ }
-\centering \emph{Fim}
-\end{frame}
+%\begin{frame}{ }
+%\centering \emph{Fim}
+%\end{frame}
 
 \appendix
 
-\begin{frame}{Semantic Linearity: Case of Var}
+\begin{frame}{Lazy Linearity: Case of Var}
 \[
 \begin{array}{c}
 (\lambda x.~\ccase{x}{\_ \to x})\\\pause
