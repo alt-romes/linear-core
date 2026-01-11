@@ -216,16 +216,30 @@ All linear type systems we know of reject |interesting|.
 % optimising passes preserve linearity -- which should be true -- by
 % typechecking linearity after every transformation! Optimiser should
 % definitely not destroy linearity. We also need linearity in Core to fully represent Linear Haskell.
-\begin{frame}{Why do we care? Linearity in GHC}
+%%% \begin{frame}{Why do we care? Linearity in GHC}
+%%% \begin{center}
+%%% \begin{tikzpicture}[node distance={5cm}, thick, main/.style = {draw, rectangle, minimum size=1.5em}]
+%%% \node[main] (1) {Linear Haskell};
+%%% \node[main] (2) [right of=1] {{Core}};
+%%% \draw[->] (1) -- node[above] {Desugar} (2);
+%%% \draw[->] (2) to [out=225,in=315,looseness=10] node[below] {Optimize} (2);
+%%% \node[main] (3) [right of=2] {Assembly};
+%%% \draw[->] (2) -- node[above] {Code Gen} (3);
+%%% \end{tikzpicture}
+%%% \end{center}
+%%% Core is both lazy and statically typed, but linearity has to be ignored.
+%%% \end{frame}
+
+\begin{frame}{So what?..... ATODO}
 \begin{center}
-\begin{tikzpicture}[node distance={5cm}, thick, main/.style = {draw, rectangle, minimum size=1.5em}] 
-\node[main] (1) {Linear Haskell}; 
+\begin{tikzpicture}[node distance={5cm}, thick, main/.style = {draw, rectangle, minimum size=1.5em}]
+\node[main] (1) {Linear Haskell};
 \node[main] (2) [right of=1] {{Core}};
 \draw[->] (1) -- node[above] {Desugar} (2);
 \draw[->] (2) to [out=225,in=315,looseness=10] node[below] {Optimize} (2);
 \node[main] (3) [right of=2] {Assembly};
 \draw[->] (2) -- node[above] {Code Gen} (3);
-\end{tikzpicture} 
+\end{tikzpicture}
 \end{center}
 Core is both lazy and statically typed, but linearity has to be ignored.
 \end{frame}
