@@ -190,11 +190,9 @@ All linear type systems we know of reject |interesting|.
 \item Traditional linearity is too syntactic
 \item Lazy semantics of linearity are rejected
 \end{itemize}
-
-\textbf{Key observation}:
-
-\centering
-\emph{syntactic linearity $\neq$ semantic linearity}
+\pause
+\textbf{Key observation}: \emph{syntactic linearity $\neq$ semantic linearity}
+% This talk: how to accept more non-strict programs as linear
 \end{frame}
 
 % Linear Types were implemented as an extension in the Glasgow Haskell
