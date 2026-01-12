@@ -183,7 +183,7 @@ if ...
 \end{frame}
 
 
-\begin{frame}{But |interesting| is always rejected!}
+\begin{frame}{Yet, |interesting| is always rejected!}
 All linear type systems we know of reject |interesting|.
 
 \begin{itemize}
@@ -241,7 +241,11 @@ All linear type systems we know of reject |interesting|.
 \draw[->] (2) -- node[above] {Code Gen} (3);
 \end{tikzpicture}
 \end{center}
-Core is both lazy and statically typed, but linearity has to be ignored.
+Core is lazy and typed, but linearity is ignored.
+\begin{itemize}
+\item Can't do sanity checking!
+\item Can't use linearity for optimisations
+\end{itemize}
 \end{frame}
 
 % So, why isn't Core linear? It's key to understand that the optimiser does
@@ -257,7 +261,7 @@ Core is both lazy and statically typed, but linearity has to be ignored.
 % to say they are in the intermediate language's type system.
 % And this only comes up in Core because the optimiser changes around things
 % that were previously linearly conservatively.
-\begin{frame}{Why isn't Core linear?}
+\begin{frame}{Why is linearity dropped in GHC Core?}
 % Optimisations heavily transform linear programs to the point they stop \emph{looking} linear
 Optimizations destroy \emph{syntactic} linearity
 % \begin{column}{0.5\textwidth}
@@ -352,9 +356,8 @@ let y = free x in free x
 \begin{frame}{Our Contributions}
 \begin{itemize}
 % \item We describe \emph{semantic} linearity under lazy evaluation
-\item Linear Core: a type system which \colorbox{notyet}{accepts} the lazy semantics of linearity statically
-\item Soundness proof for Linear Core and multiple optimising transformations,
-guaranteeing runtime linearity
+\item Type system which \colorbox{notyet}{accepts} the lazy semantics of linearity statically
+\item Soundness proof, guaranteeing runtime linearity
 \item Prototype as GHC plugin
 \end{itemize}
 \end{frame}
@@ -375,8 +378,7 @@ in if condition
   else return ptr
 \end{code}
 \end{block}
-\pause
-\vspace{0.5cm}
+
 Resources in lets are only consumed if the binder is evaluated
 \end{frame}
 
@@ -423,7 +425,7 @@ case use x of
 \end{column}
 \end{columns}
 \pause
-Resources are \emph{kind of} consumed if the expression is evaluated
+Case expressions drive evaluation, consuming (parts of) resources
 % (scrutinee is \emph{not} in WHNF)
 \end{frame}
 
@@ -460,8 +462,6 @@ Linear Core
 %\end{frame}
 
 \begin{frame}{Linear Core: Lets}
-\begin{columns}
-\begin{column}{0.5\textwidth}
 \begin{block}{}
 %format yWithUEPtr = y "_{\{ptr\}}"
 \begin{code}
@@ -471,33 +471,59 @@ in if condition
   else return ptr
 \end{code}
 \end{block}
-\end{column}
-\pause
-\begin{column}{0.5\textwidth}
+
+%% \[
+%% \onslide<3->{
+%% \infer
+%% {
+%% \onslide<4->{\cdot ; ptr \vdash free~ptr}\\
+%% \onslide<5->{y{:}_{\{ptr\}}; ptr \vdash |if condition| \dots}
+%% }
+%% {\cdot; ptr \vdash \llet{y = free~ptr}{\dots}}
+%% }
+%% \]
+
+\textbf{Key idea:} $Let$-binding doesn't consume resources
+\begin{itemize}
+\item Annotate $let$-vars with resources used in its body
+\item Using $let$-vars consumes annotated context
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Lets in Linear Haskell (Standard)}
 \[
-\onslide<3->{
 \infer
 {
-\onslide<4->{\cdot ; ptr \vdash free~ptr}\\
-\onslide<5->{y{:}_{\{ptr\}}; ptr \vdash |if condition| \dots}
+{\Gamma ; \Delta_1 \vdash e_1}\\
+{\Gamma; \Delta_2, y \vdash e_2}
 }
-{\cdot; ptr \vdash \llet{y = free~ptr}{\dots}}
-}
+{\Gamma; \Delta_1, \Delta_2 \vdash \llet{y = e_1}{e_2}}
 \]
-\end{column}
-\end{columns}
-\onslide<2->{
-\vspace{0.5cm}
-$Let$-binders don't consume resources
-\begin{itemize}
-\item Annotate $let$-vars with linear resources ($\D$) used in its body\\
-\item Using a $let$-var equates to using its annotated context ($\D$)
-\end{itemize}
+\end{frame}
+
+\begin{frame}{Lets in Linear Core}
+\[
+\infer
+{
+{\Gamma ; \Delta_1 \vdash e_1}\\
+{\Gamma, y{:}_{\Delta_1}; \Delta_1, \Delta_2 \vdash e_2}
 }
+{\Gamma; \Delta_1, \Delta_2 \vdash \llet{y = e_1}{e_2}}
+\]
+\end{frame}
+
+\begin{frame}{$\Delta$-Vars in Linear Core}
+\[
+\infer
+{
+{\Delta_1 = \Delta_2}
+}
+{\Gamma, y{:}_{\Delta_1}; \Delta_2 \vdash y}
+\]
 \end{frame}
 
 \begin{frame}{Linear Core: Case}
-Case scrut evaluate to WHNF, unless they are already in WHNF\\\pause
+Case scrut evaluate to WHNF, unless they are already in WHNF
 % Recalling the key idea that if it is already in WHNF no EVALUATION happens, thus no resources are consumed (thuis can be in the next slide)
 \begin{columns}
 \begin{column}{0.5\textwidth}
@@ -508,7 +534,6 @@ case (x,y) of
 \end{code}
 \end{block}
 \end{column}
-\pause
 \begin{column}{0.5\textwidth}
 \begin{alertblock}{}
 \begin{code}
@@ -519,7 +544,6 @@ case free x of
 \end{column}
 \end{columns}
 \vspace{0.5cm}
-\pause
 \textbf{Key idea:} We need to branch on \emph{WHNF-ness}
 % Não explico os detalhes na apresentação, mas que conseguimos tratar no
 % sistema na sua forma mais geral
@@ -600,66 +624,84 @@ Scrutinee resources are \emph{irrelevant} in the body
 \end{itemize}
 \end{frame}
 
-\begin{frame}{Metatheory: Linear Core}
-% Estranho ter esta distinção que depende do estado de algo at runtime, isto é type safe?
-% Sistema de tipos razoável
+\begin{frame}{Linear Core: Case Not-WHNF}
+%format vWithIrrX = v "_{\{[x]\}}"
+\begin{columns}
+\begin{column}{0.5\textwidth}
+\begin{alertblock}{}
+\begin{code}
+case free x of
+  Result vWithIrrX -> ()
+\end{code}
+\end{alertblock}
+\end{column}
+\begin{column}{0.5\textwidth}
+\[
+\infer
+{
+{\cdot; x \vdash free~x}\\
+{v{:}_{\{[x]\}}; [x] \vdash ()}
+}
+{
+\cdot; x \vdash \ccase{free~x}{\dots}
+}
+\]
+\end{column}
+\end{columns}
+\vspace{0.5cm}
+Scrutinee resources are \emph{irrelevant} in the body
 \begin{itemize}
-\item Not obvious whether these rules make sense together
-\item We proved the system is type safe via preservation + progress
-% Auxiliary lemma Irrelevance gives us that an alternative for a scrutinee not
-% in WHNF that is well-typed with an irrelevant resource in the context is also
-% well-typed if that irrelevant resource is substituted for any linear
-% environment uniformly regardless of the scrutinee WHNF-ness
-% \item Lots of lemmas...
-\pause
-\begin{itemize}
-\item \emph{Irrelevance} lemma
-\item Linear-var substitution lemma
-\item $\Delta$-var substitution lemma
-\item Unr-var substitution lemma
-\end{itemize}
-\end{itemize}
-\end{frame}
-
-\begin{frame}{Metatheory: Optimising Transformations}
-\begin{itemize}
-\item Inlining
-\item $\beta$-reduction
-\item $\beta$-reduction with sharing
-\item $\beta$-reduction for multiplicity abstractions
-\item Case-of-known-constructor
-\item Full laziness
-\item Local transformations (three of them)
-\item $\eta$-expansion
-\item $\eta$-reduction
-\item Binder swap
-\item Reverse binder swap (contentious!)
-\item Case-of-case
+\item They cannot be instantiated with $Var$
+\item But must still be used exactly once
+% the only way to do this is via pattern variables
 \end{itemize}
 \end{frame}
 
-\begin{frame}{GHC Plugin: Linear Core Implementation}
-We implemented Linear Core as a GHC plugin
-\scriptsize
-\input{../../prototype/core-plugin-results}
+\begin{frame}{In the paper...}
+\begin{itemize}
+\item Metatheory:
+    \begin{itemize}
+    \item Soundness and linear resource usage
+    \item Optimising transformations preserve linearity
+    \end{itemize}
+\item GHC Plugin implementing Linear Core
+\end{itemize}
 \end{frame}
+
+% \begin{frame}{Metatheory: Linear Core}
+% % Estranho ter esta distinção que depende do estado de algo at runtime, isto é type safe?
+% % Sistema de tipos razoável
+% \begin{itemize}
+% \item Not obvious whether these rules make sense together
+% \item We proved the system is type safe via preservation + progress
+% % Auxiliary lemma Irrelevance gives us that an alternative for a scrutinee not
+% % in WHNF that is well-typed with an irrelevant resource in the context is also
+% % well-typed if that irrelevant resource is substituted for any linear
+% % environment uniformly regardless of the scrutinee WHNF-ness
+% % \item Lots of lemmas...
+% \pause
+% \begin{itemize}
+% \item \emph{Irrelevance} lemma
+% \item Linear-var substitution lemma
+% \item $\Delta$-var substitution lemma
+% \item Unr-var substitution lemma
+% \end{itemize}
+% \end{itemize}
+% \end{frame}
 
 \begin{frame}{Conclusion}
 \begin{itemize}
-\item Linear Core is a suitable type system for Core, as it understands the
-interaction between linearity and laziness that the optimiser pushes to the
-limit
-\pause
-\item Not every single program is accepted by Linear Core
-  \begin{itemize}
-  \item Future work: \emph{multiplicity coercions}
-  \item Discuss linearity modulo call-by-name
-  \item Iron out quirks (rewrite rules, ...)
-  \end{itemize}
-\pause
-\item Builds on the shoulders of Linear Haskell and Linear Mini-Core
-\pause
-\item There's much more in the thesis!
+\item Linear Core accepts more of the lazy semantics of linearity
+    \begin{itemize}
+    \item Not all linear programs are accepted by Linear Core
+    \item Future work: Multiplicity Coercions
+    \end{itemize}
+\item Suitable for Lazy Linear Core language
+    \begin{itemize}
+    \item Optimizations provably preserve linearity
+    \item Validated in practice as GHC plugin
+    \item Future work: lazy features of strict linear languages
+    \end{itemize}
 \end{itemize}
 \end{frame}
 
@@ -850,7 +892,7 @@ limit
 \begin{frame}{Lazy Linearity: Case of Var}
 \[
 \begin{array}{c}
-(\lambda x.~\ccase{x}{\_ \to x})\\\pause
+(\lambda z.~\ccase{z}{\_ \to z})\\\pause
 \Longrightarrow_{\textrm{call by name}}\\\pause
 \ccase{free~x}{\_ \to free~x}\\\pause
 \\
@@ -860,12 +902,35 @@ limit
 \]
 \end{frame}
 
+\begin{frame}{Metatheory: Optimising Transformations}
+\begin{itemize}
+\item Inlining
+\item $\beta$-reduction
+\item $\beta$-reduction with sharing
+\item $\beta$-reduction for multiplicity abstractions
+\item Case-of-known-constructor
+\item Full laziness
+\item Local transformations (three of them)
+\item $\eta$-expansion
+\item $\eta$-reduction
+\item Binder swap
+\item Reverse binder swap (contentious!)
+\item Case-of-case
+\end{itemize}
+\end{frame}
+
+\begin{frame}{GHC Plugin: Linear Core Implementation}
+We implemented Linear Core as a GHC plugin
+\scriptsize
+\input{../../prototype/core-plugin-results}
+\end{frame}
+
 \begin{frame}{System FC}
 
-\only<1-2>{
+\only<1>{
 \begin{itemize}
-\item<1-> $System~F_C$ is a polymorphic lambda calculus with explicit type-equality coercions
-\item<2-> A coercion $\sigma_1\sim\sigma_2$ can be used to safely
+\item<1> $System~F_C$ is a polymorphic lambda calculus with explicit type-equality coercions
+\item<1> A coercion $\sigma_1\sim\sigma_2$ can be used to safely
 \emph{cast} an expression $e$ of type $\sigma_1$ to type $\sigma_2$,
 written $e\blacktriangleright\sigma_1\sim\sigma_2$.
 % Coercions are crucial to express a lot of surface Haskell features, such as
@@ -873,7 +938,7 @@ written $e\blacktriangleright\sigma_1\sim\sigma_2$.
 \end{itemize}
 }
 
-\only<3>{
+\only<2>{
 \begin{definition}[Syntax]
 \small
 \[
