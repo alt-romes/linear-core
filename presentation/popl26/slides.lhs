@@ -284,6 +284,7 @@ let y = free x in free x
 \end{code}
 \end{block}
 %Linearity is ignored, or too many programs would be rejected
+Many such seemingly trivial programs produced by optimizer
 \end{frame}
 
 %% Summarising,
@@ -363,11 +364,11 @@ let y = free x in free x
 \end{frame}
 
 % Let's talk about ...
-\begin{frame}{}
-\centering
-\large
-Lazy Linearity, by example
-\end{frame}
+%\begin{frame}{}
+%\centering
+%\large
+%Lazy Linearity, by example
+%\end{frame}
 
 \begin{frame}{Lazy Linearity: Lets}
 \begin{block}{}
@@ -380,6 +381,115 @@ in if condition
 \end{block}
 
 Resources in lets are only consumed if the binder is evaluated
+\end{frame}
+
+% \begin{frame}{}
+% \centering
+% \large
+% Linear Core
+% \end{frame}
+
+%\begin{frame}{Linear Core: $Let$-vars}
+%\begin{columns}
+%\begin{column}{0.5\textwidth}
+%\begin{block}{}
+%%format yWithUEPtr = y "_{\{ptr\}}"
+%\begin{code}
+%let yWithUEPtr = free ptr in yWithUEPtr
+%\end{code}
+%\end{block}
+%\end{column}
+%\pause
+%\begin{column}{0.5\textwidth}
+%\[
+%\TypeVarDelta
+%\]
+%\end{column}
+%\end{columns}
+%\pause
+%\vspace{0.5cm}
+%$Let$-binder bodies don't consume resources\pause
+%\begin{itemize}
+%\item Annotate Let-vars with linear resources $\D$ used in its body\\\pause
+%\item Using a Let-var entails using all of its $\D$
+%\end{itemize}
+%\end{frame}
+
+\begin{frame}{Linear Core: Lets}
+\begin{minipage}{0.49\textwidth}
+\begin{block}{}
+%format yWithUEPtr = y "_{\{ptr\}}"
+\begin{code}
+let yWithUEPtr = free ptr
+in if condition
+  then yWithUEPtr
+  else return ptr
+\end{code}
+\end{block}
+\end{minipage}
+\begin{minipage}{0.49\textwidth}
+\[
+\onslide<2->{
+\infer
+{
+\onslide<3->{\cdot ; ptr \vdash free~ptr}\\
+\onslide<4->{y{:}_{\{ptr\}}; ptr \vdash |if condition| \dots}
+}
+{\cdot; ptr \vdash \llet{y = free~ptr}{\dots}}
+}
+\]
+\end{minipage}
+
+\textbf{Key idea:} $Let$-binding doesn't consume resources
+\begin{itemize}
+\item Annotate $let$-vars with resources used in its body
+\item Using $let$-vars consumes annotated context
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Linear Haskell vs Linear Core: Lets}
+\begin{minipage}{0.49\textwidth}
+\[
+\infer
+{
+{\Gamma ; \Delta_1 \vdash e_1}\\
+{\Gamma; \Delta_2, y \vdash e_2}
+}
+{\Gamma; \Delta_1, \Delta_2 \vdash \llet{y = e_1}{e_2}}
+\]
+\end{minipage}
+\pause
+\begin{minipage}{0.49\textwidth}
+\[
+\infer
+{
+{\Gamma ; \Delta_1 \vdash e_1}\\
+{\Gamma, y{:}_{\Delta_1}; \Delta_1, \Delta_2 \vdash e_2}
+}
+{\Gamma; \Delta_1, \Delta_2 \vdash \llet{y = e_1}{e_2}}
+\]
+\end{minipage}
+\end{frame}
+
+\begin{frame}{Vars in Linear Core}
+\begin{minipage}{0.49\textwidth}
+\[
+\infer
+{
+}
+{\Gamma; x \vdash x}
+\]
+\end{minipage}
+\pause
+\begin{minipage}{0.49\textwidth}
+\[
+\infer
+{
+{\Delta_1 = \Delta_2}
+}
+{\Gamma, y{:}_{\Delta_1}; \Delta_2 \vdash y}
+\]
+\end{minipage}
 \end{frame}
 
 \begin{frame}{Lazy Linearity: Case}
@@ -429,99 +539,6 @@ Case expressions drive evaluation, consuming (parts of) resources
 % (scrutinee is \emph{not} in WHNF)
 \end{frame}
 
-\begin{frame}{}
-\centering
-\large
-Linear Core
-\end{frame}
-
-%\begin{frame}{Linear Core: $Let$-vars}
-%\begin{columns}
-%\begin{column}{0.5\textwidth}
-%\begin{block}{}
-%%format yWithUEPtr = y "_{\{ptr\}}"
-%\begin{code}
-%let yWithUEPtr = free ptr in yWithUEPtr
-%\end{code}
-%\end{block}
-%\end{column}
-%\pause
-%\begin{column}{0.5\textwidth}
-%\[
-%\TypeVarDelta
-%\]
-%\end{column}
-%\end{columns}
-%\pause
-%\vspace{0.5cm}
-%$Let$-binder bodies don't consume resources\pause
-%\begin{itemize}
-%\item Annotate Let-vars with linear resources $\D$ used in its body\\\pause
-%\item Using a Let-var entails using all of its $\D$
-%\end{itemize}
-%\end{frame}
-
-\begin{frame}{Linear Core: Lets}
-\begin{block}{}
-%format yWithUEPtr = y "_{\{ptr\}}"
-\begin{code}
-let yWithUEPtr = free ptr
-in if condition
-  then yWithUEPtr
-  else return ptr
-\end{code}
-\end{block}
-
-%% \[
-%% \onslide<3->{
-%% \infer
-%% {
-%% \onslide<4->{\cdot ; ptr \vdash free~ptr}\\
-%% \onslide<5->{y{:}_{\{ptr\}}; ptr \vdash |if condition| \dots}
-%% }
-%% {\cdot; ptr \vdash \llet{y = free~ptr}{\dots}}
-%% }
-%% \]
-
-\textbf{Key idea:} $Let$-binding doesn't consume resources
-\begin{itemize}
-\item Annotate $let$-vars with resources used in its body
-\item Using $let$-vars consumes annotated context
-\end{itemize}
-\end{frame}
-
-\begin{frame}{Lets in Linear Haskell (Standard)}
-\[
-\infer
-{
-{\Gamma ; \Delta_1 \vdash e_1}\\
-{\Gamma; \Delta_2, y \vdash e_2}
-}
-{\Gamma; \Delta_1, \Delta_2 \vdash \llet{y = e_1}{e_2}}
-\]
-\end{frame}
-
-\begin{frame}{Lets in Linear Core}
-\[
-\infer
-{
-{\Gamma ; \Delta_1 \vdash e_1}\\
-{\Gamma, y{:}_{\Delta_1}; \Delta_1, \Delta_2 \vdash e_2}
-}
-{\Gamma; \Delta_1, \Delta_2 \vdash \llet{y = e_1}{e_2}}
-\]
-\end{frame}
-
-\begin{frame}{$\Delta$-Vars in Linear Core}
-\[
-\infer
-{
-{\Delta_1 = \Delta_2}
-}
-{\Gamma, y{:}_{\Delta_1}; \Delta_2 \vdash y}
-\]
-\end{frame}
-
 \begin{frame}{Linear Core: Case}
 Case scrut evaluate to WHNF, unless they are already in WHNF
 % Recalling the key idea that if it is already in WHNF no EVALUATION happens, thus no resources are consumed (thuis can be in the next slide)
@@ -561,14 +578,13 @@ case (x,y) of
 \end{code}
 \end{block}
 \end{column}
-\pause
 \begin{column}{0.5\textwidth}
 \[
-\onslide<3->{
+\onslide<2->{
 \infer
 {
-\onslide<4->{\cdot; x, y \vdash (x,y)}\\
-\onslide<5->{a{:}_{\{x\}}, b{:}_{\{y\}}; x,y \vdash use~x~y}
+\onslide<3->{\cdot; x, y \vdash (x,y)}\\
+\onslide<4->{a{:}_{\{x\}}, b{:}_{\{y\}}; x,y \vdash use~x~y}
 }
 {
 \cdot; x,y \vdash \ccase{(x,y)}{(a,b) \to\dots}
@@ -579,12 +595,10 @@ case (x,y) of
 \end{columns}
 \vspace{0.5cm}
 
-\onslide<2->{
 \begin{itemize}
 \item Scrutinee resources are available in the body\\
 \item Pattern variables are annotated with corresponding scrutinee variables
 \end{itemize}
-}
 \end{frame}
 
 \begin{frame}{Linear Core: Case Not-WHNF}
@@ -600,11 +614,11 @@ case free x of
 \end{column}
 \begin{column}{0.5\textwidth}
 \[
-\onslide<3->{
+\onslide<2->{
 \infer
 {
-\onslide<4->{\cdot; x \vdash free~x}\\
-\onslide<5->{v{:}_{\{[x]\}}; [x] \vdash free~x}
+\onslide<3->{\cdot; x \vdash free~x}\\
+\onslide<4->{v{:}_{\{[x]\}}; [x] \vdash free~x}
 }
 {
 \cdot; x \vdash \ccase{free~x}{\dots}
@@ -614,57 +628,37 @@ case free x of
 \end{column}
 \end{columns}
 \vspace{0.5cm}
-\onslide<2->{
 Scrutinee resources are \emph{irrelevant} in the body
 \begin{itemize}
 \item They cannot be instantiated with $Var$
 \item But must still be used exactly once
 % the only way to do this is via pattern variables
-}
 \end{itemize}
 \end{frame}
 
 \begin{frame}{Linear Core: Case Not-WHNF}
-%format vWithIrrX = v "_{\{[x]\}}"
 \begin{columns}
 \begin{column}{0.5\textwidth}
 \begin{alertblock}{}
-\begin{code}
-case free x of
-  Result vWithIrrX -> ()
-\end{code}
+\[ {v{:}_{\{[x]\}}; [x] \vdash free~x} \]
 \end{alertblock}
 \end{column}
 \begin{column}{0.5\textwidth}
-\[
-\infer
-{
-{\cdot; x \vdash free~x}\\
-{v{:}_{\{[x]\}}; [x] \vdash ()}
-}
-{
-\cdot; x \vdash \ccase{free~x}{\dots}
-}
-\]
+\begin{alertblock}{}
+\[ {v{:}_{\{[x]\}}; [x] \vdash ()} \]
+\end{alertblock}
 \end{column}
 \end{columns}
-\vspace{0.5cm}
-Scrutinee resources are \emph{irrelevant} in the body
-\begin{itemize}
-\item They cannot be instantiated with $Var$
-\item But must still be used exactly once
-% the only way to do this is via pattern variables
-\end{itemize}
+\begin{exampleblock}{}
+\[ {v{:}_{\{[x]\}}; [x] \vdash v} \]
+\end{exampleblock}
 \end{frame}
 
 \begin{frame}{In the paper...}
 \begin{itemize}
-\item Metatheory:
-    \begin{itemize}
-    \item Soundness and linear resource usage
-    \item Optimising transformations preserve linearity
-    \end{itemize}
-\item GHC Plugin implementing Linear Core
+\item Metatheory: Soundness and linear resource usage
+\item Metatheory: Optimising transformations preserve linearity
+\item GHC plugin validating Linear Core in heart of compiler
 \end{itemize}
 \end{frame}
 
@@ -693,7 +687,7 @@ Scrutinee resources are \emph{irrelevant} in the body
 \begin{itemize}
 \item Linear Core accepts more of the lazy semantics of linearity
     \begin{itemize}
-    \item Not all linear programs are accepted by Linear Core
+    % \item Not all linear programs are accepted by Linear Core
     \item Future work: Multiplicity Coercions
     \end{itemize}
 \item Suitable for Lazy Linear Core language
@@ -703,6 +697,10 @@ Scrutinee resources are \emph{irrelevant} in the body
     \item Future work: lazy features of strict linear languages
     \end{itemize}
 \end{itemize}
+\end{frame}
+
+\begin{frame}{ }
+\centering \emph{Fim}
 \end{frame}
 
 % \begin{frame}{Lazy evaluation}
