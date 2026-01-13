@@ -230,7 +230,7 @@ All linear type systems we know of reject |interesting|.
 %%% Core is both lazy and statically typed, but linearity has to be ignored.
 %%% \end{frame}
 
-\begin{frame}{So what?..... ATODO}
+\begin{frame}{Why not just syntactic linearity?}
 \begin{center}
 \begin{tikzpicture}[node distance={5cm}, thick, main/.style = {draw, rectangle, minimum size=1.5em}]
 \node[main] (1) {Linear Haskell};
@@ -452,10 +452,10 @@ in if condition
 \[
 \infer
 {
-{\Gamma ; \Delta_1 \vdash e_1}\\
-{\Gamma; \Delta_2, y \vdash e_2}
+{\Gamma ; \Delta_1 \vdash e_1 : \sigma}\\
+{\Gamma; \Delta_2, y{:}\sigma \vdash e_2 : \tau}
 }
-{\Gamma; \Delta_1, \Delta_2 \vdash \llet{y = e_1}{e_2}}
+{\Gamma; \Delta_1, \Delta_2 \vdash \llet{y = e_1}{e_2} : \tau}
 \]
 \end{minipage}
 \pause
@@ -463,10 +463,10 @@ in if condition
 \[
 \infer
 {
-{\Gamma ; \Delta_1 \vdash e_1}\\
-{\Gamma, y{:}_{\Delta_1}; \Delta_1, \Delta_2 \vdash e_2}
+{\Gamma ; \Delta_1 \vdash e_1 : \sigma}\\
+{\Gamma, y{:}_{\Delta_1}\sigma; \Delta_1, \Delta_2 \vdash e_2 : \tau}
 }
-{\Gamma; \Delta_1, \Delta_2 \vdash \llet{y = e_1}{e_2}}
+{\Gamma; \Delta_1, \Delta_2 \vdash \llet{y = e_1}{e_2} : \tau}
 \]
 \end{minipage}
 \end{frame}
@@ -477,7 +477,7 @@ in if condition
 \infer
 {
 }
-{\Gamma; x \vdash x}
+{\Gamma; x{:}\sigma \vdash x : \sigma}
 \]
 \end{minipage}
 \pause
@@ -487,7 +487,7 @@ in if condition
 {
 {\Delta_1 = \Delta_2}
 }
-{\Gamma, y{:}_{\Delta_1}; \Delta_2 \vdash y}
+{\Gamma, y{:}_{\Delta_1}\sigma; \Delta_2 \vdash y : \sigma}
 \]
 \end{minipage}
 \end{frame}
@@ -540,7 +540,7 @@ Case expressions drive evaluation, consuming (parts of) resources
 \end{frame}
 
 \begin{frame}{Linear Core: Case}
-Case scrut evaluate to WHNF, unless they are already in WHNF
+Case scrut evaluates to WHNF, unless already in WHNF
 % Recalling the key idea that if it is already in WHNF no EVALUATION happens, thus no resources are consumed (thuis can be in the next slide)
 \begin{columns}
 \begin{column}{0.5\textwidth}
@@ -564,6 +564,9 @@ case free x of
 \textbf{Key idea:} We need to branch on \emph{WHNF-ness}
 % Não explico os detalhes na apresentação, mas que conseguimos tratar no
 % sistema na sua forma mais geral
+
+\pause
+(Note: These "trivial" programs are common during optimisation)
 \end{frame}
 
 \begin{frame}{Linear Core: Case WHNF}
@@ -656,7 +659,7 @@ Scrutinee resources are \emph{irrelevant} in the body
 
 \begin{frame}{In the paper...}
 \begin{itemize}
-\item Metatheory: Soundness and linear resource usage
+\item Metatheory: Soundness over linearity-aware semantics
 \item Metatheory: Optimising transformations preserve linearity
 \item GHC plugin validating Linear Core in heart of compiler
 \end{itemize}
